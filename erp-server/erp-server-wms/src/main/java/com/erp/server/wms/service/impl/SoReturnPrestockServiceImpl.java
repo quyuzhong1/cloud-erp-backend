@@ -7,6 +7,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -53,6 +54,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -109,6 +111,9 @@ public class SoReturnPrestockServiceImpl
     private SoReturnInstockService soReturnInstockService;
 
     @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+
+    @Resource
     private WarehouseService warehouseService;
 
     @Resource
@@ -137,13 +142,16 @@ public class SoReturnPrestockServiceImpl
         // 查询详情行
         List<SoReturnPrestockDetailEntity> detailEntities = soReturnPrestockDetailService.listByMainIds(ids);
         Map<String, List<SoReturnPrestockDetailEntity>> detailMap = detailEntities.stream().collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getMainId));
+        // 批量反查认领后生成的退货入库单（当前页全部明细行只发一次查询，不逐行查）
+        List<String> detailIds = detailEntities.stream().map(SoReturnPrestockDetailEntity::getId).collect(Collectors.toList());
+        Map<String, SoReturnInstockEntity> returnInstockByPrestockDetailId = listReturnInstockByPrestockDetailIds(detailIds);
         // 翻译枚举名称
         records.forEach(v -> {
             v.setTypeName(BillTypeEnum.getName(v.getType()));
             v.setClaimStatusName(PrestockClaimStatusEnum.getName(v.getClaimStatus()));
             v.setSourceTypeName(PrestockSourceTypeEnum.getName(v.getSourceType()));
             List<SoReturnPrestockDetailEntity> details = detailMap.get(v.getId());
-            v.setDetailList(details.stream().map(this::convertDetailToView).collect(Collectors.toList()));
+            v.setDetailList(details.stream().map(d -> convertDetailToView(d, returnInstockByPrestockDetailId)).collect(Collectors.toList()));
         });
         return new PagingVO<>(result);
     }
@@ -226,7 +234,12 @@ public class SoReturnPrestockServiceImpl
         // 查询详情行
         List<SoReturnPrestockDetailEntity> detailEntities =
                 soReturnPrestockDetailService.listByMainId(id);
-        view.setDetailList(detailEntities.stream().map(this::convertDetailToView).collect(Collectors.toList()));
+        // 批量反查认领后生成的退货入库单（本单全部明细行只发一次查询，不逐行查）
+        List<String> detailIds = detailEntities.stream().map(SoReturnPrestockDetailEntity::getId).collect(Collectors.toList());
+        Map<String, SoReturnInstockEntity> returnInstockByPrestockDetailId = listReturnInstockByPrestockDetailIds(detailIds);
+        view.setDetailList(detailEntities.stream()
+                .map(d -> convertDetailToView(d, returnInstockByPrestockDetailId))
+                .collect(Collectors.toList()));
         return view;
     }
 
@@ -376,7 +389,7 @@ public class SoReturnPrestockServiceImpl
      * （复用 {@link SoReturnInstockService#add}，由其按 soReturnId + type 反查客户/组织/价格等信息并落库、生成单号），
      * 生成后直接提交并审核通过（不走审批流，置为已审核并触发退货入库库存联动）。
      * 上游预入库单明细不记录下游退货入库单的关联指针，改为下游退货入库单明细通过
-     * {@code source_detail_id} 回指本预入库单明细行（见 {@link #buildInstockDetailAdd}）。
+     * {@code prestock_detail_id} 回指本预入库单明细行（见 {@link #buildInstockDetailAdd}）。
      */
     private void generateReturnInstock(SoReturnPrestockEntity main, List<LinkedDetailPair> linkedPairs) {
         if (CollUtil.isEmpty(linkedPairs)) {
@@ -448,8 +461,10 @@ public class SoReturnPrestockServiceImpl
         da.setReturnTypeDict(returnTypeDict);
         da.setReturnReasonDict(returnReasonDict);
         da.setSoReturnDetailId(soReturnDetailId);
-        // 下游记录来源：回指本预入库单明细行，取代此前由预入库单明细反向记录 return_instock_id/code 的方向
-        da.setSourceDetailId(detail.getId());
+        // 下游记录来源：回指本预入库单明细行，取代此前由预入库单明细反向记录 return_instock_id/code 的方向；
+        // 使用专用字段 prestockDetailId，不复用 sourceDetailId（后者已被 SoReturnReceiveServiceImpl 按
+        // "签收单明细id"语义读取，复用会导致同一字段承载两种互不相关的语义）
+        da.setPrestockDetailId(detail.getId());
         // 预入库单不存在退货签收单，签收数量兜底为 0 会误触发"实退总数量不能大于签收数量"校验；
         // 预入库单明细的 receivedQty 即已确认的到货数量，此处关闭签收数量校验
         da.setIsCheckReceiveQty(false);
@@ -746,7 +761,7 @@ public class SoReturnPrestockServiceImpl
             detailEntity.setActualQty(Objects.nonNull(d.getReceivedQty()) ? d.getReceivedQty() : 0);
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setRemark(d.getRemark());
-            detailEntity.setSourceDetailId(d.getId());
+            detailEntity.setPrestockDetailId(d.getId());
             detailEntityList.add(detailEntity);
         }
         entity.setDetailEntityList(detailEntityList);
@@ -901,7 +916,7 @@ public class SoReturnPrestockServiceImpl
     /**
      * 联动生成《退货入库单》：将本次已关联的明细行按店铺分组，每个店铺生成一张退货入库单
      * （复用 {@link SoReturnInstockService#add}）。上游预入库单明细不记录下游退货入库单的关联指针，
-     * 改为下游退货入库单明细通过 {@code source_detail_id} 回指本预入库单明细行（见 {@link #buildInstockDetailAdd}）。
+     * 改为下游退货入库单明细通过 {@code prestock_detail_id} 回指本预入库单明细行（见 {@link #buildInstockDetailAdd}）。
      *
      * @param autoApprove 是否生成后直接提交并审核通过（批量整单关联店铺场景要求已审核状态）
      */
@@ -1429,7 +1444,38 @@ public class SoReturnPrestockServiceImpl
     /**
      * 将 Entity 转换为详情出参 View
      */
-    private SoReturnPrestockDetailDTO.View convertDetailToView(SoReturnPrestockDetailEntity e) {
+    /**
+     * 批量反查预入库单明细认领后生成的退货入库单（id/code），避免逐行查询。
+     * 仅统计未作废（invalidStatus=false）的退货入库单；一个预入库单明细最多对应一张退货入库单。
+     */
+    private Map<String, SoReturnInstockEntity> listReturnInstockByPrestockDetailIds(List<String> prestockDetailIds) {
+        if (CollUtil.isEmpty(prestockDetailIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnInstockDetailEntity> instockDetails = soReturnInstockDetailService.list(
+                Wrappers.<SoReturnInstockDetailEntity>lambdaQuery()
+                        .in(SoReturnInstockDetailEntity::getPrestockDetailId, prestockDetailIds)
+                        .ne(SoReturnInstockDetailEntity::getPrestockDetailId, ""));
+        if (CollUtil.isEmpty(instockDetails)) {
+            return Collections.emptyMap();
+        }
+        List<String> mainIds = instockDetails.stream().map(SoReturnInstockDetailEntity::getMainId)
+                .distinct().collect(Collectors.toList());
+        Map<String, SoReturnInstockEntity> mainById = soReturnInstockService.listByIds(mainIds).stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getInvalidStatus()))
+                .collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity(), (a, b) -> a));
+        Map<String, SoReturnInstockEntity> result = new HashMap<>();
+        for (SoReturnInstockDetailEntity d : instockDetails) {
+            SoReturnInstockEntity main = mainById.get(d.getMainId());
+            if (Objects.nonNull(main)) {
+                result.put(d.getPrestockDetailId(), main);
+            }
+        }
+        return result;
+    }
+
+    private SoReturnPrestockDetailDTO.View convertDetailToView(SoReturnPrestockDetailEntity e,
+                                                               Map<String, SoReturnInstockEntity> returnInstockByPrestockDetailId) {
         SoReturnPrestockDetailDTO.View v = new SoReturnPrestockDetailDTO.View();
         v.setId(e.getId());
         v.setVersion(e.getVersion());
@@ -1461,6 +1507,11 @@ public class SoReturnPrestockServiceImpl
         v.setSellerId(e.getSellerId());
         v.setSellerName(e.getSellerName());
         v.setRemark(e.getRemark());
+        SoReturnInstockEntity returnInstock = returnInstockByPrestockDetailId.get(e.getId());
+        if (Objects.nonNull(returnInstock)) {
+            v.setReturnInstockId(returnInstock.getId());
+            v.setReturnInstockCode(returnInstock.getCode());
+        }
         return v;
     }
 
@@ -1622,7 +1673,7 @@ public class SoReturnPrestockServiceImpl
         SoReturnPrestockEntity prestockEntity = getByIdOrThrow(prestockId);
         Map<String, SkuVO> skuVOMap = listSkuVOMap(addDetailList.stream()
                 .map(SoReturnPrestockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
-        // 按 skuId 分组后组内按创建顺序（create_time + id 兜底排序）与入参详情行配对，用于回填 sourceDetailId
+        // 按 skuId 分组后组内按创建顺序（create_time + id 兜底排序）与入参详情行配对，用于回填 prestockDetailId
         // 溯源到预入库单具体明细行；相比整体按下标对齐，同 SKU 场景下即使排序偶发抖动也不会跨SKU错配
         Map<String, Deque<SoReturnPrestockDetailEntity>> persistedDetailQueueBySkuId = soReturnPrestockDetailService.listByMainId(prestockId)
                 .stream()
@@ -1661,7 +1712,7 @@ public class SoReturnPrestockServiceImpl
             detailEntity.setRemark(detail.getRemark());
             Deque<SoReturnPrestockDetailEntity> persistedQueue = persistedDetailQueueBySkuId.get(detail.getSkuId());
             if (Objects.nonNull(persistedQueue) && !persistedQueue.isEmpty()) {
-                detailEntity.setSourceDetailId(persistedQueue.pollFirst().getId());
+                detailEntity.setPrestockDetailId(persistedQueue.pollFirst().getId());
             }
             detailEntityList.add(detailEntity);
         }

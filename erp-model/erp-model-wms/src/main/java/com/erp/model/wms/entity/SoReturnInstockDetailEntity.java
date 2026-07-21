@@ -86,10 +86,18 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String remark;
 
     /**
-     * 来源明细id
+     * 来源明细id（签收单明细id，sourceType=soReturnReceive 时有值）
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
+
+    /**
+     * 来源预入库单明细ID（so_return_prestock_detail.id），仅 sourceType=soReturnPrestock 时有值；
+     * 与 source_detail_id 语义分离，避免复用同一字段导致按签收单明细id反查的既有逻辑（如
+     * SoReturnReceiveServiceImpl#generateSoReturnInstockView/#pdaList）误判
+     */
+    @TableField("prestock_detail_id")
+    private String prestockDetailId;
 
     /**
      * 退货单详情
@@ -235,6 +243,8 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     public static final String REMAIN_SHOULD_QTY = "remain_should_qty";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
+    public static final String PRESTOCK_DETAIL_ID = "prestock_detail_id";
 
     @Override
     public Serializable pkVal() {

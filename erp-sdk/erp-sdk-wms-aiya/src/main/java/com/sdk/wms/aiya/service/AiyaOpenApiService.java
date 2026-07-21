@@ -273,10 +273,12 @@ public class AiyaOpenApiService {
      * 调用 AIYA {@code GLINK_BATCH_QUERY_ASN_NOTIFY} 按「仓库 + 上架完成时间」范围分页批量查询入库单。
      * <p>
      * 请求业务参数按接口文档承载：{@code customerCode}（由 SDK 注入）/{@code page}/{@code pageSize}/
-     * {@code warehouseCode} 为必填，{@code putawayCompletedTimeFrom}/{@code putawayCompletedTimeTo}
-     * 本项目固定按上架完成时间窗口拉取（成对必传）；其余字段（asnNumbers/asnType/receiveTime 范围/
-     * createdTime 范围/lastUpdatedTime 范围/stage/ifNeedBatchInfo/refNumbers/extUserId）为可选，
-     * 非空时才写入 bizData。{@code pageSize} 单页最大 200，调用方按总数多次翻页。
+     * {@code warehouseCode} 为必填。爱亚隐藏约束：{@code createdTime}/{@code receiveTime}/
+     * {@code lastUpdatedTime} 范围与 {@code asnNumbers}/{@code refNumbers} 至少一组非空，否则报
+     * {@code INVALID_DATA: ... cannot be empty at the same time}；调用方须至少传其一（本项目用 receiveTime 窗口）。
+     * {@code putawayCompletedTimeFrom}/{@code putawayCompletedTimeTo} 不在该必填集合内，仅作附加过滤。
+     * 其余字段（asnType/stage/ifNeedBatchInfo/extUserId 等）为可选，非空时才写入 bizData。
+     * {@code pageSize} 单页最大 200，调用方按总数多次翻页。
      * <p>
      * {@code GLINK_BATCH_QUERY_ASN_NOTIFY} 响应结构调整解析。
      *
@@ -289,8 +291,8 @@ public class AiyaOpenApiService {
         params.put("page", dto.getPageNum());
         params.put("pageSize", dto.getPageSize());
         params.put("warehouseCode", dto.getWarehouseCode());
-        params.put("putawayCompletedTimeFrom", dto.getPutawayCompletedTimeFrom());
-        params.put("putawayCompletedTimeTo", dto.getPutawayCompletedTimeTo());
+        putIfNotBlank(params, "putawayCompletedTimeFrom", dto.getPutawayCompletedTimeFrom());
+        putIfNotBlank(params, "putawayCompletedTimeTo", dto.getPutawayCompletedTimeTo());
         if (dto.getAsnNumbers() != null && !dto.getAsnNumbers().isEmpty()) {
             params.put("asnNumbers", JSON.toJSON(dto.getAsnNumbers()));
         }

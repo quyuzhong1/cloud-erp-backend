@@ -163,6 +163,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+                if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                    detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+                }
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
                 //获取平台sku
@@ -308,6 +312,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+                if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                    detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+                }
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
@@ -404,6 +412,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+                if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                    detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+                }
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 detailEntity.setReturnAmount(detailDto.getReturnAmount());
                 detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
@@ -493,6 +505,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+            if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+            }
             detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
@@ -619,6 +635,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+                if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                    detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+                }
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
@@ -863,6 +883,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+                if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                    detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+                }
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
@@ -959,6 +983,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+                if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                    detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+                }
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
                 if (hasDetailPriceFromRequest(detailDto)) {
@@ -1080,6 +1108,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            // 编辑场景防御：字段缺失/空值时不覆盖已有关联，避免旧入参把已认领关联清空
+            if (CharSequenceUtil.isNotBlank(detailDto.getPrestockDetailId())) {
+                detailEntity.setPrestockDetailId(detailDto.getPrestockDetailId());
+            }
             //封装仓库，如果没有明细仓库，取主记录的仓库
             if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
                 if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){

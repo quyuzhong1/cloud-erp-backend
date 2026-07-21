@@ -1259,7 +1259,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CollUtil.isEmpty(errorMsgList)) {
             return;
         }
-        throw new ServiceException(primaryApiError.getCode(), String.join("\n", errorMsgList));
+        throw new ServiceException(primaryApiError.getCode(), String.join("<br>", errorMsgList));
     }
 
     @Override

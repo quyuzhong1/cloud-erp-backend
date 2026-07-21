@@ -71,6 +71,13 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 来源预入库单明细ID（so_return_prestock_detail.id），仅 sourceType=soReturnPrestock 时有值；
+     * 与 source_detail_id（旺店通预入库等其它来源复用）语义分离
+     */
+    @TableField("prestock_detail_id")
+    private String prestockDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -81,6 +88,8 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     public static final String ACTUAL_QTY = "actual_qty";
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
+
+    public static final String PRESTOCK_DETAIL_ID = "prestock_detail_id";
 
     @Override
     public Serializable pkVal() {

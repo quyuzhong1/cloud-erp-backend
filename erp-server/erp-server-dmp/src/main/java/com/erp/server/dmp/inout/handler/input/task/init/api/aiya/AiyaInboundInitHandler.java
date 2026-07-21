@@ -26,8 +26,10 @@ import java.util.stream.Collectors;
 /**
  * 爱亚（AIYA/百世 GLINK）海外仓入库单验货明细回传 InitHandler，对齐 {@code WegoInboundInitHandler}。
  * <p>
- * 调用爱亚 {@code GLINK_BATCH_QUERY_ASN_NOTIFY}，按「仓库 + 上架完成时间」范围（
- * {@code putawayCompletedTimeFrom}/{@code putawayCompletedTimeTo}）分页批量拉取入库单：
+ * 调用爱亚 {@code GLINK_BATCH_QUERY_ASN_NOTIFY}，按「仓库 + 收货时间」范围（
+ * {@code receiveTimeFrom}/{@code receiveTimeTo}）分页批量拉取入库单
+ * （爱亚要求 createdTime/receiveTime/lastUpdatedTime/asnNumbers/refNumbers 至少一组非空，
+ * putawayCompletedTime 不满足该约束，故用收货时间窗口增量拉取）：
  * <ol>
  *   <li>按 {@link #dmpInputTaskEntity} 的 {@code nextLevelId} 定位已授权爱亚服务商（复用父类 {@link #resolveAuth()}）；</li>
  *   <li>时间窗口优先取 dmp 任务 startTime/endTime，缺省回退 [今天-1天 ~ 今天]（与 wego 一致）；</li>
@@ -53,7 +55,7 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     private static final int DEFAULT_PAGE_SIZE = AiyaInboundQueryDTO.DEFAULT_PAGE_SIZE;
 
     /**
-     * 爱亚上架完成时间格式。
+     * 爱亚时间参数格式（yyyy-MM-dd HH:mm:ss）。
      */
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -61,8 +63,10 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         AiyaAuth auth = resolveAuth();
 
-        String putawayFrom = resolveBeginTime();
-        String putawayTo = resolveEndTime();
+        // 爱亚隐藏约束：createdTime/receiveTime/lastUpdatedTime/asnNumbers/refNumbers 至少一组非空，
+        // putawayCompletedTime 不算；故本项目按「收货时间」窗口增量拉取。
+        String beginTime = resolveBeginTime();
+        String endTime = resolveEndTime();
 
         // GLINK_BATCH_QUERY_ASN_NOTIFY 的 warehouseCode 为必填，按服务商已配置的仓库逐仓分页拉取
         List<String> warehouseCodes = resolveWarehouseCodes(auth.getAuthId());
@@ -78,10 +82,10 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
                 AiyaInboundResp resp;
                 try {
                     resp = aiyaOpenApiService.batchQueryAsn(
-                            buildQueryReq(auth, warehouseCode, page, putawayFrom, putawayTo));
+                            buildQueryReq(auth, warehouseCode, page, beginTime, endTime));
                 } catch (Exception e) {
-                    log.error("[爱亚入库] 服务商[id={}] 仓库[{}] 上架完成时间[{} ~ {}] 调用异常, page={}",
-                            auth.getAuthId(), warehouseCode, putawayFrom, putawayTo, page, e);
+                    log.error("[爱亚入库] 服务商[id={}] 仓库[{}] 收货时间[{} ~ {}] 调用异常, page={}",
+                            auth.getAuthId(), warehouseCode, beginTime, endTime, page, e);
                     throw new ServiceException(e, ApiError.WH_AIYA_PAGE_QUERY_ERROR, ACTION, page);
                 }
                 if (resp == null) {
@@ -117,20 +121,21 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
         }
 
         if (result.isEmpty()) {
-            log.info("[爱亚入库] 服务商[id={}] 仓库{} 上架完成时间[{} ~ {}] 未拉到任何入库单",
-                    auth.getAuthId(), warehouseCodes, putawayFrom, putawayTo);
+            log.info("[爱亚入库] 服务商[id={}] 仓库{} 收货时间[{} ~ {}] 未拉到任何入库单",
+                    auth.getAuthId(), warehouseCodes, beginTime, endTime);
             return Collections.emptyList();
         }
-        log.info("[爱亚入库] 服务商[id={}] 仓库{} 上架完成时间[{} ~ {}] 共拉取入库单={}条",
-                auth.getAuthId(), warehouseCodes, putawayFrom, putawayTo, result.size());
+        log.info("[爱亚入库] 服务商[id={}] 仓库{} 收货时间[{} ~ {}] 共拉取入库单={}条",
+                auth.getAuthId(), warehouseCodes, beginTime, endTime, result.size());
         return Collections.singletonList(buildInitDTO(result, auth.getAuthId()));
     }
 
     /**
-     * 组装单页入库单批量查询请求：必填 customerCode/page/pageSize/warehouseCode + 上架完成时间窗口。
+     * 组装单页入库单批量查询请求：必填 customerCode/page/pageSize/warehouseCode + 「收货时间」窗口
+     * （receiveTime，满足爱亚「至少一组时间/单号非空」约束）。
      */
     private AiyaInboundQueryDTO.QueryReqDTO buildQueryReq(AiyaAuth auth, String warehouseCode, int page,
-                                                         String putawayFrom, String putawayTo) {
+                                                         String beginTime, String endTime) {
         AiyaInboundQueryDTO.QueryReqDTO req = new AiyaInboundQueryDTO.QueryReqDTO();
         req.setAccessToken(auth.getPartnerId());
         req.setSecret(auth.getPartnerKey());
@@ -138,8 +143,8 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
         req.setWarehouseCode(warehouseCode);
         req.setPageNum(page);
         req.setPageSize(DEFAULT_PAGE_SIZE);
-        req.setPutawayCompletedTimeFrom(putawayFrom);
-        req.setPutawayCompletedTimeTo(putawayTo);
+        req.setReceiveTimeFrom(beginTime);
+        req.setReceiveTimeTo(endTime);
         return req;
     }
 
@@ -187,7 +192,7 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     }
 
     /**
-     * 上架完成时间起：dmp 任务有 startTime 则取之，否则回退「今天 - 1 天」。
+     * 收货时间起：dmp 任务有 startTime 则取之，否则回退「今天 - 1 天」。
      */
     private String resolveBeginTime() {
         LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
@@ -196,7 +201,7 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     }
 
     /**
-     * 上架完成时间止：dmp 任务有 endTime 则取之，否则回退「当前时间」。
+     * 收货时间止：dmp 任务有 endTime 则取之，否则回退「当前时间」。
      */
     private String resolveEndTime() {
         LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
