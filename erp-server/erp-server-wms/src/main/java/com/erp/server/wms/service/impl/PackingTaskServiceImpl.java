@@ -1227,6 +1227,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
         return this.stagingPacking(dto);
@@ -1438,7 +1439,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "addDTO.taskId", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "addDTO.taskId", unlockAfterTx = true)
     public WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
@@ -1568,7 +1569,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.cartonId",unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "dto.cartonId", unlockAfterTx = true)
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
         PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
@@ -1782,7 +1783,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.specId")
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_SPEC_KEY, keyName = "dto.specId")
     public ApiResult<String> cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto) {
         WmsCartonSpecEntity old = wmsCartonSpecService.getById(dto.getSpecId());
         if (Objects.isNull(old)){

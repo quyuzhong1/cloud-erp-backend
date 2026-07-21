@@ -148,4 +148,14 @@ public class DistributeKeyConstant {
      * 物流商对账单变更锁（确认 / 校验切换 / 匹配 / 解绑 / 删除按对账单 mainId 互斥）
      */
     public static final String TMS_LOGISTICS_RECON_KEY = "TMS_LOGISTICS_RECON";
+
+    /**
+     * WMS 装箱单箱操作锁（暂存 / 完成 / 调整装箱共用）
+     */
+    public static final String WMS_PACKING_TASK_CARTON_KEY = "WMS_PACKING_TASK_CARTON_KEY";
+
+    /**
+     * WMS 装箱箱规操作锁
+     */
+    public static final String WMS_PACKING_TASK_CARTON_SPEC_KEY = "WMS_PACKING_TASK_CARTON_SPEC_KEY";
 }
