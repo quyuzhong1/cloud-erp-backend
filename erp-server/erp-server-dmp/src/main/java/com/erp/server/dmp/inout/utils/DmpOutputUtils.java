@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
@@ -122,7 +123,7 @@ public class DmpOutputUtils{
 	        }
 	        
 	        boolean isSend = true;
-	        if(StringUtils.isNotBlank(message) && message.contains("旺店通出库") && message.contains("msg=库存不足")) {
+	        if(StringUtils.isNotBlank(message) && message.contains("旺店通出库") && message.contains("库存不足")) {
 	        	String redisKey = RedisCacheConstants.WDT_ERROR_CODE_KEY + code;
 	        	Object object = redisUtil.get(redisKey);
 	        	
@@ -137,6 +138,9 @@ public class DmpOutputUtils{
 	        			isSend = false;
 	        		}
 	        	}
+	        }
+	        if(StringUtils.isNotBlank(message) && message.contains(DmpInputConstant.PUSH_SUCCESS_CURRENT_STATUS_TIP)) {
+	        	isSend = false;
 	        }
 	        if(errorCount != null && errorCount > 3) {
 	        	isSend = false;

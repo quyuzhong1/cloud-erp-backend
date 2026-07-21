@@ -11,6 +11,10 @@ import javax.annotation.Resource;
 
 /**
  * 发票重试job
+ * <p>
+ * InvoiceJob 任务参数示例：
+ * {"queryHistory":false,"useReceiverWhenNoBillDetail":true}
+ * useReceiverWhenNoBillDetail=true 时，无 dmp_so_bill_detail 则回退订单买家信息生成 PDF；两者都没有才跳过
  */
 @Component
 @Slf4j

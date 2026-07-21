@@ -2,6 +2,7 @@ package com.sdk.oms.shopify.api.rest;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.rholder.retry.*;
@@ -12,9 +13,11 @@ import com.sdk.oms.shopify.api.rest.mappers.ShopifySdkObjectMapper;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -417,8 +420,7 @@ public class ShopifyRestClient {
     public ShopifyPage<ShopifyProduct> getProducts(final String pageInfo, final int pageSize) {
         final Response response =
                 get(getWebTarget().path(PRODUCTS).queryParam(LIMIT_QUERY_PARAMETER, pageSize).queryParam(PAGE_INFO_QUERY_PARAMETER, pageInfo));
-        final ShopifyProductsRoot shopifyProductsRoot = response.readEntity(ShopifyProductsRoot.class);
-        return mapPagedResponse(shopifyProductsRoot.getProducts(), response);
+        return parseProductsPage(response);
     }
 
 
@@ -719,7 +721,7 @@ public class ShopifyRestClient {
                 .queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString())
                 .queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString());
         if (null != maximumCreatedAtDate){
-            webTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
+            currentWebTarget = currentWebTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
         }
         final Response response = get(currentWebTarget);
 		return getOrders(response);
@@ -1182,8 +1184,78 @@ public class ShopifyRestClient {
      * @return ShopifyPage<ShopifyOrder>
      */
     private ShopifyPage<ShopifyOrder> getOrders(final Response response) {
-        final ShopifyOrdersRoot shopifyOrderRootResponse = response.readEntity(ShopifyOrdersRoot.class);
-        return mapPagedResponse(shopifyOrderRootResponse.getOrders(), response);
+        try {
+            final String responseBody = ResponseEntityToStringMapper.map(response);
+            final ObjectMapper mapper = ShopifySdkObjectMapper.buildMapper();
+            final ShopifyOrdersRoot shopifyOrderRootResponse = mapper.readValue(responseBody, ShopifyOrdersRoot.class);
+            fillMissingOrderIds(shopifyOrderRootResponse.getOrders(), responseBody, mapper, "orders");
+            return mapPagedResponse(shopifyOrderRootResponse.getOrders(), response);
+        } catch (ProcessingException e) {
+            throw toShopifyOrdersParseException(response, e);
+        } catch (Exception e) {
+            throw new ShopifyClientException("Shopify订单响应解析失败: " + e.getMessage(), e);
+        }
+    }
+
+    private ShopifyPage<ShopifyProduct> parseProductsPage(final Response response) {
+        try {
+            final String responseBody = ResponseEntityToStringMapper.map(response);
+            final ObjectMapper mapper = ShopifySdkObjectMapper.buildMapper();
+            final ShopifyProductsRoot shopifyProductsRoot = mapper.readValue(responseBody, ShopifyProductsRoot.class);
+            return mapPagedResponse(shopifyProductsRoot.getProducts(), response);
+        } catch (Exception e) {
+            throw new ShopifyClientException("Shopify产品响应解析失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Jackson 偶发未将 REST 字段 id 映射到 orderId 时，从原始 JSON 补全，避免 Fastjson 写 Mongo 时丢失 orderId。
+     */
+    private static void fillMissingOrderIds(List<ShopifyOrder> orders, String responseBody, ObjectMapper mapper, String arrayField) {
+        if (orders == null || orders.isEmpty() || StringUtils.isBlank(responseBody)) {
+            return;
+        }
+        try {
+            JsonNode ordersNode = mapper.readTree(responseBody).get(arrayField);
+            if (ordersNode == null || !ordersNode.isArray()) {
+                return;
+            }
+            for (int i = 0; i < orders.size() && i < ordersNode.size(); i++) {
+                ShopifyOrder order = orders.get(i);
+                if (StringUtils.isNotBlank(order.getOrderId())) {
+                    continue;
+                }
+                JsonNode idNode = ordersNode.get(i).get("id");
+                if (idNode != null && !idNode.isNull()) {
+                    order.setOrderId(idNode.asText());
+                    log.warn("[Shopify订单]Jackson未映射id至orderId, 已从原始JSON补全: orderId={}, name={}",
+                            order.getOrderId(), order.getName());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[Shopify订单]从原始JSON补全orderId失败", e);
+        }
+    }
+
+    private ShopifyClientException toShopifyOrdersParseException(final Response response, final ProcessingException e) {
+        final String responseBody = ResponseEntityToStringMapper.map(response);
+        final String bodyPreview = abbreviateResponseBody(responseBody);
+        final int bodyLength = responseBody == null ? 0 : responseBody.length();
+        log.error("Shopify orders response parse failed, status={}, bodyLength={}", response.getStatus(), bodyLength, e);
+        if (log.isDebugEnabled() && bodyPreview != null) {
+            log.debug("Shopify orders response parse failed bodyPreview={}", bodyPreview);
+        }
+        final Throwable rootCause = e.getCause() != null ? e.getCause() : e;
+        return new ShopifyClientException(
+                "Shopify订单响应解析失败(HTTP " + response.getStatus() + "): " + rootCause.getMessage(),
+                e);
+    }
+
+    private static String abbreviateResponseBody(final String responseBody) {
+        if (StringUtils.isBlank(responseBody)) {
+            return null;
+        }
+        return responseBody.length() > 500 ? responseBody.substring(0, 500) + "..." : responseBody;
     }
 
 
@@ -1421,7 +1493,13 @@ public class ShopifyRestClient {
         final JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
         provider.setMapper(mapper);
 
-        return ClientBuilder.newClient().register(JacksonFeature.class).register(provider);
+        // 禁用 Jersey SPI 自动发现，避免 classpath 中 FastjsonProvider 抢占 JSON 反序列化
+        //（Shopify tags 为逗号分隔字符串，需走 Jackson TagsDeserializer）
+        final ClientConfig clientConfig = new ClientConfig();
+        clientConfig.register(JacksonFeature.class);
+        clientConfig.register(provider);
+        clientConfig.property(ClientProperties.FEATURE_AUTO_DISCOVERY_DISABLE, true);
+        return ClientBuilder.newClient(clientConfig);
     }
 
     public class ShopifySdkRetryListener implements RetryListener {

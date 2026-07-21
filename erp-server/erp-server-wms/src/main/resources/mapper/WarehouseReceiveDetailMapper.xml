@@ -50,9 +50,27 @@
          group by wrd.purchase_order_detail_id
     </select>
 
+    <select id="getTotalReceiveQtyByPoSku"
+            resultType="com.erp.model.wms.dto.WarehouseReceiveDetailDTO$ReceiveQtyDTO">
+        select
+            wr.purchase_order_id as purchaseOrderId,
+            wrd.sku_id as skuId,
+            sum(wrd.receive_qty) as totalReceiveQty
+        from po_receive_detail wrd
+                 inner join po_receive wr on wr.id = wrd.main_id and wr.is_deleted = false
+        where wrd.is_deleted = false and wr.invalid_status = false
+          and wrd.purchase_order_detail_id in
+              <foreach collection="podIdList" separator="," item="item" open="(" close=")">
+                  #{item}
+              </foreach>
+        group by wr.purchase_order_id, wrd.sku_id
+    </select>
+
     <select id="getTotalWaitQcQty"
             resultType="com.erp.model.wms.dto.WarehouseReceiveDetailDTO$WaitQcQtyDTO">
         select
+        wr.purchase_order_id as purchaseOrderId,
+        wrd.sku_id as skuId,
         wrd.purchase_order_detail_id as podId,
         wrd.id as detailId,
         sum(wrd.wait_qc_qty) as totalWaitQcQty
@@ -63,7 +81,7 @@
         <foreach collection="podIdList" separator="," item="item" open="(" close=")">
             #{item}
         </foreach>
-        group by wrd.purchase_order_detail_id,wrd.id
+        group by wr.purchase_order_id, wrd.sku_id, wrd.purchase_order_detail_id, wrd.id
     </select>
 
     <update id="updateInfo">

@@ -1,0 +1,369 @@
+package com.erp.model.wms.dto;
+
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.SuperDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * <p>
+ * 售后装箱明细表请求响应实体
+ * </p>
+ *
+ * @author lei.nie
+ * @since 2026-05-12
+ */
+@Data
+@NoArgsConstructor
+public class AfterSalePackDetailDTO implements Serializable {
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+    }
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 售后装箱id,after_sale_pack.id
+         */
+        private String mainId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 拣货仓位id
+         */
+        private String outWarehouseLocationId;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+        /**
+         * 实际数量
+         */
+        private Integer actualQty;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+    }
+
+    /**
+     * 导出Excel
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 售后装箱id,after_sale_pack.id
+         */
+        private String mainId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 单位id
+         */
+        private String unitId;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 单位名称
+         */
+        private String unitName;
+
+        /**
+         * 拣货仓位id
+         */
+        private String outWarehouseLocationId;
+
+        /**
+         * 拣货仓位code
+         */
+        private String outWarehouseLocationCode;
+
+        /**
+         * 拣货仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
+
+        /**
+         * 移入仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+        /**
+         * 实际数量
+         */
+        private Integer actualQty;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+        /**
+         * sku对应的箱唛列表
+         */
+        private List<AfterSalePackDTO.DetailDTO> detailDTOList;
+
+        /**
+         * 首批到货量
+         */
+        private String actualArrivalQty;
+
+        /**
+         * 首批到货状态：1.未到货 2.已到货 3.部分到货
+         */
+        private Integer arrivalState;
+
+        /**
+         * 试产数量
+         * product_purchase
+         */
+        private Long trialProductionQty;
+
+        /**
+         * EAN码
+         * product_purchase
+         */
+        private String ean;
+
+        /**
+         * 交货周期
+         * product_purchase
+         */
+        private BigDecimal deliveryCycle;
+
+        /**
+         * 一级供应商
+         * product_purchase
+         */
+        private String mainSupplier;
+
+        /**
+         * 一级供应商名称
+         */
+        private String mainSupplierName;
+
+        /**
+         * 最小起订量
+         */
+        private Integer moq;
+    }
+
+    /**
+     * 新增
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+    }
+
+    /**
+     * 修改
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 操作类型，add,reduce,remove
+         */
+        @NotNull(message = "操作类型不能为空")
+        private String operation;
+
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO extends SuperDTO {
+
+        /**
+         * 售后装箱id,after_sale_pack.id
+         */
+        @Size(max = 50, message = "售后装箱id,after_sale_pack.id最大长度不能超过50位")
+        private String mainId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 拣货仓位code
+         */
+        private String outWarehouseLocationCode;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+        /**
+         * 实际数量
+         */
+        private Integer actualQty;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+        /**
+         * 更新数量
+         */
+        private Integer updateQty;
+
+    }
+
+}

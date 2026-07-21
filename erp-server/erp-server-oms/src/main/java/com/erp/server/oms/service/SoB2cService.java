@@ -716,6 +716,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void checkProductRegistrationAndUpdate(String id, String logisticsChannelId);
 
+    /**
+     * 提交发货时按 TMS 预报设置静默同步组包/中转状态（仅强制中转/组包时更新，无需中转的单跳过）
+     */
+    void syncForecastStatusQuietly(String id, String logisticsChannelId);
 
     /**
      * 检查产品是否备案
@@ -876,6 +880,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
 
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
+
+    /**
+     * 平台取消预报后持久化本地 SO/error 状态（仅本地 DB，不含 Feign）。
+     * 仅供 {@link #autoCancelOrderForecast} 通过自注入代理拆分事务时调用，禁止外部直接调用。
+     */
+    void persistAutoCancelOrderForecastLocalState(SoB2cEntity updateEntity, List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors);
 
     /**
      * 申报信息规则信息整理

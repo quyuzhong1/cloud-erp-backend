@@ -80,6 +80,12 @@ public class DmpThirdReturnInboundDetailEntity extends BaseEntity<DmpThirdReturn
     @TableField("third_detail_id")
     private String thirdDetailId;
 
+    /**
+     * 是否不良品（true=不良品，false=可用），由各平台 DmpHandler 按明细维度写入
+     */
+    @TableField("defective_product_flag")
+    private Boolean defectiveProductFlag;
+
 
     public static final String MAIN_ID = "main_id";
 

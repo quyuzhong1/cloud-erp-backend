@@ -121,4 +121,16 @@ public class NoticeMsgConstant {
      * 质检通知消息头
      */
     public final static String SHOP_EXPIRE_NOTICE="店铺{}将于{}授权到期，请及时处理";
+
+    /** B2C平台SKU未匹配通知正文头部（%s=汇总行列表，每行格式：{平台名}({count}个)） */
+    public final static String FS_SKU_MAPPING_PLATFORM_CONTENT = "平台(未匹配sku数量),汇总如下：\n%s";
+
+    /** 库存SKU未匹配通知正文头部（%s=汇总行列表，每行格式：{仓库简称}({count}个)） */
+    public final static String FS_SKU_MAPPING_WAREHOUSE_CONTENT = "海外仓(未匹配sku数量),汇总如下：\n%s";
+
+    /** B2B客户SKU未匹配通知正文头部（%s=汇总行列表，每行格式：{客户名}({count}个)） */
+    public final static String FS_SKU_MAPPING_CUSTOMER_CONTENT = "B2B客户名称（未匹配sku数量）,汇总如下：\n%s";
+
+    /** B2B平台SKU未匹配通知正文头部（%s=汇总行列表，每行格式：{平台名}({count}个)） */
+    public final static String FS_SKU_MAPPING_B2B_PLATFORM_CONTENT = "平台(未匹配sku数量),汇总如下：\n%s";
 }

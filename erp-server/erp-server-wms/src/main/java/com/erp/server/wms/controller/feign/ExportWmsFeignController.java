@@ -7,6 +7,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -24,6 +26,8 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +35,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ExecutionException;
 
+@Slf4j
 @RestController
 @RequestMapping("/feign/export")
 public class ExportWmsFeignController {
@@ -143,6 +149,9 @@ public class ExportWmsFeignController {
     @Resource
     private QcStandardService qcStandardService;
 
+    @Resource
+    private CfgQcUserService cfgQcUserService;
+
 
     @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
@@ -220,9 +229,14 @@ public class ExportWmsFeignController {
     private AwdOutstockService awdOutstockService;
     @Resource
     private AwdInventoryService awdInventoryService;
+    @Resource
+    private FbsInventoryService fbsInventoryService;
 
     @Resource
     private QcApplicationService qcApplicationService;
+
+    @Resource
+    private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -692,7 +706,21 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
-        return soDeliveryNoticeService.exportSoDeliveryNotice(dto);
+        try {
+            return soDeliveryNoticeService.paging(dto);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof  ServiceException){
+                throw (ServiceException) cause;
+            }
+            log.error("Error occurred while exporting SO delivery notice", e);
+            throw new ServiceException(ApiError.COMMON_EXECUTOR_EXCEPTION);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while exporting SO delivery notice", e);
+            // 保留并转换底层业务异常，避免统一丢失为普通 RuntimeException
+            throw new ServiceException(ApiError.COMMON_THREAD_INTERRUPTED_EXCEPTION);
+        }
     }
 
     @PostMapping("/soDeliveryNoticeChange")
@@ -1333,6 +1361,18 @@ public class ExportWmsFeignController {
         return awdInventoryService.paging(dto);
     }
 
+    // erp-rpc ExportWmsFeign#exportFbsInventory 的实现端，路径需与 Feign 契约保持一致。
+    @PostMapping("/exportFbsInventory")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbsInventory:export",
+            tableAlias = "fi"
+    )
+    @WebAdvanceQuery(handler = FbsInventoryQueryHandler.class)
+    public PagingVO<FbsInventoryDTO.ListDTO> exportFbsInventory(@RequestBody @Validated PagingDTO<FbsInventoryDTO.PagingParamDTO> dto) {
+        return fbsInventoryService.paging(dto);
+    }
+
     /**
      * 导出质检申请单
      */
@@ -1340,5 +1380,34 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
     public PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
         return qcApplicationService.paging(dto);
+    }
+
+    /**
+     * 导出质检员配置
+     */
+    @PostMapping("/exportCfgQcUser")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:cfgQcUser:export",
+            tableAlias = "cqu")
+    @WebAdvanceQuery(handler = CfgQcUserQueryHandler.class)
+    public PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody @Validated PagingDTO<CfgQcUserDTO.ExportDTO> dto) {
+        return cfgQcUserService.paging(dto);
+    }
+
+    /**
+     * 导出仓库位置建议售后单
+     */
+    @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging",
+            tableAlias = "awls"
+    )
+    @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
+        PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();
+        BeanUtils.copyProperties(dto, wrap);
+        return afterSalesWarehouseLocationSuggestService.paging(wrap);
     }
 }

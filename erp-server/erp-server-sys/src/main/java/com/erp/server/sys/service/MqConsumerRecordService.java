@@ -16,5 +16,4 @@ public interface MqConsumerRecordService extends SuperService<MqConsumerRecordEn
 
     String addMqRecord(MqConsumerRecordDTO.MqDTO dto);
 
-    String buildMqDTO(MqConsumerRecordDTO.BuildMqDTO dto);
 }

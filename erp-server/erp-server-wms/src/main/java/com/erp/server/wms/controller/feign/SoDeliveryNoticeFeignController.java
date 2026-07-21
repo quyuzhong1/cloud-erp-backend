@@ -1,7 +1,10 @@
 package com.erp.server.wms.controller.feign;
 
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
@@ -130,6 +133,57 @@ public class SoDeliveryNoticeFeignController {
     public SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id) {
         return soDeliveryNoticeDetailService.getById(id);
     }
+
+    /**
+     * 批量查询发货通知单
+     *
+     * @param ids 发货通知单id集合
+     * @return 发货通知单集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listByIds")
+    public List<SoDeliveryNoticeEntity> listByIds(@RequestBody List<String> ids) {
+        return soDeliveryNoticeService.listByIds(ids);
+    }
+
+    /**
+     * 按主表批量查询发货通知明细
+     *
+     * @param mainIds 发货通知单id集合
+     * @return 发货通知明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listDetailByMainIds")
+    public List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
+        return soDeliveryNoticeDetailService.listDetailByMainIds(mainIds);
+    }
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listDeclarePackingDetail")
+    public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids) {
+        return soDeliveryNoticeService.listDeclarePackingDetail(ids);
+    }
+
+    /**
+     * 下推B2B报关单合并前明细
+     **/
+    @PostMapping("/listBeforePushB2bDeclare")
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@RequestBody TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        return soDeliveryNoticeService.listBeforePushB2bDeclare(dto);
+    }
+
     /**
      * 更新销售信息
      * @param soInfoEntity
@@ -148,5 +202,30 @@ public class SoDeliveryNoticeFeignController {
     @PostMapping("/getNoticeDetailByIdList")
     public List<SoDeliveryNoticeDetailEntity> getNoticeDetailByIdList(@RequestParam(value = "id") List<String> idList) {
         return soDeliveryNoticeDetailService.listByIds(idList);
+    }
+
+
+    /**
+     * 根据id查询装箱明细信息
+     * @author will
+     * @date 2026/4/21 15:44
+     * @param querySourceDTO
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SoOutDTO>
+     */
+    @PostMapping("/listPackingDetailByIdList")
+    public List<TmsDeclareBillDTO.SoOutDTO> listPackingDetailByIdList(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        return soDeliveryNoticeDetailService.listPackingDetailByIdList(querySourceDTO);
+    }
+
+    /**
+     * 更新报关状态
+     * @author will
+     * @date 2026/4/30 11:47
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @PostMapping("/updateDeclareStatus")
+    public Boolean updateDeclareStatus(@RequestBody SoDeliveryNoticeDTO.DeclareStatusDTO dto) {
+        return soDeliveryNoticeService.updateDeclareStatus(dto);
     }
 }

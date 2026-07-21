@@ -43,7 +43,7 @@ public class ProductPackFeignController {
     }
 
     @PostMapping("/listSingleBySkuIds")
-    Map<String, BigDecimal> listSingleBySkuIds(@RequestBody List<String> skuIds){
-        return productPackService.listSingleBySkuIds(skuIds);
+    Map<String, BigDecimal> listSingleBySkuIds(@RequestBody ProductPackDTO.ListSingleBySkuIdsParam param) {
+        return productPackService.listSingleBySkuIds(param);
     }
 }

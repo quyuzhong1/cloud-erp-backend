@@ -51,6 +51,15 @@ public class LoginUser {
      */
     private Boolean isSupper;
 
+    /**
+     * 登录所属系统
+     * <p>
+     * erp：ERP 系统；srm：SRM 供应商系统；pda：PDA 系统。
+     * 账号密码登录时写入 Redis，供菜单/权限接口按系统类型过滤数据。
+     * </p>
+     */
+    private String userType;
+
 
     //菜单的列表 后面还会改
     private List<String> menuList;
@@ -58,6 +67,13 @@ public class LoginUser {
     //菜单的列表 后面还会改
     private List<String> permissionList;
 
+    /**
+     * 序列化精简登录用户信息，用于请求头传递
+     *
+     * @param loginUser 登录用户信息
+     * @return URL 编码后的 JSON 字符串
+     * @throws UnsupportedEncodingException 编码异常
+     */
     public static String simpleLoginUser(LoginUser loginUser) throws UnsupportedEncodingException {
         LoginUser compactUser = new LoginUser();
         compactUser.setUid(loginUser.getUid());
@@ -68,6 +84,7 @@ public class LoginUser {
         compactUser.setAccessToken(loginUser.getAccessToken());
         compactUser.setBindingPlatform(loginUser.getBindingPlatform());
         compactUser.setIsSupper(loginUser.getIsSupper());
+        compactUser.setUserType(loginUser.getUserType());
         return URLEncoder.encode(JSON.toJSONString(compactUser), "UTF-8");
     }
 }

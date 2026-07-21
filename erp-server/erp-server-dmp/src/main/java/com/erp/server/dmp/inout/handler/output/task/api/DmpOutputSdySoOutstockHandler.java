@@ -159,7 +159,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         Map<String, Map<String, String>> cfgMaps = new HashMap<>();
         if(CollUtil.isNotEmpty(changeDmpSoOutstockEntity)) {
         	List<String> countryIds = changeDmpSoOutstockEntity.stream().map(DmpSoOutstockEntity::getCountry).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        	Map<String, String> countryIdNameMap = FeignQuery.getByIds(DictCountryEntity.class, countryIds).stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getShortNameCn));
+        	Map<String, String> countryIdNameMap = FeignQuery.getByIds(DictCountryEntity.class, countryIds).stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
         	cfgMaps.put("country", countryIdNameMap);
         	
         	List<String> provinceIds = changeDmpSoOutstockEntity.stream().map(DmpSoOutstockEntity::getProvince).filter(StringUtils::isNotBlank).collect(Collectors.toList());

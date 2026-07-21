@@ -26,7 +26,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(25)
     @ExcelProperty(value = "供应商名称", index = 0)
-    @FieldValid(fieldName = "供应商名称",isNotBlank = true,maxLength =50 )
+    @FieldValid(fieldName = "供应商名称",isNotBlank = true,maxLength =100 )
     private String name;
 
 

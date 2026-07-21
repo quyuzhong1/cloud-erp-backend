@@ -1079,6 +1079,31 @@ public class QcInfoDTO implements Serializable {
          * 允许入库量
          */
         private Integer allowInstockQty;
+        
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+        
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        
+        /**
+         * 送检数量
+         */
+        private Integer totalQty;
+        
+        /**
+         * 质检结果
+         */
+        private String qcResult;
+        
+        /**
+         * 质检结果名称
+         */
+        private String qcResultName;
     }
 
     @Data

@@ -96,6 +96,11 @@ public class ExportTmsFeignController {
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:paging",
+            tableAlias = "db"
+    )
     PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         return tmsDeclareBillService.export(dto);
