@@ -1334,9 +1334,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Objects.isNull(afterSaleStatus)) {
             throw new ServiceException("未找到单据状态信息");
         }
-        //变更为已完成的，需要校验商家寄出快递单号不能为空
-        if (Objects.equals(afterSaleStatus, AfterSaleStatusEnum.COMPLETED) && !StringUtil.isNotBlank(dto.getTrackNo())) {
-            throw new ServiceException("单据状态修改为完成时商家寄出快递单号不能为空");
+        if (Objects.equals(afterSaleStatus, AfterSaleStatusEnum.COMPLETED)) {
+            throw new ServiceException("已完成状态不支持手动修改，请通过物流下单完成");
         }
 
         Map<String, AfterSaleDTO.NodeDTO> nodeMap = getNodeList().stream().collect(Collectors.toMap(AfterSaleDTO.NodeDTO::getNode, w -> w));
@@ -1380,6 +1379,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     entity.setStatus(dto.getNode());
                     if (Objects.equals(afterSaleStatus, AfterSaleStatusEnum.TO_BE_SHIPPED) && StringUtils.isNotBlank(dto.getRmaRemark())) {
                         entity.setRmaRemark(dto.getRmaRemark());
+                        afterSaleProgressEntity.setRemark(dto.getRmaRemark());
+                    } else {
+                        afterSaleProgressEntity.setRemark(dto.getRemark());
                     }
 
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
@@ -1392,22 +1394,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                             }
                             afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
                         }
-                        //已完成节点：商家寄出快递单号记录在待商家寄出节点
-                        if (Objects.equals(afterSaleStatus, AfterSaleStatusEnum.COMPLETED)) {
-                            AfterSaleProgressEntity shippedProgressEntity = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
-                            if (Objects.nonNull(shippedProgressEntity)) {
-                                if (!Objects.equals(shippedProgressEntity.getTrackNo(), dto.getTrackNo())) {
-                                    String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(), shippedProgressEntity.getTrackNo(), dto.getTrackNo());
-                                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "编辑信息");
-                                }
-                                shippedProgressEntity.setTrackNo(dto.getTrackNo());
-                                shippedProgressEntity.setNodeTime(LocalDateTime.now());
-                                afterSaleProgressService.updateById(shippedProgressEntity);
-                            }
-                        }
                     }
-                    afterSaleProgressEntity.setRemark(dto.getRemark());
-                    afterSaleProgressService.updateById(afterSaleProgressEntity);
 
                     //erp状态变更客户寄件，输入快递单号后，需要流转至待售后签收（待签收）
                     if (StringUtils.isNotBlank(dto.getTrackNo()) && afterSaleStatus.getCode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())) {
@@ -1417,18 +1404,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         //更新状态
                         entity.setStatus(AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
                     }
-                    //erp状态变更已完成 并发送消息
-                    if (afterSaleStatus.getCode().equals(AfterSaleStatusEnum.COMPLETED.getCode())) {
-                        registerAfterSaleTrackAfterCommit(entity, dto.getTrackNo(), true);
-                        //发送微信订阅消息
-                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                            @Override
-                            public void afterCommit() {
-                                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                                bean.sendSubscribeMsgRequest(entity, AfterSaleStatusEnum.COMPLETED.getCode());
-                            }
-                        });
-                    }
+                    afterSaleProgressService.updateById(afterSaleProgressEntity);
                     //更新
                     updateById(entity);
                     //日志
