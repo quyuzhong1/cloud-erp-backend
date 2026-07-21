@@ -2840,67 +2840,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         paramList.add(outInStockDTO);
     }
 
-
-    @Override
-    public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page<SoDeliveryNoticeDTO.PagingView> pagingViews = baseMapper.soDeliveryNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-        //获取sku的id集合
-        List<String> skuIdList = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        //中转仓map
-        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
-
-        //查询审核流程
-        List<String> ids = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getId).distinct().collect(Collectors.toList());
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-        if (200 != listApiResult.getCode()) {
-            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
-        }
-
-        for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
-            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
-            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
-            pagingView.setDeclareStatusName(WmsDeclareStatusEnum.getName(pagingView.getDeclareStatus()));
-            if (pagingView.getDeliveryStatus()) {
-                pagingView.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
-            } else {
-                pagingView.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
-            }
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            pagingView.setProductName(productDetailEntity.getName());
-            pagingView.setSalesQty(soDetailEntity.getQty());
-            pagingView.setUnit(productDetailEntity.getUnitName());
-            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-            pagingView.setCustomerName(customerInfoEntity.getName());
-            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
-            //中转仓名称
-            if (CharSequenceUtil.isNotBlank(pagingView.getTransferWarehouseIds())){
-                StringBuilder sb = new StringBuilder();
-                List<String> split = CharSequenceUtil.split(pagingView.getTransferWarehouseIds(), ",");
-                for (String s : split) {
-                    sb.append(warehouseMap.get(s)).append(",");
-                }
-                pagingView.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
-            }
-
-            //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(pagingView.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                pagingView.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,pagingView.getApproveUserName()));
-            }
-        }
-        return new PagingVO<>(pagingViews);
-    }
-
     @Override
     public BatchResultDTO updateTransferWarehouse(SoDeliveryNoticeEntity entity, List<String> changeIds) {
         //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单

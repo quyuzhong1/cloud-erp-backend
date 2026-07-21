@@ -12,4 +12,5 @@ alwaysApply: true
 - For new CRUD or module skeletons, check `erp-generator` templates before inventing structure.
 - Use `Entity` for data-layer objects, `DTO` for inputs, `VO` for outputs, and `VO` for system-to-system transfer.
 - Historical DTO outputs may exist; keep existing API compatibility when modifying old code.
+- **New methods must have comments**: every newly added public / protected / private method (including Service interface and Impl) must include JavaDoc covering purpose, key business rules, params, and return value; avoid empty `@param` / `@return` placeholders.
 - Do not invent frontend, lint, format, CI, or deployment rules that are not confirmed in this repository.

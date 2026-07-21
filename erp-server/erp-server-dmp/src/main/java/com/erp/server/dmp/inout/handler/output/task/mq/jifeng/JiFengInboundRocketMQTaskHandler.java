@@ -15,6 +15,7 @@ import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHand
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp.GcReceiving;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.jifeng.dto.response.JiFengInboundResp;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Scope("prototype")
 public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
@@ -106,20 +107,43 @@ public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
     	}
 		platformInboundDTO.setReceivingDataList(receivingDataList);
 		
-		this.groupBySku(platformInboundDTO);
+		this.groupBySku(platformInboundDTO, boxListDTOS);
     	
         return platformInboundDTO;
     }
 
-    private void groupBySku(PlatformInboundDTO dto) {
-        Map<String, Integer> receivedQuantityMap = dto.getReceivingDataList().stream()
-                .collect(Collectors.groupingBy(Receiving::getProductSku, Collectors.summingInt(Receiving::getReceiveQty)));
-
-        List<PlatformInboundDTO.Item> items = receivedQuantityMap.entrySet().stream()
-                .map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-
-        dto.setItems(items);
+    /**
+     * 按 SKU 汇总收货/良品/不良品数量。
+     * <p>
+     * 极风入库单中同一 SKU 满足 {@code putawayCount == goodCount + badCount}，
+     * 因此 {@code receivedQuantity} 仍沿用 {@code putawayCount} 汇总（语义不变），
+     * 额外把 {@code goodCount}/{@code badCount} 汇总进 {@code goodQuantity}/{@code badQuantity}，
+     * 供下游 {@code handlePlatformMessage} 按良品/不良品拆分生成签收记录。
+     */
+    private void groupBySku(PlatformInboundDTO dto, List<JiFengInboundResp.SkuListDTO> skuList) {
+        Map<String, PlatformInboundDTO.Item> itemMap = new LinkedHashMap<>();
+        for (JiFengInboundResp.SkuListDTO skuListDTO : skuList) {
+            int putaway = Objects.isNull(skuListDTO.getPutawayCount()) ? 0 : skuListDTO.getPutawayCount();
+            int good = Objects.isNull(skuListDTO.getGoodCount()) ? 0 : skuListDTO.getGoodCount();
+            int bad = Objects.isNull(skuListDTO.getBadCount()) ? 0 : skuListDTO.getBadCount();
+            // 极风上架数应满足 putawayCount == goodCount + badCount。一旦平台回传不一致，
+            // 下游 WMS 明细签收数取 putaway 汇总、良品/不良品流水取 good/bad 汇总，会造成
+            // 「明细签收总数 ≠ 良品流水 + 不良品流水」的静默数据偏差，此处打 warn 暴露异常数据，便于排查。
+            if (putaway != good + bad) {
+                log.warn("极风入库上架数与良品/不良品数不一致 receivingCode={}, sku={}, putawayCount={}, goodCount={}, badCount={}",
+                        dto.getReceivingCode(), skuListDTO.getSku(), putaway, good, bad);
+            }
+            PlatformInboundDTO.Item item = itemMap.computeIfAbsent(skuListDTO.getSku(), sku -> {
+                PlatformInboundDTO.Item newItem = new PlatformInboundDTO.Item(sku, 0);
+                newItem.setGoodQuantity(0);
+                newItem.setBadQuantity(0);
+                return newItem;
+            });
+            item.setReceivedQuantity(item.getReceivedQuantity() + putaway);
+            item.setGoodQuantity(item.getGoodQuantity() + good);
+            item.setBadQuantity(item.getBadQuantity() + bad);
+        }
+        dto.setItems(new ArrayList<>(itemMap.values()));
     }
 
 	private String convertStatus(Integer status,List<JiFengInboundResp.SkuListDTO> boxListDTOS) {
