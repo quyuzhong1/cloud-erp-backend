@@ -1283,12 +1283,12 @@ public class SoReturnPrestockServiceImpl
      * @return 承载剩余数量的新未关联详情行（已预分配 ID，未落库）
      */
     private SoReturnPrestockDetailEntity splitDetailInMemory(SoReturnPrestockDetailEntity original, int linkQty) {
-        int originalReceiveQty = Objects.nonNull(original.getReceiveQty()) ? original.getReceiveQty() : 0;
+        int originalReceiveQty = Objects.nonNull(original.getReceivedQty()) ? original.getReceivedQty() : 0;
         int remainReceiveQty = originalReceiveQty - linkQty;
 
         SoReturnPrestockDetailEntity newDetail = buildLeftoverDetail(original, remainReceiveQty);
         // 原行收敛为本次认领数量，剩余部分已转入新行
-        original.setReceiveQty(linkQty);
+        original.setReceivedQty(linkQty);
         return newDetail;
     }
 
