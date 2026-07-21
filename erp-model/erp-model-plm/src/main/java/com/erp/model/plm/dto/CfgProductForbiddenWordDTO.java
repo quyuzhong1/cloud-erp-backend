@@ -22,6 +22,30 @@ import java.util.Map;
 @NoArgsConstructor
 public class CfgProductForbiddenWordDTO implements Serializable {
 
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO implements Serializable {
+
+        /**
+         * 页签标识：all=全部，f=启用，t=禁用
+         */
+        private String tabFlag;
+
+        /**
+         * 页签名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
     @Data
     @NoArgsConstructor
     public static class AddDTO implements Serializable {

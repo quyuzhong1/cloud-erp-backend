@@ -64,6 +64,14 @@ public class CfgProductForbiddenWordController extends BaseController {
     }
 
     /**
+     * 获取状态统计
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<CfgProductForbiddenWordDTO.TabListDTO>> tabList() {
+        return success(cfgProductForbiddenWordService.tabList());
+    }
+
+    /**
      * 列表查询
      */
     @PostMapping("/paging")

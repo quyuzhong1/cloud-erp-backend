@@ -57,6 +57,15 @@
         </if>
     </sql>
 
+    <select id="tabList" resultType="com.erp.model.plm.dto.CfgProductForbiddenWordDTO$TabListDTO">
+        SELECT
+        CASE WHEN cpfw.disabled THEN 't' ELSE 'f' END AS tabFlag,
+        count(*) AS count
+        FROM cfg_product_forbidden_word cpfw
+        WHERE cpfw.is_deleted = FALSE
+        GROUP BY CASE WHEN cpfw.disabled THEN 't' ELSE 'f' END
+    </select>
+
     <select id="paging" resultType="com.erp.model.plm.dto.CfgProductForbiddenWordDTO$ListDTO">
         SELECT
         <include refid="Base_Column_List"/>
