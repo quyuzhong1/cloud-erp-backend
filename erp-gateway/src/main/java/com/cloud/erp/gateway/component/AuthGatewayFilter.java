@@ -25,10 +25,13 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.route.Route;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
@@ -36,6 +39,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.SignalType;
 import reactor.core.scheduler.Schedulers;
 import com.erp.rpc.sys.feign.SysApiTokenFeign;
 
@@ -50,7 +54,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -126,6 +132,21 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     private static final Pattern API_TOKEN_PATTERN = Pattern.compile("^" + Pattern.quote(SysApiTokenConstants.TOKEN_PREFIX) + "[A-Za-z0-9_-]{43}$");
 
+    static final String MCP_INVOCATION_ID_HEADER = "X-MCP-Invocation-Id";
+
+    private static final Pattern MCP_INVOCATION_ID_PATTERN = Pattern.compile(
+            "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$");
+
+    private static final Pattern UUID_PATH_SEGMENT_PATTERN = Pattern.compile(
+            "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
+
+    private static final Pattern NUMERIC_PATH_SEGMENT_PATTERN = Pattern.compile("^[0-9]+$");
+
+    private static final Pattern SAFE_PATH_SEGMENT_PATTERN = Pattern.compile("^[A-Za-z0-9._~-]+$");
+
+    private static final Pattern LONG_ID_PATH_SEGMENT_PATTERN = Pattern.compile(
+            "^(?=.{24,}$)(?=.*[0-9])[A-Za-z0-9_-]+$");
+
     private static final String UNKNOWN_IP = "unknown";
 
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
@@ -161,6 +182,9 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         try {  //获取请求
+            List<String> invocationHeaderValues = exchange.getRequest().getHeaders().get(MCP_INVOCATION_ID_HEADER);
+            List<String> incomingMcpInvocationIds = invocationHeaderValues == null
+                    ? null : new ArrayList<>(invocationHeaderValues);
             ServerHttpRequest request = stripApiTokenInternalHeaders(exchange.getRequest());
             exchange = exchange.mutate().request(request).build();
             // 获取请求URL
@@ -170,7 +194,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                 //文件头使用JSON格式
                 return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
             }
-            Mono<Void> apiTokenAuthResult = tryApiTokenAuth(exchange, chain, request, uri);
+            Mono<Void> apiTokenAuthResult = tryApiTokenAuth(exchange, chain, request, uri, incomingMcpInvocationIds);
             if (apiTokenAuthResult != null) {
                 return apiTokenAuthResult;
             }
@@ -305,24 +329,32 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> tryApiTokenAuth(ServerWebExchange exchange, GatewayFilterChain chain,
-                                       ServerHttpRequest request, String uri) {
+                                       ServerHttpRequest request, String uri, List<String> incomingMcpInvocationIds) {
         String apiToken = resolveApiTokenFromAuthorization(request.getHeaders().getFirst(TokenConstants.AUTHENTICATION));
         if (StringUtils.isBlank(apiToken)) {
             return null;
         }
+        String invocationId = resolveMcpInvocationId(incomingMcpInvocationIds);
+        setMcpInvocationIdHeader(exchange.getResponse().getHeaders(), invocationId);
+        long startNanos = System.nanoTime();
+        logMcpGatewayEvent(exchange, "mcp_gateway_ingress", invocationId, null, null);
         if (isApiTokenManagementPath(uri)) {
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+            return withMcpGatewayEgressAudit(exchange,
+                    unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode()),
+                    invocationId, startNanos);
         }
         if (!isApiTokenFormatValid(apiToken)) {
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+            return withMcpGatewayEgressAudit(exchange,
+                    unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode()),
+                    invocationId, startNanos);
         }
 
         String tokenHash = sha256Hex(apiToken);
-        return Mono.fromCallable(() -> authenticateApiToken(exchange, request, uri, tokenHash))
+        Mono<Void> result = Mono.fromCallable(() -> authenticateApiToken(exchange, request, uri, tokenHash, invocationId))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decision -> {
                     if (decision.authenticated) {
-                        return stripApiTokenSqlMap(decision.authenticatedExchange, chain);
+                        return stripApiTokenRestrictedFields(decision.authenticatedExchange, chain);
                     }
                     return unauthorizedResponse(exchange, decision.msg, decision.code);
                 })
@@ -330,56 +362,159 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                     log.error("API Token校验失败，URI: {}", uri, e);
                     return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                 });
+        return withMcpGatewayEgressAudit(exchange, result, invocationId, startNanos);
+    }
+
+    static boolean isValidMcpInvocationId(String invocationId) {
+        return invocationId != null && MCP_INVOCATION_ID_PATTERN.matcher(invocationId).matches();
+    }
+
+    static String resolveMcpInvocationId(List<String> headerValues) {
+        if (headerValues != null && headerValues.size() == 1 && isValidMcpInvocationId(headerValues.get(0))) {
+            return headerValues.get(0);
+        }
+        return UUID.randomUUID().toString();
+    }
+
+    static void setMcpInvocationIdHeader(HttpHeaders headers, String invocationId) {
+        headers.remove(MCP_INVOCATION_ID_HEADER);
+        headers.set(MCP_INVOCATION_ID_HEADER, invocationId);
+    }
+
+    static String sanitizeMcpAuditPath(String path) {
+        if (StringUtils.isBlank(path)) {
+            return "/";
+        }
+        String[] segments = path.split("/", -1);
+        for (int index = 0; index < segments.length; index++) {
+            String segment = segments[index];
+            if (StringUtils.isBlank(segment)) {
+                continue;
+            }
+            if (!SAFE_PATH_SEGMENT_PATTERN.matcher(segment).matches()
+                    || NUMERIC_PATH_SEGMENT_PATTERN.matcher(segment).matches()
+                    || UUID_PATH_SEGMENT_PATTERN.matcher(segment).matches()
+                    || LONG_ID_PATH_SEGMENT_PATTERN.matcher(segment).matches()) {
+                segments[index] = ":id";
+            }
+        }
+        return String.join("/", segments);
+    }
+
+    private Mono<Void> withMcpGatewayEgressAudit(ServerWebExchange exchange, Mono<Void> result,
+                                                  String invocationId, long startNanos) {
+        return result.doFinally(signalType -> {
+            Integer responseStatus = exchange.getResponse().getRawStatusCode();
+            int status = responseStatus != null ? responseStatus : defaultStatus(signalType);
+            long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            logMcpGatewayEvent(exchange, "mcp_gateway_egress", invocationId, status, durationMs);
+        });
+    }
+
+    private static int defaultStatus(SignalType signalType) {
+        if (SignalType.ON_ERROR.equals(signalType)) {
+            return 500;
+        }
+        if (SignalType.CANCEL.equals(signalType)) {
+            return 499;
+        }
+        return 200;
+    }
+
+    /**
+     * MCP 关联日志只记录固定的请求元数据，不记录 Token、Header、查询参数或请求体。
+     */
+    private void logMcpGatewayEvent(ServerWebExchange exchange, String event, String invocationId,
+                                    Integer status, Long durationMs) {
+        JSONObject audit = new JSONObject();
+        audit.set("event", event);
+        audit.set("invocationId", invocationId);
+        audit.set("method", exchange.getRequest().getMethodValue());
+        audit.set("path", sanitizeMcpAuditPath(exchange.getRequest().getPath().value()));
+        Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
+        audit.set("routeId", route == null ? "unknown" : route.getId());
+        if (status != null) {
+            audit.set("status", status);
+        }
+        if (durationMs != null) {
+            audit.set("durationMs", durationMs);
+        }
+        log.info("{}", JSONUtil.toJsonStr(audit));
     }
 
     /**
      * API Token 调用不允许客户端控制后端 SQL 片段。普通 JWT 请求不会进入此方法，
      * advanceQueryDTOList 等结构化条件会被原样保留。
      */
-    private Mono<Void> stripApiTokenSqlMap(ServerWebExchange exchange, GatewayFilterChain chain) {
+    Mono<Void> stripApiTokenRestrictedFields(ServerWebExchange exchange, GatewayFilterChain chain) {
         MediaType contentType = exchange.getRequest().getHeaders().getContentType();
-        if (contentType == null || !MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
+        if (HttpMethod.GET.equals(exchange.getRequest().getMethod()) || !isJsonContentType(contentType)) {
             return chain.filter(exchange);
         }
         return DataBufferUtils.join(exchange.getRequest().getBody())
-                .flatMap(dataBuffer -> {
-                    byte[] originalBytes = new byte[dataBuffer.readableByteCount()];
-                    dataBuffer.read(originalBytes);
-                    DataBufferUtils.release(dataBuffer);
-
+                .map(dataBuffer -> {
+                    try {
+                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                        dataBuffer.read(bytes);
+                        return bytes;
+                    } finally {
+                        DataBufferUtils.release(dataBuffer);
+                    }
+                })
+                .defaultIfEmpty(new byte[0])
+                .flatMap(originalBytes -> {
+                    if (originalBytes.length == 0) {
+                        return chain.filter(exchange);
+                    }
                     byte[] forwardedBytes = originalBytes;
                     try {
                         Object body = JSONUtil.parse(new String(originalBytes, StandardCharsets.UTF_8));
-                        if (removeSqlMapRecursively(body)) {
+                        if (removeApiTokenRestrictedFieldsRecursively(body)) {
                             forwardedBytes = JSONUtil.toJsonStr(body).getBytes(StandardCharsets.UTF_8);
                         }
                     } catch (Exception e) {
-                        // 非法 JSON 交由下游现有参数校验处理，但必须重放已读取的原始请求体。
-                        log.debug("API Token请求体不是有效JSON，按原文转发，URI: {}", exchange.getRequest().getPath().value());
+                        log.warn("API Token请求体不是有效JSON，已拒绝，URI: {}", exchange.getRequest().getPath().value());
+                        return unauthorizedResponse(exchange,
+                                localeUtils.getMessage(ApiError.HTTP_BAD_REQUEST, exchange.getRequest()),
+                                ApiError.HTTP_BAD_REQUEST.getCode());
                     }
                     return forwardBody(exchange, chain, forwardedBytes);
-                })
-                .switchIfEmpty(chain.filter(exchange));
+                });
     }
 
-    static boolean removeSqlMapRecursively(Object node) {
+    static boolean isJsonContentType(MediaType contentType) {
+        if (contentType == null || !"application".equalsIgnoreCase(contentType.getType())) {
+            return false;
+        }
+        String subtype = contentType.getSubtype();
+        return "json".equalsIgnoreCase(subtype)
+                || subtype.toLowerCase(Locale.ROOT).endsWith("+json");
+    }
+
+    static boolean removeApiTokenRestrictedFieldsRecursively(Object node) {
         boolean changed = false;
         if (node instanceof JSONObject) {
             JSONObject object = (JSONObject) node;
             for (String key : new ArrayList<>(object.keySet())) {
-                if ("sqlMap".equals(key)) {
+                if (isApiTokenRestrictedField(key)) {
                     object.remove(key);
                     changed = true;
                 } else {
-                    changed = removeSqlMapRecursively(object.get(key)) || changed;
+                    changed = removeApiTokenRestrictedFieldsRecursively(object.get(key)) || changed;
                 }
             }
         } else if (node instanceof JSONArray) {
             for (Object item : (JSONArray) node) {
-                changed = removeSqlMapRecursively(item) || changed;
+                changed = removeApiTokenRestrictedFieldsRecursively(item) || changed;
             }
         }
         return changed;
+    }
+
+    private static boolean isApiTokenRestrictedField(String key) {
+        return "sqlMap".equalsIgnoreCase(key)
+                || "permissionSql".equalsIgnoreCase(key)
+                || "dataScope".equalsIgnoreCase(key);
     }
 
     private Mono<Void> forwardBody(ServerWebExchange exchange, GatewayFilterChain chain, byte[] bodyBytes) {
@@ -407,7 +542,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
     }
 
     private ApiTokenAuthDecision authenticateApiToken(ServerWebExchange exchange, ServerHttpRequest request,
-                                                     String uri, String tokenHash) {
+                                                     String uri, String tokenHash, String invocationId) {
         // API Token 是入口级能力，限流、Redis 缓存和 Feign 都是阻塞调用，统一隔离到 boundedElastic。
         ApiTokenAuthDecision rateLimitDecision = checkApiTokenRateLimit(exchange, request, uri);
         if (rateLimitDecision != null) {
@@ -450,6 +585,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                         headers.remove(TokenConstants.AUTHENTICATION);
                         headers.remove(SysApiTokenConstants.INTERNAL_AUTH_HEADER);
                         headers.remove(SysApiTokenConstants.INTERNAL_TOKEN_ID_HEADER);
+                        setMcpInvocationIdHeader(headers, invocationId);
                     })
                     .header("tokenUserInfo", tokenUserInfo)
                     .header(SysApiTokenConstants.INTERNAL_AUTH_HEADER, SysApiTokenConstants.INTERNAL_AUTH_VALUE)
@@ -544,6 +680,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                 .headers(headers -> {
                     headers.remove(SysApiTokenConstants.INTERNAL_AUTH_HEADER);
                     headers.remove(SysApiTokenConstants.INTERNAL_TOKEN_ID_HEADER);
+                    headers.remove(MCP_INVOCATION_ID_HEADER);
                 })
                 .build();
     }
