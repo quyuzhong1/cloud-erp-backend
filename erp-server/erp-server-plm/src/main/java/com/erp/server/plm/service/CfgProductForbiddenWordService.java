@@ -23,6 +23,8 @@ public interface CfgProductForbiddenWordService extends SuperService<CfgProductF
 
     Boolean update(CfgProductForbiddenWordDTO.UpdateDTO dto);
 
+    List<CfgProductForbiddenWordDTO.TabListDTO> tabList();
+
     PagingVO<CfgProductForbiddenWordDTO.ListDTO> paging(PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto);
 
     BatchResultDTO delete(String id);

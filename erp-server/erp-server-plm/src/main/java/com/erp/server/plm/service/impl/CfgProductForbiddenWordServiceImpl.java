@@ -100,6 +100,30 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
     }
 
     @Override
+    public List<CfgProductForbiddenWordDTO.TabListDTO> tabList() {
+        List<CfgProductForbiddenWordDTO.TabListDTO> list = baseMapper.tabList();
+        int total = list.stream().mapToInt(CfgProductForbiddenWordDTO.TabListDTO::getCount).sum();
+
+        List<CfgProductForbiddenWordDTO.TabListDTO> result = new ArrayList<>(3);
+        result.add(new CfgProductForbiddenWordDTO.TabListDTO("all", "全部", total));
+
+        CfgProductForbiddenWordDTO.TabListDTO enabledTab = list.stream()
+                .filter(item -> "f".equals(item.getTabFlag()))
+                .findFirst()
+                .orElse(new CfgProductForbiddenWordDTO.TabListDTO("f", "启用", 0));
+        enabledTab.setTabFlagName("启用");
+        result.add(enabledTab);
+
+        CfgProductForbiddenWordDTO.TabListDTO disabledTab = list.stream()
+                .filter(item -> "t".equals(item.getTabFlag()))
+                .findFirst()
+                .orElse(new CfgProductForbiddenWordDTO.TabListDTO("t", "禁用", 0));
+        disabledTab.setTabFlagName("禁用");
+        result.add(disabledTab);
+        return result;
+    }
+
+    @Override
     public PagingVO<CfgProductForbiddenWordDTO.ListDTO> paging(PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto) {
         PlmPagingSortSupport.sanitizeForbiddenWordSort(dto.getParams().getSortList());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());

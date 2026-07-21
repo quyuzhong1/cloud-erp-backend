@@ -19,6 +19,8 @@ import java.util.List;
 @Mapper
 public interface CfgProductForbiddenWordMapper extends BaseMapper<CfgProductForbiddenWordEntity> {
 
+    List<CfgProductForbiddenWordDTO.TabListDTO> tabList();
+
     IPage<CfgProductForbiddenWordDTO.ListDTO> paging(Page query, @Param("params") CfgProductForbiddenWordDTO.PagingParamDTO params);
 
     List<CfgProductForbiddenWordDTO.ListDTO> listAll(@Param("params") CfgProductForbiddenWordDTO.PagingParamDTO params);
