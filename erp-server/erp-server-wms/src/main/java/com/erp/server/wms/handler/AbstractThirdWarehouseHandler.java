@@ -245,7 +245,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     private boolean isOutboundBusiness(SourceTypeEnum businessType) {
         return businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
-                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL;
+                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL
+                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL;
     }
 
     private boolean isEmptyResponseException(Exception e) {

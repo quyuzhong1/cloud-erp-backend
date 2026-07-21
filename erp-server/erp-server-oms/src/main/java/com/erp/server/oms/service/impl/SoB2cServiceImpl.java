@@ -4163,6 +4163,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || message.contains(THIRD_WAREHOUSE_EMPTY_RESPONSE);
     }
 
+    /**
+     * 取消出库超时/网络类结果：按拦截中处理，避免误判失败后解冻继续发货。
+     */
+    private boolean isThirdWarehouseNetworkOrTimeoutCancelResult(ApiResult<?> apiResult) {
+        if (Objects.isNull(apiResult)) {
+            return true;
+        }
+        if (BAD_GATEWAY.equals(apiResult.getMsg())) {
+            return true;
+        }
+        if (Objects.equals(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), apiResult.getCode())) {
+            return true;
+        }
+        if (isRetryableThirdWarehouseTimeoutMessage(apiResult.getMsg())) {
+            return true;
+        }
+        return isThirdWarehouseNetworkMessage(apiResult.getMsg());
+    }
+
+    private boolean isThirdWarehouseNetworkMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        String lowerMessage = message.toLowerCase(Locale.ROOT);
+        return lowerMessage.contains("connection")
+                || lowerMessage.contains("connectexception")
+                || lowerMessage.contains("unknownhost")
+                || message.contains("连接")
+                || message.contains("网络");
+    }
+
     private String getApiResultCode(ApiResult<?> apiResult) {
         if (Objects.isNull(apiResult) || Objects.isNull(apiResult.getCode())) {
             return String.valueOf(ApiError.HTTP_UNKNOWN.getCode());
@@ -4461,7 +4492,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             req.setAuthId(overseasProviderEntity.getId());
         }
         ApiResult<String> stringApiResult = thirdWarehouseFeign.cancelOutboundOrder(req);
-        if (stringApiResult.getCode() == 200 && ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equals(stringApiResult.getData())) {
+        if (Objects.nonNull(stringApiResult)
+                && stringApiResult.getCode() == 200
+                && ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equals(stringApiResult.getData())) {
             //自动拦截结果确认，拦截成功
             soB2cEntity.setIsIntercept(Boolean.FALSE);
             soB2cEntity.setIsFrozen(Boolean.FALSE);
@@ -4482,12 +4515,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 thirdWarehouseDeliveryFeign.update(thirdWarehouseDeliveryEntity);
             }
             return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截成功");
-        } else if (ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode().equals(stringApiResult.getData())) {
-            //拦截中
+        } else if ((Objects.nonNull(stringApiResult)
+                && ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode().equals(stringApiResult.getData()))
+                || isThirdWarehouseNetworkOrTimeoutCancelResult(stringApiResult)) {
+            // 拦截中，或超时/网络导致结果不确定：保持冻结，避免误判失败后继续发货
             soB2cEntity.setIsFrozen(Boolean.TRUE);
             soB2cEntity.setIsIntercept(Boolean.TRUE);
             this.updateById(soB2cEntity);
-            String msg = CharSequenceUtil.format("用户【{}】发起海外拦截中,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
+            boolean networkOrTimeout = isThirdWarehouseNetworkOrTimeoutCancelResult(stringApiResult);
+            String msg = networkOrTimeout
+                    ? CharSequenceUtil.format("用户【{}】发起海外拦截中（超时或网络异常，结果待确认）,备注：【{}】,原因：【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(), remark,
+                    Objects.isNull(stringApiResult) ? "三方仓拦截返回为空" : stringApiResult.getMsg())
+                    : CharSequenceUtil.format("用户【{}】发起海外拦截中,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
                 thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus());
@@ -4496,9 +4536,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "发起拦截中，等待三方仓处理");
         } else {
             //自动拦截结果确认，拦截失败
-            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：【{}】,原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark, stringApiResult.getMsg());
+            String failReason = Objects.isNull(stringApiResult) ? "三方仓拦截返回为空" : stringApiResult.getMsg();
+            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：【{}】,原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark, failReason);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
-            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截失败：" + stringApiResult.getMsg());
+            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截失败：" + failReason);
         }
     }
 

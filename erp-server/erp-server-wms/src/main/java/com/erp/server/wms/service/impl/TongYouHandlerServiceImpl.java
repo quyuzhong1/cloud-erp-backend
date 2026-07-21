@@ -302,9 +302,10 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         try {
             queryResp = queryOutboundAfterCancel(cancelOutboundReq, true);
         } catch (Exception e) {
+            // 超时/网络导致查不到结果时勿直接判失败，避免 OMS 解冻后继续发货
             log.warn(getPlatForm().getName() + "发货拦截后查询出库单异常, erpOrderCode:{}", cancelOutboundReq.getErpOrderCode(), e);
-            return success("通邮取消请求已受理，按order_status=7查询拦截结果异常，按拦截失败处理",
-                    ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+            return success("通邮取消请求已受理，按order_status=7查询拦截结果异常，按拦截中处理",
+                    ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
         }
         log.warn(getPlatForm().getName()+"发货拦截后查询出库单结果:{}", JSONUtil.toJsonStr(queryResp));
         if (ObjectUtil.isEmpty(queryResp)) {
