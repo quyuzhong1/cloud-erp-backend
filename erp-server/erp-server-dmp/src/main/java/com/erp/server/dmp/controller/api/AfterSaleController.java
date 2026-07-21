@@ -12,19 +12,27 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
+import com.erp.model.dmp.validator.AfterSaleLogisticsManualOrderGroup;
+import com.erp.model.dmp.validator.AfterSaleLogisticsPlatformOrderGroup;
+import com.erp.server.dmp.enums.AfterSaleLogisticsOrderModeEnum;
 import com.erp.server.dmp.query.AfterSaleQueryHandler;
 import com.erp.server.dmp.service.AfterSaleService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +49,9 @@ public class AfterSaleController extends BaseController {
 
     @Resource
     private AfterSaleService afterSaleService;
+
+    @Resource
+    private Validator validator;
 
 
     /**
@@ -433,10 +444,26 @@ public class AfterSaleController extends BaseController {
      * @return Object
      */
     @PostMapping("/logisticsOrder")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "寄修物流下单")
     public ApiResult<List<BatchResultDTO>> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
+        validateLogisticsOrderDto(dto);
         List<String> ids = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(ids, dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    private void validateLogisticsOrderDto(AfterSaleDTO.LogisticsOrderDTO dto) {
+        AfterSaleLogisticsOrderModeEnum orderMode = AfterSaleLogisticsOrderModeEnum.getByCode(dto.getOrderMode());
+        if (orderMode == null) {
+            throw new ServiceException("物流下单方式不正确");
+        }
+        Class<?> validateGroup = AfterSaleLogisticsOrderModeEnum.MANUAL.equals(orderMode)
+                ? AfterSaleLogisticsManualOrderGroup.class
+                : AfterSaleLogisticsPlatformOrderGroup.class;
+        Set<ConstraintViolation<AfterSaleDTO.LogisticsOrderDTO>> violations = validator.validate(dto, validateGroup);
+        if (CollectionUtils.isNotEmpty(violations)) {
+            throw new ServiceException(violations.iterator().next().getMessage());
+        }
     }
 
     /**

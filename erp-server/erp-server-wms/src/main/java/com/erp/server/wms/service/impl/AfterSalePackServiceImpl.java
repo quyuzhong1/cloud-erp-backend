@@ -733,7 +733,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 }
                 viewDTOList.add(viewDTO);
             }
-            fillLocationInconsistentFlag(viewDTOList);
             data.setDetailViewDTOList(viewDTOList);
         }
         return data;
@@ -754,8 +753,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        List<String> mainIds = list.stream().map(AfterSalePackDTO.ListDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        Map<String, Boolean> packLocationInconsistentMap = buildPackLocationInconsistentMap(mainIds);
         // 属性赋值
         for (AfterSalePackDTO.ListDTO data : list) {
             data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
@@ -764,7 +761,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
             data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setLocationInconsistent(Boolean.TRUE.equals(packLocationInconsistentMap.get(data.getId())));
         }
     }
 
@@ -778,65 +774,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
         data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-    }
-
-    private void fillLocationInconsistentFlag(List<AfterSalePackDetailDTO.ViewDTO> detailViewList) {
-        if (CollectionUtils.isEmpty(detailViewList)) {
-            return;
-        }
-        Map<String, Set<String>> skuLocationCodeMap = new HashMap<>(16);
-        for (AfterSalePackDetailDTO.ViewDTO detail : detailViewList) {
-            String skuKey = CharSequenceUtil.blankToDefault(detail.getSkuId(), detail.getSkuNo());
-            if (CharSequenceUtil.isBlank(skuKey)) {
-                continue;
-            }
-            skuLocationCodeMap.computeIfAbsent(skuKey, key -> new HashSet<>())
-                    .add(CharSequenceUtil.emptyIfNull(detail.getOutWarehouseLocationCode()));
-        }
-        Map<String, Boolean> inconsistentMap = skuLocationCodeMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size() > 1, (v1, v2) -> v1));
-        for (AfterSalePackDetailDTO.ViewDTO detail : detailViewList) {
-            String skuKey = CharSequenceUtil.blankToDefault(detail.getSkuId(), detail.getSkuNo());
-            detail.setLocationInconsistent(Boolean.TRUE.equals(inconsistentMap.get(skuKey)));
-        }
-    }
-
-    private Map<String, Boolean> buildPackLocationInconsistentMap(List<String> mainIds) {
-        if (CollectionUtils.isEmpty(mainIds)) {
-            return Collections.emptyMap();
-        }
-        List<AfterSalePackDetailEntity> detailEntityList = afterSalePackDetailService.lambdaQuery()
-                .in(AfterSalePackDetailEntity::getMainId, mainIds)
-                .list();
-        if (CollectionUtils.isEmpty(detailEntityList)) {
-            return Collections.emptyMap();
-        }
-        List<String> warehouseLocationIds = detailEntityList.stream()
-                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMapByIds(warehouseLocationIds);
-        Map<String, List<AfterSalePackDetailEntity>> detailMap = detailEntityList.stream()
-                .collect(Collectors.groupingBy(AfterSalePackDetailEntity::getMainId));
-        Map<String, Boolean> resultMap = new HashMap<>(detailMap.size());
-        for (Map.Entry<String, List<AfterSalePackDetailEntity>> entry : detailMap.entrySet()) {
-            List<AfterSalePackDetailDTO.ViewDTO> detailViewList = new ArrayList<>(entry.getValue().size());
-            for (AfterSalePackDetailEntity detailEntity : entry.getValue()) {
-                AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
-                viewDTO.setSkuId(detailEntity.getSkuId());
-                viewDTO.setSkuNo(detailEntity.getSkuNo());
-                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(detailEntity.getOutWarehouseLocationId());
-                if (warehouseLocationEntity != null) {
-                    viewDTO.setOutWarehouseLocationCode(CharSequenceUtil.emptyIfNull(warehouseLocationEntity.getCode()));
-                }
-                detailViewList.add(viewDTO);
-            }
-            fillLocationInconsistentFlag(detailViewList);
-            boolean packInconsistent = detailViewList.stream().anyMatch(item -> Boolean.TRUE.equals(item.getLocationInconsistent()));
-            resultMap.put(entry.getKey(), packInconsistent);
-        }
-        return resultMap;
     }
 
     @Override
@@ -956,7 +893,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             }
             detailMap.computeIfAbsent(afterSalePackDetailEntity.getMainId(), key -> new ArrayList<>()).add(viewDTO);
         }
-        detailMap.values().forEach(this::fillLocationInconsistentFlag);
 
         List<String> sourceIds = orderedEntityList.stream()
                 .map(AfterSalePackEntity::getSourceId)
@@ -1052,7 +988,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             }
             detailMap.computeIfAbsent(detail.getMainId(), key -> new ArrayList<>()).add(viewDTO);
         }
-        detailMap.values().forEach(this::fillLocationInconsistentFlag);
 
         // 5. 批量查采购退货，补充供应商信息
         List<String> sourceIds = orderedEntityList.stream()

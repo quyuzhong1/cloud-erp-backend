@@ -423,27 +423,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         viewDTO.setDetailDTOList(detailList.stream()
                 .map(detail -> buildBoxDetailDTO(afterSalePackEntity, detail, warehouseLocationMap))
                 .collect(Collectors.toList()));
-        viewDTO.setLocationInconsistent(isSkuLocationInconsistent(detailList, viewDTO.getDetailDTOList()));
         return viewDTO;
-    }
-
-    private boolean isSkuLocationInconsistent(List<AfterSalePackDetailEntity> detailList,
-                                              List<AfterSalePackDTO.DetailDTO> detailDTOList) {
-        Set<String> locationIds = detailList.stream()
-                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
-                .filter(StrUtil::isNotBlank)
-                .collect(Collectors.toSet());
-        if (locationIds.size() > 1) {
-            return true;
-        }
-        if (CollectionUtils.isEmpty(detailDTOList)) {
-            return false;
-        }
-        Set<String> locationCodes = detailDTOList.stream()
-                .map(AfterSalePackDTO.DetailDTO::getOutWarehouseLocationCode)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        return locationCodes.size() > 1;
     }
 
     private AfterSalePackDTO.DetailDTO buildBoxDetailDTO(AfterSalePackEntity afterSalePackEntity,

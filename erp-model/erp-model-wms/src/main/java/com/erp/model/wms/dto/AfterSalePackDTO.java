@@ -216,11 +216,6 @@ public class AfterSalePackDTO implements Serializable {
         private String invalidRemark;
 
         /**
-         * 是否存在同SKU拣货仓位不一致
-         */
-        private Boolean locationInconsistent;
-
-        /**
          * 作废时间
          */
         private LocalDateTime invalidTime;
