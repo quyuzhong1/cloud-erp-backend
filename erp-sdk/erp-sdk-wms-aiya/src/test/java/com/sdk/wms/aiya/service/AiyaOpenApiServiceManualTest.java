@@ -3,6 +3,8 @@ package com.sdk.wms.aiya.service;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
+import com.erp.model.wms.dto.AiyaInboundCancelDTO;
+import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
@@ -61,7 +63,7 @@ public class AiyaOpenApiServiceManualTest {
      * 账户只有生产账号，无独立测试环境；生产账号下专门划出的测试仓库编码。
      * 文档里 warehouseCode 为「是」（必填）的接口（queryTransport/queryInventory/saveInorder/
      * save2cOrder/query2cOrderPage）必须带这个仓库编码，避免误操作到真实生产仓库数据。
-     * 注：queryAsnInspectDetail（原 queryInorderPage）改按上架完成时间窗口查询，不再需要 warehouseCode。
+     * 注：batchQueryAsn（入库单批量查询 GLINK_BATCH_QUERY_ASN_NOTIFY）warehouseCode 为必填，须带该仓库编码。
      */
     private static final String TEST_WAREHOUSE_CODE = "SHENZHEN-01";
 
@@ -140,20 +142,28 @@ public class AiyaOpenApiServiceManualTest {
     }
 
     @Test
-    public void queryAsnInspectDetailTest() {
-        // queryInorderPage 已被移除，现按「上架完成时间」窗口查询入库单验货明细（GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY），
-        // 不再接收 warehouseCode/bizParams
-        AiyaInboundResp response = aiyaOpenApiService.queryAsnInspectDetail(
-                ACCESS_TOKEN, SECRET, CUSTOMER_CODE, 1, 200,
-                null, null); // TODO：按需传 putawayCompletedTimeFrom/To（yyyy-MM-dd HH:mm:ss）缩小范围
+    public void batchQueryAsnTest() {
+        // 入库单批量查询（GLINK_BATCH_QUERY_ASN_NOTIFY）：warehouseCode 必填、按上架完成时间窗口分页（pageSize 最大 200）
+        AiyaInboundQueryDTO.QueryReqDTO reqDTO = new AiyaInboundQueryDTO.QueryReqDTO();
+        reqDTO.setAccessToken(ACCESS_TOKEN);
+        reqDTO.setSecret(SECRET);
+        reqDTO.setCustomerCode(CUSTOMER_CODE);
+        reqDTO.setWarehouseCode(TEST_WAREHOUSE_CODE);
+        reqDTO.setPageNum(1);
+        reqDTO.setPageSize(AiyaInboundQueryDTO.DEFAULT_PAGE_SIZE);
+        reqDTO.setPutawayCompletedTimeFrom("2026-07-01 00:00:00");
+        reqDTO.setPutawayCompletedTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        AiyaInboundResp response = aiyaOpenApiService.batchQueryAsn(reqDTO);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
     @Test
     public void cancelInorderTest() {
-        // cancelInorder 签名已从单个 no（String）改为 asnNumbers（List<String>）
-        List<String> asnNumbers = Arrays.asList("TODO-填真实入库单号(即发货单号asnNumber)");
-        JSONObject response = aiyaOpenApiService.cancelInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, asnNumbers);
+        // cancelInorder 入参已收敛为强类型 AiyaInboundCancelDTO（仅必填 asnNumbers[]）
+        AiyaInboundCancelDTO request = AiyaInboundCancelDTO.builder()
+                .asnNumbers(Arrays.asList("TODO-填真实入库单号(即发货单号asnNumber)"))
+                .build();
+        JSONObject response = aiyaOpenApiService.cancelInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, request);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
