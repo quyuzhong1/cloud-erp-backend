@@ -87,17 +87,16 @@ public class AiyaInboundQueryDTO implements Serializable {
         private String warehouseCode;
 
         /**
-         * 上架完成时间从（格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * 上架完成时间从（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。
          * <p>
-         * 文档标注为可选，但本项目按上架完成时间窗口拉取，视为必填，须与 {@link #putawayCompletedTimeTo} 成对传入。
+         * 注意：{@code putawayCompletedTime} 不在爱亚「至少一组非空」的必填时间集合内（见 {@link #receiveTimeFrom}），
+         * 单独传会报 {@code INVALID_DATA}；此处仅作附加过滤，需与 createdTime/receiveTime/lastUpdatedTime 之一同时传。
          */
-        @NotBlank(message = "putawayCompletedTimeFrom不能为空")
         private String putawayCompletedTimeFrom;
 
         /**
-         * 上架完成时间到（格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * 上架完成时间到（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。
          */
-        @NotBlank(message = "putawayCompletedTimeTo不能为空")
         private String putawayCompletedTimeTo;
 
         /**
@@ -111,12 +110,16 @@ public class AiyaInboundQueryDTO implements Serializable {
         private String asnType;
 
         /**
-         * 收货时间从（可选，格式 {@code yyyy-MM-dd HH:mm:ss}；若 asnNumbers 不为空，此字段可为空）。
+         * 收货时间从（格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * <p>
+         * 爱亚隐藏约束：{@code createdTime}/{@code receiveTime}/{@code lastUpdatedTime}/{@code asnNumbers}/
+         * {@code refNumbers} 至少一组非空，否则报 {@code INVALID_DATA: ... cannot be empty at the same time}。
+         * 本项目增量拉取统一以「收货时间」窗口满足该约束（若 asnNumbers 不为空，此字段可为空）。
          */
         private String receiveTimeFrom;
 
         /**
-         * 收货时间到（可选，格式 {@code yyyy-MM-dd HH:mm:ss}；若 asnNumbers 不为空，此字段可为空）。
+         * 收货时间到（格式 {@code yyyy-MM-dd HH:mm:ss}），需与 {@link #receiveTimeFrom} 成对传入。
          */
         private String receiveTimeTo;
 
@@ -131,12 +134,13 @@ public class AiyaInboundQueryDTO implements Serializable {
         private String createdTimeTo;
 
         /**
-         * 更新时间从（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * 更新时间从（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。可满足爱亚「至少一组非空」约束，
+         * 但本项目增量拉取统一使用 {@link #receiveTimeFrom}「收货时间」窗口，此字段仅作附加过滤。
          */
         private String lastUpdatedTimeFrom;
 
         /**
-         * 更新时间到（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * 更新时间到（格式 {@code yyyy-MM-dd HH:mm:ss}），需与 {@link #lastUpdatedTimeFrom} 成对传入。
          */
         private String lastUpdatedTimeTo;
 

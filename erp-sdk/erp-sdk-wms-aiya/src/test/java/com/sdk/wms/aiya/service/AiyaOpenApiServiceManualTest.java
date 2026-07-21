@@ -151,8 +151,9 @@ public class AiyaOpenApiServiceManualTest {
         reqDTO.setWarehouseCode(TEST_WAREHOUSE_CODE);
         reqDTO.setPageNum(1);
         reqDTO.setPageSize(AiyaInboundQueryDTO.DEFAULT_PAGE_SIZE);
-        reqDTO.setPutawayCompletedTimeFrom("2026-07-01 00:00:00");
-        reqDTO.setPutawayCompletedTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        // 爱亚约束：createdTime/receiveTime/lastUpdatedTime/asnNumbers/refNumbers 至少一组非空，用收货时间窗口
+        reqDTO.setReceiveTimeFrom("2026-07-01 00:00:00");
+        reqDTO.setReceiveTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         AiyaInboundResp response = aiyaOpenApiService.batchQueryAsn(reqDTO);
         System.out.println(JSONUtil.toJsonStr(response));
     }
