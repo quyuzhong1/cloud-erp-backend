@@ -137,6 +137,17 @@ tatr.method_type AS methodType
         LIMIT #{limit}
     </select>
 
+    <update id="claimErrorRetry">
+        UPDATE tms_async_task_record
+        SET is_retry = TRUE,
+            update_time = CURRENT_TIMESTAMP,
+            version = COALESCE(version, 0) + 1
+        WHERE id = #{id}
+          AND is_deleted = FALSE
+          AND status = #{finishStatus}
+          AND (is_retry IS NULL OR is_retry = FALSE)
+    </update>
+
 
 
 </mapper>

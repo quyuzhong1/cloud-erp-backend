@@ -71,6 +71,11 @@ public class LogisticsReconMatchDTO implements Serializable {
          * 待匹配行（行 = 一条对账明细 logistics_recon_detail）
          */
         private List<MatchRowDTO> rows = new ArrayList<>();
+        /**
+         * 进入费用写路径前的运行时钩子（对账匹配用于持久化不可重放标记）。
+         * 仅内存回调，不参与序列化。
+         */
+        private transient Runnable beforePersistHook;
     }
 
     /**

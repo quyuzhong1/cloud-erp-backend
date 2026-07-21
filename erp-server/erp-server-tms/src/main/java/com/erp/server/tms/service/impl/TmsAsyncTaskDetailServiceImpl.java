@@ -221,6 +221,34 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
     }
 
     @Override
+    public List<String> listRetryableFailedBusinessIdsByCursor(String mainId, String lastBusinessId, int batchSize,
+                                                                String nonRetryableErrorPrefix) {
+        if (StringUtils.isBlank(mainId)) {
+            throw new ServiceException("错误重试来源任务不能为空");
+        }
+        int safeBatchSize = batchSize <= 0 ? 500 : batchSize;
+        return lambdaQuery()
+                .select(TmsAsyncTaskDetailEntity::getBusinessId)
+                .eq(TmsAsyncTaskDetailEntity::getMainId, mainId)
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .isNotNull(TmsAsyncTaskDetailEntity::getBusinessId)
+                .and(StringUtils.isNotBlank(nonRetryableErrorPrefix), wrapper -> wrapper
+                        .isNull(TmsAsyncTaskDetailEntity::getErrorData)
+                        .or()
+                        // 与 isNonRetryable 前缀语义一致：NOT (LIKE 'prefix%')，非 contains
+                        .not(w -> w.likeRight(TmsAsyncTaskDetailEntity::getErrorData, nonRetryableErrorPrefix)))
+                .gt(StringUtils.isNotBlank(lastBusinessId), TmsAsyncTaskDetailEntity::getBusinessId, lastBusinessId)
+                .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
+                .last("LIMIT " + safeBatchSize)
+                .list()
+                .stream()
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void saveBatchInChunks(List<TmsAsyncTaskDetailEntity> details, int batchSize) {
         if (details == null || details.isEmpty()) {
             return;

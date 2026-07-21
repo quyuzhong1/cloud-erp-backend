@@ -12,6 +12,7 @@ import com.erp.server.tms.service.LogisticsReconService;
 import com.erp.server.tms.service.TmsAsyncTaskBatchPushHandler;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
+import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -77,7 +78,12 @@ public class LogisticsReconMatchBatchPushHandler
                                      String lastId,
                                      int batchSize,
                                      TmsAsyncTaskRecordEntity taskRecord) {
-        // 正常路径：按本任务待执行明细（费用项 id）游标分页；失败重试走来源任务失败明细
+        if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(envelope.getRetryMode())) {
+            return tmsAsyncTaskDetailService.listRetryableFailedBusinessIdsByCursor(
+                    envelope.getRetrySourceTaskId(), lastId, batchSize,
+                    LogisticsReconMatchFailReasonSupport.NON_RETRYABLE_PREFIX);
+        }
+        // 正常路径：按本任务待执行明细（费用项 id）游标分页。
         BatchBusinessIdProvider defaultProvider = (cursor, size) -> pagePendingDetailBusinessIds(taskId, cursor, size);
         return asyncTaskRecordService.pageBatchBusinessIds(
                 envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,

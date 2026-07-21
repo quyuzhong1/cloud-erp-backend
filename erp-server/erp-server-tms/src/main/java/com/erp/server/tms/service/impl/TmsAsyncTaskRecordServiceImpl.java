@@ -44,6 +44,7 @@ import com.erp.server.tms.service.BatchBusinessIdProvider;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
+import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -962,12 +963,23 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if (!Objects.equals(entity.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
             throw new ServiceException("任务未完成不支持错误重试");
         }
-        Integer count = tmsAsyncTaskDetailService.lambdaQuery()
-                .eq(TmsAsyncTaskDetailEntity::getMainId, entity.getId())
-                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
-                .count();
-        if (count == null || count <= 0) {
-            throw new ServiceException("无错误数量不支持错误重试");
+        boolean logisticsReconMatch = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode()
+                .equals(entity.getBusinessType())
+                && TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(entity.getMethodType());
+        if (logisticsReconMatch) {
+            List<String> retryableIds = tmsAsyncTaskDetailService.listRetryableFailedBusinessIdsByCursor(
+                    entity.getId(), null, 1, LogisticsReconMatchFailReasonSupport.NON_RETRYABLE_PREFIX);
+            if (CollUtil.isEmpty(retryableIds)) {
+                throw new ServiceException("无可自动重试明细，费用或关联状态可能已部分落库，请人工核对");
+            }
+        } else {
+            Integer count = tmsAsyncTaskDetailService.lambdaQuery()
+                    .eq(TmsAsyncTaskDetailEntity::getMainId, entity.getId())
+                    .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                    .count();
+            if (count == null || count <= 0) {
+                throw new ServiceException("无错误数量不支持错误重试");
+            }
         }
         if (StringUtils.isBlank(entity.getDataJson()) || Objects.equals(entity.getDataJson(), "{}")) {
             throw new ServiceException("dataJson为空，无法错误重试");
@@ -1021,7 +1033,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     /**
      * 创建失败明细重试任务并在事务提交后立即派发。
      * <p>
-     * 任务创建通过 {@link #createFailedOnlyRetryTask(TmsAsyncTaskRecordEntity)} 走代理事务，
+     * 任务创建通过 {@link #createFailedOnlyRetryTask(String)} 走代理事务，
      * MQ 派发在该方法返回后执行，避免消费者先于事务提交读取不到新任务。
      *
      * @param entity 来源任务
@@ -1029,7 +1041,10 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      */
     @Override
     public BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity) {
-        TmsAsyncTaskRecordEntity newTask = selfServer.createFailedOnlyRetryTask(entity);
+        if (entity == null || StringUtils.isBlank(entity.getId())) {
+            throw new ServiceException("异步任务记录不存在");
+        }
+        TmsAsyncTaskRecordEntity newTask = selfServer.createFailedOnlyRetryTask(entity.getId());
         // createFailedOnlyRetryTask 通过代理完成事务提交后再派发 MQ，避免消费者先于任务提交查询不到记录。
         claimAndDispatch(newTask, true);
         return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
@@ -1041,14 +1056,20 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * 该方法只负责持久化新任务和标记来源任务已重试，不发送 MQ。
      * 调用方应在事务提交后再派发，避免消息消费和数据库提交之间产生竞态。
      *
-     * @param entity 来源任务
+     * @param sourceTaskId 来源任务
      * @return 已保存的新重试任务
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType,entity.methodType", unlockAfterTx = true)
-    public TmsAsyncTaskRecordEntity createFailedOnlyRetryTask(TmsAsyncTaskRecordEntity entity) {
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "sourceTaskId", unlockAfterTx = true)
+    public TmsAsyncTaskRecordEntity createFailedOnlyRetryTask(String sourceTaskId) {
+        TmsAsyncTaskRecordEntity entity = getById(sourceTaskId);
         checkErrorRetryData(entity);
+        int claimed = baseMapper.claimErrorRetry(entity.getId(),
+                TmsAsyncTaskRecordStatusEnum.FINISH.getCode());
+        if (claimed != 1) {
+            throw new ServiceException("已有重试任务，无法再次重试");
+        }
         Integer execTimeout = resolveTaskExecTimeout(loadBillBatchParams(null));
         String retryDataJson = buildFailedOnlyRetryDataJson(entity);
 
@@ -1069,9 +1090,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if(!save){
             throw new ServiceException("保存失败");
         }
-        //表示任务已重试过
-        entity.setIsRetry(Boolean.TRUE);
-        updateById(entity);
         return newTask;
     }
 

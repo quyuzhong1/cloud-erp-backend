@@ -74,6 +74,12 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
     List<String> listFailedBusinessIdsByCursor(String mainId, String lastBusinessId, int batchSize);
 
     /**
+     * 分页读取可自动重试的失败明细，排除指定错误前缀标记的人工核对数据。
+     */
+    List<String> listRetryableFailedBusinessIdsByCursor(String mainId, String lastBusinessId, int batchSize,
+                                                         String nonRetryableErrorPrefix);
+
+    /**
      * 分批保存任务明细，避免单次 saveBatch 数据量过大。
      */
     void saveBatchInChunks(List<TmsAsyncTaskDetailEntity> details, int batchSize);

@@ -202,7 +202,7 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * <p>
      * 该方法仅负责数据库事务内的任务创建和源任务标记，MQ 派发由调用方在事务提交后执行。
      */
-    TmsAsyncTaskRecordEntity createFailedOnlyRetryTask(TmsAsyncTaskRecordEntity entity);
+    TmsAsyncTaskRecordEntity createFailedOnlyRetryTask(String sourceTaskId);
 
     Boolean isExist(String businessType, String methodType, String startTimeStr);
 
