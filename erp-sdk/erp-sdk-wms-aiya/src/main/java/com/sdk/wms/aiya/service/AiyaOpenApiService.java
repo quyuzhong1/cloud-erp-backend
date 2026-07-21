@@ -8,6 +8,8 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.AiyaInboundCancelDTO;
+import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -91,6 +94,17 @@ public class AiyaOpenApiService {
      */
     private static final Set<String> INVENTORY_QUERY_RESERVED_PARAM_KEYS =
             new HashSet<>(Arrays.asList("page", "pageSize", "warehouseCode", "ignoreZero", "skus", "stockStatus", "domainCode"));
+
+    /**
+     * 入库单批量查询专用保留参数：文档字段名为 {@code page}（而非 {@code pageNum}），
+     * 以及分页/仓库/时间范围等由 DTO 一等字段承载的 key，避免业务透传参数覆盖。
+     */
+    private static final Set<String> BATCH_QUERY_ASN_RESERVED_PARAM_KEYS =
+            new HashSet<>(Arrays.asList("page", "pageSize", "warehouseCode",
+                    "putawayCompletedTimeFrom", "putawayCompletedTimeTo",
+                    "asnNumbers", "asnType", "receiveTimeFrom", "receiveTimeTo",
+                    "createdTimeFrom", "createdTimeTo", "lastUpdatedTimeFrom", "lastUpdatedTimeTo",
+                    "stage", "ifNeedBatchInfo", "refNumbers", "extUserId"));
 
     /**
      * 原始响应字符串在日志中打印的最大长度。
@@ -257,38 +271,57 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 调用 AIYA {@code GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY} 按「上架完成时间」范围分页查询入库单验货明细。
+     * 调用 AIYA {@code GLINK_BATCH_QUERY_ASN_NOTIFY} 按「仓库 + 上架完成时间」范围分页批量查询入库单。
      * <p>
-     * 与 wego 一致——按上架/收货时间窗口分页拉取，响应为 {@code asnInfoList[]}，每个 ASN 下挂
-     * {@code asnItems[]}（SKU × 货物状态 验货明细，{@code skuStatus} 区分良品 GOOD / 不良品 DAMAGE）。
-     * 分页无 total/pages 元数据，调用方按「返回条数 &lt; pageSize」判断末页。
+     * 请求业务参数按接口文档承载：{@code customerCode}（由 SDK 注入）/{@code page}/{@code pageSize}/
+     * {@code warehouseCode} 为必填。爱亚隐藏约束：{@code createdTime}/{@code receiveTime}/
+     * {@code lastUpdatedTime} 范围与 {@code asnNumbers}/{@code refNumbers} 至少一组非空，否则报
+     * {@code INVALID_DATA: ... cannot be empty at the same time}；调用方须至少传其一（本项目用 receiveTime 窗口）。
+     * {@code putawayCompletedTimeFrom}/{@code putawayCompletedTimeTo} 不在该必填集合内，仅作附加过滤。
+     * 其余字段（asnType/stage/ifNeedBatchInfo/extUserId 等）为可选，非空时才写入 bizData。
+     * {@code pageSize} 单页最大 200，调用方按总数多次翻页。
+     * <p>
+     * {@code GLINK_BATCH_QUERY_ASN_NOTIFY} 响应结构调整解析。
      *
-     * @param accessToken             AIYA partnerId（客户ID）
-     * @param secret                  AIYA partnerKey（仅用于本地签名）
-     * @param customerCode            AIYA 客户code（必填业务参数）
-     * @param page                    页码（从 1 开始）
-     * @param pageSize                每页数量
-     * @param putawayCompletedTimeFrom 上架完成时间起（yyyy-MM-dd HH:mm:ss，可为 null）
-     * @param putawayCompletedTimeTo   上架完成时间止（yyyy-MM-dd HH:mm:ss，可为 null）
+     * @param dto 入库单批量查询请求（含 accessToken/secret/customerCode/warehouseCode/pageNum(对应文档page)/
+     *            pageSize/putawayCompletedTimeFrom/putawayCompletedTimeTo 等）
      * @return AIYA 接口原始响应解析后的强类型 {@link AiyaInboundResp}；无响应时返回 null
      */
-    public AiyaInboundResp queryAsnInspectDetail(String accessToken, String secret, String customerCode,
-                                                 int page, int pageSize,
-                                                 String putawayCompletedTimeFrom, String putawayCompletedTimeTo) {
+    public AiyaInboundResp batchQueryAsn(@NotNull(message = "入库单查询请求不能为空") @Valid AiyaInboundQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
-        params.put("page", page);
-        params.put("pageSize", pageSize);
-        putIfNotNull(params, "putawayCompletedTimeFrom", putawayCompletedTimeFrom);
-        putIfNotNull(params, "putawayCompletedTimeTo", putawayCompletedTimeTo);
-        JSONObject response = doQuery(accessToken, secret, customerCode,
-                AiyaConstants.GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY, params, "查询入库单验货明细");
+        params.put("page", dto.getPageNum());
+        params.put("pageSize", dto.getPageSize());
+        params.put("warehouseCode", dto.getWarehouseCode());
+        putIfNotBlank(params, "putawayCompletedTimeFrom", dto.getPutawayCompletedTimeFrom());
+        putIfNotBlank(params, "putawayCompletedTimeTo", dto.getPutawayCompletedTimeTo());
+        if (dto.getAsnNumbers() != null && !dto.getAsnNumbers().isEmpty()) {
+            params.put("asnNumbers", JSON.toJSON(dto.getAsnNumbers()));
+        }
+        if (dto.getRefNumbers() != null && !dto.getRefNumbers().isEmpty()) {
+            params.put("refNumbers", JSON.toJSON(dto.getRefNumbers()));
+        }
+        if (dto.getIfNeedBatchInfo() != null) {
+            params.put("ifNeedBatchInfo", dto.getIfNeedBatchInfo());
+        }
+        putIfNotBlank(params, "asnType", dto.getAsnType());
+        putIfNotBlank(params, "receiveTimeFrom", dto.getReceiveTimeFrom());
+        putIfNotBlank(params, "receiveTimeTo", dto.getReceiveTimeTo());
+        putIfNotBlank(params, "createdTimeFrom", dto.getCreatedTimeFrom());
+        putIfNotBlank(params, "createdTimeTo", dto.getCreatedTimeTo());
+        putIfNotBlank(params, "lastUpdatedTimeFrom", dto.getLastUpdatedTimeFrom());
+        putIfNotBlank(params, "lastUpdatedTimeTo", dto.getLastUpdatedTimeTo());
+        putIfNotBlank(params, "stage", dto.getStage());
+        putIfNotBlank(params, "extUserId", dto.getExtUserId());
+        mergeBizParams(params, dto.getBizParams(), "批量查询入库单", BATCH_QUERY_ASN_RESERVED_PARAM_KEYS);
+        JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(), dto.getCustomerCode(),
+                AiyaConstants.GLINK_BATCH_QUERY_ASN_NOTIFY, params, "批量查询入库单");
         if (response == null) {
             return null;
         }
         try {
             return response.toJavaObject(AiyaInboundResp.class);
         } catch (Exception ex) {
-            log.error("[AIYA查询入库单验货明细] 响应JSON转换AiyaInboundResp失败, response={}", safeResponseLog(response), ex);
+            log.error("[AIYA批量查询入库单] 响应JSON转换AiyaInboundResp失败, response={}", safeResponseLog(response), ex);
             throw new ServiceException(ApiError.WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
@@ -302,12 +335,12 @@ public class AiyaOpenApiService {
      * @param accessToken  AIYA partnerId（客户ID）
      * @param secret       AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
-     * @param asnNumbers   ASN 编码列表（必填，即我方下发的 asnNumber=发货单号）
+     * @param request      取消入库单请求（必填 asnNumbers）
      * @return AIYA 接口原始响应解析后的 JSONObject（含 success / code / message）
      */
-    public JSONObject cancelInorder(String accessToken, String secret, String customerCode, List<String> asnNumbers) {
+    public JSONObject cancelInorder(String accessToken, String secret, String customerCode, @NotNull(message = "取消入库单请求不能为空") @Valid AiyaInboundCancelDTO request) {
         Map<String, Object> params = new HashMap<>();
-        params.put("asnNumbers", JSON.toJSON(asnNumbers));
+        params.put("asnNumbers", JSON.toJSON(request.getAsnNumbers()));
         return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_CANCEL_ASN_NOTIFY, params, "取消入库单");
     }
 
@@ -464,6 +497,16 @@ public class AiyaOpenApiService {
     }
 
     /**
+     * 仅在 value 非空白字符串时写入 map。
+     */
+    private void putIfNotBlank(Map<String, Object> params, String key, String value) {
+        if (StringUtils.isBlank(value)) {
+            return;
+        }
+        params.put(key, value);
+    }
+
+    /**
      * AIYA 通用查询方法：将业务参数序列化为 bizData、按 {@code MD5(bizData + partnerKey)} 计算签名并执行 HTTP 请求。
      *
      * @param partnerId    AIYA partnerId（客户ID，作为外层 partnerId 字段随请求发送）
@@ -494,12 +537,7 @@ public class AiyaOpenApiService {
         String url = getRequestUrl();
         String requestJson = JSON.toJSONString(params);
         String logRequestJson = JSON.toJSONString(maskLogParams(params));
-        // SKU 查询用 warn：任务拉到 0 条而手工测试有数据时，需从日志直接核对 bizData/响应
-        if ("查询SKU".equals(actionName)) {
-            log.warn("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
-        } else {
-            log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
-        }
+        log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
         String response;
         try {
             // 爱亚网关要求 partnerId/serviceType/bizData/sign 以 x-www-form-urlencoded 表单字段提交，
@@ -511,11 +549,7 @@ public class AiyaOpenApiService {
             throw new ServiceException(e, ApiError.WH_AIYA_SDK_API_CALL_ERROR, actionName, e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
-        if ("查询SKU".equals(actionName)) {
-            log.warn("[AIYA{}] 请求结束, cost={}ms, response={}", actionName, cost, truncateRawResponse(response));
-        } else {
-            log.info("[AIYA{}] 请求结束, cost={}ms", actionName, cost);
-        }
+        log.warn("[AIYA{}] 请求结束, cost={}ms, response={}", actionName, cost, truncateRawResponse(response));
         if (response == null || response.isEmpty()) {
             log.error("[AIYA{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
             throw new ServiceException(ApiError.WH_AIYA_SDK_API_RESPONSE_EMPTY, actionName);

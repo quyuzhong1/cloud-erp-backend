@@ -49,6 +49,11 @@ public class AiyaConstants {
     public static final String GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY = "GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY";
 
     /**
+     * 入库单批量查询（按仓库 + 时间范围分页查询入库单信息，page/pageSize 分页，pageSize 最大 200）
+     */
+    public static final String GLINK_BATCH_QUERY_ASN_NOTIFY = "GLINK_BATCH_QUERY_ASN_NOTIFY";
+
+    /**
      * 入库订单取消
      */
     public static final String GLINK_CANCEL_ASN_NOTIFY = "GLINK_CANCEL_ASN_NOTIFY";
