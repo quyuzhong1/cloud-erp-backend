@@ -211,7 +211,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                                 .filter(req -> req.getId().equals(detailDto.getSoReturnDetailId()))
                                 .map(SoReturnDetailEntity::getReturnQty)
                                 .reduce(MathUtil.ZERO, Integer::sum);
-                        detailEntity.setRemainMustQty(mustQty - (realQty + detailDto.getRealQty()));
+                        detailEntity.setRemainShouldQty(mustQty - (realQty + detailDto.getRealQty()));
                     }
                 }else if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) //子sku不做数量校验
                             && StringUtils.isNotBlank(detailDto.getSoReturnDetailId())){
@@ -248,7 +248,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         throw new ServiceException(ApiError.SO_RETURN_QTY_EXCEEDS_EXPECTED, skuVO.getSkuNo());
                     }
                     //剩余应退货数量 = 应退数量(receiveQty，此分支下即退货单明细自身的退货数量 so_return_detail.return_qty) - 历史已入库实退数量(realQty)累计（含本次）
-                    detailEntity.setRemainMustQty(receiveQty - (realQty + detailDto.getRealQty()));
+                    detailEntity.setRemainShouldQty(receiveQty - (realQty + detailDto.getRealQty()));
                 }
                 list.add(detailEntity);
             }
@@ -333,7 +333,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream()
                         .filter(v -> v.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
                 if (Objects.nonNull(soB2cReturnDetailEntity)) {
-                    detailEntity.setRemainMustQty(soB2cReturnDetailEntity.getReturnQty() - (realQty + detailDto.getRealQty()));
+                    detailEntity.setRemainShouldQty(soB2cReturnDetailEntity.getReturnQty() - (realQty + detailDto.getRealQty()));
                 }
                 if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
@@ -395,7 +395,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
                 mustQty = Math.max(mustQty, realQty + currentRealQty);
                 detailEntity.setMustQty(mustQty);
-                detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
+                detailEntity.setRemainShouldQty(mustQty - (realQty + currentRealQty));
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
@@ -487,7 +487,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
             mustQty = Math.max(mustQty, realQty + currentRealQty);
             detailEntity.setMustQty(mustQty);
-            detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
+            detailEntity.setRemainShouldQty(mustQty - (realQty + currentRealQty));
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -685,7 +685,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                             .map(SoReturnDetailEntity::getReturnQty)
                             .findFirst().orElse(null);
                     if (Objects.nonNull(mustQty)) {
-                        detailEntity.setRemainMustQty(mustQty - (realQty + detailDto.getRealQty()));
+                        detailEntity.setRemainShouldQty(mustQty - (realQty + detailDto.getRealQty()));
                     }
                     if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnReceiveDetailEntity.getReturnAmount();
@@ -739,7 +739,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         throw new ServiceException(ApiError.SO_RETURN_QTY_EXCEEDS_EXPECTED, skuVO.getSkuNo());
                     }
                     //剩余应退货数量 = 应退数量(returnQty，即退货单明细自身的退货数量 so_return_detail.return_qty) - 历史已入库实退数量(realQty)累计（含本次）
-                    detailEntity.setRemainMustQty(returnQty - (realQty + detailDto.getRealQty()));
+                    detailEntity.setRemainShouldQty(returnQty - (realQty + detailDto.getRealQty()));
                     if(realQty > 0 && returnQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
@@ -852,7 +852,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream()
                         .filter(v -> v.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
                 if (Objects.nonNull(soB2cReturnDetailEntity)) {
-                    detailEntity.setRemainMustQty(soB2cReturnDetailEntity.getReturnQty() - (realQty + detailDto.getRealQty()));
+                    detailEntity.setRemainShouldQty(soB2cReturnDetailEntity.getReturnQty() - (realQty + detailDto.getRealQty()));
                 }
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
@@ -949,7 +949,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 // 兜底后仍不足以覆盖已实退数量时，以累计实退数量为下限，避免应退数量小于实退数量导致剩余应退为负
                 mustQty = Math.max(mustQty, realQty + currentRealQty);
                 detailEntity.setMustQty(mustQty);
-                detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
+                detailEntity.setRemainShouldQty(mustQty - (realQty + currentRealQty));
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -1068,7 +1068,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             // 兜底后仍不足以覆盖已实退数量时，以累计实退数量为下限，避免应退数量小于实退数量导致剩余应退为负
             mustQty = Math.max(mustQty, realQty + currentRealQty);
             detailEntity.setMustQty(mustQty);
-            detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
+            detailEntity.setRemainShouldQty(mustQty - (realQty + currentRealQty));
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());

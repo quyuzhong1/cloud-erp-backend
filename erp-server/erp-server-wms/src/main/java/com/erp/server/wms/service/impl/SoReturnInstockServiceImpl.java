@@ -373,7 +373,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getDictPlatform()))
                 .collect(Collectors.toMap(SoB2cReturnEntity::getId, SoB2cReturnEntity::getDictPlatform, (a, b) -> a)) : Collections.emptyMap();
 
-        // B2C售后明细退货数量，及按售后明细累计的入库实退数量（用于补齐 mustQty / remainMustQty）
+        // B2C售后明细退货数量，及按售后明细累计的入库实退数量（用于补齐 mustQty / remainShouldQty）
         List<String> b2cReturnDetailIds = records.stream()
                 .filter(r -> BillTypeEnum.B2C.getCode().equals(r.getType()) && CharSequenceUtil.isNotBlank(r.getSoReturnDetailId()))
                 .map(SoReturnInstockDTO.PagingView::getSoReturnDetailId).distinct().collect(Collectors.toList());
@@ -455,7 +455,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                             b2cReturnQty = instockQty;
                         }
                         obj.setMustQty(b2cReturnQty);
-                        obj.setRemainMustQty(b2cReturnQty - instockQty);
+                        obj.setRemainShouldQty(b2cReturnQty - instockQty);
                     }
                 } else {
                     String sourceDetailId = sourceDetailMap.get(obj.getSoReturnDetailId());
@@ -920,7 +920,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             Integer mustQty = d.getReturnQty();
             if (mustQty != null) {
                 int instockQty = context.instockRealQtyBySoReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO);
-                pd.setRemainMustQty(mustQty - instockQty);
+                pd.setRemainShouldQty(mustQty - instockQty);
             }
             // 已出库数量：按销售单soId+skuId汇总，再乘以单箱数量（与 view() 口径一致）；签收数量：按退货单明细id汇总
             if (Objects.nonNull(soDetail) && CharSequenceUtil.isNotBlank(soDetail.getMainId())) {
@@ -998,7 +998,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             Integer mustQty = d.getReturnQty();
             if (mustQty != null) {
                 int instockQty = context.instockRealQtyBySoReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO);
-                pd.setRemainMustQty(mustQty - instockQty);
+                pd.setRemainShouldQty(mustQty - instockQty);
             }
             // 已出库数量 / 签收数量，口径与 view()/paging() 保持一致
             pd.setDeliveryQty(context.outstockActualQtyBySoIdSku.getOrDefault(soB2cReturn.getSoId() + "-" + d.getSkuId(), MathUtil.ZERO));
@@ -1714,7 +1714,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     if (!hasAuthoritativeReturnQty && returnQty < instockQty) {
                         returnQty = instockQty;
                     }
-                    detailView.setRemainMustQty(returnQty - instockQty);
+                    detailView.setRemainShouldQty(returnQty - instockQty);
                 }
                 detailView.setMustQty(returnQty);
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);

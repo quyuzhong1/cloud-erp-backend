@@ -4,7 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.wms.enums.PrestockLinkStatusEnum;
+import com.erp.model.wms.enums.PrestockClaimStatusEnum;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -15,9 +15,9 @@ import java.util.Arrays;
  * 注册 {@link com.common.business.annotation.WebAdvanceQuery} 所使用的高级查询处理器。
  * tab 页签映射说明：
  * <ul>
- *   <li>all / 空值 → 全部（不加 link_status 过滤）</li>
- *   <li>linked    → 已关联（link_status = LINKED）</li>
- *   <li>unlinked  → 未关联（link_status IN (UNLINKED, PARTIAL)，即未关联和部分关联）</li>
+ *   <li>all / 空值 → 全部（不加 claim_status 过滤）</li>
+ *   <li>linked    → 已关联（claim_status = LINKED）</li>
+ *   <li>unlinked  → 未关联（claim_status IN (UNLINKED, PARTIAL)，即未关联和部分关联）</li>
  * </ul>
  * </p>
  *
@@ -35,11 +35,11 @@ public class SoReturnPrestockQueryHandler extends AbstractQueryHandler {
                 return this.getQueryAllSql();
             }
             if ("linked".equals(tab)) {
-                super.buildDefaultDTO("srp.link_status", PrestockLinkStatusEnum.LINKED.getStatus());
+                super.buildDefaultDTO("srp.claim_status", PrestockClaimStatusEnum.LINKED.getStatus());
             } else if ("unlinked".equals(tab)) {
-                super.buildSplicingSQLDTO("srp.link_status", QueryConditionEnum.IN_LIST,
-                        Arrays.asList(PrestockLinkStatusEnum.UNLINKED.getStatus(),
-                                PrestockLinkStatusEnum.PARTIAL.getStatus()),
+                super.buildSplicingSQLDTO("srp.claim_status", QueryConditionEnum.IN_LIST,
+                        Arrays.asList(PrestockClaimStatusEnum.UNLINKED.getStatus(),
+                                PrestockClaimStatusEnum.PARTIAL.getStatus()),
                         QueryDataTypeEnum.STRING);
             }
         }

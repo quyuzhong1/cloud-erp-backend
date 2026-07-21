@@ -47,7 +47,7 @@ public class SoReturnPrestockDTO {
         private String returnLogisticCode;
 
         /** 关联状态（UNLINKED / PARTIAL / LINKED） */
-        private List<String> linkStatusList;
+        private List<String> claimStatusList;
 
         /** 库存组织 ID 列表 */
         private List<String> inventoryOrgIdList;
@@ -55,8 +55,8 @@ public class SoReturnPrestockDTO {
         /** 签收仓库 ID 列表 */
         private List<String> warehouseIdList;
 
-        /** 入库时间范围 */
-        private List<LocalDateTime> returnInstockTimeList;
+        /** 实际收货时间/签收时间范围 */
+        private List<LocalDateTime> receivedTimeList;
 
         /** 操作时间范围 */
         private List<LocalDateTime> operateTimeList;
@@ -90,16 +90,10 @@ public class SoReturnPrestockDTO {
         private String returnLogisticCode;
 
         /** 关联状态 */
-        private String linkStatus;
+        private String claimStatus;
 
         /** 关联状态名称 */
-        private String linkStatusName;
-
-        /** 来源单 ID */
-        private String sourceId;
-
-        /** 来源单号 */
-        private String sourceCode;
+        private String claimStatusName;
 
         /** 来源类型 */
         private String sourceType;
@@ -123,10 +117,10 @@ public class SoReturnPrestockDTO {
         private String warehouseName;
 
         /** 退货类型字典值 */
-        private String returnTypeDict;
+        private String dictReturnType;
 
-        /** 入库时间 */
-        private LocalDateTime returnInstockTime;
+        /** 实际收货时间/签收时间 */
+        private LocalDateTime receivedTime;
 
         /** 操作时间 */
         private LocalDateTime operateTime;
@@ -177,7 +171,7 @@ public class SoReturnPrestockDTO {
         private String type;
 
         /** 退货类型字典值 */
-        private String returnTypeDict;
+        private String dictReturnType;
 
         /** 库存组织 ID */
         @NotBlank(message = "库存组织不能为空")
@@ -192,12 +186,6 @@ public class SoReturnPrestockDTO {
 
         /** 签收仓库名称 */
         private String warehouseName;
-
-        /** 来源单 ID（海外仓场景写入，手动创建时可不填） */
-        private String sourceId;
-
-        /** 来源单号 */
-        private String sourceCode;
 
         /** 第三方单据编号 */
         private String thirdCode;
@@ -268,7 +256,7 @@ public class SoReturnPrestockDTO {
         private Integer version;
 
         /** 退货类型字典值 */
-        private String returnTypeDict;
+        private String dictReturnType;
 
         /** 库存组织 ID */
         private String inventoryOrgId;
@@ -316,16 +304,10 @@ public class SoReturnPrestockDTO {
         private String returnLogisticCode;
 
         /** 关联状态 */
-        private String linkStatus;
+        private String claimStatus;
 
         /** 关联状态名称 */
-        private String linkStatusName;
-
-        /** 来源单 ID */
-        private String sourceId;
-
-        /** 来源单号 */
-        private String sourceCode;
+        private String claimStatusName;
 
         /** 来源类型 */
         private String sourceType;
@@ -349,10 +331,10 @@ public class SoReturnPrestockDTO {
         private String warehouseName;
 
         /** 退货类型字典值 */
-        private String returnTypeDict;
+        private String dictReturnType;
 
-        /** 入库时间 */
-        private LocalDateTime returnInstockTime;
+        /** 实际收货时间/签收时间 */
+        private LocalDateTime receivedTime;
 
         /** 操作时间 */
         private LocalDateTime operateTime;
