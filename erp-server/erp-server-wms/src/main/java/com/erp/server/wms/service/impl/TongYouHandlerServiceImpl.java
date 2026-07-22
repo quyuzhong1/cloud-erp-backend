@@ -49,6 +49,11 @@ import java.util.Map;
 @Service
 @Validated
 public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+
+    /**
+     * 通邮建单幂等关键词：相同 deliver_no（WFHD）重复提交时返回。
+     */
+    private static final String TONGYOU_ERROR_ORDER_ALREADY_EXISTS = "订单已存在";
     private static final String TONGYOU_ORDER_NOT_EXISTS = "订单不存在";
     private static final String TONGYOU_ORDER_DELETED = "已删除";
 
@@ -170,10 +175,64 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(TongYouCreateOutboundReq));
         TongYouBaseResp<TongYouOutboundResp> tongYouBaseResp = tongYouService.createOutboundBill(TongYouCreateOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
-        if(!isSuccess(tongYouBaseResp.getError())){
+        if (!isSuccess(tongYouBaseResp.getError())) {
+            // 通邮不幂等：相同 deliver_no 重复提交返回「订单已存在」，按参考号反查 waybill。
+            if (isOrderAlreadyExists(tongYouBaseResp.getContent())) {
+                return resolveExistingOutboundByDeliverNo(createOutboundReq.getReferenceNo(), tongYouBaseResp.getContent());
+            }
             return failure(tongYouBaseResp.getContent());
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().build());
+        // 通邮创建成功响应通常不带回仓侧单号，按 deliver_no 反查赋值 shippingOrderNo
+        return resolveExistingOutboundByDeliverNo(createOutboundReq.getReferenceNo(), tongYouBaseResp.getContent());
+    }
+
+    /**
+     * 判断通邮是否因「订单已存在」拒绝建单。
+     */
+    private boolean isOrderAlreadyExists(String content) {
+        return CharSequenceUtil.contains(content, TONGYOU_ERROR_ORDER_ALREADY_EXISTS);
+    }
+
+    /**
+     * 「订单已存在」或建单未带回单号时，按 deliver_no（WFHD）反查仓侧出库单号（waybill）。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> resolveExistingOutboundByDeliverNo(String referenceNo,
+                                                                                               String originalMessage) {
+        if (CharSequenceUtil.isBlank(referenceNo)) {
+            log.warn("{}无法反查通邮出库单：参考号为空", getPlatForm().getName());
+            // 幂等分支必须拿到单号；普通建单成功历史可不带 shippingOrderNo
+            if (isOrderAlreadyExists(originalMessage)) {
+                return failure(CharSequenceUtil.blankToDefault(originalMessage, TONGYOU_ERROR_ORDER_ALREADY_EXISTS));
+            }
+            return success(ThirdWarehouseQueryOutboundResponse.builder().build());
+        }
+        log.warn("{}按发货单号反查通邮出库单, deliver_no={}", getPlatForm().getName(), referenceNo);
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queryResult = queryOutboundBill(queryReq);
+            if (queryResult != null && queryResult.isSuccess()
+                    && queryResult.getData() != null
+                    && CharSequenceUtil.isNotBlank(queryResult.getData().getShippingOrderNo())) {
+                log.warn("{}反查成功，幂等命中已有订单, shippingOrderNo={}",
+                        getPlatForm().getName(), queryResult.getData().getShippingOrderNo());
+                return queryResult;
+            }
+            String queryMsg = queryResult == null ? "反查返回为空" : queryResult.getMsg();
+            log.warn("{}反查失败（deliver_no={}, msg={}），以原始信息返回",
+                    getPlatForm().getName(), referenceNo, queryMsg);
+            // 创建接口本身已成功但反查暂未拿到单号时，仍返回成功（兼容历史：通邮创建成功可不带单号）
+            if (!isOrderAlreadyExists(originalMessage)) {
+                return success(ThirdWarehouseQueryOutboundResponse.builder().build());
+            }
+        } catch (Exception e) {
+            log.warn("{}反查异常（deliver_no={}, err={}），以原始信息返回",
+                    getPlatForm().getName(), referenceNo, e.getMessage());
+            if (!isOrderAlreadyExists(originalMessage)) {
+                return success(ThirdWarehouseQueryOutboundResponse.builder().build());
+            }
+        }
+        return failure(CharSequenceUtil.blankToDefault(originalMessage, TONGYOU_ERROR_ORDER_ALREADY_EXISTS));
     }
 
     @Override
