@@ -49,8 +49,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -1041,27 +1039,16 @@ public class SoReturnPrestockServiceImpl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids) {
+        // 批量删除按整批原子处理：任意一条失败直接抛出异常，交由 @Transactional 整批回滚，
+        // 不再吞异常拼装逐条结果，避免"部分条目标记成功但实际被回滚"的结果与数据库状态不一致问题
         List<BatchResultDTO> results = new ArrayList<>(ids.size());
         for (String id : ids) {
-            try {
-                SoReturnPrestockEntity entity = getByIdOrThrow(id);
-                // 软删主表
-                removeById(entity.getId());
-                // 软删详情行
-                soReturnPrestockDetailService.deleteByMainId(entity.getId());
-                results.add(BatchResultDTO.success(id, entity.getCode()));
-            } catch (Exception e) {
-                log.error("删除预入库单失败, id={}", id, e);
-                results.add(BatchResultDTO.fail(id, id, e.getMessage()));
-            }
-        }
-        // 只要本批次中出现任意一条失败（包含"主表已软删成功、但详情软删失败"这种半成品状态），
-        // 就将当前事务标记为仅回滚：撤销本次调用内已执行的全部软删（含批内其它已成功的条目），
-        // 避免主表与明细软删状态不一致；仍正常返回逐条结果，便于前端展示具体哪些失败，
-        // 定位问题后整批重新发起删除
-        if (results.stream().anyMatch(r -> !Boolean.TRUE.equals(r.getSuccess()))
-                && TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            SoReturnPrestockEntity entity = getByIdOrThrow(id);
+            // 软删主表
+            removeById(entity.getId());
+            // 软删详情行
+            soReturnPrestockDetailService.deleteByMainId(entity.getId());
+            results.add(BatchResultDTO.success(id, entity.getCode()));
         }
         return results;
     }

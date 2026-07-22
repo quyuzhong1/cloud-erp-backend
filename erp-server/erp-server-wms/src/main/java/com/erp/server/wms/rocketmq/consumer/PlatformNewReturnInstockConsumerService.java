@@ -404,24 +404,34 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if (Objects.nonNull(bySoCode)) {
 			candidates.add(bySoCode);
 		}
-		return candidates.stream()
+		List<SoB2cEntity> validCandidates = candidates.stream()
 				.filter(v -> !Boolean.TRUE.equals(v.getInvalidStatus()))
 				.filter(v -> SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus()))
-				.filter(v -> soB2cHasMatchingSku(v.getId(), incomingSkuIds))
+				.collect(Collectors.toList());
+		Set<String> soIdsWithMatchingSku = soIdsWithMatchingB2cSku(validCandidates, incomingSkuIds);
+		return validCandidates.stream()
+				.filter(v -> soIdsWithMatchingSku.contains(v.getId()))
 				.findFirst()
 				.orElse(null);
 	}
 
 	/**
-	 * 校验B2C销售订单明细是否存在命中的ERP SKU
+	 * 批量一次性取全部候选B2C销售订单的明细，返回其中存在命中ERP SKU的订单ID集合，
+	 * 避免逐个候选订单发起Feign查询（此前 soB2cHasMatchingSku 在 Stream.filter 中被每个候选调用一次）
 	 */
-	private boolean soB2cHasMatchingSku(String soId, Set<String> incomingSkuIds) {
-		if (CollectionUtils.isEmpty(incomingSkuIds)) {
-			return false;
+	private Set<String> soIdsWithMatchingB2cSku(List<SoB2cEntity> candidates, Set<String> incomingSkuIds) {
+		if (CollectionUtils.isEmpty(candidates) || CollectionUtils.isEmpty(incomingSkuIds)) {
+			return Collections.emptySet();
 		}
-		List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
-		return CollectionUtils.isNotEmpty(detailList) && detailList.stream()
-				.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
+		List<String> candidateIds = candidates.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+		List<SoB2cDetailEntity> allDetails = soB2cFeign.listDetailByMainIds(candidateIds);
+		if (CollectionUtils.isEmpty(allDetails)) {
+			return Collections.emptySet();
+		}
+		return allDetails.stream()
+				.filter(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()))
+				.map(SoB2cDetailEntity::getMainId)
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -438,23 +448,33 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if (Objects.nonNull(byCode)) {
 			candidates.add(byCode);
 		}
-		return candidates.stream()
+		List<SoInfoEntity> validCandidates = candidates.stream()
 				.filter(v -> !Boolean.TRUE.equals(v.getInvalidStatus()))
-				.filter(v -> soInfoHasMatchingSku(v.getId(), incomingSkuIds))
+				.collect(Collectors.toList());
+		Set<String> soInfoIdsWithMatchingSku = soInfoIdsWithMatchingSku(validCandidates, incomingSkuIds);
+		return validCandidates.stream()
+				.filter(v -> soInfoIdsWithMatchingSku.contains(v.getId()))
 				.findFirst()
 				.orElse(null);
 	}
 
 	/**
-	 * 校验B2B销售订单明细是否存在命中的ERP SKU
+	 * 批量一次性取全部候选B2B销售订单的明细，返回其中存在命中ERP SKU的订单ID集合，
+	 * 避免逐个候选订单发起Feign查询（此前 soInfoHasMatchingSku 在 Stream.filter 中被每个候选调用一次）
 	 */
-	private boolean soInfoHasMatchingSku(String soInfoId, Set<String> incomingSkuIds) {
-		if (CollectionUtils.isEmpty(incomingSkuIds)) {
-			return false;
+	private Set<String> soInfoIdsWithMatchingSku(List<SoInfoEntity> candidates, Set<String> incomingSkuIds) {
+		if (CollectionUtils.isEmpty(candidates) || CollectionUtils.isEmpty(incomingSkuIds)) {
+			return Collections.emptySet();
 		}
-		List<SoDetailEntity> detailList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soInfoId));
-		return CollectionUtils.isNotEmpty(detailList) && detailList.stream()
-				.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
+		List<String> candidateIds = candidates.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+		List<SoDetailEntity> allDetails = soInfoFeign.listSoDetailByMainIds(candidateIds);
+		if (CollectionUtils.isEmpty(allDetails)) {
+			return Collections.emptySet();
+		}
+		return allDetails.stream()
+				.filter(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()))
+				.map(SoDetailEntity::getMainId)
+				.collect(Collectors.toSet());
 	}
 
 	/**
