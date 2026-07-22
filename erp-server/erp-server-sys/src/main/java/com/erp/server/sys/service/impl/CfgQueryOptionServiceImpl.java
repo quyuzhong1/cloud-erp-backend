@@ -3,6 +3,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -18,6 +19,7 @@ import com.erp.server.sys.service.CfgQueryOptionService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, allEntries = true)
     @Override
     public BaseResultDTO.AddDTO add(CfgQueryOptionDTO.AddDTO addDTO) {
         if(StringUtils.isBlank(addDTO.getSelectLabel())){
@@ -66,6 +69,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, allEntries = true)
     @Override
     public Boolean update(CfgQueryOptionDTO.UpdateDTO updateDTO) {
         CfgQueryOptionEntity old = super.getById(updateDTO.getId());
@@ -89,6 +93,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     }
 
     @Override
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, allEntries = true)
     public void delete(BaseIdsDTO.IdsDTO dto) {
         this.removeByIds(dto.getIds());
     }

@@ -414,6 +414,10 @@ public interface RedisCacheConstants {
     String BASE_DICT_BASIC_BY_TYPE = "cache:{}:dict:type::{}";
     //每个系统缓存格式: cache:系统编码:dict:type
     String SYS_DICT_BASIC_BY_TYPE = "cache:sys:dict:type";
+    /**
+     * 高级查询条件配置，按页面/menu code 缓存。
+     */
+    String SYS_CFG_QUERY_CONDITION_BY_CODE = "cache:sys:cfgQueryCondition:code";
     String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
     String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";
     String SCM_DICT_BASIC_BY_TYPE = "cache:scm:dict:type";

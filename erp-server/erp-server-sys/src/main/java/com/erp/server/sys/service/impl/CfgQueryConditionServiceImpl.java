@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.QueryConditionEnum;
@@ -19,6 +20,8 @@ import com.erp.server.sys.service.CfgQueryConditionService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, allEntries = true)
     public Boolean add(CfgQueryConditionDTO.AddDTO dto) {
         List<CfgQueryConditionEntity> dbEntityList = this.listByCode(dto.getCode());
         if(dbEntityList.stream().anyMatch(v->v.getValue().equals(dto.getValue()) && v.getDisplayType().equals(dto.getDisplayType()))){
@@ -62,6 +66,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, allEntries = true)
     public Boolean update(CfgQueryConditionDTO.UpdateDTO dto) {
         CfgQueryConditionEntity entity = this.getById(dto.getId());
         BeanUtil.copyProperties(dto,entity,"id");
@@ -73,6 +78,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     }
 
     @Override
+    @Cacheable(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, key = "#code", sync = true)
     public List<CfgQueryConditionDTO.ViewDTO> getQueryCondition(String code) {
         List<CfgQueryConditionDTO.ViewDTO> viewList = baseMapper.getQueryConditionByCode(code);
         viewList.forEach(v->{
@@ -104,6 +110,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     }
 
     @Override
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, allEntries = true)
     public Boolean delete(BaseIdsDTO.IdsDTO idsDTO) {
         return this.removeByIds(idsDTO.getIds());
     }
