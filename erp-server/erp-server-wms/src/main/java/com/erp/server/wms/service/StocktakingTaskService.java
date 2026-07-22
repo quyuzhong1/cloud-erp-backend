@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -154,23 +155,60 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     Boolean approveEnd(ApproveOneDTO approveOne, StocktakingTaskEntity entity);
 
     /**
-     * 按盘点任务明细释放 Redis 盘点库存锁（工作流/Feign/补偿统一入口；有事务时 afterCommit 执行并重试）。
+     * 盘点任务审核通过后释放 Redis 盘点库存锁（工作流/Feign 统一入口；有事务时 afterCommit 执行并重试）。
      * <p>
-     * 释锁采用 planCode+wh+库位+sku 通配（orgId/status=*）；边界说明见实现类 {@code releaseInventoryLockByTask} 方法注释。
+     * 按 task-keys 索引精确删除本任务占用的 lock；无索引时按任务明细推导 lockKey 兜底。
+     * 若同计划其它未完成任务仍引用同一 lockKey 则保留。
+     * 计划下全部任务均为「已完成」时，再触发 plan 级兜底释锁。
      */
     void releaseInventoryLockByTaskId(String taskId);
 
     /**
-     * 按计划单号 SCAN 匹配并删除该计划全部 Redis 库存锁（反审核、下推失败回滚等调用）。
-     * 实现细节见 {@link com.erp.server.wms.service.impl.StocktakingTaskServiceImpl#releaseInventoryLockByPlanCode}。
+     * 按计划单号释放该计划全部 Redis 库存锁（反审核、下推失败回滚等调用）。
+     * 优先读取 plan-keys 索引精确删除；无索引时回退 SCAN。
      */
     void releaseInventoryLockByPlanCode(String planCode);
 
     /**
-     * 判断指定库存维度是否已被盘点占用。
-     * 实现细节见 {@link com.erp.server.wms.service.impl.StocktakingTaskServiceImpl#isInventoryLockedForStocktaking}。
+     * 判断指定库存维度是否已被其它盘点计划占用（同 planCode 的锁不计入冲突）。
+     *
+     * @param planCode             当前计划单号；为空时任意已存在锁均视为占用
+     * @param orgId                组织 ID
+     * @param warehouseId          仓库 ID
+     * @param warehouseLocation    库位
+     * @param skuId                SKU ID
+     * @param dictInventoryStatus  库存状态
+     * @return 存在其它计划占用锁时返回 true
      */
-    boolean isInventoryLockedForStocktaking(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus);
+    boolean isInventoryLockedForStocktaking(String planCode, String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus);
+
+    /**
+     * 在库存维度分布式锁内执行盘点 Redis 库存锁预检与写入（须通过 Spring 代理调用以触发 {@code @DistributeLocker}）。
+     *
+     * @param planCode      计划单号
+     * @param inventoryList 待加锁库存行
+     */
+    void acquireStocktakingInventoryLocks(String planCode, List<InventoryEntity> inventoryList);
+
+    /**
+     * 在库存维度分布式锁内执行预检与写入（调用方须已完成库存行校验，不再重复校验）。
+     * <p>
+     * 大计划分批加锁时由 {@link #acquireStocktakingInventoryLocksByPlan(String, List)} 逐批调用。
+     *
+     * @param planCode      计划单号
+     * @param inventoryList 待加锁库存行（已通过校验）
+     */
+    void acquireStocktakingInventoryLocksAfterValidated(String planCode, List<InventoryEntity> inventoryList);
+
+    /**
+     * 大计划分批加锁：planCode 分布式锁覆盖全部分批过程，各批内再调用 {@link #acquireStocktakingInventoryLocksAfterValidated(String, List)} 获取维度 MultiLock。
+     * <p>
+     * 维度数超过实现类阈值时由 {@code lockInventoryForStocktaking} 经 Spring 代理调用。
+     *
+     * @param planCode      计划单号
+     * @param inventoryList 待加锁库存行（库位已规范化）
+     */
+    void acquireStocktakingInventoryLocksByPlan(String planCode, List<InventoryEntity> inventoryList);
 
     /**
      * 根据code 获取任务信息

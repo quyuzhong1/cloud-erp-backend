@@ -43,6 +43,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.StocktakingPlanMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.util.StocktakingInventoryLockHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -387,18 +388,26 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
+    /**
+     * 反审核前置校验：存在「盘点中/复盘中」任务时不允许反审核；已完成或未开始的任务不阻断。
+     *
+     * @param entity 盘点计划
+     * @return 校验通过时返回 true
+     */
     private Boolean validateDisApprove(StocktakingPlanEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
-        // 下游盘点计划单全部为未开始时允许反审核
         List<StocktakingTaskEntity> taskEntityList = stocktakingTaskService.listBySourceId(entity.getId());
-        if(CollUtil.isEmpty(taskEntityList)){
+        if (CollUtil.isEmpty(taskEntityList)) {
             return true;
         }
-        Optional<StocktakingTaskEntity> first = taskEntityList.stream().filter(item -> !Objects.equals(item.getStatus(), StocktakingStatusEnum.NOT_STARTED)).findFirst();
-        if(first.isPresent()){
+        Optional<StocktakingTaskEntity> inProgressTask = taskEntityList.stream()
+                .filter(item -> Objects.equals(item.getStatus(), StocktakingStatusEnum.IN_PROGRESS)
+                        || Objects.equals(item.getStatus(), StocktakingStatusEnum.RECOUNT))
+                .findFirst();
+        if (inProgressTask.isPresent()) {
             throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_STARTED);
         }
         return true;
@@ -811,12 +820,14 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                 boolean hasConflict = false;
                 Set<String> checkedDimensions = new HashSet<>();
                 for (InventoryEntity item : inventoryList) {
-                    String dimensionKey = CharSequenceUtil.format("{}_{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(),
-                            item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+                    String normalizedLocation = StocktakingInventoryLockHelper.normalizeWarehouseLocation(
+                            item.getWarehouseLocation(), item.getDictInventoryStatus());
+                    String dimensionKey = StocktakingInventoryLockHelper.buildDimensionKey(item.getOrgId(),
+                            item.getWarehouseId(), normalizedLocation, item.getSkuId(), item.getDictInventoryStatus());
                     if (!checkedDimensions.add(dimensionKey)) {
                         continue;
                     }
-                    if (stocktakingTaskService.isInventoryLockedForStocktaking(item.getOrgId(), item.getWarehouseId(),
+                    if (stocktakingTaskService.isInventoryLockedForStocktaking(entity.getCode(), item.getOrgId(), item.getWarehouseId(),
                             item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus())) {
                         String warehouseName = resolveWarehouseNameById(item.getWarehouseId());
                         log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存已存在盘点任务，跳过该计划",
@@ -835,7 +846,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                     idIterator.remove();
                 }
             } catch (Exception e) {
-                log.warn("盘点计划【{}】处理异常，跳过该计划", entity.getId(), e);
+                log.warn("盘点计划【{}】库存锁定预检异常，跳过该计划", entity.getId(), e);
                 removedIds.put(planId, "处理异常");
                 idIterator.remove();
             }

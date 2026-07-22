@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -28,6 +29,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -35,14 +37,16 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelImportHelper;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelTemplateWriter;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.utils.StocktakingInventoryLockRedisUtil;
+import com.erp.server.wms.util.StocktakingInventoryLockHelper;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +54,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -76,6 +81,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTaskMapper, StocktakingTaskEntity> implements StocktakingTaskService {
 
+    /**
+     * 临界区内 setIfAbsent 分批大小（不拆分 MultiLock，仅分批写入）。
+     * <p>
+     * 盘点库存 Redis lock / 索引生命周期（与 UAT/历史 {@code lockInventoryForStocktaking} 一致）：
+     * 加锁 {@code SET NX} 不设 TTL，释锁靠业务显式 {@code DEL}；索引随释锁/回滚清理，异常残留走 plan 级 SCAN 兜底。
+     */
+    private static final int STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE = 200;
+
+    /** 超过该唯一维度数时分批维度分布式锁，单批不超过此值，避免 Redisson MultiLock 过大超时 */
+    private static final int STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD = 300;
 
     @Resource
     private StocktakingTaskDetailService stocktakingTaskDetailService;
@@ -98,7 +113,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Resource
     private RedisUtil redisUtil;
     @Resource
-    private StocktakingInventoryLockRedisUtil stocktakingInventoryLockRedisUtil;
+    @Lazy
+    private StocktakingTaskService self;
     @Resource
     private WarehouseLocationService warehouseLocationService;
     @Resource
@@ -593,7 +609,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         return result;
     }
 
-    /** {@inheritDoc} */
     @Override
     public void releaseInventoryLockByTaskId(String taskId) {
         if (CharSequenceUtil.isBlank(taskId)) {
@@ -605,46 +620,100 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return;
         }
         String planCode = task.getSourceCode();
-        runAfterCommit(() -> releaseInventoryLockByTaskWithRetry(taskId, planCode));
+        runAfterCommit(() -> releaseInventoryLockByTaskWithRetry(taskId, planCode, "releaseByTaskId:" + taskId));
     }
 
     /**
      * 按计划单号释放该计划下全部 Redis 盘点库存锁。
      * <p>
-     * 释锁语义：按 {@code lock:wms:inventory:{planCode}_*} SCAN 后删除；不校验 key value 是否为 planCode
-     * （与历史 Controller {@code keys().forEach(del)} 一致）；pattern 已限定本计划单号。
+     * 优先从 plan-keys 索引精确删除；无索引时回退 {@code lock:wms:inventory:{planCode}_*} SCAN（历史数据）。
      */
     @Override
     public void releaseInventoryLockByPlanCode(String planCode) {
         if (CharSequenceUtil.isBlank(planCode)) {
             return;
         }
+        int releasedFromIndex = releaseInventoryLockByPlanCodeFromIndex(planCode);
+        int releasedFromLegacy = 0;
+        if (!isPlanInventoryLockFullyReleased(planCode)) {
+            releasedFromLegacy = releaseInventoryLockByPlanCodeLegacy(planCode);
+        }
+        if (releasedFromIndex + releasedFromLegacy > 0) {
+            log.warn("释放盘点计划库存锁：planCode={}, indexCount={}, legacyCount={}",
+                    planCode, releasedFromIndex, releasedFromLegacy);
+        }
+    }
+
+    /**
+     * 从 plan-keys 索引精确释锁。
+     *
+     * @param planCode 计划单号
+     * @return 成功删除的 lock 数量
+     */
+    private int releaseInventoryLockByPlanCodeFromIndex(String planCode) {
+        String indexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_PLAN_KEYS, planCode);
+        Set<Object> lockKeys = redisUtil.sGet(indexKey);
+        if (CollUtil.isEmpty(lockKeys)) {
+            return 0;
+        }
+        int releasedCount = 0;
+        for (Object lockKeyObj : lockKeys) {
+            String lockKey = String.valueOf(lockKeyObj);
+            if (releaseInventoryLockIfOwnedByPlan(lockKey, planCode)) {
+                releasedCount++;
+                redisUtil.setRemove(indexKey, lockKeyObj);
+            } else if (!isInventoryLockOwnedByPlan(lockKey, planCode)) {
+                redisUtil.setRemove(indexKey, lockKeyObj);
+            } else {
+                log.warn("计划释锁跳过非本计划 key，保留 index 成员：planCode={}, lockKey={}", planCode, lockKey);
+            }
+        }
+        cleanupInventoryLockIndexIfEmpty(indexKey);
+        return releasedCount;
+    }
+
+    /**
+     * 历史计划或 index 未覆盖 lock 时的释锁兜底：按 planCode 前缀 SCAN，仅删除本 plan 占用的 key。
+     *
+     * @param planCode 计划单号
+     * @return 成功删除的 lock 数量
+     */
+    private int releaseInventoryLockByPlanCodeLegacy(String planCode) {
         String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, planCode);
         Collection<String> keys = redisUtil.scanKeys(keyPattern);
         if (CollUtil.isEmpty(keys)) {
-            return;
+            return 0;
         }
-        keys.forEach(redisUtil::del);
-        log.warn("释放盘点计划库存锁：planCode={}, count={}", planCode, keys.size());
+        int releasedCount = 0;
+        for (String key : keys) {
+            if (releaseInventoryLockIfOwnedByPlan(key, planCode)) {
+                releasedCount++;
+            }
+        }
+        if (releasedCount > 0) {
+            log.warn("释放盘点计划库存锁(legacy)：planCode={}, count={}", planCode, releasedCount);
+        }
+        return releasedCount;
     }
 
     /** 任务释锁重试封装，见 {@link #releaseInventoryLockByTask(StocktakingTaskEntity)} 设计说明 */
-    private void releaseInventoryLockByTaskWithRetry(String taskId, String planCode) {
+    private void releaseInventoryLockByTaskWithRetry(String taskId, String planCode, String context) {
         try {
             StocktakingTaskEntity task = getById(taskId);
             releaseInventoryLockByTask(task);
         } catch (Exception e) {
-            log.error("盘点任务释锁失败，重试一次：taskId={}, planCode={}", taskId, planCode, e);
+            log.error("盘点任务释锁失败，重试一次：taskId={}, planCode={}, context={}", taskId, planCode, context, e);
             try {
                 StocktakingTaskEntity task = getById(taskId);
                 releaseInventoryLockByTask(task);
             } catch (Exception retryEx) {
-                log.error("盘点任务释锁重试仍失败，需人工清理 Redis 锁：taskId={}, planCode={}", taskId, planCode, retryEx);
+                log.error("盘点任务释锁重试仍失败，需人工处理 Redis 锁：taskId={}, planCode={}, context={}",
+                        taskId, planCode, context, retryEx);
             }
         }
     }
 
-    /** 计划下全部任务已删时使用；失败重试一次，仍失败需人工清理 Redis */
+    /** 计划下全部任务已删时使用；失败重试一次，仍失败仅记录错误日志 */
     private void releaseInventoryLockByPlanCodeWithRetry(String planCode, String context) {
         try {
             releaseInventoryLockByPlanCode(planCode);
@@ -653,50 +722,431 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             try {
                 releaseInventoryLockByPlanCode(planCode);
             } catch (Exception retryEx) {
-                log.error("盘点计划释锁重试仍失败，需人工清理 Redis 锁：context={}, planCode={}", context, planCode, retryEx);
+                log.error("盘点计划释锁重试仍失败，需人工处理 Redis 锁：context={}, planCode={}", context, planCode, retryEx);
             }
         }
     }
 
     /**
-     * 按任务明细释放 Redis 盘点库存锁（与 {@link #lockInventoryForStocktaking} 成对）。
+     * 按任务释放 Redis 盘点库存锁。
      * <p>
-     * 通配释锁边界（与历史 Controller 行为一致）：
-     * <ul>
-     *   <li>任务级按 {@code planCode + wh + 库位 + sku} 通配（orgId/status 为 *）SCAN 释锁</li>
-     *   <li>范围已限定本计划单号，不按 plan 整批释锁（同计划其它任务可能仍在途）</li>
-     *   <li>明细未落库 orgId，故不用 inventory 反查精确 key，避免反查失败导致锁残留</li>
-     *   <li>若同一计划下多任务并发、且共享 wh+库位+SKU 但 org 不同，本任务审核通过可能顺带释放其它在途任务的锁；
-     *       现网暂无此类数据，故维持通配</li>
-     *   <li>SCAN 后无条件 DEL，不校验 value；相同 wh+库位+SKU 的多条明细可能重复 SCAN</li>
-     * </ul>
-     * 对外入口与审核路径均 afterCommit + 重试。
+     * 按 task-keys 索引成员精确释锁；无索引时按任务明细推导 lockKey 兜底。
+     * 同一 lockKey 若仍被本计划下其它未完成任务引用，则保留该锁。
+     * 计划下全部任务完成后，再触发 plan 级兜底释锁。
      */
     private void releaseInventoryLockByTask(StocktakingTaskEntity task) {
         if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceCode())) {
             return;
         }
-        List<StocktakingTaskDetailEntity> detailList = stocktakingTaskDetailService.listBaseByMainIds(Collections.singletonList(task.getId()));
-        if (CollUtil.isEmpty(detailList)) {
-            return;
-        }
         String planCode = task.getSourceCode();
-        detailList.forEach(detail -> releaseInventoryLockByDetail(planCode, task.getCode(), detail));
+        String taskId = task.getId();
+        String indexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_TASK_KEYS, taskId);
+        Set<Object> indexedLockKeys = redisUtil.sGet(indexKey);
+        if (CollUtil.isEmpty(indexedLockKeys)) {
+            Set<String> derivedLockKeys = resolveTaskInventoryLockKeysFromDetails(task, planCode);
+            if (CollUtil.isEmpty(derivedLockKeys)) {
+                log.warn("释锁跳过：任务无 task-keys 且无法从明细推导 lockKey：taskCode={}", task.getCode());
+            } else {
+                log.warn("释锁兜底：任务无 task-keys，按明细推导 lockKey：taskCode={}, keyCount={}",
+                        task.getCode(), derivedLockKeys.size());
+                indexedLockKeys = new HashSet<>(derivedLockKeys);
+            }
+        }
+        if (CollUtil.isNotEmpty(indexedLockKeys)) {
+            Set<String> otherReferencedLockKeys = loadLockKeysReferencedByOtherIncompleteTasks(task.getSourceId(), taskId);
+            int releasedCount = 0;
+            int skippedSharedCount = 0;
+            for (Object lockKeyObj : indexedLockKeys) {
+                String lockKey = String.valueOf(lockKeyObj);
+                if (otherReferencedLockKeys.contains(lockKey)) {
+                    skippedSharedCount++;
+                    continue;
+                }
+                if (releaseInventoryLockIfOwnedByPlan(lockKey, planCode)) {
+                    releasedCount++;
+                }
+                removeLockKeyFromPlanIndex(planCode, lockKey);
+            }
+            log.warn("释放盘点任务库存锁：taskCode={}, releasedCount={}, skippedSharedCount={}",
+                    task.getCode(), releasedCount, skippedSharedCount);
+        }
+        redisUtil.del(indexKey);
+        tryReleasePlanInventoryLockWhenAllTasksCompleted(task);
     }
 
     /**
-     * 按明细 wh+库位+sku 通配 SCAN 释锁（orgId/status 为 *）。
-     * <p>
-     * pattern 示例：{@code lock:wms:inventory:{planCode}_*_{wh}_{loc}_{sku}_*}，
-     * 会删除该计划下该库存维度的全部 org/状态锁，见 {@link #releaseInventoryLockByTask} 方法注释。
+     * 批量加载同计划下其它未完成任务引用的 lockKey（无索引任务共用一次库存/仓库反查，避免 N+1）。
+     *
+     * @param sourceId      计划 id
+     * @param excludeTaskId 当前释锁任务 id（排除自身 task-keys）
+     * @return 仍被其它未完成任务引用的 lockKey 集合；无引用时返回空 Set
      */
-    private void releaseInventoryLockByDetail(String planCode, String taskCode, StocktakingTaskDetailEntity detail) {
-        String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, "*",
-                detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
+    private Set<String> loadLockKeysReferencedByOtherIncompleteTasks(String sourceId, String excludeTaskId) {
+        if (CharSequenceUtil.isBlank(sourceId)) {
+            return Collections.emptySet();
+        }
+        List<StocktakingTaskEntity> planTasks = listBySourceId(sourceId);
+        if (CollUtil.isEmpty(planTasks)) {
+            return Collections.emptySet();
+        }
+        Set<String> referencedLockKeys = new HashSet<>();
+        List<StocktakingTaskEntity> deriveTasks = new ArrayList<>();
+        for (StocktakingTaskEntity planTask : planTasks) {
+            if (Objects.equals(planTask.getId(), excludeTaskId)) {
+                continue;
+            }
+            if (Objects.equals(planTask.getStatus(), StocktakingStatusEnum.COMPLETED)) {
+                continue;
+            }
+            String otherIndexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_TASK_KEYS, planTask.getId());
+            Set<Object> otherLockKeys = redisUtil.sGet(otherIndexKey);
+            if (CollUtil.isNotEmpty(otherLockKeys)) {
+                for (Object otherLockKeyObj : otherLockKeys) {
+                    referencedLockKeys.add(String.valueOf(otherLockKeyObj));
+                }
+                continue;
+            }
+            deriveTasks.add(planTask);
+        }
+        if (CollUtil.isEmpty(deriveTasks)) {
+            return referencedLockKeys;
+        }
+        List<String> deriveTaskIds = deriveTasks.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
+        List<StocktakingTaskDetailEntity> allDetailList = stocktakingTaskDetailService.listBaseByMainIds(deriveTaskIds);
+        InventoryLockDeriveContext deriveContext = buildInventoryLockDeriveContext(allDetailList);
+        Map<String, List<StocktakingTaskDetailEntity>> detailsByTaskId = allDetailList.stream()
+                .collect(Collectors.groupingBy(StocktakingTaskDetailEntity::getMainId));
+        for (StocktakingTaskEntity planTask : deriveTasks) {
+            referencedLockKeys.addAll(resolveTaskInventoryLockKeysFromDetails(planTask, planTask.getSourceCode(),
+                    deriveContext, detailsByTaskId.get(planTask.getId())));
+        }
+        return referencedLockKeys;
+    }
+
+    /**
+     * 无 task-keys 索引时，按任务明细 + 库存反查 org 推导本任务可能占用的 lockKey 集合。
+     *
+     * @param task     盘点任务
+     * @param planCode 计划单号
+     * @return 推导出的 lockKey 集合；无法推导时返回空 Set
+     */
+    private Set<String> resolveTaskInventoryLockKeysFromDetails(StocktakingTaskEntity task, String planCode) {
+        List<StocktakingTaskDetailEntity> detailList = stocktakingTaskDetailService.listBaseByMainIds(
+                Collections.singletonList(task.getId()));
+        InventoryLockDeriveContext deriveContext = buildInventoryLockDeriveContext(detailList);
+        return resolveTaskInventoryLockKeysFromDetails(task, planCode, deriveContext, detailList);
+    }
+
+    /**
+     * 在已构建的反查上下文中按任务明细推导 lockKey（批量释锁兜底复用，避免重复查库存/仓库）。
+     *
+     * @param task          盘点任务
+     * @param planCode      计划单号
+     * @param deriveContext 共用 org/仓库反查结果
+     * @param detailList    该任务明细；为空时返回空 Set
+     * @return 推导出的 lockKey 集合
+     */
+    private Set<String> resolveTaskInventoryLockKeysFromDetails(StocktakingTaskEntity task, String planCode,
+                                                                InventoryLockDeriveContext deriveContext,
+                                                                List<StocktakingTaskDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptySet();
+        }
+        Set<String> lockKeys = new LinkedHashSet<>();
+        for (StocktakingTaskDetailEntity detail : detailList) {
+            if (detail.getUsableQty() != null) {
+                appendDetailInventoryLockKeys(lockKeys, planCode, detail, InventoryStatusEnum.USABLE.getCode(), deriveContext);
+            }
+            if (detail.getFrozenQty() != null) {
+                appendDetailInventoryLockKeys(lockKeys, planCode, detail, InventoryStatusEnum.FROZEN.getCode(), deriveContext);
+            }
+        }
+        return lockKeys;
+    }
+
+    /**
+     * 按明细维度反查 org 后追加完整 lockKey；org 未知时回退 plan+wh+库位+sku+status 通配 SCAN（与 UAT 通配释锁一致）。
+     */
+    private void appendDetailInventoryLockKeys(Set<String> lockKeys, String planCode, StocktakingTaskDetailEntity detail,
+                                               String inventoryStatus, InventoryLockDeriveContext deriveContext) {
+        List<String> orgIds = resolveInventoryOrgIdsForDetail(detail, inventoryStatus, deriveContext);
+        if (CollUtil.isEmpty(orgIds)) {
+            appendDetailInventoryLockKeysFromPatternScan(lockKeys, planCode, detail, inventoryStatus);
+            return;
+        }
+        for (String orgId : orgIds) {
+            lockKeys.add(buildInventoryLockRedisKey(planCode, orgId, detail.getWarehouseId(),
+                    detail.getWarehouseLocation(), detail.getSkuId(), inventoryStatus));
+            if (StocktakingInventoryLockHelper.isRawWarehouseLocationDifferent(detail.getWarehouseLocation(), inventoryStatus)) {
+                lockKeys.add(CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, orgId,
+                        detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), inventoryStatus));
+            }
+        }
+    }
+
+    /**
+     * org 无法反查时，按 planCode+wh+库位+sku+status 通配 SCAN 收集本 plan 占用的 lockKey。
+     */
+    private void appendDetailInventoryLockKeysFromPatternScan(Set<String> lockKeys, String planCode,
+                                                              StocktakingTaskDetailEntity detail, String inventoryStatus) {
+        String normalizedLocation = normalizeWarehouseLocationForInventoryLock(detail.getWarehouseLocation(), inventoryStatus);
+        collectPlanOwnedLockKeysFromPattern(lockKeys, planCode, CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK,
+                planCode, "*", detail.getWarehouseId(), normalizedLocation, detail.getSkuId(), inventoryStatus));
+        if (StocktakingInventoryLockHelper.isRawWarehouseLocationDifferent(detail.getWarehouseLocation(), inventoryStatus)) {
+            collectPlanOwnedLockKeysFromPattern(lockKeys, planCode, CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK,
+                    planCode, "*", detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), inventoryStatus));
+        }
+    }
+
+    /**
+     * SCAN 匹配 pattern 下 value 为本 plan 的 lockKey 并加入集合。
+     */
+    private void collectPlanOwnedLockKeysFromPattern(Set<String> lockKeys, String planCode, String keyPattern) {
         Collection<String> keys = redisUtil.scanKeys(keyPattern);
-        if (CollUtil.isNotEmpty(keys)) {
-            keys.forEach(redisUtil::del);
-            log.warn("释放盘点任务库存锁：taskCode={}, pattern={}, count={}", taskCode, keyPattern, keys.size());
+        if (CollUtil.isEmpty(keys)) {
+            return;
+        }
+        for (String lockKey : keys) {
+            if (isInventoryLockOwnedByPlan(lockKey, planCode)) {
+                lockKeys.add(lockKey);
+            }
+        }
+    }
+
+    /**
+     * 无 task-keys 释锁兜底：一次性构建 wh+库位+sku+status → orgId 与仓库 org 反查表。
+     */
+    private InventoryLockDeriveContext buildInventoryLockDeriveContext(List<StocktakingTaskDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return new InventoryLockDeriveContext(Collections.emptyMap(), Collections.emptyMap());
+        }
+        return new InventoryLockDeriveContext(buildInventoryOrgIdsLookupByDetails(detailList),
+                resolveWarehouseOrgMap(detailList));
+    }
+
+    /**
+     * 批量加载 wh+库位+sku+status → orgId 列表，供无 task-keys 释锁兜底使用。
+     */
+    private Map<String, List<String>> buildInventoryOrgIdsLookupByDetails(List<StocktakingTaskDetailEntity> detailList) {
+        List<String> warehouseIds = detailList.stream()
+                .map(StocktakingTaskDetailEntity::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> skuIds = detailList.stream()
+                .map(StocktakingTaskDetailEntity::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(warehouseIds) || CollUtil.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<InventoryEntity> inventoryRows = inventoryService.lambdaQuery()
+                .in(InventoryEntity::getWarehouseId, warehouseIds)
+                .in(InventoryEntity::getSkuId, skuIds)
+                .in(InventoryEntity::getDictInventoryStatus,
+                        Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()))
+                .list();
+        if (CollUtil.isEmpty(inventoryRows)) {
+            return Collections.emptyMap();
+        }
+        Map<String, List<String>> lookup = new HashMap<>();
+        for (InventoryEntity inventory : inventoryRows) {
+            if (CharSequenceUtil.isBlank(inventory.getOrgId())) {
+                continue;
+            }
+            String dimKey = StocktakingInventoryLockHelper.buildDimensionKeyWithoutOrg(inventory.getWarehouseId(),
+                    inventory.getWarehouseLocation(), inventory.getSkuId(), inventory.getDictInventoryStatus());
+            lookup.computeIfAbsent(dimKey, key -> new ArrayList<>());
+            List<String> orgIds = lookup.get(dimKey);
+            if (!orgIds.contains(inventory.getOrgId())) {
+                orgIds.add(inventory.getOrgId());
+            }
+        }
+        return lookup;
+    }
+
+    /**
+     * 解析单条明细在指定库存状态下可能对应的 orgId 列表。
+     */
+    private List<String> resolveInventoryOrgIdsForDetail(StocktakingTaskDetailEntity detail, String inventoryStatus,
+                                                         InventoryLockDeriveContext deriveContext) {
+        String dimKey = StocktakingInventoryLockHelper.buildDimensionKeyWithoutOrg(detail.getWarehouseId(),
+                detail.getWarehouseLocation(), detail.getSkuId(), inventoryStatus);
+        List<String> orgIds = deriveContext.getOrgLookup().get(dimKey);
+        if (CollUtil.isNotEmpty(orgIds)) {
+            return orgIds;
+        }
+        String fallbackOrgId = deriveContext.getWarehouseOrgFallbackMap().get(detail.getWarehouseId());
+        if (CharSequenceUtil.isBlank(fallbackOrgId)) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(fallbackOrgId);
+    }
+
+    /**
+     * 批量解析仓库 orgId，供无 task-keys 释锁兜底使用。
+     */
+    private Map<String, String> resolveWarehouseOrgMap(List<StocktakingTaskDetailEntity> detailList) {
+        List<String> warehouseIds = detailList.stream()
+                .map(StocktakingTaskDetailEntity::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return Collections.emptyMap();
+        }
+        return warehouseService.listByIds(warehouseIds).stream()
+                .filter(warehouse -> CharSequenceUtil.isNotBlank(warehouse.getOrgId()))
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId, (a, b) -> a));
+    }
+
+    /**
+     * 从 plan-keys 索引移除单条 lockKey 成员。
+     *
+     * @param planCode 计划单号
+     * @param lockKey  完整 Redis lock key
+     */
+    private void removeLockKeyFromPlanIndex(String planCode, String lockKey) {
+        if (CharSequenceUtil.isBlank(planCode) || CharSequenceUtil.isBlank(lockKey)) {
+            return;
+        }
+        String indexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_PLAN_KEYS, planCode);
+        redisUtil.setRemove(indexKey, lockKey);
+        cleanupInventoryLockIndexIfEmpty(indexKey);
+    }
+
+    /**
+     * 计划下全部在途任务已完成时，释放 plan 级 Redis 库存锁。
+     */
+    private void tryReleasePlanInventoryLockWhenAllTasksCompleted(StocktakingTaskEntity task) {
+        if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceId())
+                || CharSequenceUtil.isBlank(task.getSourceCode())) {
+            return;
+        }
+        List<StocktakingTaskEntity> planTasks = listBySourceId(task.getSourceId());
+        if (CollUtil.isEmpty(planTasks)) {
+            releaseInventoryLockByPlanCodeWithRetry(task.getSourceCode(),
+                    "allTasksCompleted:" + task.getSourceId());
+            return;
+        }
+        boolean allCompleted = planTasks.stream()
+                .allMatch(planTask -> Objects.equals(planTask.getStatus(), StocktakingStatusEnum.COMPLETED));
+        if (allCompleted) {
+            releaseInventoryLockByPlanCodeWithRetry(task.getSourceCode(),
+                    "allTasksCompleted:" + task.getSourceId());
+        }
+    }
+
+    /**
+     * 下推生成任务后，将该任务对应库存的完整 lockKey 写入 Redis Set 索引。
+     * <p>
+     * 与 lock key 一致不设 TTL，由释锁/回滚时显式 {@code DEL}（见 {@link #STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE} 常量注释）。
+     *
+     * @param taskId        任务 id
+     * @param planCode      计划单号
+     * @param inventoryList 该任务覆盖的库存行（与加锁维度一致）
+     */
+    private void registerTaskInventoryLockKeys(String taskId, String planCode, List<InventoryEntity> inventoryList) {
+        if (CharSequenceUtil.isBlank(taskId) || CollUtil.isEmpty(inventoryList)) {
+            return;
+        }
+        String[] lockKeys = inventoryList.stream()
+                .map(item -> buildInventoryLockRedisKey(planCode, item.getOrgId(), item.getWarehouseId(),
+                        item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus()))
+                .distinct()
+                .toArray(String[]::new);
+        if (lockKeys.length == 0) {
+            return;
+        }
+        String indexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_TASK_KEYS, taskId);
+        redisUtil.sSet(indexKey, lockKeys);
+    }
+
+    /**
+     * 删除任务锁索引（计划整单删除/回滚时清理，避免 Redis 残留 Set）。
+     *
+     * @param taskIds 任务 id 列表
+     */
+    private void deleteTaskInventoryLockIndex(List<String> taskIds) {
+        if (CollUtil.isEmpty(taskIds)) {
+            return;
+        }
+        taskIds.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .map(taskId -> CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_TASK_KEYS, taskId))
+                .forEach(redisUtil::del);
+    }
+
+    private boolean releaseInventoryLockIfOwnedByPlan(String lockKey, String planCode) {
+        if (!isInventoryLockOwnedByPlan(lockKey, planCode)) {
+            return false;
+        }
+        redisUtil.del(lockKey);
+        return true;
+    }
+
+    /**
+     * 判断 lock key 当前是否仍由指定计划占用。
+     */
+    private boolean isInventoryLockOwnedByPlan(String lockKey, String planCode) {
+        Object existing = redisUtil.get(lockKey);
+        return existing != null && Objects.equals(planCode, String.valueOf(existing));
+    }
+
+    /**
+     * 判断计划级盘点库存锁是否已全部释放（含 plan-keys 索引与 planCode 前缀 SCAN 兜底）。
+     */
+    private boolean isPlanInventoryLockFullyReleased(String planCode) {
+        String indexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_PLAN_KEYS, planCode);
+        if (!cleanupReleasedInventoryLockIndex(indexKey, planCode)) {
+            return false;
+        }
+        String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, planCode);
+        Collection<String> keys = redisUtil.scanKeys(keyPattern);
+        if (CollUtil.isEmpty(keys)) {
+            return true;
+        }
+        for (String key : keys) {
+            if (isInventoryLockOwnedByPlan(key, planCode)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 清理 index 中已无 Redis lock 或 value 非本计划的 stale 成员；若仍有本 plan 占用则返回 false。
+     *
+     * @param indexKey  plan-keys 或 task-keys 索引 key
+     * @param planCode  计划单号
+     * @return 是否不存在本 plan 仍占用的 lock
+     */
+    private boolean cleanupReleasedInventoryLockIndex(String indexKey, String planCode) {
+        Set<Object> indexedKeys = redisUtil.sGet(indexKey);
+        if (CollUtil.isEmpty(indexedKeys)) {
+            return true;
+        }
+        boolean anyOwned = false;
+        for (Object lockKeyObj : indexedKeys) {
+            String lockKey = String.valueOf(lockKeyObj);
+            if (isInventoryLockOwnedByPlan(lockKey, planCode)) {
+                anyOwned = true;
+            } else {
+                redisUtil.setRemove(indexKey, lockKeyObj);
+            }
+        }
+        cleanupInventoryLockIndexIfEmpty(indexKey);
+        return !anyOwned;
+    }
+
+    /**
+     * index Set 为空时删除 index key，避免残留空 Set。
+     */
+    private void cleanupInventoryLockIndexIfEmpty(String indexKey) {
+        Set<Object> remaining = redisUtil.sGet(indexKey);
+        if (CollUtil.isEmpty(remaining)) {
+            redisUtil.del(indexKey);
         }
     }
 
@@ -727,54 +1177,281 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 按单库存维度 SCAN 判断是否已有其它计划占用锁；pattern 含 org/warehouse/location/sku/status，
-     * 非 {@code lock:wms:inventory:*} 全量前缀。
+     * 按单库存维度 SCAN 判断是否已有其它计划占用锁；同 planCode 的锁不计入冲突。
      */
     @Override
-    public boolean isInventoryLockedForStocktaking(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus) {
-        String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
-        return redisUtil.hasScanKeys(keyPattern);
-    }
-
-    private void rollbackStocktakingTaskCreation(String planId, String planCode) {
-        stocktakingTaskRollbackService.rollbackTasksByPlanId(planId, planCode);
-        releaseInventoryLockByPlanCode(planCode);
+    public boolean isInventoryLockedForStocktaking(String planCode, String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus) {
+        String normalizedLocation = StocktakingInventoryLockHelper.normalizeWarehouseLocation(warehouseLocation, dictInventoryStatus);
+        String normalizedPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", orgId, warehouseId,
+                normalizedLocation, skuId, dictInventoryStatus);
+        if (hasOtherPlanInventoryLockConflict(planCode, normalizedPattern)) {
+            return true;
+        }
+        if (StocktakingInventoryLockHelper.isRawWarehouseLocationDifferent(warehouseLocation, dictInventoryStatus)) {
+            String rawPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", orgId, warehouseId,
+                    StrUtils.null2EmptyWithTrim(warehouseLocation), skuId, dictInventoryStatus);
+            return hasOtherPlanInventoryLockConflict(planCode, rawPattern);
+        }
+        return false;
     }
 
     /**
-     * 盘点库存加锁：checkConflict=true 时走 {@link StocktakingInventoryLockRedisUtil#tryStocktakingInventoryLock}（Lua SCAN + SET NX）。
-     * <p>
-     * 参数与 pattern（均见 {@link com.common.business.constant.RedisCacheConstants#INVENTORY_LOCK}）：
-     * <ul>
-     *   <li>lockKey：{@code {planCode}_{org}_{wh}_{loc}_{sku}_{status}}</li>
-     *   <li>conflictPattern：{@code *_{org}_{wh}_{loc}_{sku}_{status}}，非 {@code lock:wms:inventory:*} 全量前缀</li>
-     *   <li>orgId 取下推时 {@code inventory.org_id}；每条库存一次 Lua，与 Job 预检 {@link #isInventoryLockedForStocktaking} 可能叠加</li>
-     *   <li>MATCH 仅过滤 SCAN 返回，未命中时仍可能遍历 keyspace；后续可用 slot 占用 key + plan 索引优化</li>
-     * </ul>
+     * SCAN 指定 pattern 下是否存在其它 plan 占用的 lock。
      */
-    private void lockInventoryForStocktaking(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList, boolean checkConflict) {
+    private boolean hasOtherPlanInventoryLockConflict(String planCode, String keyPattern) {
+        Collection<String> keys = redisUtil.scanKeys(keyPattern);
+        if (CollUtil.isEmpty(keys)) {
+            return false;
+        }
+        for (String key : keys) {
+            Object existing = redisUtil.get(key);
+            if (existing == null) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(planCode)) {
+                return true;
+            }
+            if (!Objects.equals(planCode, String.valueOf(existing))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void rollbackStocktakingTaskCreation(String planId, String planCode) {
+        List<StocktakingTaskEntity> taskEntityList = listBySourceId(planId);
+        List<String> taskIds = CollUtil.isEmpty(taskEntityList)
+                ? Collections.emptyList()
+                : taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
+        boolean rollbackSuccess = false;
+        try {
+            stocktakingTaskRollbackService.rollbackTasksByPlanId(planId, planCode);
+            rollbackSuccess = true;
+        } catch (Exception rollbackException) {
+            log.error("盘点任务数据库回滚失败，Redis 锁仍占用需人工处理：planId={}, planCode={}", planId, planCode, rollbackException);
+        }
+        if (!rollbackSuccess) {
+            return;
+        }
+        try {
+            deleteTaskInventoryLockIndex(taskIds);
+        } catch (Exception indexException) {
+            log.error("盘点任务回滚清理锁索引失败，planId={}, planCode={}", planId, planCode, indexException);
+        }
+        releaseInventoryLockByPlanCodeWithRetry(planCode, "taskCreationRollback:" + planId);
+    }
+
+    /**
+     * 加锁成功后将 lockKey 写入计划级索引，供计划释锁精确删除。
+     * <p>
+     * 与 lock key 一致不设 TTL，由释锁/回滚时显式清理（见 {@link #STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE} 常量注释）。
+     *
+     * @param planCode 计划单号
+     * @param lockKey  完整 Redis lock key
+     */
+    private void registerPlanInventoryLockKey(String planCode, String lockKey) {
+        if (CharSequenceUtil.isBlank(planCode) || CharSequenceUtil.isBlank(lockKey)) {
+            return;
+        }
+        String indexKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_PLAN_KEYS, planCode);
+        redisUtil.sSet(indexKey, lockKey);
+    }
+
+    /**
+     * 盘点库存加锁：校验并规范化库位后，经 Spring 代理获取维度分布式锁；超阈值时分批加锁。
+     */
+    private void lockInventoryForStocktaking(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList) {
         String planCode = entity.getCode();
+        normalizeInventoryListLocationsForLock(inventoryList);
+        int uniqueDimensions = countUniqueStocktakingDimensions(inventoryList);
+        if (uniqueDimensions > STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD) {
+            log.warn("盘点计划【{}】库存维度 {} 超过阈值 {}，改 plan 锁包裹的分批维度分布式锁",
+                    planCode, uniqueDimensions, STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD);
+            self.acquireStocktakingInventoryLocksByPlan(planCode, inventoryList);
+        } else {
+            self.acquireStocktakingInventoryLocks(planCode, inventoryList);
+        }
+    }
+
+    /**
+     * 按库存维度去重，同一 org+仓+库位+SKU+状态 仅保留首条，供大计划分批加锁使用。
+     *
+     * @param inventoryList 待加锁库存行
+     * @return 去重后的库存行列表（保持首次出现顺序）
+     */
+    private List<InventoryEntity> dedupeInventoryByDimension(List<InventoryEntity> inventoryList) {
+        if (CollUtil.isEmpty(inventoryList)) {
+            return Collections.emptyList();
+        }
+        Map<String, InventoryEntity> deduped = new LinkedHashMap<>();
         for (InventoryEntity item : inventoryList) {
+            String dimensionKey = buildStocktakingDimensionKey(item.getOrgId(), item.getWarehouseId(),
+                    item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            deduped.putIfAbsent(dimensionKey, item);
+        }
+        return new ArrayList<>(deduped.values());
+    }
+
+    /**
+     * 统计待加锁库存行的唯一维度数（去重后）。
+     */
+    private int countUniqueStocktakingDimensions(List<InventoryEntity> inventoryList) {
+        if (CollUtil.isEmpty(inventoryList)) {
+            return 0;
+        }
+        Set<String> dimensions = new HashSet<>();
+        for (InventoryEntity item : inventoryList) {
+            dimensions.add(buildStocktakingDimensionKey(item.getOrgId(), item.getWarehouseId(),
+                    item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus()));
+        }
+        return dimensions.size();
+    }
+
+    /**
+     * 校验库存行后，在维度分布式锁内执行 Redis 盘点库存锁预检与写入。
+     */
+    @Override
+    public void acquireStocktakingInventoryLocks(String planCode, List<InventoryEntity> inventoryList) {
+        validateInventoryListForStocktaking(planCode, inventoryList);
+        self.acquireStocktakingInventoryLocksAfterValidated(planCode, inventoryList);
+    }
+
+    /**
+     * 在 {@code @DistributeLocker} 保护的临界区内执行盘点 Redis 库存锁预检与写入（不再重复校验库存行）。
+     * 须为 public 且经 Spring 代理调用。
+     *
+     * @param planCode      计划单号
+     * @param inventoryList 已通过校验的待加锁库存行
+     */
+    @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.WMS_STOCKTAKING_INVENTORY_DIM_KEY,
+            keyName = "inventoryList.orgId,inventoryList.warehouseId,inventoryList.warehouseLocation,inventoryList.skuId,inventoryList.dictInventoryStatus",
+            waiteTime = 120,
+            maxRetries = 5
+    )
+    public void acquireStocktakingInventoryLocksAfterValidated(String planCode, List<InventoryEntity> inventoryList) {
+        lockInventoryForStocktakingUnderDimLock(planCode, inventoryList);
+    }
+
+    /**
+     * 大计划分批加锁：planCode 分布式锁覆盖全部分批过程，各批内再经 {@link #acquireStocktakingInventoryLocksAfterValidated} 获取维度 MultiLock，
+     * 缩小批次间 MultiLock 释放窗口，并避免同计划并发重复下推。
+     */
+    @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.WMS_STOCKTAKING_INVENTORY_DIM_KEY,
+            keyName = "planCode",
+            waiteTime = 180,
+            maxRetries = 5
+    )
+    public void acquireStocktakingInventoryLocksByPlan(String planCode, List<InventoryEntity> inventoryList) {
+        validateInventoryListForStocktaking(planCode, inventoryList);
+        List<InventoryEntity> dedupedList = dedupeInventoryByDimension(inventoryList);
+        List<List<InventoryEntity>> batches = Lists.partition(dedupedList, STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD);
+        int totalBatches = batches.size();
+        for (int i = 0; i < totalBatches; i++) {
+            List<InventoryEntity> batch = batches.get(i);
+            log.warn("盘点计划【{}】分批加锁：batch={}/{}, dimensionCount={}", planCode, i + 1, totalBatches, batch.size());
+            self.acquireStocktakingInventoryLocksAfterValidated(planCode, batch);
+        }
+    }
+
+    /**
+     * 下推前校验库存行必填字段（org/仓/SKU/状态），防止生成无效维度锁 key。
+     *
+     * @param planCode      计划单号
+     * @param inventoryList 待加锁库存行
+     */
+    private void validateInventoryListForStocktaking(String planCode, List<InventoryEntity> inventoryList) {
+        if (CollUtil.isEmpty(inventoryList)) {
+            return;
+        }
+        for (InventoryEntity item : inventoryList) {
+            if (CharSequenceUtil.isBlank(item.getOrgId())) {
+                log.warn("盘点计划【{}】存在无效库存记录：orgId 为空, warehouseId={}, skuId={}", planCode, item.getWarehouseId(), item.getSkuId());
+                throw new ServiceException(ApiError.WH_STOCKTAKING_INVENTORY_INVALID, planCode, resolveWarehouseNameById(item.getWarehouseId()), item.getSkuNo());
+            }
             if (CharSequenceUtil.isBlank(item.getWarehouseId()) || CharSequenceUtil.isBlank(item.getSkuId())) {
                 log.warn("盘点计划【{}】存在无效库存记录：warehouseId={}, skuId={}", planCode, item.getWarehouseId(), item.getSkuId());
                 String warehouseName = resolveWarehouseNameById(item.getWarehouseId());
                 throw new ServiceException(ApiError.WH_STOCKTAKING_INVENTORY_INVALID, planCode, warehouseName, item.getSkuNo());
             }
-            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, item.getOrgId(),
-                    item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            String conflictPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", item.getOrgId(),
-                    item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            if (checkConflict) {
-                if (!stocktakingInventoryLockRedisUtil.tryStocktakingInventoryLock(conflictPattern, redisKey, planCode)) {
-                    throwStocktakingTaskExist(item);
-                }
-            } else if (!Boolean.TRUE.equals(redisUtil.setIfAbsent(redisKey, planCode))) {
-                Object existing = redisUtil.get(redisKey);
-                if (!Objects.equals(planCode, String.valueOf(existing))) {
-                    throwStocktakingTaskExist(item);
-                }
+            if (CharSequenceUtil.isBlank(item.getDictInventoryStatus())) {
+                log.warn("盘点计划【{}】存在无效库存记录：dictInventoryStatus 为空, warehouseId={}, skuId={}", planCode, item.getWarehouseId(), item.getSkuId());
+                throw new ServiceException(ApiError.WH_STOCKTAKING_INVENTORY_INVALID, planCode, resolveWarehouseNameById(item.getWarehouseId()), item.getSkuNo());
             }
         }
+    }
+
+    private void lockInventoryForStocktakingUnderDimLock(String planCode, List<InventoryEntity> inventoryList) {
+        Set<String> checkedDimensions = new HashSet<>();
+        for (List<InventoryEntity> batch : Lists.partition(inventoryList, STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE)) {
+            for (InventoryEntity item : batch) {
+                String normalizedLocation = normalizeWarehouseLocationForInventoryLock(item.getWarehouseLocation(), item.getDictInventoryStatus());
+                String dimensionKey = buildStocktakingDimensionKey(item.getOrgId(), item.getWarehouseId(),
+                        normalizedLocation, item.getSkuId(), item.getDictInventoryStatus());
+                if (checkedDimensions.add(dimensionKey)
+                        && isInventoryLockedForStocktaking(planCode, item.getOrgId(), item.getWarehouseId(),
+                        item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus())) {
+                    throwStocktakingTaskExist(item);
+                }
+                String redisKey = buildInventoryLockRedisKey(planCode, item.getOrgId(), item.getWarehouseId(),
+                        item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+                acquireStocktakingInventoryLock(item, planCode, redisKey);
+                registerPlanInventoryLockKey(planCode, redisKey);
+            }
+        }
+    }
+
+    /**
+     * 加锁前规范化库存行库位，使 {@code @DistributeLocker} 与 Redis lock key 维度一致。
+     */
+    private void normalizeInventoryListLocationsForLock(List<InventoryEntity> inventoryList) {
+        if (CollUtil.isEmpty(inventoryList)) {
+            return;
+        }
+        for (InventoryEntity item : inventoryList) {
+            item.setWarehouseLocation(StocktakingInventoryLockHelper.normalizeWarehouseLocation(
+                    item.getWarehouseLocation(), item.getDictInventoryStatus()));
+        }
+    }
+
+    /**
+     * 写入盘点 Redis 库存锁；同 plan 重入时视为已持有。
+     * <p>
+     * 与 UAT/历史 {@code lockInventoryForStocktaking} 一致：{@code SET NX} 不设 TTL，
+     * 锁由业务释锁显式删除，避免盘点周期内过早过期（见 {@link #STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE} 常量注释）。
+     */
+    private void acquireStocktakingInventoryLock(InventoryEntity item, String planCode, String redisKey) {
+        if (Boolean.TRUE.equals(redisUtil.setIfAbsent(redisKey, planCode))) {
+            return;
+        }
+        Object existing = redisUtil.get(redisKey);
+        if (!Objects.equals(planCode, String.valueOf(existing))) {
+            throwStocktakingTaskExist(item);
+        }
+    }
+
+    private static String normalizeWarehouseLocationForInventoryLock(String warehouseLocation, String inventoryStatus) {
+        return StocktakingInventoryLockHelper.normalizeWarehouseLocation(warehouseLocation, inventoryStatus);
+    }
+
+    /**
+     * 构建完整 Redis 盘点库存 lock key（库位已规范化）。
+     */
+    private static String buildInventoryLockRedisKey(String planCode, String orgId, String warehouseId,
+                                                     String warehouseLocation, String skuId, String inventoryStatus) {
+        return CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, orgId, warehouseId,
+                normalizeWarehouseLocationForInventoryLock(warehouseLocation, inventoryStatus), skuId, inventoryStatus);
+    }
+
+    /**
+     * 构建库存维度 key（与 {@code @DistributeLocker} keyName 字段组合结果一致，分隔符为 {@code |}）。
+     */
+    private static String buildStocktakingDimensionKey(String orgId, String warehouseId, String warehouseLocation,
+                                                       String skuId, String dictInventoryStatus) {
+        return StocktakingInventoryLockHelper.buildDimensionKey(orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
     }
 
     private void throwStocktakingTaskExist(InventoryEntity item) {
@@ -1255,21 +1932,24 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * 删除计划下属盘点任务及明细；反审核、计划删除等场景调用。
      * <p>
      * 执行顺序：先 {@code removeByMainId/removeByIds}，再注册 {@code afterCommit → releaseInventoryLockByPlanCode}；
-     * 外层 {@link com.erp.server.wms.service.impl.StocktakingPlanServiceImpl#disApprove} 事务提交成功后才删 Redis。
-     * 无下属任务时跳过释锁（反审核经 validateDisApprove 通常必有任务）。
+     * 无下属任务时仍按计划单号补偿释锁，避免 DB 已空但 Redis 锁残留。
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeBySourceId(String sourceId) {
-        List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
-        if (CollUtil.isEmpty(taskEntityList)) {
-            return Boolean.TRUE;
-        }
         StocktakingPlanEntity planEntity = stocktakingPlanService.getById(sourceId);
         String planCode = ObjectUtil.isNotEmpty(planEntity) ? planEntity.getCode() : null;
+        List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
+        if (CollUtil.isEmpty(taskEntityList)) {
+            if (CharSequenceUtil.isNotBlank(planCode)) {
+                runAfterCommit(() -> releaseInventoryLockByPlanCodeWithRetry(planCode, "removeBySourceId:" + sourceId));
+            }
+            return Boolean.TRUE;
+        }
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
         stocktakingTaskDetailService.removeByMainId(mainIds);
         this.removeByIds(mainIds);
+        deleteTaskInventoryLockIndex(mainIds);
         if (CharSequenceUtil.isNotBlank(planCode)) {
             runAfterCommit(() -> releaseInventoryLockByPlanCodeWithRetry(planCode, "removeBySourceId:" + sourceId));
         }
@@ -1298,8 +1978,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         String planCode = entity.getCode();
         try {
-            // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
-            lockInventoryForStocktaking(entity, inventoryList, true);
+            // 2. 维度联锁下预检并加 Redis 盘点库存锁
+            lockInventoryForStocktaking(entity, inventoryList);
             // 3. 对库存记录进行分组，按照分单规则进行分组
             SeparateRuleEnum separateRule = entity.getSeparateRule();
             Map<String, String> locationAreaMap = new HashMap<>();
@@ -1333,6 +2013,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     return detailEntity;
                 }).collect(Collectors.toList());
                 stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+                registerTaskInventoryLockKeys(insertTask.getId(), planCode, inventoryEntityList);
                 String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
             });
@@ -1355,8 +2036,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         String planCode = entity.getCode();
         try {
-            // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作（与手动下推一致做冲突校验）
-            lockInventoryForStocktaking(entity, inventoryList, true);
+            // 2. 维度联锁下预检并加锁（Job filter 仅作提前过滤，临界区在此串行）
+            lockInventoryForStocktaking(entity, inventoryList);
             // 3. 对库存记录进行分组，按照分单规则进行分组
             SeparateRuleEnum separateRule = entity.getSeparateRule();
             Map<String, String> locationAreaMap = new HashMap<>();
@@ -1389,6 +2070,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     return new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
                 }).collect(Collectors.toList());
                 stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+                registerTaskInventoryLockKeys(insertTask.getId(), planCode, inventoryEntityList);
                 String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
             });
@@ -1397,6 +2079,28 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             throw e;
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 无 task-keys 释锁兜底时的共用反查上下文（org 维度 lookup + 仓库 org 兜底）。
+     */
+    private static final class InventoryLockDeriveContext {
+        private final Map<String, List<String>> orgLookup;
+        private final Map<String, String> warehouseOrgFallbackMap;
+
+        private InventoryLockDeriveContext(Map<String, List<String>> orgLookup,
+                                           Map<String, String> warehouseOrgFallbackMap) {
+            this.orgLookup = orgLookup;
+            this.warehouseOrgFallbackMap = warehouseOrgFallbackMap;
+        }
+
+        private Map<String, List<String>> getOrgLookup() {
+            return orgLookup;
+        }
+
+        private Map<String, String> getWarehouseOrgFallbackMap() {
+            return warehouseOrgFallbackMap;
+        }
     }
 
     private static String getGroupKey(SeparateRuleEnum separateRule, String format, Map<String, String> finalLocationAreaMap, InventoryEntity item) {
