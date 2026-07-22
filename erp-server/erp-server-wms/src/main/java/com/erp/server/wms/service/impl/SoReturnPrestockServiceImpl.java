@@ -788,9 +788,12 @@ public class SoReturnPrestockServiceImpl
         Map<String, SoReturnPrestockDetailEntity> detailMap = soReturnPrestockDetailService.listByMainId(dto.getMainId())
                 .stream().collect(Collectors.toMap(SoReturnPrestockDetailEntity::getId, d -> d, (a, b) -> a));
 
-        // 逐行处理：仅在内存中变更明细行并收集"本次关联行→店铺项"配对，统一在生成退货入库单、回写单号后落库。
-        // 未选择店铺的行不会出现在 shopList 中，天然保持未关联
+        // 两阶段处理：第一阶段只做入参校验与内存拆行/关联计算，可返回 BatchResultDTO.fail 的路径中不执行任何持久化，
+        // 避免「先 save 剩余行、后校验失败直接 return」导致事务不回滚、收货数量被重复计算。
+        // 未选择店铺的行不会出现在 shopList 中，天然保持未关联。
         List<LinkedShopPair> linkedPairs = new ArrayList<>();
+        List<SoReturnPrestockDetailEntity> newRows = new ArrayList<>();
+        Set<String> claimedDetailIds = new HashSet<>();
         for (SoReturnPrestockDetailDTO.ShopItem item : dto.getShopList()) {
             // 未选择关联对象（B2C 店铺id / B2B 客户id 均为空）→ 保持未关联，跳过
             if (CharSequenceUtil.isBlank(resolveLinkTargetKey(main.getType(), item))) {
@@ -801,6 +804,9 @@ public class SoReturnPrestockServiceImpl
                     || !dto.getMainId().equals(detail.getMainId())) {
                 return BatchResultDTO.fail(main.getId(), main.getCode(),
                         "详情行不存在或不属于当前预入库单：" + item.getDetailId());
+            }
+            if (!claimedDetailIds.add(detail.getId())) {
+                return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "同一明细行不可重复关联");
             }
             if (PrestockClaimStatusEnum.LINKED.getStatus().equals(detail.getClaimStatus())) {
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已关联，请先解除关联");
@@ -818,10 +824,10 @@ public class SoReturnPrestockServiceImpl
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(),
                         "认领数量不能超过当前行实际收货数量：" + receivedQty);
             }
-            // 认领数量 < 实际收货数量：按收货数量拆行，剩余收货数量拆为新未关联行，当前行仅保留认领数量并关联；
+            // 认领数量 < 实际收货数量：按收货数量拆行，剩余收货数量拆为新未关联行（仅内存），当前行仅保留认领数量并关联；
             // 认领数量 == 实际收货数量：整行关联
             if (claimQty < receivedQty) {
-                splitDetail(detail, claimQty);
+                newRows.add(splitDetailInMemory(detail, claimQty));
             } else {
                 detail.setReceivedQty(claimQty);
             }
@@ -832,9 +838,14 @@ public class SoReturnPrestockServiceImpl
             return BatchResultDTO.fail(main.getId(), main.getCode(), "无可关联的明细行（未选择店铺）");
         }
 
-        // 联动处理：关联相同店铺的行合并生成一张《退货入库单》，直接置为已审核状态，并把入库单号回写到对应明细行（内存）
+        // 第二阶段：全部校验通过后再生成下游单据，并统一落库拆行剩余行与本次关联行；
+        // 此后不可恢复的并发/业务失败抛 ServiceException，由事务回滚。
         generateReturnInstockByShop(main, linkedPairs, true);
 
+        // 拆行新增行统一插入（未关联剩余数量）；新行为纯插入，无需乐观锁
+        if (CollUtil.isNotEmpty(newRows)) {
+            soReturnPrestockDetailService.saveBatch(newRows, 500);
+        }
         // 统一落库本次关联的明细行（含店铺信息 + 退货入库单回写）
         for (LinkedShopPair pair : linkedPairs) {
             if (!soReturnPrestockDetailService.updateById(pair.detail)) {
@@ -1320,30 +1331,16 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 拆行：认领数量 &lt; 当前行实际收货数量时，将剩余收货数量（receivedQty - linkQty）拆为新的未关联行，
-     * 原行收货数量收敛为本次认领数量，保证拆分前后两行收货数量之和不变。
-     *
-     * @return 承载剩余数量的新未关联详情行（已落库）
-     */
-    private SoReturnPrestockDetailEntity splitDetail(SoReturnPrestockDetailEntity original, int linkQty) {
-        int originalReceivedQty = Objects.nonNull(original.getReceivedQty()) ? original.getReceivedQty() : 0;
-        int remainReceivedQty = originalReceivedQty - linkQty;
-
-        SoReturnPrestockDetailEntity newDetail = buildLeftoverDetail(original, remainReceivedQty);
-        soReturnPrestockDetailService.save(newDetail);
-
-        // 原行收敛为本次认领数量，剩余部分已转入新行；由调用方在后续 updateById 中一并落库
-        original.setReceivedQty(linkQty);
-        return newDetail;
-    }
-
-    /**
-     * 拆行（仅内存）：与 {@link #splitDetail} 逻辑一致，但拆出的剩余行不在此处落库，
+     * 拆行（仅内存）：认领数量 &lt; 当前行实际收货数量时，将剩余收货数量（receivedQty - linkQty）拆为新的未关联行，
+     * 原行收货数量收敛为本次认领数量，保证拆分前后两行收货数量之和不变。拆出的剩余行不在此处落库，
      * 由调用方统一收集后作为「新增」一次性插入。
-     * <p>用于关联售后单场景：拆行剩余行会回队供后续同 SKU 售后单明细继续认领，可能再次被关联并进入
-     * 待落库列表。若在此处先 {@code save} 再由调用方对同一新行乐观锁 {@code updateById}，同事务内该新行
-     * 的 version 一旦被其它写操作顶高即会导致乐观锁冲突。故新行改为纯插入，避免二次乐观锁更新。</p>
+     * <p>用于关联售后单 / 关联店铺场景：校验循环中可能提前 {@code return BatchResultDTO.fail}，
+     * 若此处先 {@code save} 则事务不会因正常返回而回滚，会导致原行完整收货数量与剩余行并存、数量重复。
+     * 关联售后单场景下剩余行还会回队继续认领，若先 {@code save} 再乐观锁 {@code updateById} 也易触发 version 冲突，
+     * 故统一改为纯内存拆分 + 调用方最后插入。</p>
      *
+     * @param original 待拆分的原明细行（内存中其 {@code receivedQty} 会被收敛为 linkQty）
+     * @param linkQty  本次认领/关联数量，须满足 {@code 0 < linkQty < original.receivedQty}
      * @return 承载剩余数量的新未关联详情行（已预分配 ID，未落库）
      */
     private SoReturnPrestockDetailEntity splitDetailInMemory(SoReturnPrestockDetailEntity original, int linkQty) {
