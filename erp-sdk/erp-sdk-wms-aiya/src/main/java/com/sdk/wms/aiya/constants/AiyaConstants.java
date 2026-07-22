@@ -61,22 +61,18 @@ public class AiyaConstants {
     /**
      * 2C订单创建/修改
      */
-    public static final String TWO_C_ORDER_SAVE = "2c.order.save";
+    public static final String TWO_C_ORDER_SAVE = "GLINK_CREATE_ORDER_NOTIFY";
 
     /**
-     * 2C订单查询
+     * 2C订单查询（支持按单号列表/订单时间范围过滤，支持分页；{@code AiyaOpenApiService#query2cOrder}
+     * 统一走该 serviceType，骨架时期曾拆成 search/queryPage 两个方法，因指向同一 serviceType 已合并）
      */
-    public static final String TWO_C_ORDER_SEARCH = "2c.order.search";
-
-    /**
-     * 2C订单分页查询
-     */
-    public static final String TWO_C_ORDER_QUERY_PAGE = "2c.order.queryPage";
+    public static final String TWO_C_ORDER_SEARCH = "GLINK_QUERY_ORDER_NOTIFY";
 
     /**
      * 2C订单截单/取消
      */
-    public static final String TWO_C_ORDER_INTERCEPT = "2c.order.intercept";
+    public static final String TWO_C_ORDER_INTERCEPT = "GLINK_CANCEL_ORDER_NOTIFY";
 
     /**
      * 2C库存查询

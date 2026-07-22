@@ -489,4 +489,10 @@ public final class ApiErrorWms {
     public static final ApiError WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT = new ApiError("WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT", 11250, "库存不足：sku=[{0}],推荐拣货仓位缺少数:{1},可从非拣货区仓位移仓数:{2},总仓依旧缺货：{3}");
     public static final ApiError WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND = new ApiError("WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND", 11251, "SKU【{0}】未找到推荐拣货上架仓位，无法生成移仓建议");
     public static final ApiError WH_STOCKTAKING_INVENTORY_INVALID = new ApiError("WH_STOCKTAKING_INVENTORY_INVALID", 11252, "盘点计划【{0}】下推库存数据不完整，仓库【{1}】SKU【{2}】");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE", 11250, "AIYA 查询2C出库单接口无响应");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_FAILED", 11251, "AIYA 查询2C出库单接口失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED", 11252, "AIYA 查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_OUTBOUND_CODE_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_CODE_REQUIRED", 11253, "AIYA出库单号不能为空");
+    public static final ApiError WH_AIYA_OUTBOUND_DETAIL_EMPTY = new ApiError("WH_AIYA_OUTBOUND_DETAIL_EMPTY", 11254, "AIYA创建出库单明细为空");
+
 }

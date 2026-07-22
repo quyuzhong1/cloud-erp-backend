@@ -13,13 +13,16 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundSaveDTO;
+import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
+import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
 import com.sdk.wms.aiya.service.AiyaOpenApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,8 @@ import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -126,6 +131,39 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * 爱亚返回 data 内的客户入库单号字段。
      */
     private static final String DATA_FIELD_ASN_NUMBER = "asnNumber";
+
+    /**
+     * 2C出库单 orderTime 官方格式：{@code yyyy-MM-dd'T'HH:mm:ssZ}，示例 {@code 2017-05-01T16:00:00+0800}。
+     */
+    private static final DateTimeFormatter ORDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
+
+    /**
+     * 承运商服务等级：官方文档"无特殊要求填 STD"，本项目暂无更细的服务等级映射数据源，固定传 STD。
+     */
+    private static final String DEFAULT_CARRIER_SERVICE = "STD";
+
+    /**
+     * 发货标签来源：{@code ATTACHMENT}（平台自带面单，随单下发 trackingNumber+files）。
+     */
+    private static final String SHIPPING_LABEL_SOURCE_ATTACHMENT = "ATTACHMENT";
+
+    /**
+     * 发货标签来源：{@code API}（由爱亚/GWMS 向快递取号）。
+     */
+    private static final String SHIPPING_LABEL_SOURCE_API = "API";
+
+    /**
+     * shipFrom 占位常量：ERP 目前无任何仓库/服务商维度的寄件人数据源
+     * （{@code WarehouseEntity}/{@code OverseasProviderEntity} 均无相关字段）。
+     * TODO：待产品确认真实寄件人信息来源后替换为动态数据，详见
+     * docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+     */
+    private static final String SHIP_FROM_PLACEHOLDER_NAME = "TODO-寄件人占位";
+    private static final String SHIP_FROM_PLACEHOLDER_STREET_LINE1 = "TODO-寄件地址占位";
+    private static final String SHIP_FROM_PLACEHOLDER_CITY = "Shenzhen";
+    private static final String SHIP_FROM_PLACEHOLDER_STATE = "Guangdong";
+    private static final String SHIP_FROM_PLACEHOLDER_POSTAL_CODE = "518000";
+    private static final String SHIP_FROM_PLACEHOLDER_COUNTRY_CODE = "CN";
 
     @Resource
     private AiyaOpenApiService aiyaOpenApiService;
@@ -462,9 +500,30 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return null;
     }
 
+    /**
+     * 创建/修改 AIYA 2C 出库单（{@code GLINK_CREATE_ORDER_NOTIFY}，创建/修改合一，按 {@code orderNumber} 幂等 upsert）。
+     * <p>
+     * {@code orderNumber} 直接取 {@code referenceNo}（ERP 发货单号）作为幂等键：与 WEGO 不同，
+     * AIYA 官方文档明确"客户系统保证唯一"即按此号 upsert，故不需要像 WEGO 一样再拼时间戳后缀，
+     * 也不需要 WEGO 那套"订单已存在"幂等反查兜底逻辑。
+     * <p>
+     * {@code shipFrom} 当前使用占位常量（见类常量注释 TODO），{@code shippingLabelSource} 按
+     * {@code isPushLabel}+{@code labelUrl} 二态映射（{@code WMS_GEN} 第三态本次不使用）。
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return failure("AIYA暂不支持创建2C出库单");
+        AiyaAuth auth = resolveAuth();
+        AiyaOutboundSaveDTO request = buildOutboundSaveDto(createOutboundReq);
+        log.warn("{}创建出库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
+        JSONObject resp = aiyaOpenApiService.save2cOrder(auth.partnerId, auth.partnerKey, auth.customerCode, request);
+        log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        if (!isSuccess(resp)) {
+            return failure(buildErrorMessage(resp));
+        }
+        // 方案文档结论：AIYA 建单成功不回传独立出库单号，orderNumber（=referenceNo）即最终单号。
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(request.getOrderNumber())
+                .build());
     }
 
     @Override
@@ -472,9 +531,38 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return failure("AIYA暂不支持创建B2B出库单");
     }
 
+    /**
+     * 取消（截单）AIYA 2C 出库单（{@code GLINK_CANCEL_ORDER_NOTIFY}）。
+     * <p>
+     * 参照 {@code TongYouHandlerServiceImpl} 的三态处理范式：{@code success=true} → 拦截成功；
+     * 明确"已出库"类错误 → 拦截失败；其余（含异常/无法判断）→ 拦截中，交由 DMP 轮询链路
+     * 后续用真实单据状态收敛（{@link ThirdWarehouseCancelResultEnum#INTERCEPTING} 落地方式与
+     * 现有平台一致，不需要新机制）。
+     * <p>
+     * TODO：AIYA 截单接口真实响应结构/错误码未有真实样例验证，"已出库"判定条件为推测，
+     * 详见 docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+     */
     @Override
     protected ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return failure("AIYA暂不支持取消2C出库单");
+        if (CharSequenceUtil.isBlank(cancelOutboundReq.getOrderCode())) {
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_CODE_REQUIRED);
+        }
+        AiyaAuth auth = resolveAuth();
+        log.warn("{}截单请求:orderNumber={}", getPlatForm().getName(), cancelOutboundReq.getOrderCode());
+        JSONObject resp = aiyaOpenApiService.intercept2cOrder(auth.partnerId, auth.partnerKey, auth.customerCode, cancelOutboundReq.getOrderCode());
+        log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        if (isSuccess(resp)) {
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        if (isOutboundAlreadyShippedError(resp)) {
+            log.warn("{}截单失败：订单已出库，orderNumber={}, msg={}",
+                    getPlatForm().getName(), cancelOutboundReq.getOrderCode(), buildErrorMessage(resp));
+            return ApiResult.success(buildErrorMessage(resp), ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        // 其余场景（含接口异常/无法判断）视为拦截中，由下游 DMP 轮询按订单真实状态（AiyaEnums.OrderStatusEnum）收敛。
+        log.warn("{}截单结果未知，暂按拦截中处理，orderNumber={}, msg={}",
+                getPlatForm().getName(), cancelOutboundReq.getOrderCode(), buildErrorMessage(resp));
+        return ApiResult.success(buildErrorMessage(resp), ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
     }
 
     @Override
@@ -482,9 +570,145 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return failure("AIYA暂不支持取消B2B出库单");
     }
 
+    /**
+     * 查询 AIYA 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}，按 {@code orderNumber} 精确查）。
+     * <p>
+     * {@code erpOrderCode} 即建单时下发的 {@code orderNumber}（=referenceNo），无需像 WEGO 一样
+     * 按时间窗口反查（AIYA 支持直接按 orderNumber 精确查）。
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
-        return failure("AIYA暂不支持查询2C出库单");
+        String orderNumber = queryOutboundReq.getErpOrderCode();
+        if (CharSequenceUtil.isBlank(orderNumber)) {
+            return failure("AIYA查询出库单参考号不能为空");
+        }
+        AiyaAuth auth = resolveAuth();
+        List<AiyaOutboundResp.OutboundOrderDTO> resultList = aiyaOpenApiService.query2cOrder(
+                auth.partnerId, auth.partnerKey, auth.customerCode,
+                Collections.singletonList(orderNumber), null, null, null, null);
+        if (CollUtil.isEmpty(resultList)) {
+            return failure("AIYA未查询到对应出库单（orderNumber=" + orderNumber + "）");
+        }
+        AiyaOutboundResp.OutboundOrderDTO matched = resultList.get(0);
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(matched.getOrderNumber())
+                .trackNo(matched.getTrackingNumber())
+                .build());
+    }
+
+    /**
+     * 构造 AIYA {@code GLINK_CREATE_ORDER_NOTIFY} 建单请求。
+     * <p>
+     * 字段映射说明：
+     * <ul>
+     *     <li>{@code orderNumber} = {@code referenceNo}（ERP 发货单号，直接做幂等键）；</li>
+     *     <li>{@code shippingInstructions.carrier} 取 {@code shippingMethodName}，{@code carrierService}
+     *         固定 {@value #DEFAULT_CARRIER_SERVICE}；{@code shippingLabelSource} 按 {@code isPushLabel}+
+     *         {@code labelUrl} 二态映射：有面单 → {@code ATTACHMENT}（连带 trackingNumber+files 传面单），
+     *         否则 → {@code API}（由 AIYA 自动生成，{@code WMS_GEN} 第三态本次不使用）；</li>
+     *     <li>{@code shipTo} 取 {@code receiverInfo}（address1→streetLine1、address2→streetLine2、
+     *         district、city、province→state、zipCode→postalCode、countryCode）；</li>
+     *     <li>{@code items[]} 按 {@code productSku} 聚合数量，防重复 SKU 行；</li>
+     *     <li>{@code shipFrom} 使用占位常量（TODO，见类常量注释）。</li>
+     * </ul>
+     */
+    private AiyaOutboundSaveDTO buildOutboundSaveDto(ThirdWarehouseCreateOutboundReq req) {
+        if (CollUtil.isEmpty(req.getItems())) {
+            log.warn("{}创建出库单明细为空, referenceNo={}", getPlatForm().getName(), req.getReferenceNo());
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_DETAIL_EMPTY);
+        }
+
+        ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
+
+        boolean hasPlatformLabel = CharSequenceUtil.isNotBlank(req.getLabelUrl())
+                && Boolean.TRUE.equals(req.getIsPushLabel());
+        AiyaOutboundSaveDTO.ShippingInstructions.ShippingInstructionsBuilder instructionsBuilder =
+                AiyaOutboundSaveDTO.ShippingInstructions.builder()
+                        .carrier(req.getShippingMethodName())
+                        .carrierService(DEFAULT_CARRIER_SERVICE);
+        List<AiyaOutboundSaveDTO.FileItem> files = null;
+        if (hasPlatformLabel) {
+            instructionsBuilder.shippingLabelSource(SHIPPING_LABEL_SOURCE_ATTACHMENT)
+                    .trackingNumber(req.getTrackingNo());
+            files = Collections.singletonList(AiyaOutboundSaveDTO.FileItem.builder()
+                    .fileType(AiyaOutboundSaveDTO.FileItem.FILE_TYPE_SHIPPING_LABEL)
+                    .fileName("面单信息")
+                    .fileUrl(req.getLabelUrl())
+                    .build());
+        } else {
+            instructionsBuilder.shippingLabelSource(SHIPPING_LABEL_SOURCE_API);
+        }
+
+        List<AiyaOutboundSaveDTO.Item> items = new ArrayList<>();
+        // 同一 productSku 可能出现在多行明细中，需按 SKU 聚合数量，避免重复条目导致拒单或数量统计异常
+        Map<String, Integer> skuQtyMap = new LinkedHashMap<>();
+        for (ThirdWarehouseCreateOutboundReq.Item item : req.getItems()) {
+            if (CharSequenceUtil.isBlank(item.getProductSku()) || item.getQuantity() == null) {
+                continue;
+            }
+            skuQtyMap.merge(item.getProductSku(), item.getQuantity(), Integer::sum);
+        }
+        skuQtyMap.forEach((sku, qty) -> items.add(
+                AiyaOutboundSaveDTO.Item.builder().sku(sku).quantity(qty).build()));
+        if (items.isEmpty()) {
+            log.warn("{}创建出库单明细为空, referenceNo={}", getPlatForm().getName(), req.getReferenceNo());
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_DETAIL_EMPTY);
+        }
+
+        String orderTime = req.getPayTime() != null
+                ? ZonedDateTime.of(req.getPayTime(), ZoneOffset.ofHours(8)).format(ORDER_TIME_FORMATTER)
+                : ZonedDateTime.now(ZoneOffset.ofHours(8)).format(ORDER_TIME_FORMATTER);
+
+        return AiyaOutboundSaveDTO.builder()
+                .orderNumber(req.getReferenceNo())
+                .warehouseCode(req.getWarehouseCode())
+                .extOrderNumber(req.getPlatformCode())
+                .orderTime(orderTime)
+                .salesChannel(req.getPlatform())
+                .storeNumber(req.getShopName())
+                .shippingInstructions(instructionsBuilder.build())
+                .shipTo(AiyaOutboundSaveDTO.ShipTo.builder()
+                        .name(receiver != null ? receiver.getName() : null)
+                        .mobileNumber(receiver != null ? receiver.getPhone() : null)
+                        .email(receiver != null ? receiver.getEmail() : null)
+                        .streetLine1(receiver != null ? receiver.getAddress1() : null)
+                        .streetLine2(receiver != null ? receiver.getAddress2() : null)
+                        .district(receiver != null ? receiver.getDistrict() : null)
+                        .city(receiver != null ? receiver.getCity() : null)
+                        .state(receiver != null ? receiver.getProvince() : null)
+                        .postalCode(receiver != null ? receiver.getZipCode() : null)
+                        .countryCode(receiver != null ? receiver.getCountryCode() : null)
+                        .build())
+                .items(items)
+                .shipFrom(buildShipFromPlaceholder())
+                .files(files)
+                .build();
+    }
+
+    /**
+     * shipFrom 占位实现：ERP 目前无任何仓库/服务商维度的寄件人数据源，见类常量注释 TODO。
+     */
+    private AiyaOutboundSaveDTO.ShipFrom buildShipFromPlaceholder() {
+        return AiyaOutboundSaveDTO.ShipFrom.builder()
+                .name(SHIP_FROM_PLACEHOLDER_NAME)
+                .streetLine1(SHIP_FROM_PLACEHOLDER_STREET_LINE1)
+                .city(SHIP_FROM_PLACEHOLDER_CITY)
+                .state(SHIP_FROM_PLACEHOLDER_STATE)
+                .postalCode(SHIP_FROM_PLACEHOLDER_POSTAL_CODE)
+                .countryCode(SHIP_FROM_PLACEHOLDER_COUNTRY_CODE)
+                .build();
+    }
+
+    /**
+     * 判断截单失败是否因订单已出库导致（AIYA 真实错误码/文案未有样例验证，暂按关键词匹配，纯推测实现）。
+     * TODO：需联调真实接口确认，详见 docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+     */
+    private boolean isOutboundAlreadyShippedError(JSONObject resp) {
+        if (resp == null) {
+            return false;
+        }
+        String message = resp.getString(RESP_FIELD_MESSAGE);
+        return CharSequenceUtil.isNotBlank(message) && message.contains("已出库");
     }
 
     @Override

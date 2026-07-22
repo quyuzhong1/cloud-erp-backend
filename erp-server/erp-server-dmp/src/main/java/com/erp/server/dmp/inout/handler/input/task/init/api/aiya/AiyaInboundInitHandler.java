@@ -17,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,12 +38,14 @@ import java.util.stream.Collectors;
  *   <li>时间窗口优先取 dmp 任务 startTime/endTime，缺省回退 [今天-1天 ~ 今天]（与 wego 一致）；</li>
  *   <li>warehouseCode 为该接口必填，按服务商已配置仓库逐仓分页（pageSize 最大 200，无 total/pages 元数据，
  *       按「返回条数 &lt; pageSize」判断末页），循环翻页至末页；</li>
- *   <li>归一化字段（receivingCode/sourceCode/receivingStatus/asnItems）并把 ASN 级 receiveTime、asnNumber
- *       回填到每行验货明细，交由下游 mongo/{@code AiyaInBoundDmpHandler} 落 {@code dmp_third_inbound}。</li>
+ *   <li>归一化字段（receivingCode/sourceCode/receivingStatus/asnItems）；签收明细取自
+ *       {@code asnItemReceiveDetails} 中 detailId 前缀为 PV 的上架流水（RV 收货流水数量与之重复，不取），
+ *       并把 ASN 级 receiveTime、asnNumber 回填到每行，交由下游 mongo/{@code AiyaInBoundDmpHandler}
+ *       落 {@code dmp_third_inbound}。</li>
  * </ol>
  * <p>
- * {@code asnItems.skuStatus} 区分良品（GOOD）/不良品（DAMAGE），下游据此把良品/不良品分别写入
- * 签收记录、直接调拨单与即时库存。
+ * PV 上架流水的 {@code skuStatus} 区分良品（GOOD）/不良品（DAMAGE），{@code putawayQty} 为上架数量，
+ * 下游据此把良品/不良品分别写入签收记录、直接调拨单与即时库存。
  */
 @Slf4j
 @Service
@@ -48,6 +53,12 @@ import java.util.stream.Collectors;
 public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
 
     private static final String ACTION = "批量查询入库单";
+
+    /**
+     * 爱亚 {@code asnItemReceiveDetails} 上架流水 detailId 前缀（上架，签收以此为准，取 putawayQty；
+     * 前缀为 {@code RV} 的收货流水数量与之重复，签收不取）。
+     */
+    private static final String PUTAWAY_DETAIL_ID_PREFIX = "PV";
 
     /**
      * 单页拉取条数（GLINK_BATCH_QUERY_ASN_NOTIFY 文档约束 pageSize 最大 200）。
@@ -167,17 +178,28 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     }
 
     /**
-     * 归一化爱亚 ASN 结果为下游 DMP 映射直接可用的字段名，并把 ASN 级 receiveTime/asnNumber 回填到每行入库单明细
-     * （拍平到 detail_list_json 后仍能取到收货时间、生成唯一签收流水 ID）。
+     * 归一化爱亚 ASN 结果为下游 DMP 映射直接可用的字段名。
+     * <p>
+     * 签收明细取自 {@code asnItemReceiveDetails}：该数组同时包含收货流水（detailId 前缀 {@code RV}）
+     * 与上架流水（detailId 前缀 {@value #PUTAWAY_DETAIL_ID_PREFIX}），二者数量重复，签收以「上架流水（PV）」为准。
+     * 因此仅保留 PV 流水，并把 ASN 级 receiveTime、asnNumber 回填到每行（PV 流水本身无收货时间），
+     * 拍平到 detail_list_json 后下游仍能取到收货时间、生成唯一签收流水 ID。
      */
     private JSONObject normalize(AiyaInboundResp.AsnInfoDTO asnInfo) {
-        List<AiyaInboundResp.AsnLineItemDTO> asnItems = asnInfo.getAsnLineItems();
-        if (CollUtil.isNotEmpty(asnItems)) {
-            for (AiyaInboundResp.AsnLineItemDTO item : asnItems) {
-                if (item != null) {
-                    item.setReceiveTime(asnInfo.getReceiveTime());
-                    item.setAsnNumber(asnInfo.getAsnNumber());
+        List<AiyaInboundResp.AsnItemReceiveDetailDTO> putawayDetails = new ArrayList<>();
+        List<AiyaInboundResp.AsnItemReceiveDetailDTO> receiveDetails = asnInfo.getAsnItemReceiveDetails();
+        if (CollUtil.isNotEmpty(receiveDetails)) {
+            for (AiyaInboundResp.AsnItemReceiveDetailDTO detail : receiveDetails) {
+                if (detail == null || detail.getDetailId() == null
+                        || !detail.getDetailId().startsWith(PUTAWAY_DETAIL_ID_PREFIX)) {
+                    continue;
                 }
+                detail.setAsnNumber(asnInfo.getAsnNumber());
+                // PV 上架流水无收货时间，回填 ASN 级收货时间用于下游生成签收流水时间
+                if (CharSequenceUtil.isBlank(detail.getReceiveTime())) {
+                    detail.setReceiveTime(asnInfo.getReceiveTime());
+                }
+                putawayDetails.add(detail);
             }
         }
         JSONObject obj = new JSONObject();
@@ -187,25 +209,29 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
         obj.put("warehouseCode", asnInfo.getWarehouseCode());
         obj.put("receiveTime", asnInfo.getReceiveTime());
         obj.put("remark", asnInfo.getWarehouseNotes());
-        obj.put("asnItems", asnItems);
+        obj.put("asnItems", putawayDetails);
         return obj;
     }
 
     /**
-     * 收货时间起：dmp 任务有 startTime 则取之，否则回退「今天 - 1 天」。
+     * 收货时间起：dmp 任务有 startTime 则取其「当天 00:00:00」，否则回退「今天 - 1 天」的 00:00:00。
+     * <p>
+     * 与 {@code WegoInboundInitHandler} 对齐：dmp 任务的 startTime/endTime 是「业务时间窗口」，NORMAL 任务
+     * 常为很窄的增量窗口（甚至只有数十秒，见基类拆分逻辑），若按秒级窗口过滤 {@code receiveTime} 几乎命中不到
+     * 任何实际收货数据，故统一放宽到「整天」边界（爱亚按 asnNumber 幂等 upsert，重复拉取安全）。
      */
     private String resolveBeginTime() {
         LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
-        LocalDateTime begin = startTime != null ? startTime : LocalDateTime.now().minusDays(1);
-        return begin.format(DATETIME_FORMATTER);
+        LocalDate beginDate = startTime != null ? startTime.toLocalDate() : LocalDate.now().minusDays(1);
+        return beginDate.atStartOfDay().format(DATETIME_FORMATTER);
     }
 
     /**
-     * 收货时间止：dmp 任务有 endTime 则取之，否则回退「当前时间」。
+     * 收货时间止：dmp 任务有 endTime 则取其「当天 23:59:59」，否则回退「今天」的 23:59:59。
      */
     private String resolveEndTime() {
         LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
-        LocalDateTime end = endTime != null ? endTime : LocalDateTime.now();
-        return end.format(DATETIME_FORMATTER);
+        LocalDate endDate = endTime != null ? endTime.toLocalDate() : LocalDate.now();
+        return endDate.atTime(LocalTime.MAX).format(DATETIME_FORMATTER);
     }
 }

@@ -6,6 +6,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
+import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
@@ -17,8 +18,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -170,36 +174,112 @@ public class AiyaOpenApiServiceManualTest {
 
     // ===================== 2C 出库单相关 =====================
 
+    /**
+     * 创建/修改 2C 出库单（{@code GLINK_CREATE_ORDER_NOTIFY}）。
+     * <p>
+     * 字段按 2026-07-21 官方接口截图 + 方案文档 6.3.3 映射收敛后的 {@link AiyaOutboundSaveDTO} 组装：
+     * 只传官方必填 + 产品文档有映射的可选字段。联调前请按注释替换 SKU / 收件人 / 寄件人等测试值。
+     * <p>
+     * 重点核对：
+     * <ul>
+     *     <li>{@code success=true} 时响应是否仍不回传独立出库单号（方案文档结论）；</li>
+     *     <li>{@code orderNumber} 是否可作为后续查询/取消的唯一键；</li>
+     *     <li>本例默认 {@code shippingLabelSource=API}（海外仓取号）；若测平台面单，改为 {@code ATTACHMENT}
+     *         并补 {@code trackingNumber}+{@code files}（有且仅有一个面单附件）。</li>
+     * </ul>
+     */
     @Test
     public void save2cOrderTest() {
-        Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填（《B2C销售订单》的[发货仓库]），生产账号必须带测试专属仓库编码
-        bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
-        // TODO：按 AiyaConstants.TWO_C_ORDER_SAVE 真实字段补充剩余业务参数（收件人信息、商品明细等）
-        JSONObject response = aiyaOpenApiService.save2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, bizParams);
+        // orderTime 官方格式：yyyy-MM-dd'T'HH:mm:ssZ，截图示例为 2017-05-01T16:00:00+0800（无冒号）
+        String orderTime = ZonedDateTime.now(ZoneOffset.ofHours(8))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+
+        AiyaOutboundSaveDTO request = AiyaOutboundSaveDTO.builder()
+                // 必填：客户交易物流订单号=三方仓发货单号，客户侧保证唯一；修改时传同一号即可幂等 upsert
+                .orderNumber("WFHD-AIYA-TEST-" + System.currentTimeMillis())
+                .warehouseCode(TEST_WAREHOUSE_CODE)
+                // 可选：客户销售平台编号（平台订单号等）
+//                .extOrderNumber("PLATFORM-ORDER-TEST-001")
+                .orderTime(orderTime)
+                // 可选：方案文档映射销售平台 / 店铺
+                .salesChannel("Amazon")
+                .storeNumber("TEST-SHOP")
+                .shippingInstructions(AiyaOutboundSaveDTO.ShippingInstructions.builder()
+                        // 必填：承运商；API 取号时仍须传（可用物流渠道映射名）；无特殊要求 carrierService=STD
+                        .carrier("顺风")
+                        .carrierService("STD")
+                        // 必填：API=海外仓向快递取号；ATTACHMENT=平台自带面单；WMS_GEN=仓内模板生成
+//                        .shippingLabelSource("API")
+                        .shippingLabelSource("ATTACHMENT")
+                        // ATTACHMENT 时必填运单号；API 模式可不传
+                        .trackingNumber("1Z999AA10123456784")
+                        .build())
+                .shipTo(AiyaOutboundSaveDTO.ShipTo.builder()
+                        .name("Test Receiver")
+                        .mobileNumber("13800138000")
+                        .email("receiver@example.com")
+                        .streetLine1("100 Test Street")
+                        .streetLine2("Apt 1")
+                        // district 官方为可选；有值可传
+                        .district("Test District")
+                        .city("Los Angeles")
+                        .state("CA")
+                        .postalCode("90001")
+                        .countryCode("US")
+                        .build())
+                .items(Collections.singletonList(
+                        // TODO：换成测试仓库真实已映射且有库存的平台 SKU
+                        AiyaOutboundSaveDTO.Item.builder().sku("test1602").quantity(1).build()))
+                .shipFrom(AiyaOutboundSaveDTO.ShipFrom.builder()
+                        // name / company 必须至少填一个（可同时填）
+                        .name("张三")
+                        // .company("Test Company Ltd")
+                        // 方案文档：默认取海外仓库维度寄件地址；联调先手填测试仓地址
+                        .streetLine1("Warehouse Road 1")
+                        .city("Shenzhen")
+                        .state("Guangdong")
+                        .postalCode("518000")
+                        .countryCode("CN")
+                        .build())
+                // ATTACHMENT 时必须下发 files，且有且仅有一个 Shipping Label 附件；
+                // 一旦下发 FileItem，fileType 必填（取值见 AiyaOutboundSaveDTO.FileItem 常量）
+                .files(Collections.singletonList(AiyaOutboundSaveDTO.FileItem.builder()
+                        .fileType(AiyaOutboundSaveDTO.FileItem.FILE_TYPE_SHIPPING_LABEL)
+                        .fileName("label.pdf")
+                        .fileUrl("https://example.com/label.pdf")
+                        .build()))
+                .build();
+
+        JSONObject response = aiyaOpenApiService.save2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, request);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
+    /**
+     * 查询 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}）。
+     * <p>
+     * 骨架时期曾拆成 {@code search2cOrderTest}（按单号）/{@code query2cOrderPageTest}（分页）两个测试，
+     * 因两个方法指向同一 serviceType 已合并为 {@code query2cOrder}，本测试演示按单号列表精确查；
+     * 传 {@code orderNumbers=null} 即可改为按 orderTimeFrom/orderTimeTo 时间窗口分页查询。
+     * <p>
+     * 重点核对：{@code resultList} 字段名是否正确（推测值，未有真实样例验证）。
+     */
     @Test
-    public void search2cOrderTest() {
-        List<String> noList = Arrays.asList("TODO-填真实出库单号");
-        List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.search2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, noList);
+    public void query2cOrderTest() {
+        List<String> orderNumbers = Arrays.asList("TODO-填真实出库单号(即建单时下发的orderNumber)");
+        List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(
+                ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumbers, null, null, null, null);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
-    @Test
-    public void query2cOrderPageTest() {
-        Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填
-        bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
-        AiyaOutboundResp response = aiyaOpenApiService.query2cOrderPage(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, 1, 100, bizParams);
-        System.out.println(JSONUtil.toJsonStr(response));
-    }
-
+    /**
+     * 截单（取消）2C 出库单（{@code GLINK_CANCEL_ORDER_NOTIFY}）。
+     * <p>
+     * 入参已从骨架时期的 {@code no} 改为 {@code orderNumber}，与建单/查询保持一致的幂等键命名。
+     */
     @Test
     public void intercept2cOrderTest() {
-        String no = "TODO-填真实出库单号";
-        JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, no);
+        String orderNumber = "TODO-填真实出库单号(即建单时下发的orderNumber)";
+        JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumber);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 

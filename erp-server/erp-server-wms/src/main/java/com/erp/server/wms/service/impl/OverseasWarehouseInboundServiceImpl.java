@@ -1414,7 +1414,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         || OmsPlatformEnum.AI_YA.getCode().equalsIgnoreCase(dto.getPlatform())) {
                     // wego / 爱亚(aiya) 均按上架/收货时间窗口分页回传全量明细，且每条流水都带全局唯一 thirdId：
                     // - wego：inOrderDetailId_batch_createTime_sku；
-                    // - 爱亚：asnNumber_sku_skuStatus_batchNo_receiveTime（skuStatus 区分良品/不良品，各自独立成流水）。
+                    // - 爱亚：asnNumber_detailId_lineNo_sku_skuStatus（取 asnItemReceiveDetails 中 PV 上架流水，
+                    //   skuStatus 区分良品 GOOD / 不良品 DAMAGE，各自独立成流水）。
                     // 时间窗口重叠会重复拉取同一行，必须按 flow_id 强去重，否则会反复落
                     // overseas_warehouse_inbound_received，导致调拨/库存/状态计算重复触发。
                     // 兜底：极端情况下 thirdId 缺失时降级到 (detailId,qty,time) 弱去重，避免完全丢数据。
