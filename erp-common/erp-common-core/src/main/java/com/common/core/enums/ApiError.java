@@ -1145,6 +1145,8 @@ public final class ApiError implements Serializable {
     public static final ApiError SO_RETURN_PRESTOCK_REAL_QTY_INVALID = ApiErrorWms.SO_RETURN_PRESTOCK_REAL_QTY_INVALID;
     public static final ApiError WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.WAREHOUSE_INVENTORY_FAILED;
     public static final ApiError VIRTUAL_WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.VIRTUAL_WAREHOUSE_INVENTORY_FAILED;
+    public static final ApiError WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT = ApiErrorWms.WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT;
+    public static final ApiError WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND = ApiErrorWms.WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

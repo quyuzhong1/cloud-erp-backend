@@ -452,4 +452,6 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}】实际收货数量不可<累计的剩余应退货数量");
     public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
     public static final ApiError SO_RETURN_PRESTOCK_REAL_QTY_INVALID = new ApiError("SO_RETURN_PRESTOCK_REAL_QTY_INVALID", 10808, "实退数量必须大于0：{0}");
+    public static final ApiError WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT = new ApiError("WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT", 11221, "库存不足：sku=[{0}],推荐拣货仓位缺少数:{1},可从非拣货区仓位移仓数:{2},总仓依旧缺货：{3}");
+    public static final ApiError WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND = new ApiError("WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND", 11222, "SKU【{0}】未找到推荐拣货上架仓位，无法生成移仓建议");
 }
