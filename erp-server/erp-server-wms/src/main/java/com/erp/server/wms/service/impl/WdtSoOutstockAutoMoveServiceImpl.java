@@ -86,7 +86,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
 
             List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = new ArrayList<>();
             for (NeedStock need : needList) {
-                planMoveForNeed(need, detailList, inOutStockList, moveDetailList, inventoryCache);
+                planMoveForNeed(need, needList, detailList, inOutStockList, moveDetailList, inventoryCache);
             }
             moveDetailList.removeIf(d -> Objects.equals(d.getInWarehouseLocation(), d.getOutWarehouseLocation())
                     || d.getQty() == null || d.getQty() <= 0);
@@ -157,6 +157,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
     }
 
     private void planMoveForNeed(NeedStock need,
+                                 List<NeedStock> warehouseNeedList,
                                  List<SoOutstockDetailEntity> detailList,
                                  List<InOutStockDTO> inOutStockList,
                                  List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList,
@@ -196,20 +197,30 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             return copy;
         }).collect(Collectors.toList());
 
+        // 本单同仓同 SKU 各出库库位预留量（仍需从原库位扣减的数量），源仓分配时不可挪用
+        Map<String, Integer> reservedOutstockMaps = buildReservedOutstockQty(warehouseNeedList, need.getSkuId());
         Map<String, Integer> plannedOutMaps = new HashMap<>();
         for (WarehouseLocationMoveDetailDTO.AddDTO planned : moveDetailList) {
-            if (!need.getSkuNo().equals(planned.getSkuNo())) {
+            if (!Objects.equals(need.getSkuId(), planned.getSkuId())
+                    && !Objects.equals(need.getSkuNo(), planned.getSkuNo())) {
                 continue;
             }
             plannedOutMaps.merge(planned.getOutWarehouseLocation(), planned.getQty(), Integer::sum);
         }
         locationList.forEach(l -> {
-            Integer planned = plannedOutMaps.get(l.getCode());
-            if (planned != null) {
-                l.setUsableQty((l.getUsableQty() == null ? 0 : l.getUsableQty()) - planned);
+            String code = CharSequenceUtil.nullToEmpty(l.getCode());
+            int usable = l.getUsableQty() == null ? 0 : l.getUsableQty();
+            Integer reserved = reservedOutstockMaps.get(code);
+            if (reserved != null) {
+                usable -= reserved;
             }
+            Integer planned = plannedOutMaps.get(code);
+            if (planned != null) {
+                usable -= planned;
+            }
+            l.setUsableQty(usable);
         });
-        // 源仓排除：空仓位、当前库位（同仓同仓位不自转/不挪当前位存量）
+        // 源仓排除：空仓位、当前库位；预留后可用量<=0 的库位
         locationList.removeIf(l -> {
             String code = CharSequenceUtil.nullToEmpty(l.getCode());
             return l.getUsableQty() == null || l.getUsableQty() <= 0
@@ -332,6 +343,24 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             currNum = currNum - usableQty;
         }
         return currNum;
+    }
+
+    /**
+     * 汇总本仓本 SKU 各出库库位仍需扣减的预留数量（含当前处理行自身）。
+     */
+    private Map<String, Integer> buildReservedOutstockQty(List<NeedStock> warehouseNeedList, String skuId) {
+        Map<String, Integer> reserved = new HashMap<>();
+        if (CollUtil.isEmpty(warehouseNeedList) || CharSequenceUtil.isBlank(skuId)) {
+            return reserved;
+        }
+        for (NeedStock item : warehouseNeedList) {
+            if (item == null || !Objects.equals(skuId, item.getSkuId())
+                    || item.getQty() == null || item.getQty() <= 0) {
+                continue;
+            }
+            reserved.merge(CharSequenceUtil.nullToEmpty(item.getWarehouseLocation()), item.getQty(), Integer::sum);
+        }
+        return reserved;
     }
 
     private Map<String, NeedStock> aggregateNeed(List<InOutStockDTO> inOutStockList) {
