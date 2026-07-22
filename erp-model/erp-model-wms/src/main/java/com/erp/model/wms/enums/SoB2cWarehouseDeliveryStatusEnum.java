@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
  */
 public enum SoB2cWarehouseDeliveryStatusEnum implements EnumMessage {
     WAIT_HANDLE("waitHandle", "待处理"),
+    FAILED("failed", "创建失败"),
     SHIPPED("shipped", "已发货"),
     INTERCEPTING("intercepting", "拦截中"),
     CANCEL_DELIVERY("cancelDelivery", "取消发货")
