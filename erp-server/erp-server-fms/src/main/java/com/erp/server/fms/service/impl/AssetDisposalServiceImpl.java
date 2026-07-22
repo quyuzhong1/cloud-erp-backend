@@ -45,6 +45,7 @@ import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.listener.AssetDisposalExcelListener;
 import com.erp.server.fms.mapper.AssetDisposalMapper;
 import com.erp.server.fms.service.*;
+import com.erp.server.fms.utils.FmsAssetNameResolver;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -100,6 +101,8 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     private AssetCardService assetCardService;
     @Resource
     private AssetCardDetailService assetCardDetailService;
+    @Resource
+    private FmsAssetNameResolver fmsAssetNameResolver;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -359,6 +362,14 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
             }
         }
 
+        // 资产名称：关联模具档案/产品品名，不使用卡片本地冗余名
+        List<String> cardIds = list.stream()
+                .map(AssetDisposalDTO.ListDTO::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> cardNameMap = fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
+
         // 属性赋值
         for (AssetDisposalDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -366,6 +377,12 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
             data.setDisposalMethodName(AssetDisposalDisposalMethodEnum.getName(data.getDisposalMethod()));
             data.setDisposalCurrencyName(CurrencyEnum.getNameByCode(data.getDisposalCurrency()));
             data.setInvoiceTypeName(AssetDisposalDetailInvoiceTypeEnum.getName(data.getInvoiceType()));
+            if (StringUtils.isNotBlank(data.getSourceId())) {
+                String resolvedName = cardNameMap.get(data.getSourceId());
+                if (StringUtils.isNotBlank(resolvedName)) {
+                    data.setAssetName(resolvedName);
+                }
+            }
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
@@ -1084,8 +1101,29 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
 
         //查询明细数据
         List<AssetDisposalDetailDTO.ViewDTO> detial = assetDisposalDetailService.listByMainId(id);
+        fillDetailAssetNameFromCard(detial);
         data.setAssetDisposalDetailDTOList(detial);
         return data;
+    }
+
+    private void fillDetailAssetNameFromCard(List<AssetDisposalDetailDTO.ViewDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> cardIds = detailList.stream()
+                .map(AssetDisposalDetailDTO.ViewDTO::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> cardNameMap = fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
+        for (AssetDisposalDetailDTO.ViewDTO detail : detailList) {
+            if (StringUtils.isNotBlank(detail.getSourceId())) {
+                String resolvedName = cardNameMap.get(detail.getSourceId());
+                if (StringUtils.isNotBlank(resolvedName)) {
+                    detail.setAssetName(resolvedName);
+                }
+            }
+        }
     }
 
     private void fillOne(AssetDisposalDTO.ViewDTO data) {

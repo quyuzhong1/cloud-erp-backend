@@ -460,12 +460,17 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         if (CollUtil.isEmpty(cardIds)) {
             return;
         }
-        Map<String, String> cardNameMap = assetCardService.listByIds(cardIds).stream()
-                .filter(card -> StringUtils.isNotBlank(card.getId()))
-                .collect(Collectors.toMap(AssetCardEntity::getId, AssetCardEntity::getName, (v1, v2) -> v1));
+        Map<String, String> cardNameMap = fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
         for (AssetProfitLossDetailDTO.ViewDTO detail : detailList) {
             if (StringUtils.isNotBlank(detail.getCardId())) {
-                detail.setAssetName(cardNameMap.get(detail.getCardId()));
+                String resolvedName = cardNameMap.get(detail.getCardId());
+                if (StringUtils.isNotBlank(resolvedName)) {
+                    detail.setAssetName(resolvedName);
+                } else if (StringUtils.isNotBlank(detail.getAssetCode())) {
+                    detail.setAssetName(fmsAssetNameResolver.resolveMoldNameByCode(detail.getAssetCode()));
+                }
+            } else if (StringUtils.isNotBlank(detail.getAssetCode())) {
+                detail.setAssetName(fmsAssetNameResolver.resolveMoldNameByCode(detail.getAssetCode()));
             }
         }
     }
@@ -605,6 +610,14 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         List<AssetLocationEntity> assetLocationEntities = assetLocationService.listByIds(actualLocationList);
         Map<String, String> assetLocationMap = assetLocationEntities.stream().collect(Collectors.toMap(AssetLocationEntity::getId, AssetLocationEntity::getAddress));
 
+        // 资产名称：关联模具档案/产品品名，不使用卡片本地冗余名
+        List<String> cardIds = list.stream()
+                .map(AssetProfitLossDTO.ListDTO::getCardId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> cardNameMap = fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
+
         // 属性赋值
         for(AssetProfitLossDTO.ListDTO data : list) {
             // 审核状态名称
@@ -620,6 +633,17 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             // 资产类别名称
             if (StringUtils.isNotBlank(data.getAssetCategory())) {
                 data.setAssetCategoryName(finalAssetCategoryMap.get(data.getAssetCategory()));
+            }
+
+            if (StringUtils.isNotBlank(data.getCardId())) {
+                String resolvedName = cardNameMap.get(data.getCardId());
+                if (StringUtils.isNotBlank(resolvedName)) {
+                    data.setAssetName(resolvedName);
+                } else if (StringUtils.isNotBlank(data.getAssetCode())) {
+                    data.setAssetName(fmsAssetNameResolver.resolveMoldNameByCode(data.getAssetCode()));
+                }
+            } else if (StringUtils.isNotBlank(data.getAssetCode())) {
+                data.setAssetName(fmsAssetNameResolver.resolveMoldNameByCode(data.getAssetCode()));
             }
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值

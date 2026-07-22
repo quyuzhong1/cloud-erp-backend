@@ -11,8 +11,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import jodd.util.StringUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -25,6 +28,8 @@ public class AssetDisposalQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private WorkflowFeign workflowFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -66,11 +71,24 @@ public class AssetDisposalQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
+        // 资产名称：按模具档案名称查编码，再按卡片 asset_code 过滤（不依赖本地冗余名）
         if (isAssetNameField(field)) {
-            super.buildDefaultDTO("ac.name", value);
-            return super.getSplicingSQL();
+            return handleAssetNameQuery(value);
         }
         return null;
+    }
+
+    private String handleAssetNameQuery(Object value) {
+        String assetName = value != null ? value.toString() : null;
+        if (StringUtils.isBlank(assetName)) {
+            return null;
+        }
+        List<String> moldCodes = plmTaskFeign.listMoldCodesByName(assetName);
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            super.buildDefaultDTO("ac.asset_code", moldCodes);
+            return null;
+        }
+        return this.getQueryEmptySql();
     }
 
     private boolean isAssetNameField(String field) {
