@@ -809,12 +809,8 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     }
 
     private Map<String, String> buildCardNameMap(List<String> cardIds) {
-        if (CollUtil.isEmpty(cardIds)) {
-            return Collections.emptyMap();
-        }
-        return assetCardService.listByIds(cardIds).stream()
-                .filter(card -> StringUtils.isNotBlank(card.getId()))
-                .collect(Collectors.toMap(AssetCardEntity::getId, AssetCardEntity::getName, (v1, v2) -> v1));
+        // 关联模具档案/产品品名，不使用卡片本地冗余名
+        return fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
     }
 
     /**

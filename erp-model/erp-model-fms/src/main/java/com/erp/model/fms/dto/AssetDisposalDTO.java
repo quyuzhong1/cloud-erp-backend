@@ -187,6 +187,11 @@ public class AssetDisposalDTO implements Serializable {
         private String assetDisposalDetailId;
 
         /**
+         * 来源卡片id（关联查询资产名称用）
+         */
+        private String sourceId;
+
+        /**
          * 卡片编码
          */
         private String sourceCode;
