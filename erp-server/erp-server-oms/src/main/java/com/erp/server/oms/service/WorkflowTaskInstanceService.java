@@ -133,7 +133,11 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
 
     void markSuccess(String instanceId, int currentIndex, int totalSteps);
 
-
+    /**
+     * 将实例标记为成功；若乐观锁冲突则抛出业务异常。
+     * <p>用于末节点收口等必须保证实例/节点状态一致的事务路径。</p>
+     */
+    void markSuccessOrThrow(String instanceId, int currentIndex, int totalSteps);
 
     /**
 

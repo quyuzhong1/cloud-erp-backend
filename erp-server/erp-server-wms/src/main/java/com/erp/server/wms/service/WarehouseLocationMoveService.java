@@ -266,7 +266,17 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
 
     PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto);
     
+    /**
+     * 旺店通库存不足自动移仓（默认事务传播）。
+     * <p>供 DMP {@code getWdtInsufficientInventory} 等跨服务调用，可加入调用方全局事务。</p>
+     */
     void wdtAutoAdd(WarehouseLocationMoveDTO.PcAddDTO pcAddDTO);
+
+    /**
+     * 旺店通库存不足自动移仓（独立新事务）。
+     * <p>供出库同步前预检使用，移仓结果立即提交，不与外层出库事务绑定。</p>
+     */
+    void wdtAutoAddNewTx(WarehouseLocationMoveDTO.PcAddDTO pcAddDTO);
 
     /**
      * 售后 PDA 货品上架：单 SKU 从源仓位移动到目标仓位，并生成已审核仓位移动单。

@@ -13,12 +13,14 @@ import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlFillModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlOrderDirectionEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlReplaceModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlRuleTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSubstringModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportImportTypeEnum;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.logisticsPayTypeEnum;
@@ -620,6 +622,55 @@ public class LogisticsCostImportFieldRuleTest {
         assertEquals(2, mergeList.size());
         assertBigDecimalEquals(new BigDecimal("4.00"), findCostValue(mergeList, "USD"));
         assertBigDecimalEquals(new BigDecimal("5"), findCostValue(mergeList, "CNY"));
+    }
+
+    @Test
+    public void lineFormatCostShouldOnlyUseMatchedCostItemColumn() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        List<CfgLogisticsCostImportDetailEntity> details = new ArrayList<>();
+        CfgLogisticsCostImportDetailEntity platformCode = importDetail("platformCode", "platformCode", "费用项明细");
+        platformCode.setSourceField("Related order ID");
+        platformCode.setIsUniqueKey(true);
+        CfgLogisticsCostImportDetailEntity currency = importDetail("currency", "currency", "币种");
+        currency.setSourceField("Currency");
+        details.add(platformCode);
+        details.add(currency);
+        for (int i = 0; i < 11; i++) {
+            CfgLogisticsCostImportDetailEntity costItem = importDetail("costItem-" + i, "costItem", "费用项明细");
+            costItem.setSourceField(i == 0 ? "Seller shipping fee" : "Unmatched shipping fee " + i);
+            costItem.setTargetDetailField("shippingCost");
+            costItem.setTargetDetailFieldName("平台运费");
+            details.add(costItem);
+        }
+        Map<Integer, String> headMap = new HashMap<>();
+        headMap.put(0, "Related order ID");
+        headMap.put(1, "Currency");
+        headMap.put(2, "Seller shipping fee");
+        JSONObject rowData = new JSONObject();
+        rowData.set("0", "584567827388531727");
+        rowData.set("1", "VND");
+        rowData.set("2", "-113500");
+        invokePrivate(service, "prepareImportRowValues", new Class[]{List.class, Map.class, List.class},
+                details, headMap, Collections.singletonList(rowData));
+
+        TmsCfgCostEntity cfgCost = new TmsCfgCostEntity();
+        cfgCost.setId("platform-shipping-cost");
+        cfgCost.setCostName("平台运费");
+        cfgCost.setDictCostAttribution(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
+        cfgCost.setDictCostCategory("shippingCost");
+        Map<String, String> currencyLookupMap = Collections.singletonMap("VND", "VND");
+        Map<String, BigDecimal> currencyRateMap = Collections.singletonMap("VND", BigDecimal.ONE);
+        List<String> errorMsgList = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        List<TmsCostDetailDTO.UpdateDTO> updateList = (List<TmsCostDetailDTO.UpdateDTO>) invokePrivate(service, "lineFormatCost",
+                new Class[]{JSONObject.class, JSONObject.class, List.class, List.class, List.class, List.class, String.class, Map.class, Map.class},
+                new JSONObject(), rowData, errorMsgList, Collections.singletonList(cfgCost), details,
+                new ArrayList<>(headMap.values()), DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode(), currencyLookupMap, currencyRateMap);
+
+        assertTrue(errorMsgList.isEmpty());
+        assertEquals(1, updateList.size());
+        assertBigDecimalEquals(new BigDecimal("-113500.0000"), updateList.get(0).getCostValue());
     }
 
     @Test

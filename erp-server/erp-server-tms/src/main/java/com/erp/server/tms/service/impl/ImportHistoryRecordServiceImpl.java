@@ -2590,20 +2590,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (ObjectUtil.isNotNull(detail.getMappingIndex())) {
             rowData.set(detail.getMappingIndex().toString(), text);
         }
-        if (CharSequenceUtil.isNotBlank(detail.getTargetField())) {
+        if (CharSequenceUtil.isNotBlank(detail.getTargetField())
+                && !CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())) {
             rowData.set(detail.getTargetField(), text);
         }
     }
 
     private String getPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail) {
-        Object value = ObjectUtil.isNotNull(detail.getMappingIndex()) ? rowData.get(detail.getMappingIndex().toString()) : null;
-        if (ObjectUtil.isEmpty(value) && CharSequenceUtil.isNotBlank(detail.getTargetField())) {
+        Object value = ObjectUtil.isNotNull(detail.getMappingIndex())
+                ? rowData.get(detail.getMappingIndex().toString())
+                : null;
+        if (ObjectUtil.isEmpty(value)
+                && CharSequenceUtil.isNotBlank(detail.getTargetField())
+                && !CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())) {
             value = rowData.get(detail.getTargetField());
         }
-        if (ObjectUtil.isEmpty(value)) {
-            return "";
-        }
-        return String.valueOf(value);
+        return ObjectUtil.isEmpty(value) ? "" : String.valueOf(value);
     }
 
     private void standardizeImportRowWeightValues(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,

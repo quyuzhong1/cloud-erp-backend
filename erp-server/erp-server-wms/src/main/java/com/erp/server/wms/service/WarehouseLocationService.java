@@ -351,6 +351,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
 
     WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo);
 
+    /**
+     * 根据SKU批量找出非拣货区的所有仓位，按库存数量降序排序
+     */
+    List<WarehouseLocationDTO.WareInventoryQtyDTO> listWareInventoryQtyBySkuNos(String warehouseId, List<String> skuNos);
+
     List<BatchResultDTO> updateStatusBatch(WarehouseLocationDTO.UpdateStatusDto dto);
 
     /**
