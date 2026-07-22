@@ -944,13 +944,13 @@ public class AfterSaleDTO implements Serializable {
     public static class LogisticsOrderDTO {
 
         /**
-         * 下单方式：PLATFORM-下单至物流平台，MANUAL-自行寄出；不传默认 PLATFORM
+         * 下单方式：platform-下单至物流平台，manual-自行寄出；不传默认 platform
          */
         @Size(max = 20, message = "下单方式最大长度不能超过20位")
         private String orderMode;
 
         /**
-         * 自行寄出时的物流单号（orderMode=MANUAL 时必填）
+         * 自行寄出时的物流单号（orderMode=manual 时必填）
          */
         @NotBlank(message = "物流单号不能为空", groups = AfterSaleLogisticsManualOrderGroup.class)
         @Size(max = 64, message = "物流单号最大长度不能超过64位", groups = AfterSaleLogisticsManualOrderGroup.class)

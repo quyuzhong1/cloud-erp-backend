@@ -1876,7 +1876,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     /**
-     * 按物流下单方式校验入参：PLATFORM 校验渠道等平台字段，MANUAL 校验自行寄出运单号等字段。
+     * 按物流下单方式校验入参：platform 校验渠道等平台字段，manual 校验自行寄出运单号等字段。
      *
      * @param dto 物流下单入参
      */

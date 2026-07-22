@@ -12,8 +12,8 @@ import java.util.Arrays;
 @Getter
 public enum AfterSaleLogisticsOrderModeEnum {
 
-    PLATFORM("PLATFORM", "下单至物流平台"),
-    MANUAL("MANUAL", "自行寄出"),
+    PLATFORM("platform", "下单至物流平台"),
+    MANUAL("manual", "自行寄出"),
     ;
 
     @JsonValue
