@@ -346,6 +346,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
         // 组装请求参数
         List<OrderRequest> orderRequestList = new ArrayList<>();
+        List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
+        Set<String> idempotentSkippedAfterSaleIds = new HashSet<>();
         for (LogisticsOrderEntity logisticsOrderEntity : entityList) {
             LogisticsOrderEntity old = logisticsOrderEntityMap.get(logisticsOrderEntity.getSourceCode());
             logisticsOrderEntity.setOrderId(logisticsOrderEntity.getSourceCode() + "_" + LocalTime.now().format(DateTimeFormatter.ofPattern(DateUtil.FMT_HMS)));
@@ -356,6 +358,21 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             } else {
                 logisticsOrderEntity.setId(old.getId());
                 logisticsOrderEntity.setCode(old.getCode());
+            }
+            if (old != null && LogisticsStatusEnum.SUCCESS.getCode().equals(old.getStatus())
+                    && StringUtils.isNotBlank(old.getTrackNo())) {
+                log.warn("物流下单幂等跳过顺丰调用, afterSaleId={}, sourceCode={}, trackNo={}",
+                        logisticsOrderEntity.getAfterSaleId(), logisticsOrderEntity.getSourceCode(), old.getTrackNo());
+                AfterSaleDTO.LogisticsOrderResultDTO existResult = new AfterSaleDTO.LogisticsOrderResultDTO();
+                existResult.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
+                existResult.setStatus(true);
+                existResult.setTrackNo(old.getTrackNo());
+                resultDTOList.add(existResult);
+                idempotentSkippedAfterSaleIds.add(logisticsOrderEntity.getAfterSaleId());
+                logisticsOrderEntity.setOrderId(old.getOrderId());
+                logisticsOrderEntity.setStatus(old.getStatus());
+                logisticsOrderEntity.setTrackNo(old.getTrackNo());
+                continue;
             }
             AfterSaleDTO.ViewDTO viewDTO = viewDTOMap.get(logisticsOrderEntity.getAfterSaleId());
             // 托寄物信息
@@ -391,7 +408,6 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             orderRequestList.add(orderRequest);
         }
         // 同步调用外部接口，单个订单失败不影响后续订单处理
-        List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         Map<String, String> map = entityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getSourceCode, LogisticsOrderEntity::getAfterSaleId));
         for (OrderRequest orderRequest : orderRequestList) {
             try {
@@ -430,15 +446,17 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
                     e.setTrackNo(resultDTO.getTrackNo());
                     e.setExceptionReason("");
-                    // 操作日志
-                    String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
-                    // 下单成功发送异步请求保存面单
-                    // 设置redis
-                    String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
-                    redisUtil.set(labelRedisKey, true, 86400);
-                    LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
-                    successLabelList.add(labelDTO);
+                    if (!idempotentSkippedAfterSaleIds.contains(e.getAfterSaleId())) {
+                        // 操作日志
+                        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
+                        // 下单成功发送异步请求保存面单
+                        // 设置redis
+                        String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
+                        redisUtil.set(labelRedisKey, true, 86400);
+                        LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
+                        successLabelList.add(labelDTO);
+                    }
                 } else {
                     e.setStatus(LogisticsStatusEnum.FAILED.getCode());
                     e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());

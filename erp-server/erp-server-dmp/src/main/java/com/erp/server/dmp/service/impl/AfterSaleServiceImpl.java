@@ -1596,12 +1596,15 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         Map<String, String> trackStatusMap = new HashMap<>();
         int batchSize = 500;
+        int failedBatchCount = 0;
         for (int i = 0; i < trackQueryList.size(); i += batchSize) {
             int end = Math.min(i + batchSize, trackQueryList.size());
             List<LogisticsBillDTO.LogisticsBillVo> batch = trackQueryList.subList(i, end);
             try {
                 List<LogisticsBillDTO.LogisticsBillVo> resultList = logisticsBillFeign.getTrackStatusByTrackNo(batch);
                 if (CollUtil.isEmpty(resultList)) {
+                    failedBatchCount++;
+                    log.warn("寄修单物流轨迹状态同步失败，批次起始索引={}，请求数={}，返回数=0", i, batch.size());
                     continue;
                 }
                 for (LogisticsBillDTO.LogisticsBillVo vo : resultList) {
@@ -1613,8 +1616,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     trackStatusMap.put(vo.getSourceId() + "|" + vo.getTrackNo(), status);
                 }
             } catch (Exception e) {
+                failedBatchCount++;
                 log.warn("寄修单物流轨迹状态同步失败，批次起始索引={}", i, e);
             }
+        }
+        if (failedBatchCount > 0) {
+            throw new ServiceException(ApiError.DMP_AFTER_SALE_TRACK_SYNC_FAILED, failedBatchCount);
         }
 
         Map<String, String> mainIdStatusMap = new HashMap<>();

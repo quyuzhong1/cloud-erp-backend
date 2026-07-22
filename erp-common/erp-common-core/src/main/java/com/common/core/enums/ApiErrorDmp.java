@@ -75,4 +75,5 @@ public final class ApiErrorDmp {
     public static final ApiError MAPPING_START_DATE_INVALID = new ApiError("MAPPING_START_DATE_INVALID", 7510, "启用日期不能早于上个映射关系的开始时间【{0}】");
     public static final ApiError MAPPING_MSKU_NOT_MAPPING = new ApiError("MAPPING_MSKU_NOT_MAPPING", 7511, "MSKU【{0}】未映射SKU");
     public static final ApiError MAPPING_MSKU_NOT_EXIST = new ApiError("MAPPING_MSKU_NOT_EXIST", 7512, "MSKU不存在");
+    public static final ApiError DMP_AFTER_SALE_TRACK_SYNC_FAILED = new ApiError("DMP_AFTER_SALE_TRACK_SYNC_FAILED", 7513, "寄修单物流轨迹状态同步失败，失败批次数={0}");
 }

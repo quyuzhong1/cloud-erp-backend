@@ -498,5 +498,8 @@ public final class ApiErrorWms {
     public static final ApiError WH_AFTER_SALE_PACK_VOID_NOT_EMPTY = new ApiError("WH_AFTER_SALE_PACK_VOID_NOT_EMPTY", 11256, "箱唛【{0}】非空箱，不能作废");
     public static final ApiError WH_AFTER_SALE_PACK_VOID_IN_USE = new ApiError("WH_AFTER_SALE_PACK_VOID_IN_USE", 11257, "箱唛【{0}】已被单据使用，不能作废");
     public static final ApiError WH_AFTER_SALE_PACK_SCAN_VOIDED = new ApiError("WH_AFTER_SALE_PACK_SCAN_VOIDED", 11258, "扫描箱唛失败，箱唛已被作废");
+    public static final ApiError WH_AFTER_SALE_PACK_STATE_CHANGED = new ApiError("WH_AFTER_SALE_PACK_STATE_CHANGED", 11259, "箱唛【{0}】状态已变更，请刷新后重试");
+    public static final ApiError WH_PO_RETURN_REASON_TYPE_INVALID = new ApiError("WH_PO_RETURN_REASON_TYPE_INVALID", 11260, "退货原因类型不正确");
+    public static final ApiError WH_PO_RETURN_REMARK_REQUIRED = new ApiError("WH_PO_RETURN_REMARK_REQUIRED", 11261, "退货原因类型为其它时，退货说明不能为空");
 
 }
