@@ -245,7 +245,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * 将原方法拆分为四步，降低事务持有时间：
      * 1. 幂等检查（纯读，无事务）
      * 2. 前置查询：所有 Feign / DB 只读操作（无事务，{@link #preQueryForWdtSync}）
-     * 3. 出库配置推荐：按库区优先级匹配库存，非拣货区自动移至空仓位
+     * 3. 扣库存前结构化预检：当前库位不足则改空仓位，按「出库数量-空仓位已有」从其他仓位移入
+     *    （{@link WdtSoOutstockAutoMoveService#preCheckAndAutoMove}；源仓排除空仓位与当前库位）
      * 4. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
      * </p>
      */
@@ -276,7 +277,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 2. 前置查询：所有 Feign / 只读 DB 操作在事务外完成，避免长事务持有连接
         WdtSyncQueryContext ctx = preQueryForWdtSync(entity);
 
-        // 3. 按出库配置匹配库存仓位：拣货区直接出库，非拣货区先移至空仓位
+        // 3. 扣库存事务外预检：当前库位不足则改空仓位，移仓数量=出库数量-空仓位已有（移仓独立事务提交）
         wdtSoOutstockAutoMoveService.preCheckAndAutoMove(
                 ctx.soOutstock, ctx.detailList, ctx.inOutStockList,
                 ctx.soOutstock.getCode(), ctx.soOutstock.getCode());

@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 
 import java.util.List;
@@ -13,19 +12,17 @@ import java.util.List;
 public interface WdtSoOutstockAutoMoveService {
 
     /**
-     * 按出库仓位推荐规则和库区优先级匹配可用库存仓位。
-     * <p>拣货区仓位直接出库；非拣货区先移至空仓位；无可用仓位时抛出业务异常。</p>
-     * <p>移仓按 sourceId + sourceType + warehouseId 幂等：解析前若已存在已审核移仓单，
-     * 按移仓明细回写目标仓位后再推荐剩余明细，避免重试时因库存已移至空仓位而误报缺货。</p>
+     * 按出库明细预检当前库位可用量。
+     * <p>不足时改为空仓位扣减；移仓数量 = 出库数量 - 空仓位已有；
+     * 源仓排除空仓位/当前库位，并扣减本单同 SKU 其他出库库位预留量。
+     * 凑不满时不移仓、不抛错，交由后续扣库存报不足。</p>
      *
-     * @param soOutstock    本单出库主单（用于规则匹配）
      * @param detailList     本单出库明细（不足时会改写 warehouseLocation 为空仓位）
      * @param inOutStockList 本单待扣减的实体仓出入库明细（与 detail 同步改写）
-     * @param sourceId       幂等键：旺店通出库单号
+     * @param sourceId       旺店通出库单号，写入自动移仓来源
      * @param sourceCode     来源单号（通常同 sourceId）
      */
-    void preCheckAndAutoMove(SoOutstockEntity soOutstock,
-                             List<SoOutstockDetailEntity> detailList,
+    void preCheckAndAutoMove(List<SoOutstockDetailEntity> detailList,
                              List<InOutStockDTO> inOutStockList,
                              String sourceId,
                              String sourceCode);

@@ -40,7 +40,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 旺店通销售出库同步前，按出库配置推荐仓位并完成必要的自动移仓。
+ * 旺店通销售出库同步前预检：当前库位不足则改空仓位；
+ * 移仓数量 = 出库数量 - 空仓位已有，源仓排除空仓位与当前库位。
  */
 @Slf4j
 @Service
@@ -127,40 +128,17 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 continue;
             }
 
-            List<CfgRulePickingDTO.OutStockItemDTO> items = needResolveDetails.stream()
-                    .map(detail -> new CfgRulePickingDTO.OutStockItemDTO(
-                            detail.getId(), detail.getSkuId(), detail.getSkuNo(), detail.getActualQty()))
-                    .collect(Collectors.toList());
-            List<CfgRulePickingDTO.OutStockLocationSuggestDTO> suggests =
-                    cfgRulePickingService.resolveOutStockLocations(executionData, warehouseId, items);
-            applySuggests(warehouseId, needResolveDetails, inOutStockList, suggests, sourceId, sourceCode);
-        }
-    }
+            List<NeedStock> needList = entry.getValue();
+            // 按仓批量加载本单涉及 SKU 的可用库存：同时用于当前库位预检 + 候选源仓分配
+            WarehouseInventoryCache inventoryCache = loadWarehouseInventoryCache(warehouse, needList);
 
-    /**
-     * 若 sourceId + 仓库已存在有效移仓单，按移仓明细回写出库仓位（通常为空仓位），返回仍需重新推荐的明细。
-     * <p>明细 ID 由旺店通单号+业务键稳定生成，优先按 sourceDetailId 精确匹配；其次仅在 skuId+qty 唯一时匹配。</p>
-     */
-    private List<SoOutstockDetailEntity> restoreMovedLocationsIfPresent(String sourceId,
-                                                                        String warehouseId,
-                                                                        List<SoOutstockDetailEntity> warehouseDetails,
-                                                                        List<InOutStockDTO> inOutStockList) {
-        WarehouseLocationMoveEntity moved = findValidMovedBySource(sourceId, warehouseId);
-        if (moved == null) {
-            return warehouseDetails;
-        }
-        List<WarehouseLocationMoveDetailEntity> moveDetails =
-                warehouseLocationMoveDetailService.listByMainIds(Collections.singletonList(moved.getId()));
-        if (CollUtil.isEmpty(moveDetails)) {
-            throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, "",
-                    "已存在移仓单但无明细，请人工处理");
-        }
-        List<WarehouseLocationMoveDetailEntity> unmatched = new ArrayList<>(moveDetails);
-        List<SoOutstockDetailEntity> needResolve = new ArrayList<>();
-        for (SoOutstockDetailEntity detail : warehouseDetails) {
-            WarehouseLocationMoveDetailEntity matched = pollMatchedMoveDetail(unmatched, detail);
-            if (matched == null) {
-                needResolve.add(detail);
+            List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = new ArrayList<>();
+            for (NeedStock need : needList) {
+                planMoveForNeed(need, needList, detailList, inOutStockList, moveDetailList, inventoryCache);
+            }
+            moveDetailList.removeIf(d -> Objects.equals(d.getInWarehouseLocation(), d.getOutWarehouseLocation())
+                    || d.getQty() == null || d.getQty() <= 0);
+            if (CollUtil.isEmpty(moveDetailList)) {
                 continue;
             }
             String target = matched.getInWarehouseLocation() == null ? EMPTY_LOCATION : matched.getInWarehouseLocation();
@@ -261,51 +239,299 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         warehouseLocationMoveService.wdtAutoAddNewTx(addDTO);
     }
 
-    private WarehouseLocationMoveEntity findValidMovedBySource(String sourceId, String warehouseId) {
-        if (CharSequenceUtil.isBlank(sourceId) || CharSequenceUtil.isBlank(warehouseId)) {
-            return null;
-        }
-        return warehouseLocationMoveService.lambdaQuery()
-                .eq(WarehouseLocationMoveEntity::getSourceType, SourceTypeEnum.SO_OUTSTOCK.getCode())
-                .eq(WarehouseLocationMoveEntity::getSourceId, sourceId)
-                .eq(WarehouseLocationMoveEntity::getWarehouseId, warehouseId)
-                .eq(WarehouseLocationMoveEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
-                .and(w -> w.isNull(WarehouseLocationMoveEntity::getInvalidStatus)
-                        .or()
-                        .eq(WarehouseLocationMoveEntity::getInvalidStatus, false))
-                .orderByDesc(WarehouseLocationMoveEntity::getCreateTime)
-                .last("limit 1")
-                .one();
-    }
-
-    private CfgRulePickingDTO.CfgExecutionDataDTO buildExecutionData(
-            SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> details) {
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData =
-                new CfgRulePickingDTO.CfgExecutionDataDTO();
-        executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
-        executionData.setCustomerId(soOutstock.getCustomerId());
-        executionData.setCountryCode(soOutstock.getCountry());
-        executionData.setDeliveryWarehouseId(soOutstock.getWarehouseId());
-        executionData.setSourceCode(soOutstock.getCode());
-        executionData.setDetails(details.stream()
-                .map(detail -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(
-                        CharSequenceUtil.isNotBlank(detail.getWarehouseId())
-                                ? detail.getWarehouseId() : soOutstock.getWarehouseId(),
-                        detail.getSkuId(), detail.getSkuNo(), "",
-                        detail.getActualQty(), detail.getId()))
-                .collect(Collectors.toList()));
-        return executionData;
-    }
-
-    private void rewriteLocation(List<SoOutstockDetailEntity> details,
-                                 List<InOutStockDTO> inOutStockList,
-                                 String warehouseLocation) {
-        Set<String> detailIds = details.stream()
-                .map(SoOutstockDetailEntity::getId)
+    /**
+     * 按仓库一次查出本单 SKU 的全部可用库存，构建当前库位数量 Map 与候选源仓列表。
+     */
+    private WarehouseInventoryCache loadWarehouseInventoryCache(WarehouseEntity warehouse, List<NeedStock> needList) {
+        Set<String> skuIds = needList.stream()
+                .map(NeedStock::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
                 .collect(Collectors.toSet());
-        details.forEach(detail -> detail.setWarehouseLocation(warehouseLocation));
-        inOutStockList.stream()
-                .filter(item -> detailIds.contains(item.getSourceDetailId()))
-                .forEach(item -> item.setWarehouseLocation(warehouseLocation));
+        WarehouseInventoryCache cache = new WarehouseInventoryCache();
+        if (CollUtil.isEmpty(skuIds)) {
+            return cache;
+        }
+        List<InventoryEntity> inventoryList = inventoryService.lambdaQuery()
+                .eq(InventoryEntity::getOrgId, warehouse.getOrgId())
+                .eq(InventoryEntity::getWarehouseId, warehouse.getId())
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                .in(InventoryEntity::getSkuId, skuIds)
+                .list();
+        if (CollUtil.isEmpty(inventoryList)) {
+            return cache;
+        }
+        for (InventoryEntity inv : inventoryList) {
+            if (inv == null || CharSequenceUtil.isBlank(inv.getSkuId())) {
+                continue;
+            }
+            String location = CharSequenceUtil.nullToEmpty(inv.getWarehouseLocation());
+            int qty = inv.getQty() == null ? 0 : inv.getQty();
+            cache.qtyBySkuLocation.put(buildSkuLocationKey(inv.getSkuId(), location), qty);
+            if (qty <= 0) {
+                continue;
+            }
+            LocationListDTO locationDto = new LocationListDTO();
+            locationDto.setCode(location);
+            locationDto.setUsableQty(qty);
+            cache.locationsBySkuId
+                    .computeIfAbsent(inv.getSkuId(), k -> new ArrayList<>())
+                    .add(locationDto);
+        }
+        return cache;
+    }
+
+    private void planMoveForNeed(NeedStock need,
+                                 List<NeedStock> warehouseNeedList,
+                                 List<SoOutstockDetailEntity> detailList,
+                                 List<InOutStockDTO> inOutStockList,
+                                 List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList,
+                                 WarehouseInventoryCache inventoryCache) {
+        String currentLocation = CharSequenceUtil.nullToEmpty(need.getWarehouseLocation());
+        int haveQty = inventoryCache.qtyBySkuLocation.getOrDefault(
+                buildSkuLocationKey(need.getSkuId(), currentLocation), 0);
+        // 当前库位足够：不改位、不移仓
+        if (haveQty >= need.getQty()) {
+            return;
+        }
+
+        // 当前库位不足：改为空仓位扣减；移仓数量 = 出库数量 - 空仓位已有（不含当前库位存量）
+        // emptyHave 含本单前面已规划移入空仓位的数量（见下方 cache 回写）
+        int emptyHaveQty = inventoryCache.qtyBySkuLocation.getOrDefault(
+                buildSkuLocationKey(need.getSkuId(), EMPTY_LOCATION), 0);
+        int moveQty = need.getQty() - emptyHaveQty;
+        if (moveQty <= 0) {
+            // 空仓位已够出库，只改写扣减仓位
+            rewriteToEmptyLocation(detailList, inOutStockList, need.getWarehouseId(), need.getSkuId(), currentLocation);
+            log.warn("旺店通出库预检空仓位已够，仅改写库位 skuNo={} currentLocation={} need={} emptyHave={}",
+                    need.getSkuNo(), currentLocation, need.getQty(), emptyHaveQty);
+            return;
+        }
+
+        List<LocationListDTO> sourceLocations = inventoryCache.locationsBySkuId.get(need.getSkuId());
+        if (CollUtil.isEmpty(sourceLocations)) {
+            log.warn("旺店通出库预检无可用源仓位，跳过移仓 skuNo={} currentLocation={} need={} emptyHave={}",
+                    need.getSkuNo(), currentLocation, need.getQty(), emptyHaveQty);
+            return;
+        }
+        // 拷贝一份，避免本单多 SKU/多行互相扣减 usableQty 时污染缓存
+        List<LocationListDTO> locationList = sourceLocations.stream().map(src -> {
+            LocationListDTO copy = new LocationListDTO();
+            copy.setCode(src.getCode());
+            copy.setUsableQty(src.getUsableQty());
+            return copy;
+        }).collect(Collectors.toList());
+
+        // 本单同仓同 SKU 各出库库位预留量（仍需从原库位扣减的数量），源仓分配时不可挪用
+        Map<String, Integer> reservedOutstockMaps = buildReservedOutstockQty(warehouseNeedList, need.getSkuId());
+        Map<String, Integer> plannedOutMaps = new HashMap<>();
+        for (WarehouseLocationMoveDetailDTO.AddDTO planned : moveDetailList) {
+            if (!Objects.equals(need.getSkuId(), planned.getSkuId())
+                    && !Objects.equals(need.getSkuNo(), planned.getSkuNo())) {
+                continue;
+            }
+            plannedOutMaps.merge(planned.getOutWarehouseLocation(), planned.getQty(), Integer::sum);
+        }
+        locationList.forEach(l -> {
+            String code = CharSequenceUtil.nullToEmpty(l.getCode());
+            int usable = l.getUsableQty() == null ? 0 : l.getUsableQty();
+            Integer reserved = reservedOutstockMaps.get(code);
+            if (reserved != null) {
+                usable -= reserved;
+            }
+            Integer planned = plannedOutMaps.get(code);
+            if (planned != null) {
+                usable -= planned;
+            }
+            l.setUsableQty(usable);
+        });
+        // 源仓排除：空仓位、当前库位；预留后可用量<=0 的库位
+        locationList.removeIf(l -> {
+            String code = CharSequenceUtil.nullToEmpty(l.getCode());
+            return l.getUsableQty() == null || l.getUsableQty() <= 0
+                    || Objects.equals(code, EMPTY_LOCATION)
+                    || Objects.equals(code, currentLocation);
+        });
+
+        Map<String, Integer> addNumMaps = new HashMap<>();
+        int remain = moveQty;
+        List<Predicate<? super LocationListDTO>> predicateList = buildPriorityPredicates();
+        for (Predicate<? super LocationListDTO> predicate : predicateList) {
+            remain = allocateMoveQty(remain, addNumMaps, locationList, predicate);
+        }
+
+        if (remain > 0 || addNumMaps.isEmpty()) {
+            // 凑不满：不改库位、不移仓，保留原推荐位交给后续扣库存报不足
+            log.warn("旺店通出库预检仓位可用量凑不满，跳过移仓 skuNo={} currentLocation={} need={} currentHave={} emptyHave={} moveQty={} remain={}",
+                    need.getSkuNo(), currentLocation, need.getQty(), haveQty, emptyHaveQty, moveQty, remain);
+            return;
+        }
+
+        // 凑满后再改库位，避免移仓未执行时明细已指向空仓位
+        rewriteToEmptyLocation(detailList, inOutStockList, need.getWarehouseId(), need.getSkuId(), currentLocation);
+
+        int movedTotal = 0;
+        for (Map.Entry<String, Integer> addEntry : addNumMaps.entrySet()) {
+            WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
+            detail.setSkuId(need.getSkuId());
+            detail.setSkuNo(need.getSkuNo());
+            detail.setQty(addEntry.getValue());
+            detail.setOutWarehouseLocation(addEntry.getKey());
+            detail.setInWarehouseLocation(EMPTY_LOCATION);
+            detail.setOutInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            detail.setInInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            detail.setWarehouseId(need.getWarehouseId());
+            detail.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
+            moveDetailList.add(detail);
+            movedTotal += addEntry.getValue() == null ? 0 : addEntry.getValue();
+        }
+        // 回写缓存，供同仓后续 SKU/明细累计空仓位已有量
+        if (movedTotal > 0) {
+            inventoryCache.qtyBySkuLocation.merge(
+                    buildSkuLocationKey(need.getSkuId(), EMPTY_LOCATION), movedTotal, Integer::sum);
+        }
+    }
+
+    private void rewriteToEmptyLocation(List<SoOutstockDetailEntity> detailList,
+                                        List<InOutStockDTO> inOutStockList,
+                                        String warehouseId,
+                                        String skuId,
+                                        String fromLocation) {
+        String from = CharSequenceUtil.nullToEmpty(fromLocation);
+        if (CollUtil.isNotEmpty(detailList)) {
+            for (SoOutstockDetailEntity detail : detailList) {
+                if (detail == null) {
+                    continue;
+                }
+                if (!Objects.equals(warehouseId, detail.getWarehouseId())
+                        || !Objects.equals(skuId, detail.getSkuId())) {
+                    continue;
+                }
+                if (!Objects.equals(from, CharSequenceUtil.nullToEmpty(detail.getWarehouseLocation()))) {
+                    continue;
+                }
+                detail.setWarehouseLocation(EMPTY_LOCATION);
+            }
+        }
+        if (CollUtil.isNotEmpty(inOutStockList)) {
+            for (InOutStockDTO item : inOutStockList) {
+                if (item == null) {
+                    continue;
+                }
+                if (!Objects.equals(warehouseId, item.getWarehouseId())
+                        || !Objects.equals(skuId, item.getSkuId())) {
+                    continue;
+                }
+                if (!Objects.equals(from, CharSequenceUtil.nullToEmpty(item.getWarehouseLocation()))) {
+                    continue;
+                }
+                item.setWarehouseLocation(EMPTY_LOCATION);
+            }
+        }
+    }
+
+    /**
+     * 源仓位选取优先级：code 以 3 开头 → 以 4 开头 → 任意
+     */
+    private static List<Predicate<? super LocationListDTO>> buildPriorityPredicates() {
+        List<Predicate<? super LocationListDTO>> predicateList = new ArrayList<>();
+        predicateList.add(l -> CharSequenceUtil.startWith(l.getCode(), "3"));
+        predicateList.add(l -> CharSequenceUtil.startWith(l.getCode(), "4"));
+        predicateList.add(l -> CharSequenceUtil.startWith(CharSequenceUtil.nullToEmpty(l.getCode()), ""));
+        return predicateList;
+    }
+
+    private Integer allocateMoveQty(Integer currNum, Map<String, Integer> addNumMaps,
+                                    List<LocationListDTO> locationList,
+                                    Predicate<? super LocationListDTO> paramPredicate) {
+        if (currNum == null || currNum <= 0) {
+            return currNum == null ? 0 : currNum;
+        }
+        List<LocationListDTO> currDtoList = locationList.stream()
+                .filter(paramPredicate)
+                .filter(l -> !addNumMaps.containsKey(l.getCode()))
+                .sorted((l1, l2) -> Integer.compare(
+                        l2.getUsableQty() == null ? 0 : l2.getUsableQty(),
+                        l1.getUsableQty() == null ? 0 : l1.getUsableQty()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(currDtoList)) {
+            return currNum;
+        }
+        for (LocationListDTO dto : currDtoList) {
+            String code = dto.getCode();
+            Integer usableQty = dto.getUsableQty() == null ? 0 : dto.getUsableQty();
+            if (usableQty >= currNum) {
+                addNumMaps.put(code, currNum);
+                return 0;
+            }
+            addNumMaps.put(code, usableQty);
+            currNum = currNum - usableQty;
+        }
+        return currNum;
+    }
+
+    /**
+     * 汇总本仓本 SKU 各出库库位仍需扣减的预留数量（含当前处理行自身）。
+     */
+    private Map<String, Integer> buildReservedOutstockQty(List<NeedStock> warehouseNeedList, String skuId) {
+        Map<String, Integer> reserved = new HashMap<>();
+        if (CollUtil.isEmpty(warehouseNeedList) || CharSequenceUtil.isBlank(skuId)) {
+            return reserved;
+        }
+        for (NeedStock item : warehouseNeedList) {
+            if (item == null || !Objects.equals(skuId, item.getSkuId())
+                    || item.getQty() == null || item.getQty() <= 0) {
+                continue;
+            }
+            reserved.merge(CharSequenceUtil.nullToEmpty(item.getWarehouseLocation()), item.getQty(), Integer::sum);
+        }
+        return reserved;
+    }
+
+    private Map<String, NeedStock> aggregateNeed(List<InOutStockDTO> inOutStockList) {
+        Map<String, NeedStock> map = new LinkedHashMap<>();
+        for (InOutStockDTO item : inOutStockList) {
+            if (item == null || item.getQty() == null || item.getQty() <= 0) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(item.getWarehouseId()) || CharSequenceUtil.isBlank(item.getSkuId())) {
+                continue;
+            }
+            String location = CharSequenceUtil.nullToEmpty(item.getWarehouseLocation());
+            String key = item.getWarehouseId() + "_" + location + "_" + item.getSkuId();
+            NeedStock need = map.get(key);
+            if (need == null) {
+                need = new NeedStock();
+                need.setWarehouseId(item.getWarehouseId());
+                need.setWarehouseLocation(location);
+                need.setSkuId(item.getSkuId());
+                need.setSkuNo(item.getSkuNo());
+                need.setSourceCode(item.getSourceCode());
+                need.setQty(0);
+                map.put(key, need);
+            }
+            need.setQty(need.getQty() + item.getQty());
+        }
+        return map;
+    }
+
+    private static String buildSkuLocationKey(String skuId, String location) {
+        return skuId + "_" + CharSequenceUtil.nullToEmpty(location);
+    }
+
+    private static class WarehouseInventoryCache {
+        /** key = skuId_location */
+        private final Map<String, Integer> qtyBySkuLocation = new HashMap<>();
+        /** key = skuId，value = 该 SKU 有可用库存的仓位列表 */
+        private final Map<String, List<LocationListDTO>> locationsBySkuId = new HashMap<>();
+    }
+
+    @lombok.Data
+    private static class NeedStock {
+        private String warehouseId;
+        private String warehouseLocation;
+        private String skuId;
+        private String skuNo;
+        private String sourceCode;
+        private Integer qty;
     }
 }
