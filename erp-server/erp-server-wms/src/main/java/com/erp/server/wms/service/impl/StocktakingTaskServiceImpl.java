@@ -757,7 +757,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         for (InventoryEntity item : inventoryList) {
             if (CharSequenceUtil.isBlank(item.getWarehouseId()) || CharSequenceUtil.isBlank(item.getSkuId())) {
                 log.warn("盘点计划【{}】存在无效库存记录：warehouseId={}, skuId={}", planCode, item.getWarehouseId(), item.getSkuId());
-                throw new ServiceException(ApiError.WH_STOCKTAKING_INVENTORY_INVALID, planCode, item.getWarehouseId(), item.getSkuNo());
+                String warehouseName = resolveWarehouseNameById(item.getWarehouseId());
+                throw new ServiceException(ApiError.WH_STOCKTAKING_INVENTORY_INVALID, planCode, warehouseName, item.getSkuNo());
             }
             String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, item.getOrgId(),
                     item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
@@ -777,11 +778,27 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     private void throwStocktakingTaskExist(InventoryEntity item) {
-        WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
-        String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+        String warehouseName = resolveWarehouseNameById(item.getWarehouseId());
         log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建",
                 warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
         throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
+    }
+
+    private String resolveWarehouseNameById(String warehouseId) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            return "";
+        }
+        return resolveWarehouseName(warehouseService.detailWithCache(warehouseId));
+    }
+
+    private String resolveWarehouseName(WarehouseDTO.UpdateDTO updateDTO) {
+        if (ObjectUtil.isEmpty(updateDTO)) {
+            return "";
+        }
+        if (CharSequenceUtil.isNotBlank(updateDTO.getName())) {
+            return updateDTO.getName();
+        }
+        return CharSequenceUtil.blankToDefault(updateDTO.getKingdeeWarehouseCode(), "");
     }
 
     /**
@@ -1311,8 +1328,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                         .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
                 List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
                     List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
-                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
-                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
+                    String warehouseName = resolveWarehouseNameById(inventoryEntities.get(0).getWarehouseId());
                     StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
                     return detailEntity;
                 }).collect(Collectors.toList());
@@ -1369,8 +1385,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                         .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
                 List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
                     List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
-                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
-                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
+                    String warehouseName = resolveWarehouseNameById(inventoryEntities.get(0).getWarehouseId());
                     return new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
                 }).collect(Collectors.toList());
                 stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
