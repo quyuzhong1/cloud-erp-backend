@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.sensitive.SensitiveWordMatcher;
@@ -17,7 +18,6 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.dto.ProductForbiddenWordCheckDTO;
 import com.erp.model.plm.dto.excel.ProductForbiddenWordCheckReportExcelDTO;
 import com.erp.model.plm.entity.ProductForbiddenWordCheckEntity;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.ProductForbiddenWordCheckStatusEnum;
 import com.erp.server.plm.mapper.ProductForbiddenWordCheckMapper;
 import com.erp.server.plm.service.ProductForbiddenWordCheckService;
@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -212,25 +211,21 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
 
     private ReportWriteResult writeReportFile(String reportName, SensitiveWordMatcher matcher, Integer totalCount) throws IOException {
         File tempDirectory = FileUtils.getTempDirectory();
-        File templateFile = new File(tempDirectory, "productForbiddenWordCheckTemplate" + LocalDate.now() + ".xlsx");
         File outputFile = new File(tempDirectory, reportName);
-        if (!templateFile.exists()) {
-            EasyExcel.write(templateFile, ProductForbiddenWordCheckReportExcelDTO.class)
-                    .sheet("产品检测")
-                    .doWrite(Collections.emptyList());
-        }
         ExcelWriter excelWriter = EasyExcel.write(outputFile, ProductForbiddenWordCheckReportExcelDTO.class)
-                .withTemplate(templateFile)
                 .inMemory(false)
                 .build();
         WriteSheet writeSheet = EasyExcel.writerSheet("产品检测").build();
         List<ProductForbiddenWordCheckReportExcelDTO> batch = new ArrayList<>(REPORT_WRITE_BATCH_SIZE);
         int hitCount = 0;
+        int reportRowCount = 0;
         boolean truncated = false;
         int offset = 0;
         int safeTotalCount = Objects.isNull(totalCount) ? 0 : totalCount;
         try {
-            while (offset < safeTotalCount && hitCount < MAX_REPORT_ROWS) {
+            // 即使命中结果为空也生成一次表头；不再叠加带表头模板，避免重复表头。
+            excelWriter.write(Collections.emptyList(), writeSheet);
+            while (offset < safeTotalCount && reportRowCount < MAX_REPORT_ROWS) {
                 List<ProductForbiddenWordCheckDTO.ProductScanDTO> products = baseMapper.listProductForDetect(SCAN_BATCH_SIZE, offset);
                 if (CollectionUtils.isEmpty(products)) {
                     break;
@@ -240,15 +235,21 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
                     if (CollectionUtils.isEmpty(hitWords)) {
                         continue;
                     }
-                    batch.add(buildReportRow(product, hitWords));
                     hitCount++;
-                    if (hitCount >= MAX_REPORT_ROWS) {
-                        truncated = true;
-                        break;
+                    for (String hitWord : hitWords) {
+                        batch.add(buildReportRow(product, hitWord));
+                        reportRowCount++;
+                        if (batch.size() >= REPORT_WRITE_BATCH_SIZE) {
+                            excelWriter.write(batch, writeSheet);
+                            batch.clear();
+                        }
+                        if (reportRowCount >= MAX_REPORT_ROWS) {
+                            truncated = true;
+                            break;
+                        }
                     }
-                    if (batch.size() >= REPORT_WRITE_BATCH_SIZE) {
-                        excelWriter.write(batch, writeSheet);
-                        batch.clear();
+                    if (truncated) {
+                        break;
                     }
                 }
                 offset += products.size();
@@ -262,12 +263,12 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
         return new ReportWriteResult(outputFile, hitCount, truncated);
     }
 
-    private ProductForbiddenWordCheckReportExcelDTO buildReportRow(ProductForbiddenWordCheckDTO.ProductScanDTO product, List<String> hitWords) {
+    private ProductForbiddenWordCheckReportExcelDTO buildReportRow(ProductForbiddenWordCheckDTO.ProductScanDTO product, String hitWord) {
         return new ProductForbiddenWordCheckReportExcelDTO(
                 product.getSkuNo(),
                 product.getName(),
-                hitWords.stream().collect(Collectors.joining("\n")),
-                ProductDetailStatusEnum.getName(product.getStatus())
+                hitWord,
+                DisabledEnum.ENABLE.getName()
         );
     }
 

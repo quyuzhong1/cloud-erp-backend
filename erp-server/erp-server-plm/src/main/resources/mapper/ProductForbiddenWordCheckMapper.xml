@@ -55,12 +55,6 @@
         <if test="params != null and params.status != null">
             AND pfwc.status = #{params.status}
         </if>
-        <if test="params != null and params.finishStartTime != null">
-            AND pfwc.finish_time &gt;= #{params.finishStartTime}
-        </if>
-        <if test="params != null and params.finishEndTime != null">
-            AND pfwc.finish_time &lt;= #{params.finishEndTime}
-        </if>
         <if test="params != null and params.createUserName != null and params.createUserName != ''">
             AND pfwc.create_user_name ILIKE concat('%', #{params.createUserName}::text, '%')
         </if>
@@ -104,8 +98,7 @@
         SELECT
             id AS id,
             sku_no AS skuNo,
-            name AS name,
-            status AS status
+            name AS name
         FROM product_detail
         WHERE is_deleted = FALSE
         ORDER BY id
