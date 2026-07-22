@@ -104,7 +104,6 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.businessId", unlockAfterTx = true)
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
