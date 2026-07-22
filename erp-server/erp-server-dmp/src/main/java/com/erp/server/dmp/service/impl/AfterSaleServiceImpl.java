@@ -208,7 +208,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleEntity afterSaleEntity = new AfterSaleEntity();
         BeanMapperUtils.copy(addDTO, afterSaleEntity);
         afterSaleEntity.setType("");
-        List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
+        List<AfterSaleDTO.NodeDTO> nodeList = loadAllNodeList();
 
 
         //第三方用户id为空的情况下，则新增用户
@@ -1303,17 +1303,34 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
 
     /**
-     * 获取节点配置信息
+     * 获取可手动变更的节点配置（供编辑状态下拉、OpenAPI/Feign 调用；非完整进度节点列表）。
+     * 排除 completed：仅物流下单成功后自动进入已完成。
+     * 排除 terminated：终态，须通过作废/取消/审核驳回等专用入口流转，不支持 PC 手动 changeStatus。
+     *
+     * @return 可选手动变更的节点列表
      */
     @Override
     public List<AfterSaleDTO.NodeDTO> getNodeList() {
+        return loadAllNodeList().stream()
+                // 已完成：禁止 PC 手动改状态，须走 logisticsOrder
+                .filter(node -> !AfterSaleStatusEnum.COMPLETED.getCode().equals(node.getNode())
+                        // 已终止：终态，禁止 PC 手动 changeStatus
+                        && !AfterSaleStatusEnum.TERMINATED.getCode().equals(node.getNode()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 加载 cfg_setting 中的完整售后维修节点配置（含已完成、已终止，供进度条与物流下单等内部逻辑使用）。
+     *
+     * @return 完整节点列表
+     */
+    private List<AfterSaleDTO.NodeDTO> loadAllNodeList() {
         String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_NODE);
         if (StringUtils.isBlank(value)) {
             throw new ServiceException("售后维修节点配置不存在");
         }
         // 解析 JSON 字符串为 List<AfterSaleDTO.NodeDTO>
-        List<AfterSaleDTO.NodeDTO> nodeList = JSONUtil.toList(JSONUtil.parseObj(value).getJSONArray("nodeList"), AfterSaleDTO.NodeDTO.class);
-        return nodeList;
+        return JSONUtil.toList(JSONUtil.parseObj(value).getJSONArray("nodeList"), AfterSaleDTO.NodeDTO.class);
     }
 
     /**
@@ -1341,11 +1358,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Objects.isNull(afterSaleStatus)) {
             throw new ServiceException("未找到单据状态信息");
         }
+        // 终态禁止 PC 手动 changeStatus（与 getNodeList 下拉过滤一致，直连 API 亦拦截）
         if (Objects.equals(afterSaleStatus, AfterSaleStatusEnum.COMPLETED)) {
             throw new ServiceException("已完成状态不支持手动修改，请通过物流下单完成");
         }
+        if (Objects.equals(afterSaleStatus, AfterSaleStatusEnum.TERMINATED)) {
+            throw new ServiceException("已终止状态不支持手动修改");
+        }
 
-        Map<String, AfterSaleDTO.NodeDTO> nodeMap = getNodeList().stream().collect(Collectors.toMap(AfterSaleDTO.NodeDTO::getNode, w -> w));
+        // 节点 index 校验需完整配置，故用 loadAllNodeList，不能用对外过滤后的 getNodeList
+        Map<String, AfterSaleDTO.NodeDTO> nodeMap = loadAllNodeList().stream().collect(Collectors.toMap(AfterSaleDTO.NodeDTO::getNode, w -> w));
         AfterSaleDTO.NodeDTO newNodeDTO = nodeMap.get(dto.getNode());
         if (Objects.isNull(newNodeDTO)) {
             throw new ServiceException("目标节点配置不存在，请检查售后维修节点配置");
@@ -1464,7 +1486,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         });
-        List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
+        List<AfterSaleDTO.NodeDTO> nodeList = loadAllNodeList();
         if (AfterSaleStatusEnum.TERMINATED.getCode().equals(repairProgress.get(0).getStatus())) {
             repairRecordDTO.setActive(nodeList.size() - 1);
         } else {
@@ -2044,7 +2066,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     .list();
             existingTrackMainIds = getExistingOutboundTrackMainIds(afterSaleProgressList);
         }
-        Map<String, AfterSaleDTO.NodeDTO> nodeMap = getNodeList().stream()
+        Map<String, AfterSaleDTO.NodeDTO> nodeMap = loadAllNodeList().stream()
                 .collect(Collectors.toMap(AfterSaleDTO.NodeDTO::getNode, w -> w));
         AfterSaleDTO.NodeDTO completedNodeDTO = nodeMap.get(AfterSaleStatusEnum.COMPLETED.getCode());
         if (Objects.isNull(completedNodeDTO)) {
