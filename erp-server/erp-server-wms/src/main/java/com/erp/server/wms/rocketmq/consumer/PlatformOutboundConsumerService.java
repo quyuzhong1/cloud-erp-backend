@@ -743,6 +743,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     /**
      * 批量加载订单已绑定物流渠道（用于读取 isPushLabel）。
+     * 一次 FeignQuery.in 拉取，避免按渠道 ID 循环远程调用。
+     * 查询失败时返回空 Map，由 {@link #shouldForceUpdateLogisticsTrack} 对已绑定渠道订单禁止强制覆盖。
      */
     private Map<String, LogisticsChannelEntity> loadOrderLogisticsChannelById(
             Map<String, SoB2cLogisticsEntity> logisticsByMainId) {
@@ -755,15 +757,22 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 .map(SoB2cLogisticsEntity::getLogisticsChannelId)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
-        for (String channelId : channelIds) {
-            try {
-                LogisticsChannelEntity channel = logisticsFeign.getChannelById(channelId);
-                if (Objects.nonNull(channel)) {
-                    channelById.put(channelId, channel);
+        if (CollUtil.isEmpty(channelIds)) {
+            return channelById;
+        }
+        try {
+            List<LogisticsChannelEntity> channelList = FeignQuery.create(LogisticsChannelEntity.class)
+                    .in(LogisticsChannelEntity::getId, new ArrayList<>(channelIds))
+                    .list();
+            if (CollUtil.isNotEmpty(channelList)) {
+                for (LogisticsChannelEntity channel : channelList) {
+                    if (Objects.nonNull(channel) && StringUtils.isNotBlank(channel.getId())) {
+                        channelById.put(channel.getId(), channel);
+                    }
                 }
-            } catch (Exception e) {
-                log.warn("三方仓自动出库: 查询物流渠道失败, channelId={}", channelId, e);
             }
+        } catch (Exception e) {
+            log.warn("三方仓自动出库: 批量查询物流渠道失败, channelIds={}", channelIds, e);
         }
         return channelById;
     }
@@ -771,6 +780,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     /**
      * 渠道「是否推送海外仓面单」为否（含未配置）且仓回传跟踪号与订单不一致时，强制覆盖物流单号/跟踪号。
      * 配置为是则不做覆盖。本消费者单据均为海外仓出库回传。
+     * 订单已绑定 logisticsChannelId 但渠道未加载成功时禁止覆盖，避免查询失败被当成未配置而误覆盖面单跟踪号。
      */
     private boolean shouldForceUpdateLogisticsTrack(SoB2cLogisticsEntity logisticsEntity,
                                                     Map<String, LogisticsChannelEntity> orderLogisticsChannelById,
@@ -779,11 +789,16 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (CharSequenceUtil.isBlank(warehouseTrackNo) || Objects.isNull(logisticsEntity)) {
             return false;
         }
-        LogisticsChannelEntity channel = null;
+        LogisticsChannelEntity channel;
         if (StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
             channel = orderLogisticsChannelById.get(logisticsEntity.getLogisticsChannelId());
-        }
-        if (Objects.isNull(channel)) {
+            if (Objects.isNull(channel)) {
+                // 已绑定渠道但查询失败/未返回：禁止强制覆盖（不回退 resolved，也不按未配置处理）
+                log.warn("三方仓自动出库: 订单物流渠道未加载成功，跳过强制覆盖跟踪号, soMainId={}, logisticsChannelId={}",
+                        logisticsEntity.getMainId(), logisticsEntity.getLogisticsChannelId());
+                return false;
+            }
+        } else {
             channel = resolvedLogisticsChannel;
         }
         // 推送海外仓面单=是：跟踪号以 ERP 面单为准，不覆盖
@@ -795,7 +810,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
     /**
-     * WFHD / 销售订单号回传路径：按订单已绑定物流渠道判断是否强制覆盖跟踪号。
+     * WFHD / 销售订单号回传路径（单订单）：按订单已绑定物流渠道判断是否强制覆盖跟踪号。
+     * 批量建单路径请使用循环外预加载的 logistics/channel 映射，勿循环调用本方法。
      */
     private boolean shouldForceUpdateLogisticsTrackForOrder(String soB2cId, String warehouseTrackNo) {
         if (CharSequenceUtil.isBlank(soB2cId) || CharSequenceUtil.isBlank(warehouseTrackNo)) {
