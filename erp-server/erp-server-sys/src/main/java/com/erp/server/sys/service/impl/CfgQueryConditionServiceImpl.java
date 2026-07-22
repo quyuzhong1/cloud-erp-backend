@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,11 +21,13 @@ import com.erp.server.sys.service.CfgQueryConditionService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
 /**
  * <p>
@@ -38,6 +41,8 @@ import java.util.List;
 @Service
 public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryConditionMapper, CfgQueryConditionEntity> implements CfgQueryConditionService {
 
+    @Resource
+    private CacheManager cacheManager;
 
     public static final String CREATE_TIME_NAME = "创建时间";
     public static final String CREATE_TIME = "create_time";
@@ -78,9 +83,11 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     }
 
     @Override
-    @Cacheable(cacheNames = RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE, key = "#code", sync = true)
     public List<CfgQueryConditionDTO.ViewDTO> getQueryCondition(String code) {
-        List<CfgQueryConditionDTO.ViewDTO> viewList = baseMapper.getQueryConditionByCode(code);
+        List<CfgQueryConditionDTO.ViewDTO> viewList = JSON.parseArray(
+                getQueryConditionJson(code),
+                CfgQueryConditionDTO.ViewDTO.class
+        );
         viewList.forEach(v->{
             if(v.getIsExtend()){
                 v.getCompareList().removeIf(item -> item.getLogic().equals(QueryConditionEnum.IS_NULL.getCompareCode()) || item.getLogic().equals(QueryConditionEnum.NOT_NULL.getCompareCode()));
@@ -93,6 +100,20 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
             }
         });
         return viewList;
+    }
+
+    private String getQueryConditionJson(String code) {
+        Cache cache = cacheManager.getCache(RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE);
+        if (cache == null) {
+            return JSON.toJSONString(baseMapper.getQueryConditionByCode(code));
+        }
+        Cache.ValueWrapper cached = cache.get(code);
+        if (cached != null && cached.get() instanceof String) {
+            return (String) cached.get();
+        }
+        String json = JSON.toJSONString(baseMapper.getQueryConditionByCode(code));
+        cache.put(code, json);
+        return json;
     }
 
     @Override
