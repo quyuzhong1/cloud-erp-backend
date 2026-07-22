@@ -305,8 +305,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(mainIdList)
                         ? Collections.emptyList() : soReturnInstockFeign.getSoReturnInstockByReturnIds(mainIdList);
                 instockQtyByDetailId = instockDetails.stream()
-                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId())
-                                && ApproveStatusEnum.APPROVE.getCode().equals(d.getApproveStatus()))
+                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId()))
                         .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
                                 Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
             }

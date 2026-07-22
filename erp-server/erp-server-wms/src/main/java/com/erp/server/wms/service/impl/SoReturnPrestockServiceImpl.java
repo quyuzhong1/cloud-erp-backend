@@ -134,8 +134,8 @@ public class SoReturnPrestockServiceImpl
     private OperateLogService operateLogService;
 
     /**
-     * 自注入代理：forceCloseUnclaimedPrestock 需要让每个批次的 forceCloseBatch 在独立事务中提交，
-     * 必须通过 Spring 代理调用（而非 this.forceCloseBatch(...)）才能使方法上的 @Transactional 生效；
+     * 自注入代理：forceCloseUnclaimedPrestock 需要让每个批次的 forceCloseBatch / forceCloseSingle
+     * 在独立事务中提交，且 forceCloseSingle 上的 {@code @DistributeLocker} 必须通过 Spring 代理调用才能生效；
      * 使用 @Lazy 避免 Bean 初始化阶段的循环依赖。
      */
     @Lazy
@@ -1184,66 +1184,87 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 强制关闭一批预入库单：将其下「未关联」明细行 claim_status 置为「强制关闭」（已关联明细不变），
-     * 再按明细最新关联状态重算并批量回写主表关联状态。均为集合式批量更新，避免逐行查改。
-     * <p>独立标注事务并通过 {@code self} 代理调用（见 {@link #forceCloseUnclaimedPrestock}），
-     * 使每批在自己的事务中提交，避免分批循环全部处于同一个长事务内。</p>
+     * 强制关闭一批预入库单：逐单加锁、独立事务处理，避免与认领入口并发覆盖状态。
+     * 外层 batchIds 仅为候选集合，每张单在处理前会重新校验主表当前关联状态。
      *
-     * @param mainIds     本批处理的预入库单主表 ID
+     * @param mainIds     本批候选预入库单主表 ID
      * @param operateTime 本次强制关闭操作的统一操作时间
-     * @return 本批处理的预入库单数量
+     * @return 本批实际强制关闭处理的预入库单数量
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime) {
-        // 明细：仅将「未关联」行强制关闭，已关联行保持不变
+        if (CollUtil.isEmpty(mainIds)) {
+            return 0;
+        }
+        int processedCount = 0;
+        for (String mainId : mainIds) {
+            processedCount += self.forceCloseSingle(mainId, operateTime);
+        }
+        return processedCount;
+    }
+
+    /**
+     * 强制关闭单张预入库单：将其下「未关联」明细行 claim_status 置为「强制关闭」（已关联明细不变），
+     * 再按明细最新关联状态回写主表。与认领入口共用分布式锁，主表回写携带 version 乐观锁。
+     *
+     * @param mainId      预入库单主表 ID
+     * @param operateTime 本次强制关闭操作的统一操作时间
+     * @return 实际处理返回 1，主表状态已不满足关闭条件则返回 0
+     */
+    @Override
+    @DistributeLocker(businessType = SO_RETURN_PRESTOCK_LINK_LOCK_KEY, keyName = "mainId")
+    @Transactional(rollbackFor = Exception.class)
+    public int forceCloseSingle(String mainId, LocalDateTime operateTime) {
+        SoReturnPrestockEntity main = getById(mainId);
+        if (Objects.isNull(main) || Boolean.TRUE.equals(main.getIsDeleted())) {
+            return 0;
+        }
+        String claimStatus = main.getClaimStatus();
+        if (!PrestockClaimStatusEnum.UNLINKED.getStatus().equals(claimStatus)
+                && !PrestockClaimStatusEnum.PARTIAL.getStatus().equals(claimStatus)) {
+            return 0;
+        }
+
         soReturnPrestockDetailService.lambdaUpdate()
-                .in(SoReturnPrestockDetailEntity::getMainId, mainIds)
+                .eq(SoReturnPrestockDetailEntity::getMainId, mainId)
                 .eq(SoReturnPrestockDetailEntity::getClaimStatus, PrestockClaimStatusEnum.UNLINKED.getStatus())
                 .eq(SoReturnPrestockDetailEntity::getIsDeleted, false)
                 .set(SoReturnPrestockDetailEntity::getClaimStatus, PrestockClaimStatusEnum.FORCE_CLOSE.getStatus())
                 .update();
 
-        // 主表：按明细最新关联状态分组回写（全部已关联→已关联；全部强制关闭→强制关闭；混合→部分关联）
-        Map<String, List<SoReturnPrestockDetailEntity>> detailMap = soReturnPrestockDetailService.listByMainIds(mainIds)
-                .stream().collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getMainId));
-        List<String> toLinked = new ArrayList<>();
-        List<String> toPartial = new ArrayList<>();
-        List<String> toForceClose = new ArrayList<>();
-        for (String mainId : mainIds) {
-            List<SoReturnPrestockDetailEntity> details = detailMap.get(mainId);
-            if (CollUtil.isEmpty(details)) {
-                continue;
-            }
-            long linkedCount = details.stream()
-                    .filter(d -> PrestockClaimStatusEnum.LINKED.getStatus().equals(d.getClaimStatus()))
-                    .count();
-            if (linkedCount == details.size()) {
-                toLinked.add(mainId);
-            } else if (linkedCount == 0) {
-                toForceClose.add(mainId);
-            } else {
-                toPartial.add(mainId);
-            }
-        }
-        batchUpdateMainClaimStatus(toLinked, PrestockClaimStatusEnum.LINKED.getStatus(), operateTime);
-        batchUpdateMainClaimStatus(toPartial, PrestockClaimStatusEnum.PARTIAL.getStatus(), operateTime);
-        batchUpdateMainClaimStatus(toForceClose, PrestockClaimStatusEnum.FORCE_CLOSE.getStatus(), operateTime);
-        return mainIds.size();
+        refreshMainClaimStatusAfterForceClose(main, operateTime);
+        return 1;
     }
 
     /**
-     * 按 ID 集合批量更新主表关联状态与操作时间
+     * 强制关闭后按明细最新关联状态回写主表；仅当主表仍为未关联/部分关联时才更新，并使用 version 乐观锁。
      */
-    private void batchUpdateMainClaimStatus(List<String> ids, String claimStatus, LocalDateTime operateTime) {
-        if (CollUtil.isEmpty(ids)) {
+    private void refreshMainClaimStatusAfterForceClose(SoReturnPrestockEntity main, LocalDateTime operateTime) {
+        String currentStatus = main.getClaimStatus();
+        if (!PrestockClaimStatusEnum.UNLINKED.getStatus().equals(currentStatus)
+                && !PrestockClaimStatusEnum.PARTIAL.getStatus().equals(currentStatus)) {
             return;
         }
-        lambdaUpdate()
-                .in(SoReturnPrestockEntity::getId, ids)
-                .set(SoReturnPrestockEntity::getClaimStatus, claimStatus)
-                .set(SoReturnPrestockEntity::getOperateTime, operateTime)
-                .update();
+        List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainId(main.getId());
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        long linkedCount = details.stream()
+                .filter(d -> PrestockClaimStatusEnum.LINKED.getStatus().equals(d.getClaimStatus()))
+                .count();
+        String newClaimStatus;
+        if (linkedCount == details.size()) {
+            newClaimStatus = PrestockClaimStatusEnum.LINKED.getStatus();
+        } else if (linkedCount == 0) {
+            newClaimStatus = PrestockClaimStatusEnum.FORCE_CLOSE.getStatus();
+        } else {
+            newClaimStatus = PrestockClaimStatusEnum.PARTIAL.getStatus();
+        }
+        main.setClaimStatus(newClaimStatus);
+        main.setOperateTime(operateTime);
+        if (!updateById(main)) {
+            log.warn("[预入库单强制关闭]主表{}状态已被并发修改，跳过回写", main.getId());
+        }
     }
 
     // ===================== 私有辅助方法 =====================
