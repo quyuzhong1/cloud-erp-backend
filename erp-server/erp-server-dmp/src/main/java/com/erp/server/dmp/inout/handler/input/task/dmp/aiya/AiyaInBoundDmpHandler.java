@@ -13,10 +13,11 @@ import java.util.TreeMap;
 /**
  * 爱亚（AIYA/百世 GLINK）入库 DMP 转换扩展 handler，对齐 {@code WegoInBoundDmpHandler} / {@code JiFengInBoundDmpHandler}。
  * <p>
- * 把 mongo 缓存中的入库单明细数组（{@code asnItems}，对应
- * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnLineItemDTO}）整体拍平到
+ * 把 mongo 缓存中的上架流水数组（{@code asnItems}，对应
+ * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnItemReceiveDetailDTO} 中 detailId 前缀为 PV 的记录，
+ * 由 InitHandler 完成 RV/PV 去重过滤）整体拍平到
  * {@link com.erp.model.dmp.entity.DmpThirdInboundEntity} 的 {@code detail_list_json} 字段，
- * 供下游 {@code AiyaInboundRocketMQTaskHandler} 反序列化后按验货流水（含良品/不良品）生成签收/调拨/库存数据。
+ * 供下游 {@code AiyaInboundRocketMQTaskHandler} 反序列化后按上架流水（含良品/不良品）生成签收/调拨/库存数据。
  * <p>
  * 同时把 {@code warehouse_platform_type} 兜底为
  * {@link WarehousePlatformTypeEnum#OVERSEAS_WAREHOUSE OVERSEAS_WAREHOUSE}，保证下游
@@ -29,9 +30,9 @@ import java.util.TreeMap;
 public class AiyaInBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 
     /**
-     * 爱亚入库 mongo 缓存中「入库单明细」字段名，对应
-     * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnInfoDTO#getAsnLineItems()}
-     * 归一化后统一以 {@code asnItems} 键承载。
+     * 爱亚入库 mongo 缓存中「上架流水」字段名，对应
+     * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnInfoDTO#getAsnItemReceiveDetails()}
+     * 中 detailId 前缀为 PV 的记录，归一化后统一以 {@code asnItems} 键承载。
      */
     private static final String MONGO_KEY_ASN_ITEMS = "asnItems";
 

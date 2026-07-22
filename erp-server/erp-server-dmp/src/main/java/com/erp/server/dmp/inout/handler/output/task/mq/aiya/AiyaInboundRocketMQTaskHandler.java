@@ -37,13 +37,15 @@ import java.util.stream.Collectors;
 /**
  * 爱亚（AIYA/百世 GLINK）海外仓入库验货明细 DMP 输出 MQ 任务处理器。
  * <p>
- * 数据模型：爱亚 {@code GLINK_BATCH_QUERY_ASN_NOTIFY} 返回按 ASN 汇总的入库单明细
- * （{@link AiyaInboundResp.AsnLineItemDTO}），每行为「SKU × 货物状态」的明细流水，
- * {@code skuStatus} 区分良品（GOOD）/不良品（DAMAGE）。因此：
+ * 数据模型：爱亚 {@code GLINK_BATCH_QUERY_ASN_NOTIFY} 的 {@code asnItemReceiveDetails}
+ * （{@link AiyaInboundResp.AsnItemReceiveDetailDTO}）同时包含收货流水（detailId 前缀 RV）与上架流水
+ * （detailId 前缀 PV），二者数量重复；签收以「上架流水（PV）」为准，{@code putawayQty} 为上架数量，
+ * {@code skuStatus} 区分良品（GOOD）/不良品（DAMAGE）。RV/PV 去重过滤在 InitHandler 完成，
+ * {@code detail_list_json} 仅保留 PV 流水。因此：
  * <ol>
- *   <li>把 {@code detail_list_json} 中的验货明细逐行展开为签收流水 {@link Receiving}，
- *       {@code defectiveProductFlag} 取自 {@code skuStatus}，{@code thirdId} 由
- *       {@code asnNumber_sku_skuStatus_batchNo_receiveTime} 组成以保证唯一（防重复拉取重复落库）；</li>
+ *   <li>把 {@code detail_list_json} 中的上架流水逐行展开为签收流水 {@link Receiving}，
+ *       {@code receiveQty} 取 {@code putawayQty}，{@code defectiveProductFlag} 取自 {@code skuStatus}，
+ *       {@code thirdId} 由 {@code asnNumber_detailId_lineNo_sku_skuStatus} 组成以保证唯一（防重复拉取重复落库）；</li>
  *   <li>设置 {@code hasReceivedData=true}，让消费端
  *       {@code OverseasWarehouseInboundServiceImpl.handlePlatformMessage} 直接按流水落
  *       {@code overseas_warehouse_inbound_received}，并按良品/不良品分别生成直接调拨单、即时库存。</li>
@@ -141,12 +143,12 @@ public class AiyaInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         platformInboundDTO.setPlatform(sourcePlatform);
         platformInboundDTO.setProvider(sourcePlatform);
 
-        List<AiyaInboundResp.AsnLineItemDTO> asnItems =
+        List<AiyaInboundResp.AsnItemReceiveDetailDTO> putawayDetails =
                 parseAsnItems(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity.getDetailListJson());
 
-        platformInboundDTO.setReceivingStatus(this.convertStatus(dmpThirdInboundEntity.getReceivingStatus(), asnItems));
+        platformInboundDTO.setReceivingStatus(this.convertStatus(dmpThirdInboundEntity.getReceivingStatus(), putawayDetails));
 
-        List<Receiving> receivingDataList = buildReceivingList(asnItems);
+        List<Receiving> receivingDataList = buildReceivingList(putawayDetails);
         if (CollUtil.isNotEmpty(receivingDataList)) {
             platformInboundDTO.setHasReceivedData(true);
             platformInboundDTO.setReceivingDataList(receivingDataList);
@@ -166,18 +168,19 @@ public class AiyaInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     }
 
     /**
-     * 反序列化 {@code detail_list_json} 为爱亚验货明细。
+     * 反序列化 {@code detail_list_json} 为爱亚上架流水（{@code asnItemReceiveDetails} 中 detailId 前缀为 PV 的记录，
+     * InitHandler 已完成 RV/PV 去重过滤，仅保留上架流水）。
      * <p>
-     * 空串属正常场景（尚无验货明细）；非空却解析失败视为签收数据不完整，抛出 {@link ServiceException}
+     * 空串属正常场景（尚无上架流水）；非空却解析失败视为签收数据不完整，抛出 {@link ServiceException}
      * 中止本次推送，避免「无流水签收」静默落库导致漏记/库存不同步。
      */
-    private List<AiyaInboundResp.AsnLineItemDTO> parseAsnItems(String inboundId, String detailListJson) {
+    private List<AiyaInboundResp.AsnItemReceiveDetailDTO> parseAsnItems(String inboundId, String detailListJson) {
         if (StringUtils.isBlank(detailListJson)) {
             return new ArrayList<>();
         }
         try {
-            List<AiyaInboundResp.AsnLineItemDTO> list =
-                    JSON.parseArray(detailListJson, AiyaInboundResp.AsnLineItemDTO.class);
+            List<AiyaInboundResp.AsnItemReceiveDetailDTO> list =
+                    JSON.parseArray(detailListJson, AiyaInboundResp.AsnItemReceiveDetailDTO.class);
             return list == null ? new ArrayList<>() : list;
         } catch (Exception e) {
             log.error("[爱亚入库] 解析 detail_list_json 失败，签收数据不完整，中止本次推送。inboundId={}, jsonLength={}, jsonSummary={}",
@@ -187,27 +190,27 @@ public class AiyaInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     }
 
     /**
-     * 把爱亚入库单明细逐行展开为签收流水。
+     * 把爱亚上架流水（PV）逐行展开为签收流水。
      * <ul>
-     *   <li>{@code productSku} 取 sku；{@code receiveQty} 取入库单明细上架量 putawayedQuantity；</li>
+     *   <li>{@code productSku} 取 sku；{@code receiveQty} 取上架数量 putawayQty；</li>
      *   <li>{@code defectiveProductFlag} = (skuStatus == DAMAGE)，区分良品/不良品；</li>
-     *   <li>{@code thirdId} = asnNumber_sku_skuStatus_batchNo_receiveTime，保证同一行重复拉取不重复落库；</li>
-     *   <li>{@code receiveTime} 取 ASN 完成收货时间（InitHandler 已回填到每行）。</li>
+     *   <li>{@code thirdId} = asnNumber_detailId_lineNo_sku_skuStatus，保证同一行重复拉取不重复落库；</li>
+     *   <li>{@code receiveTime} 取 ASN 完成收货时间（PV 流水无收货时间，InitHandler 已回填到每行）。</li>
      * </ul>
      */
-    private List<Receiving> buildReceivingList(List<AiyaInboundResp.AsnLineItemDTO> asnItems) {
+    private List<Receiving> buildReceivingList(List<AiyaInboundResp.AsnItemReceiveDetailDTO> putawayDetails) {
         List<Receiving> receivingList = new ArrayList<>();
-        if (CollUtil.isEmpty(asnItems)) {
+        if (CollUtil.isEmpty(putawayDetails)) {
             return receivingList;
         }
-        for (AiyaInboundResp.AsnLineItemDTO item : asnItems) {
+        for (AiyaInboundResp.AsnItemReceiveDetailDTO item : putawayDetails) {
             if (item == null || StringUtils.isBlank(item.getSku())) {
                 continue;
             }
             boolean defective = SKU_STATUS_DAMAGE.equalsIgnoreCase(item.getSkuStatus());
             Receiving receiving = new Receiving();
             receiving.setProductSku(item.getSku());
-            receiving.setReceiveQty(item.getPutawayedQuantity() == null ? 0 : item.getPutawayedQuantity());
+            receiving.setReceiveQty(item.getPutawayQty() == null ? 0 : item.getPutawayQty());
             receiving.setReceiveTime(resolveReceiveTime(item.getReceiveTime()));
             receiving.setDefectiveProductFlag(defective);
             receiving.setThirdId(buildThirdId(item));
@@ -217,14 +220,17 @@ public class AiyaInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     }
 
     /**
-     * 组装签收流水唯一 ID：asnNumber_sku_skuStatus_batchNo_receiveTime。
+     * 组装签收流水唯一 ID：asnNumber_detailId_lineNo_sku_skuStatus。
+     * <p>
+     * 爱亚同一 PV 上架流水 detailId 会被多行共用，需叠加 lineNo/sku/skuStatus 保证每行唯一，
+     * 与下游按 flow_id 强去重共同保证重复拉取不重复落库。
      */
-    private String buildThirdId(AiyaInboundResp.AsnLineItemDTO item) {
+    private String buildThirdId(AiyaInboundResp.AsnItemReceiveDetailDTO item) {
         return StringUtils.defaultString(item.getAsnNumber())
+                + "_" + StringUtils.defaultString(item.getDetailId())
+                + "_" + StringUtils.defaultString(item.getLineNo())
                 + "_" + StringUtils.defaultString(item.getSku())
-                + "_" + StringUtils.defaultString(item.getSkuStatus())
-                + "_" + StringUtils.defaultString(item.getBatchNo())
-                + "_" + StringUtils.defaultString(item.getReceiveTime());
+                + "_" + StringUtils.defaultString(item.getSkuStatus());
     }
 
     /**
@@ -250,24 +256,24 @@ public class AiyaInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 入库单状态映射：以爱亚 ASN 状态为主（该字段仅用于展示，主表状态由消费端按收发差异计算）。
      */
-    private String convertStatus(String aiyaStatus, List<AiyaInboundResp.AsnLineItemDTO> asnItems) {
+    private String convertStatus(String aiyaStatus, List<AiyaInboundResp.AsnItemReceiveDetailDTO> putawayDetails) {
         if (ASN_STATUS_FULFILLED.equalsIgnoreCase(aiyaStatus)) {
             return OverseasInstockStatusEnum.SIGNED.getCode();
         }
         if (ASN_STATUS_VOIDED.equalsIgnoreCase(aiyaStatus)) {
             return OverseasInstockStatusEnum.CANCELED.getCode();
         }
-        if (ASN_STATUS_RECEIVED.equalsIgnoreCase(aiyaStatus) && hasAnyReceived(asnItems)) {
+        if (ASN_STATUS_RECEIVED.equalsIgnoreCase(aiyaStatus) && hasAnyReceived(putawayDetails)) {
             return OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode();
         }
         return OverseasInstockStatusEnum.TO_BE_SIGNED.getCode();
     }
 
-    private boolean hasAnyReceived(List<AiyaInboundResp.AsnLineItemDTO> asnItems) {
-        if (CollUtil.isEmpty(asnItems)) {
+    private boolean hasAnyReceived(List<AiyaInboundResp.AsnItemReceiveDetailDTO> putawayDetails) {
+        if (CollUtil.isEmpty(putawayDetails)) {
             return false;
         }
-        return asnItems.stream().anyMatch(v -> v != null && v.getPutawayedQuantity() != null && v.getPutawayedQuantity() > 0);
+        return putawayDetails.stream().anyMatch(v -> v != null && v.getPutawayQty() != null && v.getPutawayQty() > 0);
     }
 
     /**
