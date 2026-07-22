@@ -633,14 +633,23 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         if (CollectionUtils.isEmpty(outStockRules)) {
             throw new ServiceException(ApiError.WH_OUT_STOCK_RULE_NOT_FOUND);
         }
-        CfgRulePickingEntity hitRule = outStockRules.get(0);
-        List<CfgRulePackingActionEntity> outStockActions = cfgRulePackingActionService.listByRuleIds(
-                Collections.singletonList(hitRule.getId()), RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode());
-        outStockActions = outStockActions.stream()
-                .filter(action -> warehouseId.equals(action.getWarehouseId()))
-                .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex, Comparator.nullsLast(Integer::compareTo)))
+        List<String> matchedRuleIds = outStockRules.stream()
+                .map(CfgRulePickingEntity::getId)
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(outStockActions)) {
+        List<CfgRulePackingActionEntity> matchedActions = cfgRulePackingActionService.listByRuleIds(
+                matchedRuleIds, RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode());
+        Map<String, List<CfgRulePackingActionEntity>> actionsByRuleId = matchedActions.stream()
+                .filter(action -> warehouseId.equals(action.getWarehouseId()))
+                .collect(Collectors.groupingBy(CfgRulePackingActionEntity::getRuleId));
+        CfgRulePickingEntity hitRule = null;
+        for (CfgRulePickingEntity rule : outStockRules) {
+            List<CfgRulePackingActionEntity> currentActions = actionsByRuleId.get(rule.getId());
+            if (!CollectionUtils.isEmpty(currentActions)) {
+                hitRule = rule;
+                break;
+            }
+        }
+        if (hitRule == null) {
             throw new ServiceException(ApiError.WH_OUT_STOCK_RULE_NOT_FOUND);
         }
 
