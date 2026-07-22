@@ -158,4 +158,9 @@ public class DistributeKeyConstant {
      * WMS 装箱箱规操作锁
      */
     public static final String WMS_PACKING_TASK_CARTON_SPEC_KEY = "WMS_PACKING_TASK_CARTON_SPEC_KEY";
+
+    /**
+     * WMS 盘点下推：按库存维度（org+仓+库位+SKU+状态）联锁，串行预检与加 Redis 盘点锁
+     */
+    public static final String WMS_STOCKTAKING_INVENTORY_DIM_KEY = "WMS_STOCKTAKING_INVENTORY_DIM_KEY";
 }
