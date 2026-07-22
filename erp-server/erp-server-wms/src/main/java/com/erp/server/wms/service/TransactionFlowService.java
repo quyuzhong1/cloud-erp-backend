@@ -172,4 +172,9 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     PagingVO<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPagingByLocation(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
 
     void exportDailyInventoryByLocation(InventoryReportDTO.DailyInventoryParamDTO dto);
+
+    /**
+     * 按 SKU 取指定仓位集合内最新出入库仓位。
+     */
+    List<TransactionFlowEntity> listLatestLocationBySku(String warehouseId, List<String> skuIds, List<String> warehouseLocations);
 }

@@ -459,6 +459,14 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         return baseMapper.listByOrgId(startDate, orgId, inventoryId, fromTable);
     }
 
+    @Override
+    public List<TransactionFlowEntity> listLatestLocationBySku(String warehouseId, List<String> skuIds, List<String> warehouseLocations) {
+        if (CharSequenceUtil.isBlank(warehouseId) || CollUtil.isEmpty(skuIds) || CollUtil.isEmpty(warehouseLocations)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listLatestLocationBySku(warehouseId, skuIds, warehouseLocations);
+    }
+
     /**
      * @description: 每日库存数据处理
      * @author Will

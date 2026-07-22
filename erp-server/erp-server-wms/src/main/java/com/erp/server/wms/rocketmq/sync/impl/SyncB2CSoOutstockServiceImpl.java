@@ -5,6 +5,7 @@ import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -401,6 +402,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         Map<String, SkuVO> skuNoMap = skuList.stream()
                 .filter(s -> CharSequenceUtil.isNotBlank(s.getSkuNo()))
                 .collect(Collectors.toMap(SkuVO::getSkuNo, s -> s, (a, b) -> a));
+        int lineIndex = 0;
         for (WdtSoOutStockDetailDTO detailDTO : wdtSoOutStockDetailDTOS) {
             List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();
             if (CollectionUtils.isEmpty(positionDetailsList)) {
@@ -410,7 +412,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 if (CharSequenceUtil.isBlank(skuId)) {
                     throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                 }
-                detailEntity.setId(IdWorker.getIdStr());
+                // 稳定明细 ID：重试时与移仓 sourceDetailId 对齐
+                detailEntity.setId(buildWdtStableDetailId(entity.getCode(), detailEntity.getSkuNo(),
+                        String.valueOf(detailDTO.getActualQty()), String.valueOf(lineIndex++)));
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(skuId);
                 //仓库
@@ -444,7 +448,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     if (CharSequenceUtil.isBlank(skuId)) {
                         throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                     }
-                    detailEntity.setId(IdWorker.getIdStr());
+                    // 有 recId 用 recId；否则用 sku+qty+行号，保证重试可幂等恢复移仓
+                    String bizKey = CharSequenceUtil.isNotBlank(detail.getRecId())
+                            ? detail.getRecId()
+                            : detailEntity.getSkuNo() + "#" + detail.getPositionGoodsCount() + "#" + (lineIndex++);
+                    detailEntity.setId(buildWdtStableDetailId(entity.getCode(), bizKey));
                     detailEntity.setMainId(id);
                     detailEntity.setSkuId(skuId);
                     //仓库
@@ -466,6 +474,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
         return new WdtSyncQueryContext(soOutstock, detailList, inOutStockList);
+    }
+
+    /**
+     * 旺店通出库明细稳定主键：同单重试保持一致，便于移仓 sourceDetailId 幂等恢复。
+     */
+    private String buildWdtStableDetailId(String billCode, String... parts) {
+        StringBuilder raw = new StringBuilder(CharSequenceUtil.nullToEmpty(billCode));
+        if (parts != null) {
+            for (String part : parts) {
+                raw.append('#').append(CharSequenceUtil.nullToEmpty(part));
+            }
+        }
+        return DigestUtil.md5Hex(raw.toString());
     }
 
     /**

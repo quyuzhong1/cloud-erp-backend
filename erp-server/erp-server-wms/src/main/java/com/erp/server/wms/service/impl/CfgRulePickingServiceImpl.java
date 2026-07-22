@@ -371,6 +371,17 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     }
 
     /**
+     * 从缺货 Map 键解析仓库 ID。
+     */
+    public static String parseShortageWarehouseId(String shortageKey) {
+        if (CharSequenceUtil.isBlank(shortageKey)) {
+            return "";
+        }
+        int idx = shortageKey.indexOf('#');
+        return idx >= 0 ? shortageKey.substring(0, idx) : "";
+    }
+
+    /**
      * 拣货明细转换为规则执行数据明细
      */
     @Override
@@ -715,7 +726,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     }
 
     /**
-     * 批量加载各 SKU 在拣货区的最新出入库仓位（按单据日期、ID 取最新）。
+     * 批量加载各 SKU 在拣货区的最新出入库仓位（SQL DISTINCT ON，避免全量拉取）。
      */
     private Map<String, String> loadRecentPickingLocations(String warehouseId,
                                                            List<String> skuIds,
@@ -725,46 +736,20 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 || CollectionUtils.isEmpty(pickLocationCodes)) {
             return Collections.emptyMap();
         }
-        List<TransactionFlowEntity> flows = transactionFlowService.lambdaQuery()
-                .eq(TransactionFlowEntity::getWarehouseId, warehouseId)
-                .in(TransactionFlowEntity::getSkuId, skuIds)
-                .in(TransactionFlowEntity::getWarehouseLocation, pickLocationCodes)
-                .list();
+        List<TransactionFlowEntity> flows = transactionFlowService.listLatestLocationBySku(
+                warehouseId, skuIds, pickLocationCodes);
         if (CollectionUtils.isEmpty(flows)) {
             return Collections.emptyMap();
         }
-        Map<String, TransactionFlowEntity> latestBySkuId = new HashMap<>();
+        Map<String, String> result = new HashMap<>();
         for (TransactionFlowEntity flow : flows) {
             if (flow == null || CharSequenceUtil.isBlank(flow.getSkuId())
                     || CharSequenceUtil.isBlank(flow.getWarehouseLocation())) {
                 continue;
             }
-            TransactionFlowEntity existing = latestBySkuId.get(flow.getSkuId());
-            if (existing == null || isNewerTransactionFlow(flow, existing)) {
-                latestBySkuId.put(flow.getSkuId(), flow);
-            }
-        }
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, TransactionFlowEntity> entry : latestBySkuId.entrySet()) {
-            result.put(entry.getKey(), entry.getValue().getWarehouseLocation());
+            result.putIfAbsent(flow.getSkuId(), flow.getWarehouseLocation());
         }
         return result;
-    }
-
-    private boolean isNewerTransactionFlow(TransactionFlowEntity candidate, TransactionFlowEntity baseline) {
-        if (candidate.getBillDate() != null && baseline.getBillDate() != null) {
-            int dateCompare = candidate.getBillDate().compareTo(baseline.getBillDate());
-            if (dateCompare != 0) {
-                return dateCompare > 0;
-            }
-        } else if (candidate.getBillDate() != null) {
-            return true;
-        } else if (baseline.getBillDate() != null) {
-            return false;
-        }
-        String candidateId = CharSequenceUtil.nullToEmpty(candidate.getId());
-        String baselineId = CharSequenceUtil.nullToEmpty(baseline.getId());
-        return candidateId.compareTo(baselineId) > 0;
     }
 
     /**

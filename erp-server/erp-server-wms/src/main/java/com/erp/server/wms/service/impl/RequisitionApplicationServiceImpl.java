@@ -2252,8 +2252,20 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
 
         }
         addDTO.setDetails(detailList);
-        // 执行拣货规则
-        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = this.genPickToSkuMove(application.getRequisitionWarehouseId(), application.getRequisitionWarehouseName(), addDTO);
+        // 执行拣货规则：缺货 key 按明细仓（toWarehouse）聚合，须与 genPickToSkuMove 入参仓一致
+        String pickWarehouseId = detailList.stream()
+                .map(PickingDetailDTO.AddDTO::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse(application.getRequisitionWarehouseId());
+        String pickWarehouseName = detailList.stream()
+                .filter(d -> Objects.equals(pickWarehouseId, d.getWarehouseId()))
+                .map(PickingDetailDTO.AddDTO::getWarehouseName)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse(application.getRequisitionWarehouseName());
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves =
+                this.genPickToSkuMove(pickWarehouseId, pickWarehouseName, addDTO);
         if(CollectionUtils.isNotEmpty(moves)){
             return moves;
         }
@@ -2508,7 +2520,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             return moveEntityList;
         }
 
-        // ② 缺货：按补货仓位推荐解析取货/上架仓位（key = warehouseId#skuNo）
+        // ② 缺货：按补货仓位推荐解析取货/上架仓位（key = warehouseId#skuNo，精确匹配当前仓）
         List<String> shortageSkuNos = errorList.keySet().stream()
                 .map(CfgRulePickingServiceImpl::parseShortageSkuNo)
                 .filter(CharSequenceUtil::isNotBlank)
@@ -2521,8 +2533,9 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         List<CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItems = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : errorList.entrySet()) {
             String shortageKey = entry.getKey();
-            String expectedKeyPrefix = CfgRulePickingServiceImpl.buildShortageKey(warehouseId, "");
-            if (CharSequenceUtil.isNotBlank(warehouseId) && !shortageKey.startsWith(expectedKeyPrefix)) {
+            String shortageWarehouseId = CfgRulePickingServiceImpl.parseShortageWarehouseId(shortageKey);
+            if (CharSequenceUtil.isNotBlank(warehouseId)
+                    && !Objects.equals(warehouseId, shortageWarehouseId)) {
                 continue;
             }
             String skuNo = CfgRulePickingServiceImpl.parseShortageSkuNo(shortageKey);
@@ -2537,6 +2550,9 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                         .orElse(null);
             }
             shortageItems.add(new CfgRulePickingDTO.ReplenishShortageItemDTO(skuId, skuNo, entry.getValue()));
+        }
+        if (org.springframework.util.CollectionUtils.isEmpty(shortageItems)) {
+            throw new ServiceException("缺货仓库与当前拣货仓库不一致，无法生成补货移仓，请检查");
         }
         List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> suggests = cfgRulePickingService.resolveReplenishLocations(
                 executionData, warehouseId, shortageItems);

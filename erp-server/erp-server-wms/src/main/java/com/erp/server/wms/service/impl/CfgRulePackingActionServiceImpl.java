@@ -81,14 +81,13 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
                 .collect(Collectors.toList());
         // 更新 ID 必须属于当前规则 + 动作类型，防止跨规则覆盖
         validateActionIdsBelongToRule(ruleId, ruleType, actionIds);
-        if (!CollectionUtils.isEmpty(actionIds)) {
-            List<String> removeIds = oldActions.stream()
-                    .map(CfgRulePackingActionEntity::getId)
-                    .filter(id -> !actionIds.contains(id))
-                    .collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(removeIds)) {
-                removeByIds(removeIds);
-            }
+        // 始终删除「旧有但本次未提交」的动作；actionIds 为空表示全量替换，删除该类型全部旧动作
+        List<String> removeIds = oldActions.stream()
+                .map(CfgRulePackingActionEntity::getId)
+                .filter(id -> !actionIds.contains(id))
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(removeIds)) {
+            removeByIds(removeIds);
         }
         List<CfgRulePackingActionEntity> actions = actionList.stream()
                 .map(action -> {

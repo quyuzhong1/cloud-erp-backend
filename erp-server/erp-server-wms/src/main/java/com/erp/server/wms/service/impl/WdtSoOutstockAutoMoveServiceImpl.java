@@ -139,7 +139,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
 
     /**
      * 若 sourceId + 仓库已存在有效移仓单，按移仓明细回写出库仓位（通常为空仓位），返回仍需重新推荐的明细。
-     * <p>旺店通重试时明细 ID 会重建，因此优先 sourceDetailId，其次 skuId+qty，再次 skuId。</p>
+     * <p>明细 ID 由旺店通单号+业务键稳定生成，优先按 sourceDetailId 精确匹配；其次仅在 skuId+qty 唯一时匹配。</p>
      */
     private List<SoOutstockDetailEntity> restoreMovedLocationsIfPresent(String sourceId,
                                                                         String warehouseId,
@@ -152,9 +152,8 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         List<WarehouseLocationMoveDetailEntity> moveDetails =
                 warehouseLocationMoveDetailService.listByMainIds(Collections.singletonList(moved.getId()));
         if (CollUtil.isEmpty(moveDetails)) {
-            log.warn("旺店通出库预检已存在移仓主单但无明细，跳过恢复 sourceId={} warehouseId={} moveId={}",
-                    sourceId, warehouseId, moved.getId());
-            return warehouseDetails;
+            throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, "",
+                    "已存在移仓单但无明细，请人工处理");
         }
         List<WarehouseLocationMoveDetailEntity> unmatched = new ArrayList<>(moveDetails);
         List<SoOutstockDetailEntity> needResolve = new ArrayList<>();
@@ -167,6 +166,11 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             String target = matched.getInWarehouseLocation() == null ? EMPTY_LOCATION : matched.getInWarehouseLocation();
             rewriteLocation(Collections.singletonList(detail), inOutStockList, target);
         }
+        if (CollUtil.isNotEmpty(unmatched)) {
+            String skuNo = unmatched.get(0).getSkuNo();
+            throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, skuNo,
+                    "已有移仓明细无法匹配到出库明细，请人工处理");
+        }
         log.warn("旺店通出库预检按已有移仓单恢复仓位 sourceId={} warehouseId={} restored={} remain={}",
                 sourceId, warehouseId, warehouseDetails.size() - needResolve.size(), needResolve.size());
         return needResolve;
@@ -177,7 +181,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         if (CollUtil.isEmpty(candidates) || detail == null) {
             return null;
         }
-        // 1) 来源明细 ID（同进程二次调用时可能命中）
+        // 1) 稳定来源明细 ID（重试可命中）
         for (Iterator<WarehouseLocationMoveDetailEntity> it = candidates.iterator(); it.hasNext(); ) {
             WarehouseLocationMoveDetailEntity candidate = it.next();
             if (CharSequenceUtil.isNotBlank(detail.getId())
@@ -186,22 +190,19 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 return candidate;
             }
         }
-        // 2) SKU + 数量
-        for (Iterator<WarehouseLocationMoveDetailEntity> it = candidates.iterator(); it.hasNext(); ) {
-            WarehouseLocationMoveDetailEntity candidate = it.next();
-            if (Objects.equals(detail.getSkuId(), candidate.getSkuId())
-                    && Objects.equals(detail.getActualQty(), candidate.getQty())) {
-                it.remove();
-                return candidate;
-            }
+        // 2) SKU + 数量：仅在候选中唯一时匹配，禁止同 SKU 多行猜测绑定
+        List<WarehouseLocationMoveDetailEntity> qtyMatches = candidates.stream()
+                .filter(candidate -> Objects.equals(detail.getSkuId(), candidate.getSkuId())
+                        && Objects.equals(detail.getActualQty(), candidate.getQty()))
+                .collect(Collectors.toList());
+        if (qtyMatches.size() == 1) {
+            WarehouseLocationMoveDetailEntity matched = qtyMatches.get(0);
+            candidates.remove(matched);
+            return matched;
         }
-        // 3) 仅 SKU（同 SKU 多行时按顺序消费）
-        for (Iterator<WarehouseLocationMoveDetailEntity> it = candidates.iterator(); it.hasNext(); ) {
-            WarehouseLocationMoveDetailEntity candidate = it.next();
-            if (Objects.equals(detail.getSkuId(), candidate.getSkuId())) {
-                it.remove();
-                return candidate;
-            }
+        if (qtyMatches.size() > 1) {
+            throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, detail.getSkuNo(),
+                    "同SKU多行移仓明细无法唯一匹配，请人工处理");
         }
         return null;
     }
@@ -218,16 +219,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getSourceDetailId()))
                 .collect(Collectors.groupingBy(InOutStockDTO::getSourceDetailId));
         List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetails = new ArrayList<>();
-
         for (CfgRulePickingDTO.OutStockLocationSuggestDTO suggest : suggests) {
-            SoOutstockDetailEntity detail = detailMap.get(suggest.getDetailId());
-            if (detail == null) {
-                continue;
-            }
-            detail.setWarehouseLocation(suggest.getTargetLocation());
-            stockByDetailId.getOrDefault(suggest.getDetailId(), Collections.emptyList())
-                    .forEach(item -> item.setWarehouseLocation(suggest.getTargetLocation()));
-
             if (Boolean.TRUE.equals(suggest.getNeedMove())) {
                 WarehouseLocationMoveDetailDTO.AddDTO moveDetail =
                         WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(
@@ -239,13 +231,24 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 moveDetails.add(moveDetail);
             }
         }
+        // 已有移仓却仍解析出需移仓明细：先失败，避免改写仓位后静默跳过
+        if (CollUtil.isNotEmpty(moveDetails) && findValidMovedBySource(sourceId, warehouseId) != null) {
+            String skuNo = moveDetails.get(0).getSkuNo();
+            throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, skuNo,
+                    "已存在移仓单但仍有未覆盖的移仓明细，请人工处理");
+        }
+
+        for (CfgRulePickingDTO.OutStockLocationSuggestDTO suggest : suggests) {
+            SoOutstockDetailEntity detail = detailMap.get(suggest.getDetailId());
+            if (detail == null) {
+                continue;
+            }
+            detail.setWarehouseLocation(suggest.getTargetLocation());
+            stockByDetailId.getOrDefault(suggest.getDetailId(), Collections.emptyList())
+                    .forEach(item -> item.setWarehouseLocation(suggest.getTargetLocation()));
+        }
 
         if (CollUtil.isEmpty(moveDetails)) {
-            return;
-        }
-        // 防御：同 sourceId + 仓库已有有效移仓单时不再重复建单
-        if (findValidMovedBySource(sourceId, warehouseId) != null) {
-            log.warn("旺店通出库预检已存在移仓单，跳过移仓 sourceId={} warehouseId={}", sourceId, warehouseId);
             return;
         }
         WarehouseLocationMoveDTO.PcAddDTO addDTO = new WarehouseLocationMoveDTO.PcAddDTO();
