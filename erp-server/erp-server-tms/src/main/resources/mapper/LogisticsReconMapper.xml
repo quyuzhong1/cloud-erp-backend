@@ -121,6 +121,7 @@
     <update id="refreshPagingStats">
         WITH stats AS (
             SELECT m.id,
+                   m.version AS expected_version,
                    COUNT(v.id)::int AS valid_cost_count,
                    (COUNT(v.id) FILTER (WHERE v.match_status = 'matched'))::int AS match_count,
                    COALESCE(SUM(v.local_amount) FILTER (WHERE v.match_status = 'matched'), 0) AS match_success_amount,
@@ -169,11 +170,18 @@
             update_time = NOW()
         FROM stats
         WHERE m.id = stats.id
+          AND m.version IS NOT DISTINCT FROM stats.expected_version
           AND m.is_deleted = false
     </update>
 
     <update id="applyMatchStatsDelta">
-        UPDATE logistics_recon
+        WITH current_main AS (
+            SELECT id, version AS expected_version
+            FROM logistics_recon
+            WHERE id = #{mainId}
+              AND is_deleted = false
+        )
+        UPDATE logistics_recon m
         SET match_count = COALESCE(match_count, 0) + #{matchCountDelta},
             match_success_amount = COALESCE(match_success_amount, 0) + #{matchSuccessAmountDelta},
             -- 失败金额是当前 FAILED 状态的汇总，不是失败尝试次数的累计值。
@@ -193,7 +201,9 @@
             update_user_name = #{updateUserName},
             version = COALESCE(version, 0) + 1,
             update_time = NOW()
-        WHERE id = #{mainId}
-          AND is_deleted = false
+        FROM current_main
+        WHERE m.id = current_main.id
+          AND m.version IS NOT DISTINCT FROM current_main.expected_version
+          AND m.is_deleted = false
     </update>
 </mapper>
