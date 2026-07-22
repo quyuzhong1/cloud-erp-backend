@@ -95,7 +95,7 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
     /**
      * 按补货仓位推荐解析缺货 SKU 的取货/上架仓位。
      * <p>
-     * 取货：命中规则的补货动作库区优先级 + 可用库存；无库存抛 {@code WH_REPLENISH_FROM_LOCATION_NOT_FOUND}。<br>
+     * 取货：命中规则的补货动作库区优先级 + 单仓位可用量 ≥ 缺货数量；找不到抛 {@code WH_REPLENISH_FROM_LOCATION_NOT_FOUND}。<br>
      * 上架：按规则 {@code inWarehouseLocation} 解析：
      * <ul>
      *   <li>large / small → SKU 大件/小件推荐仓位</li>

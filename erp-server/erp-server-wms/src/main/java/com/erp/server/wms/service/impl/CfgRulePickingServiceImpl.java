@@ -378,7 +378,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     /**
      * 按补货仓位推荐解析缺货 SKU 的取货/上架仓位（B2C 缺货补货、要货一键移动共用）。
      * <ul>
-     *   <li>取货：补货动作库区优先级 + 可用库存；无库存 → {@link ApiError#WH_REPLENISH_FROM_LOCATION_NOT_FOUND}</li>
+     *   <li>取货：补货动作库区优先级 + 单仓位可用量 ≥ 缺货数量；找不到 → {@link ApiError#WH_REPLENISH_FROM_LOCATION_NOT_FOUND}</li>
      *   <li>上架 large/small：SKU 大/小件推荐仓位；无效 → {@link ApiError#WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED}</li>
      *   <li>上架 recent：优先产品小货区；否则拣货区最新出入库流水；无流水 → {@link ApiError#WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED}</li>
      *   <li>无规则/本仓无动作 → {@link ApiError#WH_LOCATION_SUGGEST_NOT_FOUND}</li>
@@ -414,12 +414,24 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     .filter(CharSequenceUtil::isNotBlank).findFirst().orElse("");
             throw new ServiceException(ApiError.WH_REPLENISH_FROM_LOCATION_NOT_FOUND, skuNo);
         }
+        // 已按 crpa.index、qty desc 排序，保证库区优先级
         List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> replenishInventories = cfgRulePackingActionService.listLocationByRule(
                 Collections.singletonList(hitRule),
                 Collections.singletonList(warehouseId),
                 skuIds,
                 "gt",
                 RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+
+        // 同 SKU 多明细时扣减候选库存，避免重复占用同一仓位
+        Map<String, Integer> remainingQtyMap = new LinkedHashMap<>();
+        for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inv : replenishInventories) {
+            if (!warehouseId.equals(inv.getWarehouseId()) || CharSequenceUtil.isBlank(inv.getWarehouseLocation())
+                    || inv.getQty() == null || inv.getQty() <= 0) {
+                continue;
+            }
+            String key = inv.getSkuId() + "#" + inv.getWarehouseLocation();
+            remainingQtyMap.merge(key, inv.getQty(), Integer::sum);
+        }
 
         List<WarehouseLocationEntity> warehouseLocations = warehouseLocationService.listByWarehouseIds(Collections.singletonList(warehouseId));
         Map<String, WarehouseLocationEntity> locationByCode = warehouseLocations.stream()
@@ -441,18 +453,26 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
             if (CharSequenceUtil.isBlank(item.getSkuId()) && CharSequenceUtil.isBlank(item.getSkuNo())) {
                 throw new ServiceException(ApiError.WH_REPLENISH_FROM_LOCATION_NOT_FOUND, "");
             }
-            CfgRulePickingDTO.CfgRulePickingInventoryDTO outInventory = replenishInventories.stream()
-                    .filter(v -> {
-                        boolean skuMatch = (CharSequenceUtil.isNotBlank(item.getSkuId()) && item.getSkuId().equals(v.getSkuId()))
-                                || (CharSequenceUtil.isNotBlank(item.getSkuNo()) && item.getSkuNo().equals(v.getSkuNo()));
-                        return warehouseId.equals(v.getWarehouseId())
-                                && skuMatch
-                                && v.getQty() != null
-                                && v.getQty() > 0;
-                    })
-                    .findFirst()
-                    .orElse(null);
-            if (outInventory == null || CharSequenceUtil.isBlank(outInventory.getWarehouseLocation())) {
+            int needQty = item.getQty() == null ? 0 : item.getQty();
+            if (needQty <= 0) {
+                continue;
+            }
+            CfgRulePickingDTO.CfgRulePickingInventoryDTO outInventory = null;
+            for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inv : replenishInventories) {
+                boolean skuMatch = (CharSequenceUtil.isNotBlank(item.getSkuId()) && item.getSkuId().equals(inv.getSkuId()))
+                        || (CharSequenceUtil.isNotBlank(item.getSkuNo()) && item.getSkuNo().equals(inv.getSkuNo()));
+                if (!warehouseId.equals(inv.getWarehouseId()) || !skuMatch || CharSequenceUtil.isBlank(inv.getWarehouseLocation())) {
+                    continue;
+                }
+                String key = inv.getSkuId() + "#" + inv.getWarehouseLocation();
+                Integer remain = remainingQtyMap.get(key);
+                if (remain != null && remain >= needQty) {
+                    outInventory = inv;
+                    remainingQtyMap.put(key, remain - needQty);
+                    break;
+                }
+            }
+            if (outInventory == null) {
                 throw new ServiceException(ApiError.WH_REPLENISH_FROM_LOCATION_NOT_FOUND, item.getSkuNo());
             }
             String fromLocation = outInventory.getWarehouseLocation();
@@ -489,7 +509,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
             CfgRulePickingDTO.ReplenishLocationSuggestDTO suggest = new CfgRulePickingDTO.ReplenishLocationSuggestDTO();
             suggest.setSkuId(item.getSkuId());
             suggest.setSkuNo(item.getSkuNo());
-            suggest.setQty(item.getQty());
+            suggest.setQty(needQty);
             suggest.setFromWarehouseArea(fromArea);
             suggest.setFromWarehouseLocation(fromLocation);
             suggest.setToWarehouseArea(toArea);
