@@ -43,10 +43,19 @@ public interface LogisticsReconMapper extends BaseMapper<LogisticsReconEntity> {
     List<LogisticsReconDTO.TabListDTO> tabList(@Param("params") LogisticsReconDTO.PagingParamDTO params);
 
     /**
+     * 单条 SQL 聚合并回刷主表分页冗余，避免先读聚合结果再覆盖主表产生旧快照覆盖。
+     */
+    int refreshPagingStats(@Param("mainId") String mainId,
+                           @Param("updateUserId") String updateUserId,
+                           @Param("updateUserName") String updateUserName);
+
+    /**
      * 原子维护主表匹配冗余统计（匹配数/成功金额增量，失败金额按当前状态重算）
      */
     int applyMatchStatsDelta(@Param("mainId") String mainId,
                              @Param("matchCountDelta") int matchCountDelta,
-                             @Param("matchSuccessAmountDelta") BigDecimal matchSuccessAmountDelta);
+                             @Param("matchSuccessAmountDelta") BigDecimal matchSuccessAmountDelta,
+                             @Param("updateUserId") String updateUserId,
+                             @Param("updateUserName") String updateUserName);
 
 }

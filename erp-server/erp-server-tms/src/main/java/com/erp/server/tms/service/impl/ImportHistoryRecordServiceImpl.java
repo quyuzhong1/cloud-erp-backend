@@ -110,7 +110,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     /**
      * 对账匹配落库分片大小，避免单事务过大。
      */
-    private static final int RECON_MATCH_PERSIST_BATCH_SIZE = 1000;
+    private static final int RECON_MATCH_PERSIST_BATCH_SIZE = 500;
 
     /**
      * 识别组并行计算时，每个线程任务处理的识别组数量（与导入纵向/横向分组批大小对齐）。
