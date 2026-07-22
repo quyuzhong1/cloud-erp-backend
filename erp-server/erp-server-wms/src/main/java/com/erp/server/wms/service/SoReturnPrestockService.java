@@ -97,6 +97,14 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     List<BatchResultDTO> deleteByIds(List<String> ids);
 
     /**
+     * 按第三方/平台退货单号查询全部未删除预入库单（用于海外仓消息重试时与退货入库单一并做明细缺口对账）。
+     *
+     * @param thirdCode 第三方/平台退货单号（platformReturnOrderNo）
+     * @return 同 thirdCode 下的预入库单列表，无则空列表
+     */
+    List<SoReturnPrestockEntity> listByThirdCode(String thirdCode);
+
+    /**
      * 由海外仓退货入库单（无物流单号、无参考单号，本次消息无法关联到任何单据）自动创建预入库单（系统内部调用）
      * <p>幂等保证：以 thirdCode（第三方/平台退货单号）为唯一键，已存在则跳过；此场景下 returnLogisticCode 固定落空字符串。</p>
      *

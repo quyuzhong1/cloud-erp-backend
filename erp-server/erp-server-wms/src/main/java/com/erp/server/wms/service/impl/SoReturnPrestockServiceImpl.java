@@ -1056,6 +1056,17 @@ public class SoReturnPrestockServiceImpl
     // ===================== 无物流单号+无参考单号自动创建（系统内部） =====================
 
     @Override
+    public List<SoReturnPrestockEntity> listByThirdCode(String thirdCode) {
+        if (CharSequenceUtil.isBlank(thirdCode)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .eq(SoReturnPrestockEntity::getThirdCode, thirdCode)
+                .eq(SoReturnPrestockEntity::getIsDeleted, false)
+                .list();
+    }
+
+    @Override
     @DistributeLocker(businessType = SO_RETURN_PRESTOCK_HEADLESS_LOCK_KEY, keyName = "dto.thirdCode")
     @Transactional(rollbackFor = Exception.class)
     public String createFromOverseasWhHeadless(SoReturnPrestockDTO.Add dto) {
@@ -1066,7 +1077,13 @@ public class SoReturnPrestockServiceImpl
                     .eq(SoReturnPrestockEntity::getIsDeleted, false)
                     .one();
             if (Objects.nonNull(existing)) {
-                log.info("预入库单已存在（无头件），第三方单号：{}，跳过创建", dto.getThirdCode());
+                // 本方法不追加明细：若调用方仍带着缺口明细进来，说明入口对账与已有预入库不对齐（历史脏数据/映射异常），
+                // 此处无法静默补单，打 warn 便于人工按 thirdCode 核对
+                int incomingDetailCount = CollUtil.isEmpty(dto.getDetailList()) ? 0 : dto.getDetailList().size();
+                int incomingQty = CollUtil.isEmpty(dto.getDetailList()) ? 0 : dto.getDetailList().stream()
+                        .mapToInt(d -> Objects.nonNull(d.getReceivedQty()) ? d.getReceivedQty() : 0).sum();
+                log.warn("预入库单已存在（无头件），第三方单号：{}，已有单id={}，本次入参明细行数={}、数量合计={}，跳过创建且不追加明细；若入口对账仍判有缺口请人工核对",
+                        dto.getThirdCode(), existing.getId(), incomingDetailCount, incomingQty);
                 return existing.getId();
             }
         } else {

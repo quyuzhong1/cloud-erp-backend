@@ -146,17 +146,20 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			if (StringUtils.isBlank(thirdId)){
 				ServiceException.runError("谷仓退货入库明细流水thirdId不能为空");
 			}
-			// 谷仓按明细ID判断
-			Integer count = soReturnInstockDetailService.lambdaQuery()
+			// 谷仓按明细ID判断；命中时补偿售后状态（入库已成功但 Feign 改状态失败后的重试路径）
+			SoReturnInstockDetailEntity existDetail = soReturnInstockDetailService.lambdaQuery()
 					.eq(SoReturnInstockDetailEntity::getSourceDetailId, thirdId)
 					.eq(SoReturnInstockDetailEntity::getCreateUserId, dto.getAuthId())
-					.count();
-			if (count > 0) {
+					.last("limit 1")
+					.one();
+			if (Objects.nonNull(existDetail)) {
+				compensateReturnStatusIfNeeded(soReturnInstockService.getById(existDetail.getMainId()));
 				return;
 			}
 		}else if (PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
 			SoReturnInstockEntity exist = soReturnInstockService.getBySourceId(dto.getSourceId());
 			if(Objects.nonNull(exist)){
+				compensateReturnStatusIfNeeded(exist);
 				return;
 			}
 		} else {
@@ -167,6 +170,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				// 打日志留痕，方便按 thirdCode 排查该单是否遗漏了未匹配SKU对应的预入库单
 				log.warn("[海外仓退货入库] thirdCode={} 已存在退货入库单(id={}, code={})，本次消息跳过处理；若怀疑此前处理未覆盖全部平台推送明细，请人工核对该thirdCode下退货入库单+预入库单明细合计是否等于平台推送明细",
 						dto.getPlatformReturnOrderNo(), existEntity.getId(), existEntity.getCode());
+				// 入库已存在但售后可能仍为待退货（落库成功、Feign 失败后重试），补偿同步状态
+				compensateReturnStatusIfNeeded(existEntity);
 				return;
 			}
 		}
@@ -369,7 +374,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
 		}
 
-		// 关联已匹配到的退货单：按SKU回写明细的退货单明细ID，退货单状态由待退货流转为已退货
+		// 关联已匹配到的退货单：按SKU回写明细的退货单明细ID；售后状态在本地落库成功后再更新，避免远程已完结、本地回滚导致不一致
 		List<SoB2cReturnDetailEntity> matchedDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
 				.eq(SoB2cReturnDetailEntity::getMainId, matchedReturn.getId()).list();
 		for (SoReturnInstockDetailEntity soReturnInstockDetailEntity : splitResult.matchedList) {
@@ -380,14 +385,47 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		}
 		soReturnInstockEntity.setSoReturnId(matchedReturn.getId());
 		soReturnInstockEntity.setSoReturnCode(matchedReturn.getCode());
-		if (SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(matchedReturn.getStatus())) {
-			matchedReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
-			soB2cReturnFeign.updateBatch(Collections.singletonList(matchedReturn));
-		}
 
 		// 已匹配到订单的SKU落退货入库单，订单里没有的SKU（unmatchedList）单独落预入库单，两者同一本地事务提交
 		this.persistMatchedInstockAndUnmatchedPrestock(soReturnInstockEntity, splitResult.matchedList, dto, warehouseEntity, splitResult.unmatchedList);
+		// 仅实际生成了退货入库明细时，才把售后从待退货改为已退货（整批走预入库不提前完结）
+		if (CollectionUtils.isNotEmpty(splitResult.matchedList)
+				&& SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(matchedReturn.getStatus())) {
+			matchedReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
+			soB2cReturnFeign.updateBatch(Collections.singletonList(matchedReturn));
+		}
 		return true;
+	}
+
+	/**
+	 * 本地入库已落库但售后状态可能尚未同步（Feign 失败后 MQ 重试命中幂等跳过）时，
+	 * 补偿将关联退货单从待退货改为已退货。补偿本身可幂等：已是已退货则 no-op。
+	 *
+	 * @param existEntity 已存在的退货入库单；无关联售后单时直接返回
+	 */
+	private void compensateReturnStatusIfNeeded(SoReturnInstockEntity existEntity) {
+		if (Objects.isNull(existEntity) || CharSequenceUtil.isBlank(existEntity.getSoReturnId())) {
+			return;
+		}
+		List<SoB2cReturnEntity> returns = soB2cReturnFeign.listByIds(Collections.singletonList(existEntity.getSoReturnId()));
+		if (CollectionUtils.isEmpty(returns)) {
+			log.warn("[海外仓退货入库] 补偿售后状态跳过：入库单{}关联的退货单{}不存在",
+					existEntity.getCode(), existEntity.getSoReturnId());
+			return;
+		}
+		SoB2cReturnEntity soReturn = returns.get(0);
+		if (!SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(soReturn.getStatus())) {
+			return;
+		}
+		soReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
+		try {
+			soB2cReturnFeign.updateBatch(Collections.singletonList(soReturn));
+			log.warn("[海外仓退货入库] 补偿将退货单{}由待退货更新为已退货（入库单已存在：{}）",
+					soReturn.getCode(), existEntity.getCode());
+		} catch (RuntimeException e) {
+			log.warn("[海外仓退货入库] 补偿更新退货单{}状态失败，将触发MQ重试：{}", soReturn.getCode(), e.getMessage());
+			throw e;
+		}
 	}
 
 	/**

@@ -3018,6 +3018,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    public List<SoReturnInstockEntity> listByThirdCode(String thirdCode) {
+        if (CharSequenceUtil.isBlank(thirdCode)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(SoReturnInstockEntity::getThirdCode, thirdCode).list();
+    }
+
+    @Override
     public SoReturnInstockEntity getBySourceId(String sourceId) {
         if (CharSequenceUtil.isBlank(sourceId)) {
             return null;

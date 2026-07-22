@@ -361,6 +361,15 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO);
 
     SoReturnInstockEntity getByThirdCode(String thirdCode);
+
+    /**
+     * 按第三方/平台退货单号查询全部退货入库单（用于海外仓消息重试时按明细缺口对账，而非「存在任意一条即整单跳过」）。
+     *
+     * @param thirdCode 第三方/平台退货单号（platformReturnOrderNo）
+     * @return 同 thirdCode 下的退货入库单列表，无则空列表
+     */
+    List<SoReturnInstockEntity> listByThirdCode(String thirdCode);
+
     SoReturnInstockEntity getBySourceId(String sourceId);
 
     void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
