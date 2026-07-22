@@ -416,7 +416,7 @@ public interface RedisCacheConstants {
     /**
      * 高级查询条件配置，按页面/menu code 缓存。
      */
-    String SYS_CFG_QUERY_CONDITION_BY_CODE = "cache:sys:cfgQueryCondition:code";
+    String SYS_CFG_QUERY_CONDITION_BY_CODE = "cache:sys:cfgQueryCondition:code:v2";
     String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
     String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";
     String SCM_DICT_BASIC_BY_TYPE = "cache:scm:dict:type";
