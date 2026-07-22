@@ -134,6 +134,13 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return ApiResult.error(getPlatForm().getName() + "不支持查询运费");
     }
 
+    /**
+     * 创建极兔出库单。
+     *
+     * <p>demo 实测：相同 txlogisticid（WFHD）重复提交直接返回 success=true，
+     * 并带回原 deliveryOrderCode（天然幂等）。极兔无出库查单接口，无法失败后反查，
+     * 仅依赖创建响应中的 deliveryOrderCode；若失败响应仍带单号则按成功处理。</p>
+     */
     @Override
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         StockOutOrderCreateRequest createRequest = OverseasWarehouseInboundConverter.INSTANCE.b2cOutboundDtoToJitu(createOutboundReq);
@@ -142,12 +149,53 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         //设置付款时间
         setPayTime(createOutboundReq, createRequest);
         //重置地址
-        setAddress(createOutboundReq,createRequest);
-        log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createRequest));
+        setAddress(createOutboundReq, createRequest);
+        String referenceNo = createOutboundReq.getReferenceNo();
+        log.warn("{}创建出库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(createRequest));
         StockOutOrderCreateResponse response = jituService.createStockOutOrder(createRequest);
-        log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
-        StockOutOrderCreateResponse.ResponseItem responseItem = response.getResponseitems().get(0);
-        return "true".equals(responseItem.getSuccess()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(responseItem.getDeliveryOrderCode()).trackNo(responseItem.getMailno()).build()) : failure(responseItem.getReason() + ":" + responseItem.getErrorMsg());
+        log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(response));
+
+        if (response == null || response.getResponseitems() == null || response.getResponseitems().isEmpty()) {
+            return failure("极兔创建出库单响应结果为空");
+        }
+        StockOutOrderCreateResponse.ResponseItem item = response.getResponseitems().get(0);
+        String shippingOrderNo = resolveShippingOrderNo(item, referenceNo);
+
+        if ("true".equals(item.getSuccess())) {
+            if (CharSequenceUtil.isBlank(item.getDeliveryOrderCode())) {
+                log.warn("{}创建成功但未返回 deliveryOrderCode，降级使用 shippingOrderNo={}, referenceNo={}",
+                        getPlatForm().getName(), shippingOrderNo, referenceNo);
+            }
+            return success(ThirdWarehouseQueryOutboundResponse.builder()
+                    .shippingOrderNo(shippingOrderNo)
+                    .trackNo(item.getMailno())
+                    .build());
+        }
+
+        // 无查单能力：失败但响应仍带回出库单号时，按幂等成功（避免误失败）
+        if (CharSequenceUtil.isNotBlank(item.getDeliveryOrderCode())) {
+            log.warn("{}建单失败但返回了 deliveryOrderCode，按幂等成功处理, shippingOrderNo={}, reason={}, errorMsg={}",
+                    getPlatForm().getName(), item.getDeliveryOrderCode(), item.getReason(), item.getErrorMsg());
+            return success(ThirdWarehouseQueryOutboundResponse.builder()
+                    .shippingOrderNo(item.getDeliveryOrderCode())
+                    .trackNo(item.getMailno())
+                    .build());
+        }
+        String failMsg = CharSequenceUtil.blankToDefault(item.getErrorMsg(), item.getReason());
+        return failure(CharSequenceUtil.blankToDefault(failMsg, "极兔创建出库单失败"));
+    }
+
+    /**
+     * 优先仓侧出库单号；缺失时用响应 txlogisticid / ERP 参考号兜底。
+     */
+    private String resolveShippingOrderNo(StockOutOrderCreateResponse.ResponseItem item, String referenceNo) {
+        if (item == null) {
+            return referenceNo;
+        }
+        if (CharSequenceUtil.isNotBlank(item.getDeliveryOrderCode())) {
+            return item.getDeliveryOrderCode();
+        }
+        return CharSequenceUtil.blankToDefault(item.getTxlogisticid(), referenceNo);
     }
 
     private void setAddress(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderCreateRequest createRequest) {
@@ -240,6 +288,9 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
     }
 
+    /**
+     * 极兔当前无出库查单 API（SDK / RestCloud ODS 均未对接），无法按 WFHD 反查。
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         return failure("暂不支持查询出库单");

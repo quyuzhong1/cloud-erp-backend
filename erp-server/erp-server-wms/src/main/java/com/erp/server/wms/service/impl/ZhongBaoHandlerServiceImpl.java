@@ -48,6 +48,16 @@ import java.util.*;
 @Service
 public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
+    /**
+     * 众包 B2C 建单幂等关键词：相同 referenceNo（WFHD）重复提交时出现在 errors 中。
+     * 实测：code=10001, success=false, errors=["自定义编号已存在"]。
+     */
+    private static final String ZHONGBAO_ERROR_REFERENCE_ALREADY_EXISTS = "自定义编号已存在";
+    /**
+     * 历史/注释中的另一文案，兜底匹配。
+     */
+    private static final String ZHONGBAO_ERROR_REFERENCE_DUPLICATE = "参考号重复";
+
     @Resource
     private ZhongbaoService zhongbaoService;
 
@@ -143,11 +153,84 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createRequest));
         BaseResponse<OutboundB2cCreateResponse> response = zhongbaoService.createB2cOutboundBill(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
-//        if (response.getMessage().contains("参考号重复")) {
-//            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
-//            return success(orderCode.getData());
-//        }
-        return response.getSuccess() ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderNo()).trackNo(response.getData().getTrackingNo()).build()) : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
+        if (response != null && Boolean.TRUE.equals(response.getSuccess())
+                && response.getData() != null
+                && CharSequenceUtil.isNotBlank(response.getData().getOrderNo())) {
+            return success(ThirdWarehouseQueryOutboundResponse.builder()
+                    .shippingOrderNo(response.getData().getOrderNo())
+                    .trackNo(response.getData().getTrackingNo())
+                    .build());
+        }
+        // 众包不幂等：相同 referenceNo 重复提交返回「自定义编号已存在」，按参考号反查 orderNo。
+        if (isReferenceAlreadyExists(response)) {
+            return resolveExistingOutboundByReferenceNo(createOutboundReq.getReferenceNo(), buildZhongBaoFailMsg(response));
+        }
+        return failure(buildZhongBaoFailMsg(response));
+    }
+
+    /**
+     * 判断众包是否因「自定义编号/参考号已存在」拒绝建单。
+     */
+    private boolean isReferenceAlreadyExists(BaseResponse<?> response) {
+        if (response == null) {
+            return false;
+        }
+        if (CharSequenceUtil.contains(response.getMessage(), ZHONGBAO_ERROR_REFERENCE_ALREADY_EXISTS)
+                || CharSequenceUtil.contains(response.getMessage(), ZHONGBAO_ERROR_REFERENCE_DUPLICATE)) {
+            return true;
+        }
+        if (CollUtil.isEmpty(response.getErrors())) {
+            return false;
+        }
+        for (String error : response.getErrors()) {
+            if (CharSequenceUtil.contains(error, ZHONGBAO_ERROR_REFERENCE_ALREADY_EXISTS)
+                    || CharSequenceUtil.contains(error, ZHONGBAO_ERROR_REFERENCE_DUPLICATE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 「自定义编号已存在」时按 referenceNo 反查仓侧出库单号。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> resolveExistingOutboundByReferenceNo(String referenceNo,
+                                                                                                 String originalMessage) {
+        if (CharSequenceUtil.isBlank(referenceNo)) {
+            log.warn("{}无法反查众包出库单：参考号为空", getPlatForm().getName());
+            return failure(CharSequenceUtil.blankToDefault(originalMessage, ZHONGBAO_ERROR_REFERENCE_ALREADY_EXISTS));
+        }
+        log.warn("{}建单返回[自定义编号已存在]，按参考号反查, referenceNo={}", getPlatForm().getName(), referenceNo);
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queryResult = queryOutboundBill(queryReq);
+            if (queryResult != null && queryResult.isSuccess()
+                    && queryResult.getData() != null
+                    && CharSequenceUtil.isNotBlank(queryResult.getData().getShippingOrderNo())) {
+                log.warn("{}反查成功，幂等命中已有订单, shippingOrderNo={}",
+                        getPlatForm().getName(), queryResult.getData().getShippingOrderNo());
+                return queryResult;
+            }
+            String queryMsg = queryResult == null ? "反查返回为空" : queryResult.getMsg();
+            log.warn("{}反查失败（referenceNo={}, msg={}），以原始错误返回",
+                    getPlatForm().getName(), referenceNo, queryMsg);
+        } catch (Exception e) {
+            log.warn("{}反查异常（referenceNo={}, err={}），以原始错误返回",
+                    getPlatForm().getName(), referenceNo, e.getMessage());
+        }
+        return failure(CharSequenceUtil.blankToDefault(originalMessage, ZHONGBAO_ERROR_REFERENCE_ALREADY_EXISTS));
+    }
+
+    private String buildZhongBaoFailMsg(BaseResponse<?> response) {
+        if (response == null) {
+            return "众包创建出库单响应为空";
+        }
+        String errors = CollUtil.isEmpty(response.getErrors()) ? "" : String.join(", ", response.getErrors());
+        if (CharSequenceUtil.isBlank(errors)) {
+            return CharSequenceUtil.blankToDefault(response.getMessage(), "众包创建出库单失败");
+        }
+        return CharSequenceUtil.blankToDefault(response.getMessage(), "") + ":" + errors;
     }
 
     private void setAddress(OutboundB2cCreateRequest createRequest) {
@@ -266,9 +349,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().referenceNo(queryOutboundReq.getErpOrderCode()).build();
         BaseResponse<OutboundB2cQueryResponse> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
-        return response.getSuccess() ?
-                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getList().get(0).getOrderNo()).trackNo(response.getData().getList().get(0).getTrackingNo()).build())
-                : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
+        if (response == null || !Boolean.TRUE.equals(response.getSuccess()) || response.getData() == null
+                || CollUtil.isEmpty(response.getData().getList())) {
+            return failure(buildZhongBaoFailMsg(response));
+        }
+        OutboundB2cQueryResponse.Query first = response.getData().getList().get(0);
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(first.getOrderNo())
+                .trackNo(first.getTrackingNo())
+                .build());
     }
 
     @Override

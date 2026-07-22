@@ -2003,9 +2003,21 @@
         pd.status,
         pd.variant_property as variantProperty,
         pd.warehouse_location as warehouseLocation,
-        COALESCE((SELECT ean FROM product_purchase WHERE sku_id = pd.id AND is_deleted = FALSE LIMIT 1), '') AS ean
+        COALESCE(pp.ean, '') AS ean
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT DISTINCT ON (sku_id) sku_id, ean
+            FROM product_purchase
+            WHERE is_deleted = FALSE
+            <if test="skuIds != null and skuIds.size>0">
+                AND sku_id IN
+                <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                    #{skuId}
+                </foreach>
+            </if>
+            ORDER BY sku_id
+        ) pp ON pp.sku_id = pd.id
         WHERE pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN

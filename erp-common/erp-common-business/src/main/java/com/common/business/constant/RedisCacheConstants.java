@@ -247,6 +247,18 @@ public interface RedisCacheConstants {
     String INVENTORY_LOCK_CODE="lock:wms:inventory:{}_*";
 
     /**
+     * 盘点任务占用的库存锁 key 索引（Set 成员为完整 {@link #INVENTORY_LOCK} key）
+     * taskId
+     */
+    String INVENTORY_LOCK_TASK_KEYS = "lock:wms:inventory:task-keys:{}";
+
+    /**
+     * 盘点计划占用的库存锁 key 索引（Set 成员为完整 {@link #INVENTORY_LOCK} key）
+     * planCode
+     */
+    String INVENTORY_LOCK_PLAN_KEYS = "lock:wms:inventory:plan-keys:{}";
+
+    /**
      * SKU含税成本
      * skuNo
      */

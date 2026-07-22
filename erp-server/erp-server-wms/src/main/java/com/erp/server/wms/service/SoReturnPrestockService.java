@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.model.wms.entity.SoReturnPrestockEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -128,4 +129,16 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * @return 本次实际强制关闭处理的预入库单数量
      */
     int forceCloseUnclaimedPrestock();
+
+    /**
+     * 强制关闭一批预入库单（供 {@link #forceCloseUnclaimedPrestock} 分批调用，独立成事务方法）。
+     * <p>将该批预入库单下关联状态为「未关联」的明细行置为「强制关闭」（已关联明细不变），
+     * 再按明细最新关联状态重算并批量回写主表关联状态。声明为接口方法是为了支持
+     * 自注入代理调用，使每批在独立事务中提交，避免所有批次共用同一个长事务。</p>
+     *
+     * @param mainIds     本批处理的预入库单主表 ID
+     * @param operateTime 本次强制关闭操作的统一操作时间
+     * @return 本批处理的预入库单数量
+     */
+    int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime);
 }

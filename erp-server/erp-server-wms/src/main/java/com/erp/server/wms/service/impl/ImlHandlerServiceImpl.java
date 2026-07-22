@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.UnitEnum;
@@ -273,14 +275,81 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .build());
     }
 
+    /**
+     * 创建 IML 出库单。
+     *
+     * <p>预发实测：相同 platformOrderNo（WFHD）重复提交直接返回 success + 原 orderNo（天然幂等）。
+     * 优先用创建响应中的 orderNo；缺失、响应为空或创建失败时再按 platformOrderNo 反查，
+     * 反查命中则按成功处理。</p>
+     */
     @Override
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        ImlCreateOutboundReq imlCreateOutboundReq =  this.buildOutboundDto(createOutboundReq);
-        ImlBaseResp<ImlOutboundResp> imlInboundRespImlBaseResp = imlService.createOutboundBill(imlCreateOutboundReq);
-        if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
-            return failure(imlInboundRespImlBaseResp.getMessage());
+        ImlCreateOutboundReq imlCreateOutboundReq = this.buildOutboundDto(createOutboundReq);
+        String referenceNo = createOutboundReq.getReferenceNo();
+        log.warn("{}创建出库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(createOutboundReq));
+        ImlBaseResp<ImlOutboundResp> resp = imlService.createOutboundBill(imlCreateOutboundReq);
+        log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+
+        if (resp == null) {
+            log.warn("{}创建出库单响应为空，按 platformOrderNo 反查, platformOrderNo={}",
+                    getPlatForm().getName(), referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByPlatformOrderNo(referenceNo);
+            if (isQueriedOutboundHit(queried)) {
+                return queried;
+            }
+            return failure("IML创建出库单响应结果为空");
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(imlInboundRespImlBaseResp.getData().getOrderNo()).build());
+
+        if (isSuccess(resp.getCode())) {
+            String orderNo = resp.getData() == null ? null : resp.getData().getOrderNo();
+            if (CharSequenceUtil.isNotBlank(orderNo)) {
+                return success(ThirdWarehouseQueryOutboundResponse.builder()
+                        .shippingOrderNo(orderNo)
+                        .build());
+            }
+            log.warn("{}创建出库单成功但未返回 orderNo，按 platformOrderNo 反查, platformOrderNo={}",
+                    getPlatForm().getName(), referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByPlatformOrderNo(referenceNo);
+            if (queried != null && queried.isSuccess()) {
+                return queried;
+            }
+            // 创建已成功，反查暂无单号时不降级为失败
+            return success(ThirdWarehouseQueryOutboundResponse.builder().build());
+        }
+
+        log.warn("{}建单失败，先按 platformOrderNo 反查是否已有出库单, platformOrderNo={}, msg={}",
+                getPlatForm().getName(), referenceNo, resp.getMessage());
+        ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByPlatformOrderNo(referenceNo);
+        if (isQueriedOutboundHit(queried)) {
+            log.warn("{}反查命中已有订单，按幂等成功处理, shippingOrderNo={}",
+                    getPlatForm().getName(), queried.getData().getShippingOrderNo());
+            return queried;
+        }
+        return failure(CharSequenceUtil.blankToDefault(resp.getMessage(), "IML创建出库单失败"));
+    }
+
+    /**
+     * 按 platformOrderNo（WFHD）反查仓侧出库单；未命中返回 failure，不抛异常。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> queryExistingOutboundByPlatformOrderNo(String platformOrderNo) {
+        if (CharSequenceUtil.isBlank(platformOrderNo)) {
+            return failure("IML出库单参考号不能为空");
+        }
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(platformOrderNo);
+            return queryOutboundBill(queryReq);
+        } catch (Exception e) {
+            log.warn("{}按 platformOrderNo 反查异常, platformOrderNo={}, err={}",
+                    getPlatForm().getName(), platformOrderNo, e.getMessage());
+            return failure(CharSequenceUtil.blankToDefault(e.getMessage(), "IML出库单反查失败"));
+        }
+    }
+
+    private boolean isQueriedOutboundHit(ApiResult<ThirdWarehouseQueryOutboundResponse> queried) {
+        return queried != null && queried.isSuccess()
+                && queried.getData() != null
+                && CharSequenceUtil.isNotBlank(queried.getData().getShippingOrderNo());
     }
 
     private ImlCreateOutboundReq buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
@@ -335,15 +404,26 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         ImlQueryOutboundReq imlQueryOutboundReq = ImlQueryOutboundReq.builder()
                 .platformOrderNo(queryOutboundReq.getErpOrderCode())
                 .build();
-        ImlBaseResp<ImlQueryOutboundResp> imlQueryOutboundRespImlBaseResp = imlService.queryOutboundBill(imlQueryOutboundReq);
-        if(!isSuccess(imlQueryOutboundRespImlBaseResp.getCode())){
-            return failure(imlQueryOutboundRespImlBaseResp.getMessage());
+        log.warn("{}查询出库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(imlQueryOutboundReq));
+        ImlBaseResp<ImlQueryOutboundResp> resp = imlService.queryOutboundBill(imlQueryOutboundReq);
+        log.warn("{}查询出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        if (resp == null) {
+            return failure("IML获取出库单数据失败: 响应结果为空");
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(imlQueryOutboundRespImlBaseResp.getData().getOrderNo()).build());
+        if (!isSuccess(resp.getCode()) || resp.getData() == null
+                || CharSequenceUtil.isBlank(resp.getData().getOrderNo())) {
+            log.warn("{}获取出库单失败或无单号，code:{},msg:{}",
+                    getPlatForm().getName(), resp.getCode(), resp.getMessage());
+            return failure(CharSequenceUtil.blankToDefault(resp.getMessage(), "IML出库单不存在"));
+        }
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(resp.getData().getOrderNo())
+                .trackNo(resp.getData().getTrackNumber())
+                .build());
     }
 
     @Override
@@ -388,8 +468,8 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return true;
     }
 
-    public boolean isSuccess(Integer code){
-        return code.equals(0);
+    public boolean isSuccess(Integer code) {
+        return code != null && code.equals(0);
     }
 
     @Override

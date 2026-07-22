@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -45,6 +46,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+
+    /**
+     * 极风重复建单：相同 erpNo（WFHD）再提交返回 code=50019。
+     * 实测文案：ERP order number already exists（无新单产生）。
+     */
+    private static final int JIFENG_CODE_ORDER_ALREADY_EXISTS = 50019;
+    private static final String JIFENG_ERROR_ORDER_ALREADY_EXISTS = "ERP order number already exists";
 
     @Resource
     private JiFengService jiFengService;
@@ -166,16 +174,86 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return null;
     }
 
+    /**
+     * 创建极风出库单。
+     *
+     * <p>仓侧实测：相同 erpNo 重复提交返回 {@code code=50019} /
+     * {@code ERP order number already exists}，此时按 erpNo 反查仓侧 orderNo，
+     * 命中则按成功处理。建单失败时也先反查，覆盖超时后仓侧已成功的场景。</p>
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         JiFengCreateOutboundRequest jiFengCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
-        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(jiFengCreateOutboundRequest));
-        JiFengBaseResp<String> resp = jiFengService.createOutbound(ThirdWarehouseContext.getAuthMap(),jiFengCreateOutboundRequest);
-        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
-        if(!isSuccess(resp)){
-            return failure(resp.getMessage());
+        String referenceNo = createOutboundReq.getReferenceNo();
+        log.warn("{}创建出库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(jiFengCreateOutboundRequest));
+        JiFengBaseResp<String> resp = jiFengService.createOutbound(
+                ThirdWarehouseContext.getAuthMap(), jiFengCreateOutboundRequest);
+        log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+
+        if (resp == null) {
+            log.warn("{}创建出库单响应为空，按 erpNo 反查, erpNo={}", getPlatForm().getName(), referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByErpNo(referenceNo);
+            if (isQueriedOutboundHit(queried)) {
+                return queried;
+            }
+            return failure("极风创建出库单响应结果为空");
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(createOutboundReq.getReferenceNo()).build());
+
+        if (isSuccess(resp)) {
+            // 历史成功路径以 WFHD 作为 shippingOrderNo，保持兼容
+            return success(ThirdWarehouseQueryOutboundResponse.builder()
+                    .shippingOrderNo(referenceNo)
+                    .build());
+        }
+
+        if (isOrderAlreadyExists(resp)) {
+            log.warn("{}建单返回[ERP order number already exists]，按 erpNo 反查, erpNo={}",
+                    getPlatForm().getName(), referenceNo);
+        } else {
+            log.warn("{}建单失败，先按 erpNo 反查是否已有出库单, erpNo={}, code={}, msg={}",
+                    getPlatForm().getName(), referenceNo, resp.getCode(), resp.getMessage());
+        }
+        ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByErpNo(referenceNo);
+        if (isQueriedOutboundHit(queried)) {
+            log.warn("{}反查命中已有订单，按幂等成功处理, shippingOrderNo={}",
+                    getPlatForm().getName(), queried.getData().getShippingOrderNo());
+            return queried;
+        }
+        return failure(CharSequenceUtil.blankToDefault(resp.getMessage(), "极风创建出库单失败"));
+    }
+
+    private boolean isOrderAlreadyExists(JiFengBaseResp<?> resp) {
+        if (resp == null) {
+            return false;
+        }
+        if (resp.getCode() != null && resp.getCode() == JIFENG_CODE_ORDER_ALREADY_EXISTS) {
+            return true;
+        }
+        return CharSequenceUtil.containsIgnoreCase(resp.getMessage(), JIFENG_ERROR_ORDER_ALREADY_EXISTS);
+    }
+
+    /**
+     * 按 erpNo（WFHD）反查仓侧出库单；未命中返回 failure，不抛异常。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> queryExistingOutboundByErpNo(String erpNo) {
+        if (CharSequenceUtil.isBlank(erpNo)) {
+            return failure("极风出库单参考号不能为空");
+        }
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(erpNo);
+            return queryOutboundBill(queryReq);
+        } catch (Exception e) {
+            log.warn("{}按 erpNo 反查异常, erpNo={}, err={}",
+                    getPlatForm().getName(), erpNo, e.getMessage());
+            return failure(CharSequenceUtil.blankToDefault(e.getMessage(), "极风出库单反查失败"));
+        }
+    }
+
+    private boolean isQueriedOutboundHit(ApiResult<ThirdWarehouseQueryOutboundResponse> queried) {
+        return queried != null && queried.isSuccess()
+                && queried.getData() != null
+                && CharSequenceUtil.isNotBlank(queried.getData().getShippingOrderNo());
     }
 
     private JiFengCreateOutboundRequest buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
@@ -245,12 +323,22 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
-        JiFengBaseResp<JiFengOutboundResp> outBound = jiFengService.getOutBound(ThirdWarehouseContext.getAuthMap(), queryOutboundReq.getErpOrderCode());
-        if(!isSuccess(outBound)){
-            return failure(outBound.getMessage());
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
+        log.warn("{}查询出库单请求:{}", getPlatForm().getName(), queryOutboundReq.getErpOrderCode());
+        JiFengBaseResp<JiFengOutboundResp> outBound = jiFengService.getOutBound(
+                ThirdWarehouseContext.getAuthMap(), queryOutboundReq.getErpOrderCode());
+        log.warn("{}查询出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(outBound));
+        if (outBound == null) {
+            return failure("极风获取出库单数据失败: 响应结果为空");
         }
-        return Objects.nonNull(outBound.getData()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(outBound.getData().getOrderNo()).build()) : failure(outBound.getMessage());
+        if (!isSuccess(outBound) || outBound.getData() == null
+                || CharSequenceUtil.isBlank(outBound.getData().getOrderNo())) {
+            return failure(CharSequenceUtil.blankToDefault(outBound.getMessage(), "极风出库单不存在"));
+        }
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(outBound.getData().getOrderNo())
+                .trackNo(outBound.getData().getTrackingNo())
+                .build());
     }
 
     @Override
@@ -382,8 +470,8 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return jiFengCreateB2BOutboundRequest;
     }
 
-    public <T> boolean isSuccess(JiFengBaseResp<T> resp){
-        return resp.getCode()==0;
+    public <T> boolean isSuccess(JiFengBaseResp<T> resp) {
+        return resp != null && resp.getCode() != null && resp.getCode() == 0;
     }
 
 }
