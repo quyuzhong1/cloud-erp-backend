@@ -1202,6 +1202,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+        // 循环内只收集需流转状态的 B2C 售后单，建单完成后统一 updateBatch，避免逐单 Feign 写拉长全局事务
+        List<SoB2cReturnEntity> b2cStatusUpdateList = new ArrayList<>();
         for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : instockDetailsByMainId.entrySet()) {
             String mainId = entry.getKey();
             List<SoReturnInstockDetailEntity> detailEntityList = entry.getValue();
@@ -1218,12 +1220,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 continue;
             }
             SoReturnInstockEntity instockEntity = buildInstockEntityFromB2cReturn(dto, warehouseEntity, company, b2cReturn, b2cContext);
-            // B2C售后单若为"待退货"，同步流转为"已退货"
+            // B2C售后单若为"待退货"，同步流转为"已退货"（先改内存，循环外批量落库）
             if (SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(b2cReturn.getStatus())) {
                 b2cReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
-                soB2cReturnFeign.updateBatch(Collections.singletonList(b2cReturn));
+                b2cStatusUpdateList.add(b2cReturn);
             }
             this.addByThirdWarehouse(instockEntity, detailEntityList);
+        }
+        if (CollUtil.isNotEmpty(b2cStatusUpdateList)) {
+            for (List<SoB2cReturnEntity> batch : CollUtil.split(b2cStatusUpdateList, IMPORT_UPDATE_BATCH_SIZE)) {
+                soB2cReturnFeign.updateBatch(batch);
+            }
         }
         return remaining;
     }
@@ -1604,13 +1611,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //平台：B2C取售后单平台，否则取客户归属平台（可能为空）；客户/类型在上方"海外仓退货"分支可能已变更，此处按更新后的entity重新计算
         SoB2cReturnEntity soB2cReturnEntityForPlatform = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CharSequenceUtil.isNotBlank(entity.getSoReturnId())
                 ? FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId()) : null;
-        //上方"海外仓退货允许改客户"分支已按相同客户id查询过customerInfo，此处直接复用，避免重复Feign调用
+        //上方"海外仓退货允许改客户"分支已按相同客户id查询过customerInfo，此处直接复用，避免重复Feign调用；
+        //非该分支时 Feign 也可能返回 null（客户停用/删除等），平台字段允许为空，不得直接解引用
         CustomerInfoEntity customerInfoForPlatform = Objects.nonNull(customerInfoFromEdit) && customerInfoFromEdit.getId().equals(entity.getCustomerId())
                 ? customerInfoFromEdit
-                : (CharSequenceUtil.isNotBlank(entity.getCustomerId()) ? customerFeign.getCustomerById(entity.getCustomerId()) : new CustomerInfoEntity());
+                : (CharSequenceUtil.isNotBlank(entity.getCustomerId()) ? customerFeign.getCustomerById(entity.getCustomerId()) : null);
+        String customerPlatformType = Objects.nonNull(customerInfoForPlatform) ? customerInfoForPlatform.getPlatformType() : null;
         entity.setDictPlatform(resolveDictPlatform(entity.getType(),
                 Objects.nonNull(soB2cReturnEntityForPlatform) ? soB2cReturnEntityForPlatform.getDictPlatform() : null,
-                customerInfoForPlatform.getPlatformType()));
+                customerPlatformType));
         if (!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())) {
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}", entity.getReturnLogisticCode(), dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
         }

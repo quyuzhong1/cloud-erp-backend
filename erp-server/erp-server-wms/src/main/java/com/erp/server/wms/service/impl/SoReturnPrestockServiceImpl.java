@@ -1247,6 +1247,8 @@ public class SoReturnPrestockServiceImpl
 
     /**
      * 强制关闭后按明细最新关联状态回写主表；仅当主表仍为未关联/部分关联时才更新，并使用 version 乐观锁。
+     * <p>调用方须传入已加载且携带 {@code version} 的主表实体。更新失败时抛出异常触发事务回滚，
+     * 避免明细已强制关闭而主表仍为旧状态。</p>
      */
     private void refreshMainClaimStatusAfterForceClose(SoReturnPrestockEntity main, LocalDateTime operateTime) {
         String currentStatus = main.getClaimStatus();
@@ -1272,7 +1274,7 @@ public class SoReturnPrestockServiceImpl
         main.setClaimStatus(newClaimStatus);
         main.setOperateTime(operateTime);
         if (!updateById(main)) {
-            log.warn("[预入库单强制关闭]主表{}状态已被并发修改，跳过回写", main.getId());
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_MODIFIED);
         }
     }
 
@@ -1384,8 +1386,12 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 联动刷新主表关联状态和操作时间
-     * 规则：全部已关联→LINKED；全部未关联→UNLINKED；混合→PARTIAL
+     * 联动刷新主表关联状态和操作时间。
+     * <p>规则：全部已关联→LINKED；全部未关联→UNLINKED；混合→PARTIAL。
+     * 先读取携带 {@code version} 的主表实体再乐观锁更新；更新失败抛出异常触发事务回滚，
+     * 避免明细/下游单据已变更而主表仍显示旧关联状态。</p>
+     *
+     * @param mainId 预入库单主表 ID
      */
     private void refreshMainClaimStatus(String mainId) {
         List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainId(mainId);
@@ -1404,11 +1410,13 @@ public class SoReturnPrestockServiceImpl
             newClaimStatus = PrestockClaimStatusEnum.PARTIAL.getStatus();
         }
 
-        SoReturnPrestockEntity main = new SoReturnPrestockEntity();
-        main.setId(mainId);
+        // 必须带 version 做乐观锁更新；仅 setId 的局部实体会导致乐观锁不生效或并发覆盖
+        SoReturnPrestockEntity main = getByIdOrThrow(mainId);
         main.setClaimStatus(newClaimStatus);
         main.setOperateTime(LocalDateTime.now());
-        updateById(main);
+        if (!updateById(main)) {
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_MODIFIED);
+        }
     }
 
     /**
