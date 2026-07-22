@@ -112,4 +112,24 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
             CfgRulePickingDTO.CfgExecutionDataDTO executionData,
             String warehouseId,
             List<CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItems);
+
+    /**
+     * 按出库仓位推荐解析明细的出库仓位。
+     * <p>
+     * 命中 {@code WAREHOUSE_LOCATION_OUT_STOCK} 规则后，按出库动作库区优先级查找可用库存仓位：
+     * <ul>
+     *   <li>仓位在拣货区 → 明细直接赋该仓位（{@code needMove=false}）</li>
+     *   <li>仓位非拣货区 → 需先移至空仓位 {@code ""}（{@code needMove=true}，{@code targetLocation=""}）</li>
+     * </ul>
+     * 无规则抛 {@code WH_OUT_STOCK_RULE_NOT_FOUND}；无足够可用库存抛 {@code WH_OUT_STOCK_LOCATION_NOT_FOUND}。
+     *
+     * @param executionData 规则执行数据（用于命中出库规则）
+     * @param warehouseId   仓库 ID
+     * @param items         出库明细（含数量）
+     * @return 每个明细的出库仓位建议
+     */
+    List<CfgRulePickingDTO.OutStockLocationSuggestDTO> resolveOutStockLocations(
+            CfgRulePickingDTO.CfgExecutionDataDTO executionData,
+            String warehouseId,
+            List<CfgRulePickingDTO.OutStockItemDTO> items);
 }

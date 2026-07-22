@@ -238,10 +238,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     /**
      * 旺店通销售出库单同步入口：仅持有分布式锁，不开事务。
      * <p>
-     * 将原方法拆分为三步，降低事务持有时间：
+     * 将原方法拆分为多步，降低事务持有时间：
      * 1. 幂等检查（纯读，无事务）
      * 2. 前置查询：所有 Feign / DB 只读操作（无事务，{@link #preQueryForWdtSync}）
-     * 3. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
+     * 3. 出库仓位推荐：独立事务（{@link #prepareWdtOutStockLocationSuggest}）
+     * 4. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
      * </p>
      */
     @Override
@@ -271,7 +272,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 2. 前置查询：所有 Feign / 只读 DB 操作在事务外完成，避免长事务持有连接
         WdtSyncQueryContext ctx = preQueryForWdtSync(entity);
 
-        // 3. 写操作：短事务内完成保存 + 扣库存 + 推送
+        // 3. 出库仓位推荐（独立事务）：落库前完成仓位赋值与非拣货区移仓
+        service.prepareWdtOutStockLocationSuggest(ctx);
+
+        // 4. 写操作：短事务内完成保存 + 扣库存 + 推送
         service.doSyncWdtSoOutStock(ctx);
     }
 
@@ -459,8 +463,25 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
     /**
+     * 出库仓位推荐（独立事务）。
+     * <p>
+     * 在单据保存/扣库存之前执行：按配置覆盖明细仓位，非拣货区先移至空仓位；结果写回 ctx 内存数据。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public void prepareWdtOutStockLocationSuggest(WdtSyncQueryContext ctx) {
+        SoOutstockEntity soOutstock = ctx.soOutstock;
+        if (CharSequenceUtil.isBlank(soOutstock.getOrderType())) {
+            soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
+        }
+        // 明细尚未落库：仅改内存仓位 + 移仓，不 updateBatch
+        soOutstockService.applyOutStockLocationSuggest(soOutstock, ctx.detailList, false);
+        syncInOutStockLocationFromDetails(ctx.inOutStockList, ctx.detailList);
+    }
+
+    /**
      * 写操作：在短事务内完成单据保存、库存扣减和外部推送。
-     * 此时所有查询数据均已从 {@link WdtSyncQueryContext} 中预取，不再持有 DB 连接做 Feign 调用。
+     * 此时所有查询数据均已从 {@link WdtSyncQueryContext} 中预取，且仓位已在 {@link #prepareWdtOutStockLocationSuggest} 处理完成。
      */
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
@@ -940,6 +961,24 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
             }
         });
+    }
+
+    /**
+     * 出库仓位推荐回写后，同步扣库存入参上的仓位。
+     */
+    private void syncInOutStockLocationFromDetails(List<InOutStockDTO> inOutStockList, List<SoOutstockDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(inOutStockList) || CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        Map<String, SoOutstockDetailEntity> detailMap = detailList.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
+                .collect(Collectors.toMap(SoOutstockDetailEntity::getId, d -> d, (a, b) -> a));
+        for (InOutStockDTO inOutStock : inOutStockList) {
+            SoOutstockDetailEntity detail = detailMap.get(inOutStock.getSourceDetailId());
+            if (detail != null) {
+                inOutStock.setWarehouseLocation(detail.getWarehouseLocation());
+            }
+        }
     }
 
     /**

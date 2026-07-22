@@ -387,4 +387,46 @@ public class CfgRulePickingDTO {
         /** 命中的补货推荐规则 ID */
         private String ruleId;
     }
+
+    /**
+     * 出库仓位推荐入参（明细维度）
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OutStockItemDTO {
+        /** 出库明细 ID，用于回写仓位 */
+        private String detailId;
+        private String skuId;
+        private String skuNo;
+        /** 出库数量 */
+        private Integer qty;
+    }
+
+    /**
+     * 出库仓位推荐结果
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OutStockLocationSuggestDTO {
+        private String detailId;
+        private String skuId;
+        private String skuNo;
+        private Integer qty;
+        /** 有库存的推荐仓位 */
+        private String stockLocation;
+        /** 有库存仓位是否属于拣货区 */
+        private Boolean inPickingArea;
+        /** 非拣货区时需先移至空仓位 */
+        private Boolean needMove;
+        /**
+         * 出库明细应写入的仓位：拣货区=stockLocation；非拣货区=空字符串
+         */
+        private String targetLocation;
+        /** 命中的出库推荐规则 ID */
+        private String ruleId;
+    }
 }

@@ -94,11 +94,13 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -304,6 +306,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SyncDhtOutstockService syncDhtOutstockService;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private CfgRulePickingService cfgRulePickingService;
+    @Resource
+    private WarehouseLocationMoveService warehouseLocationMoveService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -881,14 +887,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2c = OrderTypeEnum.B2C.getCode();
         Boolean isB2c = b2c.equals(orderType);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus(), isB2c);
-
         Boolean isPass = ApproveStatusEnum.APPROVE.equals(approveStatus);
         if (isPass) {
-            //审核通过发送金蝶
+            // 出库仓位推荐须在更新审核状态之前完成，失败则不落审核通过状态
             if (!isB2c) {
                 // B2B物流单发货时间=销售出库单审核时间
                 entity.setActualDeliveryDate(LocalDateTime.now());
+            }
+            applyOutStockLocationSuggest(entity, null, true);
+            updateForApprove(entity.getId(), approveStatus.getStatus(), isB2c);
+            if (!isB2c) {
                 handleData(entity);
             } else {
                 handleSoB2cData(entity);
@@ -904,6 +912,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToSdy(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送到订货通
             syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        } else {
+            updateForApprove(entity.getId(), approveStatus.getStatus(), isB2c);
         }
         return Boolean.TRUE;
     }
@@ -961,9 +971,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
             // B2C销售出库单出库等待时间20秒
             member.setLockWaitTime(20L);
-            if (CharSequenceUtil.isBlank(member.getWarehouseLocation())){
-                member.setWarehouseLocation(null);
-            }
+            // 空仓位 code 为 ""，库存按空串匹配；勿将 blank 转 null
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //处理虚拟仓库存
@@ -983,6 +991,175 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
         }
+    }
+
+    /**
+     * 直接扣可用库存时，按出库仓位推荐回写明细仓位；非拣货区先自动移至空仓位再出库。
+     * <p>
+     * 失败写操作日志并抛 {@link ServiceException}；审核场景配合事务回滚，避免审核状态已通过。
+     *
+     * @param entity      销售出库单
+     * @param details     明细；null 则查库
+     * @param checkUsable true 时校验 {@link #isSoOutstockUsable}；false 表示调用方已确认直扣可用
+     */
+    @Override
+    public void applyOutStockLocationSuggest(SoOutstockEntity entity, List<SoOutstockDetailEntity> details, boolean checkUsable) {
+        if (entity == null) {
+            return;
+        }
+        if (checkUsable && !isSoOutstockUsable(entity)) {
+            return;
+        }
+        // details == null：从库加载并回写；非 null：仅改内存明细（如旺店通落库前准备）
+        boolean persistDetails = details == null;
+        try {
+            if (details == null) {
+                details = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            }
+            if (CollectionUtils.isEmpty(details)) {
+                return;
+            }
+            details = details.stream()
+                    .filter(d -> d.getActualQty() != null && d.getActualQty() > 0)
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(details)) {
+                return;
+            }
+            CfgRulePickingDTO.CfgExecutionDataDTO executionData = buildOutStockExecutionData(entity, details);
+            Map<String, List<SoOutstockDetailEntity>> warehouseDetailMap = details.stream()
+                    .collect(Collectors.groupingBy(d -> CharSequenceUtil.isNotBlank(d.getWarehouseId())
+                            ? d.getWarehouseId() : entity.getWarehouseId()));
+            List<SoOutstockDetailEntity> updateDetails = new ArrayList<>();
+            Map<String, List<WarehouseLocationMoveDetailDTO.AddDTO>> moveByWarehouse = new LinkedHashMap<>();
+            for (Map.Entry<String, List<SoOutstockDetailEntity>> entry : warehouseDetailMap.entrySet()) {
+                String warehouseId = entry.getKey();
+                if (CharSequenceUtil.isBlank(warehouseId)) {
+                    throw new ServiceException(ApiError.WH_OUT_STOCK_RULE_NOT_FOUND);
+                }
+                List<CfgRulePickingDTO.OutStockItemDTO> items = entry.getValue().stream()
+                        .map(d -> new CfgRulePickingDTO.OutStockItemDTO(d.getId(), d.getSkuId(), d.getSkuNo(), d.getActualQty()))
+                        .collect(Collectors.toList());
+                List<CfgRulePickingDTO.OutStockLocationSuggestDTO> suggests =
+                        cfgRulePickingService.resolveOutStockLocations(executionData, warehouseId, items);
+                Map<String, SoOutstockDetailEntity> detailMap = entry.getValue().stream()
+                        .collect(Collectors.toMap(SoOutstockDetailEntity::getId, Function.identity(), (a, b) -> a));
+                for (CfgRulePickingDTO.OutStockLocationSuggestDTO suggest : suggests) {
+                    SoOutstockDetailEntity detail = detailMap.get(suggest.getDetailId());
+                    if (detail == null) {
+                        continue;
+                    }
+                    detail.setWarehouseLocation(suggest.getTargetLocation());
+                    updateDetails.add(detail);
+                    if (Boolean.TRUE.equals(suggest.getNeedMove())) {
+                        WarehouseLocationMoveDetailDTO.AddDTO moveDetail = WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(
+                                suggest.getSkuId(), suggest.getSkuNo(),
+                                suggest.getStockLocation(), "",
+                                suggest.getQty(), warehouseId, suggest.getDetailId());
+                        moveDetail.setOutInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+                        moveDetail.setInInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+                        moveByWarehouse.computeIfAbsent(warehouseId, k -> new ArrayList<>()).add(moveDetail);
+                    }
+                }
+            }
+            if (!moveByWarehouse.isEmpty()) {
+                for (Map.Entry<String, List<WarehouseLocationMoveDetailDTO.AddDTO>> moveEntry : moveByWarehouse.entrySet()) {
+                    List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = moveEntry.getValue();
+                    try {
+                        WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
+                        moveDto.setWarehouseId(moveEntry.getKey());
+                        moveDto.setPcShow(true);
+                        moveDto.setSourceId(entity.getId());
+                        moveDto.setSourceCode(entity.getCode());
+                        moveDto.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+                        moveDto.setDetailList(moveDetailList);
+                        Boolean originalValue = UserContext.getIsUserSystem();
+                        UserContext.setIsUserSystem(Boolean.TRUE);
+                        try {
+                            warehouseLocationMoveService.addAndApprove(moveDto);
+                        } finally {
+                            UserContext.setIsUserSystem(originalValue);
+                        }
+                    } catch (ServiceException e) {
+                        String skuNo = moveDetailList.get(0).getSkuNo();
+                        throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, skuNo,
+                                CharSequenceUtil.blankToDefault(e.getMsg(), e.getMessage()));
+                    } catch (Exception e) {
+                        String skuNo = moveDetailList.get(0).getSkuNo();
+                        throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, skuNo,
+                                CharSequenceUtil.blankToDefault(e.getMessage(), "未知异常"));
+                    }
+                }
+            }
+            if (persistDetails && CollectionUtils.isNotEmpty(updateDetails)) {
+                soOutstockDetailService.updateBatchById(updateDetails);
+            }
+        } catch (ServiceException e) {
+            final String failMsg = CharSequenceUtil.format("出库仓位推荐失败：{}", e.getMsg());
+            final String businessId = entity.getId();
+            log.warn("出库仓位推荐失败 businessId={}, code={}, msg={}", businessId, entity.getCode(), e.getMsg());
+            // 审核事务回滚后仍落操作日志，避免失败原因随事务消失
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        try {
+                            operateLogService.addModuleOperateLog(failMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(),
+                                    businessId, "出库仓位推荐");
+                        } catch (Exception ex) {
+                            log.warn("出库仓位推荐失败写操作日志异常 businessId={}", businessId, ex);
+                        }
+                    }
+                });
+            } else {
+                operateLogService.addModuleOperateLog(failMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(),
+                        businessId, "出库仓位推荐");
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * 是否走直接扣可用库存（{@code SO_OUTSTOCK_USABLE}），与 handleData / handleSoB2cData 业务类型判断一致。
+     */
+    private boolean isSoOutstockUsable(SoOutstockEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+                Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(
+                        RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", entity.getSoId()));
+                boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj);
+                return Objects.nonNull(soB2cEntity) && (Boolean.TRUE.equals(soB2cEntity.getIsNotOutbound()) || isNotOutbound);
+            }
+            return true;
+        }
+        // B2B：有中转批次号或来源发货通知单 → 扣冻结，不走本逻辑
+        return ObjectUtil.isEmpty(entity.getBatchNo())
+                && !SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType());
+    }
+
+    /**
+     * 组装出库仓位推荐规则执行数据。
+     */
+    private CfgRulePickingDTO.CfgExecutionDataDTO buildOutStockExecutionData(SoOutstockEntity entity,
+                                                                            List<SoOutstockDetailEntity> details) {
+        CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
+        boolean isB2c = OrderTypeEnum.B2C.getCode().equals(entity.getOrderType());
+        executionData.setBillType(isB2c ? PickingBillTypeEnum.B2C.getCode() : PickingBillTypeEnum.B2B.getCode());
+        executionData.setCustomerId(entity.getCustomerId());
+        executionData.setCountryCode(entity.getCountry());
+        executionData.setDeliveryWarehouseId(entity.getWarehouseId());
+        executionData.setSourceCode(entity.getCode());
+        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = details.stream()
+                .map(d -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(
+                        CharSequenceUtil.isNotBlank(d.getWarehouseId()) ? d.getWarehouseId() : entity.getWarehouseId(),
+                        d.getSkuId(), d.getSkuNo(), "",
+                        d.getActualQty(), d.getId()))
+                .collect(Collectors.toList());
+        executionData.setDetails(detailList);
+        return executionData;
     }
 
     /**
