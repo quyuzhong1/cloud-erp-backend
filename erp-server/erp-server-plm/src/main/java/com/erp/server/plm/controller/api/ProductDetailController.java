@@ -835,7 +835,6 @@ public class ProductDetailController extends BaseController {
      *
      * @param excelFile  文件流
      * @param importType 请求类型
-     * @param response   响应
      * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
@@ -843,9 +842,8 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入产品信息")
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
-    public ApiResult<ExcelImportFsDTO.UrlDTO> importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        ExcelImportFsDTO.UrlDTO urlDTO = productDetailService.importProductFile(excelFile, importType, response);
-        return success(urlDTO);
+    public ApiResult<Boolean> importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType) {
+        return success(productDetailService.importProductFile(excelFile, importType));
     }
 
     /**

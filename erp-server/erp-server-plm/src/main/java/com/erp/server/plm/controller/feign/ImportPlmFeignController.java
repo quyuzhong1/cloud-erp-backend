@@ -44,6 +44,9 @@ public class ImportPlmFeignController {
     @Resource
     private SkuStdRetailPriceService skuStdRetailPriceService;
 
+    @Resource
+    private ProductDetailService productDetailService;
+
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
@@ -79,6 +82,17 @@ public class ImportPlmFeignController {
         } catch (Exception e) {
             log.error("【SKU标准成本导入】失败", e);
             updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importProductDetail")
+    public void importProductDetail(@RequestBody BaseDTO.ImportTypeDTO dto) throws Exception {
+        try {
+            productDetailService.importProductFile(dto);
+        } catch (Exception e) {
+            log.error("导入产品信息失败", e);
+            updateTask(dto.getTaskId(), e);
+            throw e;
         }
     }
 

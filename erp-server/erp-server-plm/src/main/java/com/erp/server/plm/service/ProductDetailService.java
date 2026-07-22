@@ -6,6 +6,7 @@ import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -627,10 +628,14 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Date 2024/3/22 10:35
      * @param excelFile
      * @param importType
-     * @param response
      * @return java.lang.Boolean
      **/
-    ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+    Boolean importProductFile(MultipartFile excelFile, Integer importType);
+
+    /**
+     * 异步处理产品信息导入任务。
+     */
+    void importProductFile(BaseDTO.ImportTypeDTO dto);
 
 
     /**
