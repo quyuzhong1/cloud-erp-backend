@@ -4062,11 +4062,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     throw new ServiceException("调用三方仓出库单异常，{}", apiResult.getMsg());
                 }
                 String message = "创建三方仓出库单异常" + apiResult.getMsg();
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】删除，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
+                // 创建失败保留本地 WFHD，下次提交复用原单号先查再建，避免删单换号导致仓侧双出库
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】保留，可复用原单号重试，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
-                //标记三方仓发货单为删除
-                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             } else {
                 // 建单成功后立即将 WEGO/三方仓出库单号持久化到 so_b2c，防止外层调用方在后续逻辑中
                 // 因超时、异常等原因未能执行到 thirdWarehouseCreateOutStock 的写库步骤，
@@ -4127,17 +4126,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
             } catch (Exception e1) {
                 String message = e1.getMessage();
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】删除，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
+                // 创建失败保留本地 WFHD，下次提交复用原单号先查再建，避免删单换号导致仓侧双出库
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】保留，可复用原单号重试，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
-                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                 return ApiResult.error(-1, message);
             }
         } else {
             log.error("订单{}三方仓发货单号{}已达到最大重试次数{}次，停止重试", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT);
             String message = "重试创建出库单异常"+ e.getMessage();
-            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】删除，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
+            // 创建失败保留本地 WFHD，下次提交复用原单号先查再建，避免删单换号导致仓侧双出库
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】保留，可复用原单号重试，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
             soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
-            thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             return ApiResult.error(-1, e.getMessage());
         }
     }
@@ -4173,6 +4172,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || (lowerMessage.contains("cannot invoke") && lowerMessage.contains("response") && lowerMessage.contains("is null"))
                 || message.contains("超时")
                 || message.contains(THIRD_WAREHOUSE_EMPTY_RESPONSE);
+    }
+
+    /**
+     * 取消出库超时/网络类结果：按拦截中处理，避免误判失败后解冻继续发货。
+     */
+    private boolean isThirdWarehouseNetworkOrTimeoutCancelResult(ApiResult<?> apiResult) {
+        if (Objects.isNull(apiResult)) {
+            return true;
+        }
+        if (BAD_GATEWAY.equals(apiResult.getMsg())) {
+            return true;
+        }
+        if (Objects.equals(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), apiResult.getCode())) {
+            return true;
+        }
+        if (isRetryableThirdWarehouseTimeoutMessage(apiResult.getMsg())) {
+            return true;
+        }
+        return isThirdWarehouseNetworkMessage(apiResult.getMsg());
+    }
+
+    private boolean isThirdWarehouseNetworkMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        String lowerMessage = message.toLowerCase(Locale.ROOT);
+        return lowerMessage.contains("connection")
+                || lowerMessage.contains("connectexception")
+                || lowerMessage.contains("unknownhost")
+                || message.contains("连接")
+                || message.contains("网络");
     }
 
     private String getApiResultCode(ApiResult<?> apiResult) {
@@ -4476,7 +4506,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             req.setAuthId(overseasProviderEntity.getId());
         }
         ApiResult<String> stringApiResult = thirdWarehouseFeign.cancelOutboundOrder(req);
-        if (stringApiResult.getCode() == 200 && ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equals(stringApiResult.getData())) {
+        if (Objects.nonNull(stringApiResult)
+                && stringApiResult.getCode() == 200
+                && ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equals(stringApiResult.getData())) {
             //自动拦截结果确认，拦截成功
             soB2cEntity.setIsIntercept(Boolean.FALSE);
             soB2cEntity.setIsFrozen(Boolean.FALSE);
@@ -4497,12 +4529,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 thirdWarehouseDeliveryFeign.update(thirdWarehouseDeliveryEntity);
             }
             return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截成功");
-        } else if (ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode().equals(stringApiResult.getData())) {
-            //拦截中
+        } else if ((Objects.nonNull(stringApiResult)
+                && ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode().equals(stringApiResult.getData()))
+                || isThirdWarehouseNetworkOrTimeoutCancelResult(stringApiResult)) {
+            // 拦截中，或超时/网络导致结果不确定：保持冻结，避免误判失败后继续发货
             soB2cEntity.setIsFrozen(Boolean.TRUE);
             soB2cEntity.setIsIntercept(Boolean.TRUE);
             this.updateById(soB2cEntity);
-            String msg = CharSequenceUtil.format("用户【{}】发起海外拦截中,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
+            boolean networkOrTimeout = isThirdWarehouseNetworkOrTimeoutCancelResult(stringApiResult);
+            String msg = networkOrTimeout
+                    ? CharSequenceUtil.format("用户【{}】发起海外拦截中（超时或网络异常，结果待确认）,备注：【{}】,原因：【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(), remark,
+                    Objects.isNull(stringApiResult) ? "三方仓拦截返回为空" : stringApiResult.getMsg())
+                    : CharSequenceUtil.format("用户【{}】发起海外拦截中,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
                 thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus());
@@ -4511,9 +4550,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "发起拦截中，等待三方仓处理");
         } else {
             //自动拦截结果确认，拦截失败
-            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：【{}】,原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark, stringApiResult.getMsg());
+            String failReason = Objects.isNull(stringApiResult) ? "三方仓拦截返回为空" : stringApiResult.getMsg();
+            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：【{}】,原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark, failReason);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
-            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截失败：" + stringApiResult.getMsg());
+            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截失败：" + failReason);
         }
     }
 

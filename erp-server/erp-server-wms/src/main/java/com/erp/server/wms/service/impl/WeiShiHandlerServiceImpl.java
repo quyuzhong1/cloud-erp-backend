@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -40,6 +41,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+
+    /**
+     * 纬狮历史失败文案：相同 referNo 重复提交时偶发返回（code=1）。
+     * 当前测试环境更多表现为直接 success 并带回原 orderNo。
+     */
+    private static final String WEISHI_ERROR_ORDER_ALREADY_EXISTS = "ERP order number already exists";
 
     @Resource
     private WeiShiService weiShiService;
@@ -165,19 +172,95 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success();
     }
 
+    /**
+     * 创建纬狮出库单。
+     *
+     * <p>测试环境实测：相同 referNo 重复提交常直接返回 success + 原 orderNo（天然幂等）。
+     * 历史环境也可能返回失败文案 {@code ERP order number already exists}。
+     * 因此：优先用创建响应中的 orderNo；缺失或创建失败时再按 referNo 反查，
+     * 反查命中则按成功处理，避免误失败。</p>
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
-        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
-        WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,ThirdWarehouseContext.getAuthMap());
-        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
-        if(Objects.isNull(resp)){
-            throw new ServiceException("纬狮创建出库单响应结果为空" + JSONUtil.toJsonStr(resp));
+        log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
+        WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(
+                weiShiCreateOutboundRequest, ThirdWarehouseContext.getAuthMap());
+        log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(resp));
+
+        String referenceNo = createOutboundReq.getReferenceNo();
+        if (Objects.isNull(resp)) {
+            // 响应丢失时仓侧可能已建单，先反查再失败
+            log.warn("{}创建出库单响应为空，按 referNo 反查, referNo={}",
+                    getPlatForm().getName(), referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByReferNo(referenceNo);
+            if (queried != null && queried.isSuccess()
+                    && queried.getData() != null
+                    && CharSequenceUtil.isNotBlank(queried.getData().getShippingOrderNo())) {
+                return queried;
+            }
+            return failure("纬狮创建出库单响应结果为空");
         }
-        if(!isSuccess(resp)){
-            return failure(resp.getMsg());
+
+        if (isSuccess(resp)) {
+            // 含重复提交直接 success 并带回原 orderNo 的场景
+            String orderNo = resp.getData() == null ? null : resp.getData().getOrderNo();
+            String trackNo = resp.getData() == null ? null : resp.getData().getTrackingNumber();
+            if (CharSequenceUtil.isNotBlank(orderNo)) {
+                return success(ThirdWarehouseQueryOutboundResponse.builder()
+                        .shippingOrderNo(orderNo)
+                        .trackNo(trackNo)
+                        .build());
+            }
+            log.warn("{}创建出库单成功但未返回 orderNo，按 referNo 反查, referNo={}",
+                    getPlatForm().getName(), referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByReferNo(referenceNo);
+            if (queried != null && queried.isSuccess()) {
+                return queried;
+            }
+            // 创建已成功，反查暂无单号时不降级为失败
+            return success(ThirdWarehouseQueryOutboundResponse.builder().trackNo(trackNo).build());
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(resp.getData().getOrderNo()).trackNo(resp.getData().getTrackingNumber()).build());
+
+        // 创建失败：先反查是否仓侧已有单（覆盖 already exists 及未知重复文案）
+        if (isOrderAlreadyExists(resp)) {
+            log.warn("{}建单返回[ERP order number already exists]，按 referNo 反查, referNo={}",
+                    getPlatForm().getName(), referenceNo);
+        } else {
+            log.warn("{}建单失败，先按 referNo 反查是否已有出库单, referNo={}, msg={}",
+                    getPlatForm().getName(), referenceNo, resp.getMsg());
+        }
+        ApiResult<ThirdWarehouseQueryOutboundResponse> queried = queryExistingOutboundByReferNo(referenceNo);
+        if (queried != null && queried.isSuccess()
+                && queried.getData() != null
+                && CharSequenceUtil.isNotBlank(queried.getData().getShippingOrderNo())) {
+            log.warn("{}反查命中已有订单，按幂等成功处理, shippingOrderNo={}",
+                    getPlatForm().getName(), queried.getData().getShippingOrderNo());
+            return queried;
+        }
+        return failure(CharSequenceUtil.blankToDefault(resp.getMsg(), "纬狮创建出库单失败"));
+    }
+
+    private boolean isOrderAlreadyExists(WeiShiBaseResp<?> resp) {
+        return resp != null && CharSequenceUtil.containsIgnoreCase(resp.getMsg(), WEISHI_ERROR_ORDER_ALREADY_EXISTS);
+    }
+
+    /**
+     * 按 referNo（WFHD）反查仓侧出库单；未命中返回 failure，不抛异常。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> queryExistingOutboundByReferNo(String referenceNo) {
+        if (CharSequenceUtil.isBlank(referenceNo)) {
+            return failure("纬狮出库单参考号不能为空");
+        }
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(referenceNo);
+            return queryOutboundBill(queryReq);
+        } catch (Exception e) {
+            log.warn("{}按 referNo 反查异常, referNo={}, err={}",
+                    getPlatForm().getName(), referenceNo, e.getMessage());
+            return failure(CharSequenceUtil.blankToDefault(e.getMessage(), "纬狮出库单反查失败"));
+        }
     }
 
     @Override
@@ -236,20 +319,25 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
         weiShiGetOutboundRequest.setReferNo(queryOutboundReq.getErpOrderCode());
-        log.warn(getPlatForm().getName()+"查询出库单请求:{}", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
-        WeiShiBaseResp<WeiShiOutboundResp> resp = weiShiService.getOutbound(weiShiGetOutboundRequest, ThirdWarehouseContext.getAuthMap());
-        log.warn(getPlatForm().getName()+"查询出库单结果:{}", JSONUtil.toJsonStr(resp));
-        if (null == resp || resp.getData() == null) {
-            throw new ServiceException("纬狮获取出库单数据失败: 响应结果为空");
+        log.warn(getPlatForm().getName() + "查询出库单请求:{}", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
+        WeiShiBaseResp<WeiShiOutboundResp> resp = weiShiService.getOutbound(
+                weiShiGetOutboundRequest, ThirdWarehouseContext.getAuthMap());
+        log.warn(getPlatForm().getName() + "查询出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if (resp == null) {
+            return failure("纬狮获取出库单数据失败: 响应结果为空");
         }
-        if(resp.getCode() != 200){
-            log.warn("纬狮获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMsg());
-            throw new ServiceException("纬狮获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMsg());
+        if (!isSuccess(resp) || resp.getData() == null || CharSequenceUtil.isBlank(resp.getData().getOrderNo())) {
+            log.warn("{}获取出库单失败或无单号，code:{},msg:{}",
+                    getPlatForm().getName(), resp.getCode(), resp.getMsg());
+            return failure(CharSequenceUtil.blankToDefault(resp.getMsg(), "纬狮出库单不存在"));
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(resp.getData().getOrderNo()).build());
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(resp.getData().getOrderNo())
+                .trackNo(resp.getData().getTrackingNo())
+                .build());
     }
 
     @Override

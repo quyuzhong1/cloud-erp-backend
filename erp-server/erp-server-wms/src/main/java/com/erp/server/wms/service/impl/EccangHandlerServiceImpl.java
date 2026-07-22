@@ -46,6 +46,11 @@ import java.util.Objects;
 @Validated
 public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
+    /**
+     * 易仓系（安兔/速派通等）建单幂等关键词：相同参考号重复提交时返回。
+     */
+    private static final String ECCANG_ERROR_REFERENCE_ALREADY_EXISTS = "参考编号已存在";
+
     @Resource
     private AntuService antuService;
 
@@ -110,8 +115,10 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
         log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
-        if(response.getMessage().contains("参考编号已存在")){
-            return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getOrderCode()).build());
+        // 易仓不幂等：相同 reference_no 重复提交返回「参考编号已存在」且常带 order_code；
+        // 无 order_code 时按参考号反查，避免上层误判失败。
+        if (isReferenceAlreadyExists(response)) {
+            return resolveExistingOutboundByRef(createOutboundReq.getReferenceNo(), response.getOrderCode(), response.getMessage());
         }
         return isSuccess(response.getAsk()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData()).build()) : failure(response.getMessage());
     }
@@ -278,10 +285,61 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AntuCreateOutboundReq antuCreateOutboundReq = this.buildB2BOrder(createOutboundReq);
         this.handleData(antuCreateOutboundReq);
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
-        if(response.getMessage().contains("参考编号已存在")){
-            return success(response.getOrderCode());
+        if (isReferenceAlreadyExists(response)) {
+            ApiResult<ThirdWarehouseQueryOutboundResponse> resolved =
+                    resolveExistingOutboundByRef(createOutboundReq.getReferenceNo(), response.getOrderCode(), response.getMessage());
+            if (resolved.isSuccess() && resolved.getData() != null
+                    && CharSequenceUtil.isNotBlank(resolved.getData().getShippingOrderNo())) {
+                return success(resolved.getData().getShippingOrderNo());
+            }
+            return failure(CharSequenceUtil.blankToDefault(resolved.getMsg(), response.getMessage()));
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+    }
+
+    /**
+     * 判断易仓是否因「相同参考编号已存在」拒绝建单。
+     */
+    private boolean isReferenceAlreadyExists(AntuResponse<?> response) {
+        return response != null && CharSequenceUtil.contains(response.getMessage(), ECCANG_ERROR_REFERENCE_ALREADY_EXISTS);
+    }
+
+    /**
+     * 「参考编号已存在」时解析仓侧出库单号：优先用响应 order_code，否则按参考号反查。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> resolveExistingOutboundByRef(String referenceNo,
+                                                                                         String orderCode,
+                                                                                         String originalMessage) {
+        if (CharSequenceUtil.isNotBlank(orderCode)) {
+            log.warn("{}建单返回[参考编号已存在]，使用响应 order_code={}, referenceNo={}",
+                    getPlatForm().getName(), orderCode, referenceNo);
+            return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(orderCode).build());
+        }
+        if (CharSequenceUtil.isBlank(referenceNo)) {
+            log.warn("{}建单返回[参考编号已存在]但无 order_code 且参考号为空，无法反查", getPlatForm().getName());
+            return failure(CharSequenceUtil.blankToDefault(originalMessage, ECCANG_ERROR_REFERENCE_ALREADY_EXISTS));
+        }
+        log.warn("{}建单返回[参考编号已存在]但无 order_code，按参考号反查, referenceNo={}",
+                getPlatForm().getName(), referenceNo);
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queryResult = queryOutboundBill(queryReq);
+            if (queryResult != null && queryResult.isSuccess()
+                    && queryResult.getData() != null
+                    && CharSequenceUtil.isNotBlank(queryResult.getData().getShippingOrderNo())) {
+                log.warn("{}反查成功，幂等命中已有订单, shippingOrderNo={}",
+                        getPlatForm().getName(), queryResult.getData().getShippingOrderNo());
+                return queryResult;
+            }
+            String queryMsg = queryResult == null ? "反查返回为空" : queryResult.getMsg();
+            log.warn("{}反查失败（referenceNo={}, msg={}），以原始错误返回",
+                    getPlatForm().getName(), referenceNo, queryMsg);
+        } catch (Exception e) {
+            log.warn("{}反查异常（referenceNo={}, err={}），以原始错误返回",
+                    getPlatForm().getName(), referenceNo, e.getMessage());
+        }
+        return failure(CharSequenceUtil.blankToDefault(originalMessage, ECCANG_ERROR_REFERENCE_ALREADY_EXISTS));
     }
 
     private AntuCreateOutboundReq buildB2BOrder(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {

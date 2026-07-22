@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -34,6 +35,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+
+    /**
+     * 大麦建单幂等关键词：相同客户单号（custRefNo / WFHD）重复提交时返回。
+     */
+    private static final String DAMAI_ERROR_CUST_REF_ALREADY_EXISTS = "客户单号已存在";
 
     @Resource
     private DaMaiService daMaiService;
@@ -227,10 +233,58 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateOrderRequest);
         log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(resp));
-        if(!isSuccess(resp)){
+        if (!isSuccess(resp)) {
+            // 大麦不幂等：相同 custRefNo 重复提交返回「客户单号已存在」，按参考号反查 soNo。
+            if (isCustRefAlreadyExists(resp)) {
+                return resolveExistingOutboundByCustRef(createOutboundReq.getReferenceNo(), resp.getMsg());
+            }
             return failure(resp.getMsg());
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(resp.getData().getSoNo()).build());
+        String soNo = resp.getData() == null ? null : resp.getData().getSoNo();
+        if (CharSequenceUtil.isBlank(soNo)) {
+            log.warn("{}创建出库单成功但未返回 soNo，按参考号反查, referenceNo={}",
+                    getPlatForm().getName(), createOutboundReq.getReferenceNo());
+            return resolveExistingOutboundByCustRef(createOutboundReq.getReferenceNo(), "创建成功但未返回出库单号");
+        }
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(soNo).build());
+    }
+
+    /**
+     * 判断大麦是否因「客户单号已存在」拒绝建单。
+     */
+    private boolean isCustRefAlreadyExists(DaMaiBaseResp<?> resp) {
+        return resp != null && CharSequenceUtil.contains(resp.getMsg(), DAMAI_ERROR_CUST_REF_ALREADY_EXISTS);
+    }
+
+    /**
+     * 「客户单号已存在」或建单未带回 soNo 时，按 custRefNo（WFHD）反查仓侧出库单号。
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> resolveExistingOutboundByCustRef(String referenceNo,
+                                                                                             String originalMessage) {
+        if (CharSequenceUtil.isBlank(referenceNo)) {
+            log.warn("{}无法反查大麦出库单：参考号为空", getPlatForm().getName());
+            return failure(CharSequenceUtil.blankToDefault(originalMessage, DAMAI_ERROR_CUST_REF_ALREADY_EXISTS));
+        }
+        log.warn("{}按客户单号反查大麦出库单, custRefNo={}", getPlatForm().getName(), referenceNo);
+        try {
+            ThirdWarehouseQueryOutboundReq queryReq = new ThirdWarehouseQueryOutboundReq();
+            queryReq.setErpOrderCode(referenceNo);
+            ApiResult<ThirdWarehouseQueryOutboundResponse> queryResult = queryOutboundBill(queryReq);
+            if (queryResult != null && queryResult.isSuccess()
+                    && queryResult.getData() != null
+                    && CharSequenceUtil.isNotBlank(queryResult.getData().getShippingOrderNo())) {
+                log.warn("{}反查成功，幂等命中已有订单, shippingOrderNo={}",
+                        getPlatForm().getName(), queryResult.getData().getShippingOrderNo());
+                return queryResult;
+            }
+            String queryMsg = queryResult == null ? "反查返回为空" : queryResult.getMsg();
+            log.warn("{}反查失败（custRefNo={}, msg={}），以原始错误返回",
+                    getPlatForm().getName(), referenceNo, queryMsg);
+        } catch (Exception e) {
+            log.warn("{}反查异常（custRefNo={}, err={}），以原始错误返回",
+                    getPlatForm().getName(), referenceNo, e.getMessage());
+        }
+        return failure(CharSequenceUtil.blankToDefault(originalMessage, DAMAI_ERROR_CUST_REF_ALREADY_EXISTS));
     }
 
     @Override
