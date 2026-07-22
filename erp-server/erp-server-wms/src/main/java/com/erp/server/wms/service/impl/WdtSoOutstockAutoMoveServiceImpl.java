@@ -32,7 +32,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * 旺店通销售出库同步前预检：当前库位不足则改空仓位并按缺口移入。
+ * 旺店通销售出库同步前预检：当前库位不足则改空仓位；
+ * 移仓数量 = 出库数量 - 空仓位已有，源仓排除空仓位与当前库位。
  */
 @Slf4j
 @Service
@@ -163,14 +164,28 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         String currentLocation = CharSequenceUtil.nullToEmpty(need.getWarehouseLocation());
         int haveQty = inventoryCache.qtyBySkuLocation.getOrDefault(
                 buildSkuLocationKey(need.getSkuId(), currentLocation), 0);
+        // 当前库位足够：不改位、不移仓
         if (haveQty >= need.getQty()) {
             return;
         }
 
-        // 仅补足当前库位缺口；候选源仓来自本仓批量库存缓存（等价于原 pagingSelect + filterZero）
-        int moveQty = need.getQty() - haveQty;
+        // 当前库位不足：改为空仓位扣减；移仓数量 = 出库数量 - 空仓位已有（不含当前库位存量）
+        // emptyHave 含本单前面已规划移入空仓位的数量（见下方 cache 回写）
+        int emptyHaveQty = inventoryCache.qtyBySkuLocation.getOrDefault(
+                buildSkuLocationKey(need.getSkuId(), EMPTY_LOCATION), 0);
+        int moveQty = need.getQty() - emptyHaveQty;
+        if (moveQty <= 0) {
+            // 空仓位已够出库，只改写扣减仓位
+            rewriteToEmptyLocation(detailList, inOutStockList, need.getWarehouseId(), need.getSkuId(), currentLocation);
+            log.warn("旺店通出库预检空仓位已够，仅改写库位 skuNo={} currentLocation={} need={} emptyHave={}",
+                    need.getSkuNo(), currentLocation, need.getQty(), emptyHaveQty);
+            return;
+        }
+
         List<LocationListDTO> sourceLocations = inventoryCache.locationsBySkuId.get(need.getSkuId());
         if (CollUtil.isEmpty(sourceLocations)) {
+            log.warn("旺店通出库预检无可用源仓位，跳过移仓 skuNo={} currentLocation={} need={} emptyHave={}",
+                    need.getSkuNo(), currentLocation, need.getQty(), emptyHaveQty);
             return;
         }
         // 拷贝一份，避免本单多 SKU/多行互相扣减 usableQty 时污染缓存
@@ -194,9 +209,13 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 l.setUsableQty((l.getUsableQty() == null ? 0 : l.getUsableQty()) - planned);
             }
         });
-        // 源仓排除空仓位自身，避免同仓位自转
-        locationList.removeIf(l -> l.getUsableQty() == null || l.getUsableQty() <= 0
-                || Objects.equals(CharSequenceUtil.nullToEmpty(l.getCode()), EMPTY_LOCATION));
+        // 源仓排除：空仓位、当前库位（同仓同仓位不自转/不挪当前位存量）
+        locationList.removeIf(l -> {
+            String code = CharSequenceUtil.nullToEmpty(l.getCode());
+            return l.getUsableQty() == null || l.getUsableQty() <= 0
+                    || Objects.equals(code, EMPTY_LOCATION)
+                    || Objects.equals(code, currentLocation);
+        });
 
         Map<String, Integer> addNumMaps = new HashMap<>();
         int remain = moveQty;
@@ -207,14 +226,15 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
 
         if (remain > 0 || addNumMaps.isEmpty()) {
             // 凑不满：不改库位、不移仓，保留原推荐位交给后续扣库存报不足
-            log.warn("旺店通出库预检仓位可用量凑不满，跳过移仓 skuNo={} currentLocation={} need={} have={} remain={}",
-                    need.getSkuNo(), currentLocation, need.getQty(), haveQty, remain);
+            log.warn("旺店通出库预检仓位可用量凑不满，跳过移仓 skuNo={} currentLocation={} need={} currentHave={} emptyHave={} moveQty={} remain={}",
+                    need.getSkuNo(), currentLocation, need.getQty(), haveQty, emptyHaveQty, moveQty, remain);
             return;
         }
 
         // 凑满后再改库位，避免移仓未执行时明细已指向空仓位
         rewriteToEmptyLocation(detailList, inOutStockList, need.getWarehouseId(), need.getSkuId(), currentLocation);
 
+        int movedTotal = 0;
         for (Map.Entry<String, Integer> addEntry : addNumMaps.entrySet()) {
             WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
             detail.setSkuId(need.getSkuId());
@@ -227,6 +247,12 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             detail.setWarehouseId(need.getWarehouseId());
             detail.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
             moveDetailList.add(detail);
+            movedTotal += addEntry.getValue() == null ? 0 : addEntry.getValue();
+        }
+        // 回写缓存，供同仓后续 SKU/明细累计空仓位已有量
+        if (movedTotal > 0) {
+            inventoryCache.qtyBySkuLocation.merge(
+                    buildSkuLocationKey(need.getSkuId(), EMPTY_LOCATION), movedTotal, Integer::sum);
         }
     }
 
