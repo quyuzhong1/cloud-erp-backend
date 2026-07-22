@@ -4016,6 +4016,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         throw new ServiceException("查询三方仓接口返回为空");
                     }
                     if (queryOutboundResult.isSuccess()) {
+                        // 仓侧已有单：本地 WFHD 置为待处理，便于列表区分创建失败单
+                        markThirdWarehouseDeliveryCreateResult(entity.getId(), queryReferenceNo, true);
                         return queryOutboundResult;
                     }
                     if (shouldRetryCreateOutbound(queryOutboundResult)) {
@@ -4029,6 +4031,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             } else {
                 log.warn("订单{}已存在待处理的发货单，不再重复创建", entity.getCode());
+                markThirdWarehouseDeliveryCreateResult(entity.getId(), queryReferenceNo, true);
                 return ApiResult.success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(entity.getShippingOrderNo()).build());
             }
         }
@@ -4062,8 +4065,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     throw new ServiceException("调用三方仓出库单异常，{}", apiResult.getMsg());
                 }
                 String message = "创建三方仓出库单异常" + apiResult.getMsg();
-                // 创建失败保留本地 WFHD，下次提交复用原单号先查再建，避免删单换号导致仓侧双出库
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】保留，可复用原单号重试，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
+                // 创建失败保留本地 WFHD，状态改为创建失败，下次提交复用原单号先查再建
+                markThirdWarehouseDeliveryCreateResult(entity.getId(), createOutboundReq.getReferenceNo(), false);
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】状态=创建失败，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
             } else {
@@ -4074,6 +4078,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CharSequenceUtil.isNotBlank(earlyShippingOrderNo) && CharSequenceUtil.isBlank(entity.getShippingOrderNo())) {
                     persistEarlyShippingOrderNoWithRetry(entity, earlyShippingOrderNo);
                 }
+                // 创建成功：WFHD 置为待处理（含从创建失败重试成功）
+                markThirdWarehouseDeliveryCreateResult(entity.getId(), createOutboundReq.getReferenceNo(), true);
             }
             return apiResult;
         } catch (Exception e) {
@@ -4126,18 +4132,53 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
             } catch (Exception e1) {
                 String message = e1.getMessage();
-                // 创建失败保留本地 WFHD，下次提交复用原单号先查再建，避免删单换号导致仓侧双出库
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】保留，可复用原单号重试，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
+                // 创建失败保留本地 WFHD，状态改为创建失败，下次提交复用原单号先查再建
+                markThirdWarehouseDeliveryCreateResult(entity.getId(), createOutboundReq.getReferenceNo(), false);
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】状态=创建失败，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 return ApiResult.error(-1, message);
             }
         } else {
             log.error("订单{}三方仓发货单号{}已达到最大重试次数{}次，停止重试", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT);
             String message = "重试创建出库单异常"+ e.getMessage();
-            // 创建失败保留本地 WFHD，下次提交复用原单号先查再建，避免删单换号导致仓侧双出库
-            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】保留，可复用原单号重试，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
+            // 创建失败保留本地 WFHD，状态改为创建失败，下次提交复用原单号先查再建
+            markThirdWarehouseDeliveryCreateResult(entity.getId(), createOutboundReq.getReferenceNo(), false);
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】状态=创建失败，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
             soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
             return ApiResult.error(-1, e.getMessage());
+        }
+    }
+
+    /**
+     * 更新三方仓发货单创建结果状态：失败→failed，成功→waitHandle。
+     * 成功时不回退已发货/拦截中/取消发货。
+     */
+    private void markThirdWarehouseDeliveryCreateResult(String soId, String referenceNo, boolean success) {
+        if (CharSequenceUtil.isBlank(soId) || CharSequenceUtil.isBlank(referenceNo)) {
+            return;
+        }
+        try {
+            ThirdWarehouseDeliveryEntity delivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(referenceNo, soId);
+            if (Objects.isNull(delivery)) {
+                log.warn("更新三方仓发货单状态时未找到单据，soId={}, referenceNo={}, success={}", soId, referenceNo, success);
+                return;
+            }
+            String targetStatus = success
+                    ? SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus()
+                    : SoB2cWarehouseDeliveryStatusEnum.FAILED.getStatus();
+            if (success
+                    && (SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus().equals(delivery.getStatus())
+                    || SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus().equals(delivery.getStatus())
+                    || SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus().equals(delivery.getStatus()))) {
+                return;
+            }
+            if (targetStatus.equals(delivery.getStatus())) {
+                return;
+            }
+            delivery.setStatus(targetStatus);
+            thirdWarehouseDeliveryFeign.update(delivery);
+        } catch (Exception e) {
+            log.warn("更新三方仓发货单状态失败，soId={}, referenceNo={}, success={}", soId, referenceNo, success, e);
         }
     }
 
@@ -4232,6 +4273,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         thirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
         thirdWarehouseDeliveryEntity.setThirdWarehousePlatform(createOutboundReq.getThirdWarehouseProvideCode());
         thirdWarehouseDeliveryEntity.setShippingMethod(createOutboundReq.getShippingMethod());
+        // 新建本地发货单先落待处理；仓侧创建失败后再改为创建失败
+        thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus());
         List<ThirdWarehouseDeliveryDetailEntity> detailEntityList = new ArrayList<>();
         for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
