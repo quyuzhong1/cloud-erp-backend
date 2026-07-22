@@ -224,6 +224,26 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				}
 			}else {
 				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
+				// WEGO 特有：参考单号可能是 B2C 售后单号，通过售后单找关联销售订单
+				if(Objects.isNull(soB2cEntity)
+						&& DmpBasicSystemCodeEnum.WEGO.getCode().equalsIgnoreCase(dto.getPlatform())){
+					List<SoB2cReturnEntity> returnList = FeignQuery.create(SoB2cReturnEntity.class)
+							.eq(SoB2cReturnEntity::getCode, dto.getOrderReferenceNo())
+							.list();
+					if(CollUtil.isNotEmpty(returnList)){
+						if(returnList.size() > 1){
+							log.warn("[WEGO退货入库] 售后单号 {} 命中多条记录({})，取首条有 soCode 的记录，请人工确认关联关系",
+									dto.getOrderReferenceNo(), returnList.size());
+						}
+						SoB2cReturnEntity soB2cReturnEntity = returnList.stream()
+								.filter(r -> CharSequenceUtil.isNotBlank(r.getSoCode()))
+								.findFirst()
+								.orElse(null);
+						if(Objects.nonNull(soB2cReturnEntity)){
+							soB2cEntity = soB2cFeign.getSoCode(soB2cReturnEntity.getSoCode());
+						}
+					}
+				}
 			}
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
