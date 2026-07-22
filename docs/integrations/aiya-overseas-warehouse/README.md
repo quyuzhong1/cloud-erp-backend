@@ -31,6 +31,7 @@
 | 2026-07-16 | 已与产品/业务确认：爱亚账号/SKU 不存在早于 2026-07-14 的创建记录，`AiyaSkuInitHandler.DEV_START_TIME` 固定锚点不会漏拉历史 SKU，相关「待产品确认」项已移至「已确认结论」，同步更新代码注释 |
 | 2026-07-16 | 实测确认库存查询接口 `stockStatus` 参数**非必传，且最好不传**（不传即查询全部状态库存），此前的猜测（可能需按 GOOD/DAMAGE 分两次查）已被推翻。已从 `AiyaInventoryInitHandler` 移除 `STOCK_STATUS_PLACEHOLDER` 占位逻辑（不再传该参数），同步更新 `AiyaInventoryQueryDTO`/`AiyaOpenApiService.queryInventory`/`AiyaOpenApiServiceManualTest` 的注释，相关「待产品确认」项移至「已确认结论」 |
 | 2026-07-21 | 测试环境执行爱亚库存定时/手动任务报「输入信息数据代码【inventory】没有符合条件的明细任务」：已定位为 DMP 配置层问题（`DmpInputHotfixCreateHandler`/`DmpInputDetailCreateHandler`），不是 SDK/InitHandler 代码问题。根因：服务商重新授权后旧 `dmp_cfg_input_detail` 大量软删，且明细 `next_level_id` 曾指向已作废的旧 `overseas_provider`。当前库内已有可用 normal 明细（`next_level_id=2079487193754226690`），并已跑出 finish 任务；但 `dmp_cfg_input_convert_mapping`（爱亚库存字段映射）仍为空、`dmp_cfg_output`（`AiyaInventoryRocketMQTaskHandler`）仍未配置，导致 `dmp_third_inventory` 落库字段为空且无法推送到 WMS |
+| 2026-07-22 | 用户反馈「任务拉取成功但三方仓库存无爱亚数据」：复核测试库确认根因仍是配置缺失——① `dmp_cfg_input_convert`=`2076948134579164619`（爱亚库存dmp）对应 mapping 表 0 条，导致 `dmp_third_inventory` 仅落出 `source_platform=aiya` 的空行（sku/仓码/数量全空，唯一键塌缩成 1 条）；② `dmp_cfg_output` 无 `AiyaInventoryRocketMQTaskHandler`，WMS `overseas_inventory` 无推送入口。需补 mapping + output 后重跑 Input，再触发 Output |
 | 2026-07-16 | 用户提供真实联调响应样例（不传 `stockStatus` 时的查询结果），核对后发现并修复一个真实 bug：`AiyaInventoryInitHandler.extractInventoryList` 里失败分支读取的是 `response.get("Code")`（大写C），但真实响应顶层字段其实是小写 `code`（跟 `AbstractAiyaInitHandler`/`AiyaSkuInitHandler`/`AiyaWarehouseInitHandler` 里其它接口一致），大写写法会导致失败时异常信息里的错误码永远打印成 `null`。已修正为 `response.get("code")`，同步更新 `AiyaOpenApiService.queryInventory`/`AiyaInventoryInitHandler` 里写错的 `{Code,...}` 结构说明为 `{code,...}`。此外真实样例其它字段（`success`/`inventoryVOList`/明细 11 个字段、`skuStatus="GOOD"`）均与此前按接口文档截图确认的清单一致，无其它出入；样例仍只有 3 个顶层字段，未出现 `total`/`pages` |
 | 2026-07-16 | 用户提供 `querySku` 真实联调响应样例（2条测试SKU：test1602/test2717），核对后有 1 项新发现 + 1 处真实 bug 修复：① **响应顶层实际带 `total` 字段**（`{"total":2,"code":"SUCCESS","success":true,"itemList":[...]}`），此前「分页翻页终止条件」待确认项已解决，`AiyaSkuInitHandler` 已改为"累计拉取条数达到 `total`"与"本页条数<pageSize"任一满足即停止翻页，`total`缺失时自动退化为纯size判断；② `status` 字段实测确认真实取值为 `"Active"`（大小写与文档一致），`Inactive` 暂未见真实样例但 `needSync` 用 `equalsIgnoreCase` 兼容，不受影响；③ **真实bug**：`AiyaSkuOmsSyncDmpHandler.parseBarcodeList` 之前读取顶层 `barcode` 字段，但真实响应条码字段是顶层 `barcodeList` 数组（元素为 `{unit,barcode}` 对象，与 `packagingList` 同级、非嵌套关系），导致条码同步到 OMS 一直是空列表，已修正为解析 `barcodeList`；④ 顺带发现两条测试SKU响应里完全没有 `name` 键（只有 `description`），`AiyaSkuOmsSyncDmpHandler` 的 name 映射已改为"`name` 为空则回退用 `description`"，避免可选字段 `name` 未设置时未匹配表里名称长期为空 |
 | 2026-07-17 | 完成「商品映射」规则 b/c/d（全量快照回收）开发：`SkuMappingEntity`/`WarehousePagingViewDTO` 新增 `status` 字段 + `SkuMappingStatusEnum`（启用/禁用，与 `isExpire` 是两个维度，不复用旧字段）；`WegoSkuSyncDTO.SkuItemDTO` 新增可选 `status`（源端原始状态）；`ListingInfoService` 新增平台无关的 `reconcileWarehouseSkuSnapshot`（空快照防呆 + 规则b删除 + 规则c/d禁用），配套 Feign 契约 `OmsListingInfoFeign#reconcileWarehouseSkuSnapshot`；`AiyaSkuOmsSyncDmpHandler` 改为除最后一批走原 `syncWarehouseNotMatchSku`（a/e），最后一批携带全量 skuItems 调新方法触发回收；并在 `SkuMappingServiceImpl` 一批"解析当前可用映射供业务使用"的方法（`getByAttribute`/`listBySkuNoList`/`listByInfo`/`listByPlatformSkuNoAndPlatform`/`listStockSkuNoByProductSkuIds`/`listByErpSkuIdAndType`/`listByWarehouseAndPlatformSku`/`listSkuMappingByParams`）追加 `status=enable` 过滤，覆盖头程发货单、海外仓入库单选库存SKU、B2C销售订单推三方仓出库单选库存SKU等链路；管理页面（`warehousePaging`/`listWarehouseExport`/`paging`/导出等）不过滤，仅新增 `status`/`statusName` 展示列 + 可选筛选参数。本轮只对爱亚生效，`listByListingIds`（历史遗留 warehouseId 回填、Excel 导入比对等通用工具方法，含义偏"全部记录"而非"仅可用记录"）保持不加过滤，避免误伤 Excel 导入等未验证场景 |
@@ -41,6 +42,7 @@
 | 2026-07-20 | 补齐「人工重新启用」后端入口：`SkuMappingDTO.UpdateStatusDTO` + `SkuMappingService#updateStatus` + `POST /skuMaping/updateStatus`，仅库存SKU（`WAREHOUSE`）可批量改 `status`，写操作日志，返回 `BatchResultDTO`；相关待确认项已移至「已确认结论」 |
 | 2026-07-20 | 启动「尾程-出库单对接」（文档 6.3.3 节），先做 AIYA 文档 vs 现有 WEGO 出库单实现的差异分析（未写代码）。核心发现见「尾程-出库单相关」待确认项 |
 | 2026-07-21 | 依据用户提供的爱亚开放平台「创建/修改出库单」接口文档截图（图1-4 顶层、图5 `shippingInstructions`、图6 `shipTo`、图7 实际为顶层后续可选字段而非 items 子字段、图8 `shipFrom`）收敛建单报文：新增 `AiyaOutboundSaveDTO`；`AiyaOpenApiService.save2cOrder` 改为接强类型 DTO；完善 `AiyaOpenApiServiceManualTest.save2cOrderTest`。字段收敛原则：官方必填全留 + 方案文档有映射的可选字段保留；官方非必填且方案未映射的（udf*/代收货款/保价/托盘等）一律不进 DTO。关键纠正见下方「已确认结论」 |
+| 2026-07-22 | 完成「尾程-出库单对接」核心链路（建单/截单/查询 + DMP 定时同步），用户明确同意 `shipFrom` 用占位常量、「汉化管理」错误码翻译与「超量发货」本次不做。改动清单：① `AiyaEnums.OrderStatusEnum` 由 WEGO 数字状态码占位改为方案文档字母码 A/B/C/D 映射 `SoB2cBillStatusEnum`；② `AiyaOutboundResp` 由 WEGO 嵌套分页结构改为扁平 `{success,code,message,resultList[]}`；③ `AiyaOpenApiService.search2cOrder`/`query2cOrderPage`（原指向同一 serviceType）合并为 `query2cOrder`，`intercept2cOrder` 入参由 `no` 改为 `orderNumber`；④ `AiyaHandlerServiceImpl` 实现 `createOutboundBill`/`cancelOutboundBill`/`queryOutboundBill`，`orderNumber` 直取 `referenceNo` 做幂等键（不需要 WEGO 那套"订单已存在"反查兜底），截单按 `TongYouHandlerServiceImpl` 三态范式处理；⑤ 新增 DMP 三件套 `AiyaOutboundInitHandler`/`AiyaOutBoundDmpHandler`/`AiyaOutboundRocketMQTaskHandler`，结构对齐 WEGO 出库单同步链路；⑥ `AiyaOpenApiServiceManualTest` 用 `query2cOrderTest`/`intercept2cOrderTest` 替换原 `search2cOrderTest`/`query2cOrderPageTest`。以上均为**按当前理解实现，尚未有真实接口响应样例验证**，详见下方「待产品确认」新增/保留项 |
 
 ## 待产品确认
 
@@ -79,19 +81,22 @@
 - [x] **【已解决】末批 `reconcileWarehouseSkuSnapshot` 请求体大小重新变为"全量"**：原实现为了支持规则b/c需要"完整快照"比对哪些SKU消失了，因此只在最后一批携带全量skuItems触发回收，重新引入了分批机制本要规避的超大请求体风险。2026-07-17 确认规则b/c不会真实发生（三方仓不会让SKU整条消失，只会变状态）后，回收逻辑简化为只看"本批SKU各自的状态"，不再需要完整快照比对，因此改为每一批都独立调用 `reconcileWarehouseSkuSnapshot`（不再区分是否最后一批），恢复了原有的 `SYNC_BATCH_SIZE=500` 分批保护，问题随架构简化一并解决。
 - [ ] **【新增，代码审查发现，已知晓，暂不处理】`SkuMappingMapper.xml` 硬编码 `sm.status = 'enable'`（5处）与 Java 枚举值可能失配**：`SkuMappingStatusEnum.ENABLE` 的持久化 `code` 是 `"enable"`，XML 里直接写了同样的字符串常量，未通过 Mapper 参数传入。若以后修改枚举 `code`，这 5 处 XML 不会自动同步，导致业务判断口径不一致（不是SQL注入风险，是枚举单一来源约定问题）。已确认这 5 处写法跟随了同一文件里 `is_deleted = false`/`is_expire = false`/`match_result = 'false'` 等既有的硬编码字面量约定，不是本次改动独有的孤立问题，为保持同文件风格一致，暂不单独修改。若后续要统一治理，需要连同文件里其它历史硬编码字段一起按 Mapper 参数绑定方式改造，而非只改这 5 处。
 
-### 尾程-出库单相关（2026-07-20）
+### 尾程-出库单相关（2026-07-20，2026-07-22 更新）
 
-对照文档 6.3.3 节与现有实现分析后，**仍待确认**项（建单请求字段类问题已移至下方「已确认结论」）：
+核心链路（建单/截单/查询/DMP同步）已按当前理解完成开发，见下方「已确认结论」；以下均为**代码已实现但尚无真实接口响应样例验证**，仍需联调确认（不阻塞已完成开发，出问题时按这里逐项排查）：
 
-- [ ] **【高优】出库单四个接口的真实 serviceType 标识**：代码里已改为 `GLINK_CREATE_ORDER_NOTIFY` / `GLINK_QUERY_ORDER_NOTIFY` / `GLINK_CANCEL_ORDER_NOTIFY`，仍需联调确认是否即为网关真实值。
-- [ ] **建单幂等行为（联调）**：唯一键字段已确认为 `orderNumber`（见已确认结论）；仍需联调确认重复提交同一 `orderNumber` 的真实行为（报错拒绝 / upsert / 产生重复单），以及成功响应是否仍不回传独立出库单号。
-- [ ] **取消/拦截为异步流程**：需确认「4、爱亚出库单查询」定时轮询是否就是唯一的拦截结果确认渠道，以及 `ThirdWarehouseCancelResultEnum.INTERCEPTING` 三态在 ERP 侧如何落地；`ThirdWarehouseCancelOutboundReq.confirmInterceptResult` 全仓库未见实际调用方。
-- [ ] **`shipFrom` ERP 数据源**：请求字段约束已确认（见已确认结论）；仍需确认仓库 Entity/维度表是否已有寄件地址 + name/company 可取，还是要新增。
-- [ ] **`shippingLabelSource` 三态 vs 现有配置二态**：AIYA 需要 ATTACHMENT/API/WMS_GEN，ERP「是否推海外仓面单」是二态，需确认如何映射第三态 WMS_GEN。
-- [ ] **出库单查询响应结构是扁平还是嵌套**：方案文档看起来是扁平结构，当前 `AiyaOutboundResp` 骨架仍是 WEGO 嵌套结构，需要真实响应样例核实。
-- [ ] **单据状态字母码 A/B/C/D 的完整语义**：尤其"D-锁住"未展开；`AiyaEnums.OrderStatusEnum` 仍是照抄 WEGO 的数字状态码占位。
-- [ ] **"汉化管理"错误码翻译能力是否已有可复用实现**。
-- [ ] **"超量发货"处理流程**：WEGO 无对应实现，AIYA 独有新分支。
+- [ ] **【高优】出库单相关接口的真实 serviceType 标识**：代码里已改为 `GLINK_CREATE_ORDER_NOTIFY`（建单）/`GLINK_QUERY_ORDER_NOTIFY`（查询，合并后的 `query2cOrder` 仍用此常量）/`GLINK_CANCEL_ORDER_NOTIFY`（截单），仍需联调确认是否即为网关真实值。
+- [ ] **建单幂等行为（联调）**：唯一键字段已确认为 `orderNumber`（见已确认结论），`AiyaHandlerServiceImpl.createOutboundBill` 已按此假设实现（不再需要类似 WEGO 的"订单已存在"反查兜底）；仍需联调确认重复提交同一 `orderNumber` 的真实行为（报错拒绝 / upsert / 产生重复单），以及成功响应是否仍不回传独立出库单号。
+- [ ] **查询接口 `query2cOrder` 的真实入参/出参**：`AiyaOpenApiService.query2cOrder` 当前假设按 `orderNumbers[]`/`orderTimeFrom`/`orderTimeTo`/`pageNum`/`pageSize` 过滤，响应顶层 `resultList[]`（参照同族 `GLINK_QUERY_XXX_NOTIFY` 接口推测得出），均未有真实样例验证；`AiyaOutboundResp.OutboundOrderDTO` 的 `finishTime`（出库完成时间，供 DMP `dateShipping` 映射）字段名也是推测，若真实字段名不同会导致 `AiyaOutBoundDmpHandler` 该字段静默不生效（有 warn 日志兜底，不影响其它字段）。
+- [ ] **截单接口 `intercept2cOrder` 的真实响应结构与失败判定**：`AiyaHandlerServiceImpl.cancelOutboundBill` 当前用「消息含"已出库"关键词」判定拦截失败（`INTERCEPTION_FAILED`），其余场景一律归为拦截中（`INTERCEPTING`），均为推测实现，需联调后按真实错误码/文案修正。
+- [ ] **取消/拦截为异步流程**：需确认「4、爱亚出库单查询」定时轮询（即新增的 `AiyaOutboundInitHandler`）是否就是唯一的拦截结果确认渠道，以及 `ThirdWarehouseCancelResultEnum.INTERCEPTING` 三态在 ERP 侧如何最终收敛（当前设计：由 DMP 轮询按订单最新状态字母码收敛，与通邮一致，未新增机制）；`ThirdWarehouseCancelOutboundReq.confirmInterceptResult` 全仓库未见实际调用方。
+- [ ] **`shipFrom` ERP 数据源**：请求字段约束已确认（见已确认结论）；本次在 `AiyaHandlerServiceImpl` 用写死的占位常量（`SHIP_FROM_PLACEHOLDER_*`），仍需产品确认仓库 Entity/维度表是否要新增寄件人字段，确认后替换占位常量为真实数据源。
+- [ ] **`shippingLabelSource` 三态 vs 现有配置二态**：AIYA 需要 ATTACHMENT/API/WMS_GEN，ERP「是否推海外仓面单」（`isPushLabel`）是二态，当前按 `isPushLabel && 有labelUrl` → ATTACHMENT，否则 → API 简单映射，`WMS_GEN` 第三态本次未使用，需确认是否有业务场景需要它。
+- [ ] **出库单查询响应结构是扁平还是嵌套**：`AiyaOutboundResp` 已改为扁平结构（`resultList[]`，参照同族接口推测），是否真的无分页字段（`pages`/`total`）仍需真实响应样例核实。
+- [ ] **单据状态字母码 A/B/C/D 的完整语义**：`AiyaEnums.OrderStatusEnum` 已改为方案文档字母码（A-已出库/B-已取消/C-库存不足/D-锁住），但"D-锁住"具体语义（被谁锁、是否会自动解锁）未展开，且不排除还有未列出的状态码，需联调确认。
+- [ ] **DMP 任务与字段映射配置**：新增的 `AiyaOutboundInitHandler`（Input）/`AiyaOutBoundDmpHandler`（Convert）/`AiyaOutboundRocketMQTaskHandler`（Output）均需在数据库配置表（`dmp_cfg_input_convert`/`dmp_cfg_output`/`dmp_cfg_input_convert_mapping`/`dmp_cfg_mq`）里注册任务、字段映射与 MQ Topic/Tag，这部分在数据库里配置，不在代码仓库；建议字段映射：`orderNumber→order_code`/`reference_no`、`warehouseCode→warehouse_code`、`orderStatus→order_status`、`trackingNumber→tracking_no`、`carrier→carrier_name`。需要找运维/产品在环境里配置，否则代码上线了也不会被调度/推送。
+- [ ] **"汉化管理"错误码翻译能力是否已有可复用实现**：本次不做，留待后续单独排期。
+- [ ] **"超量发货"处理流程**：WEGO 无对应实现，AIYA 独有新分支；本次不做，留待后续单独排期。
 
 ## 已确认结论
 
@@ -132,3 +137,12 @@
   - **禁用状态需要在实际业务流程里拦截，不是只做展示**：已在 `SkuMappingServiceImpl` 中"解析当前可用映射供业务使用"的一批共享方法里追加 `status=enable` 过滤（清单见上方「待产品确认」），命中头程发货单下推海外仓入库单、海外仓入库单/B2C销售订单推三方仓出库单选库存SKU等链路；命中后复用各流程**现有的"SKU未映射"异常路径**，未新建异常类型，也未在报错文案上区分"从未映射"和"已被禁用"（如需区分可作为后续增强单独排期）。
   - DB 变更 `ALTER TABLE sku_mapping ADD COLUMN status varchar NOT NULL DEFAULT 'enable'` 未在仓库内找到迁移脚本机制（无 flyway/liquibase/`db/migration`），需要走仓库外流程手动执行，本次改动前需要先跟 DBA/运维确认已执行，否则代码里 `@TableField("status")` 会因列不存在报错。
 - **人工启用/禁用库存SKU映射接口（2026-07-20）**：仿照 `/wms/warehouse-area/updateStatus`，在 `SkuMappingController` 新增 `POST /skuMaping/updateStatus`。请求体 `SkuMappingDTO.UpdateStatusDTO`（`ids` + `status`）；Service 按条校验「仅 `WAREHOUSE` 类型可改」、状态未变则记成功跳过、变更则写 `ModuleTypeEnum.SKU_MAPPING` 操作日志并 `updateBatchById`；返回 `List<BatchResultDTO>`，全部成功才 HTTP success。不加 `@DataPermission`（与同 Controller 的 `updateWarehouseSku`/`delete` 一致）。前端交互不在本次范围。
+- **尾程-出库单核心链路已按当前理解实现（2026-07-22，用户明确同意 `shipFrom` 占位常量方案 + 「汉化管理」「超量发货」本次不做，待联调核实，非真正确认）**：
+  - **建单幂等键**：`orderNumber` 直接取 ERP `referenceNo`（发货单号），不加时间戳后缀；AIYA 官方文档"客户系统保证唯一"，与 WEGO 需要反查兜底不同。
+  - **状态枚举**：`AiyaEnums.OrderStatusEnum` 改为字母码 `A`(已出库→SHIPPED)/`B`(已取消→DISUSE)/`C`(库存不足→EXCEPTION)/`D`(锁住→EXCEPTION)，替换掉此前照抄 WEGO 的数字状态码占位。
+  - **响应结构**：`AiyaOutboundResp` 改为扁平 `{success,code,message,resultList:[OutboundOrderDTO]}`，去掉 WEGO 式嵌套分页（`PageResultDTO`/`logisticsList`）；`OutboundOrderDTO` 以 `orderNumber`/`warehouseCode`/`orderStatus`/`orderTime`/`finishTime`/`trackingNumber`/`carrier`/`carrierService`/`items[]`/`remark`/`errorMessage` 为主。
+  - **SDK 方法合并**：`search2cOrder`/`query2cOrderPage`（原分别指向同一 `serviceType`）合并为 `query2cOrder(accessToken, secret, customerCode, orderNumbers, orderTimeFrom, orderTimeTo, pageNum, pageSize)`；`intercept2cOrder` 入参由 `no` 改为 `orderNumber`，与建单/查询保持一致。
+  - **`AiyaHandlerServiceImpl`**：`createOutboundBill` 按 `isPushLabel`+`labelUrl` 二态映射 `shippingLabelSource`（有面单→`ATTACHMENT`+`trackingNumber`+`files[]`，否则→`API`，`WMS_GEN` 未使用）；`shipFrom` 用类内占位常量（`SHIP_FROM_PLACEHOLDER_*`，TODO 待替换真实数据源）；`cancelOutboundBill` 按 `success=true`→拦截成功、消息含"已出库"→拦截失败、其余→拦截中（三态范式对齐 `TongYouHandlerServiceImpl`）；`queryOutboundBill` 直接按 `orderNumber` 精确查（不需要 WEGO 式按时间窗口反查）。
+  - **DMP 三件套**：新增 `AiyaOutboundInitHandler`（按订单时间窗口分页轮询 `query2cOrder`，翻页终止用"本页条数<pageSize"）、`AiyaOutBoundDmpHandler`（`finishTime`→`dateShipping` 多格式解析，固定写 `warehousePlatformType=overseasWarehouse`+`orderType=B2C`）、`AiyaOutboundRocketMQTaskHandler`（按 `AiyaEnums.OrderStatusEnum` 映射后推送，MQ Topic/Tag 由数据库 `dmp_cfg_mq` 配置驱动，非代码硬编码），三者结构均对齐 WEGO 出库单同步链路对应类。
+  - 本次不做「汉化管理」错误码翻译、「超量发货」处理流程，均留待后续单独排期。
+  - 涉及新增 `ApiError`：`WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE`/`WH_AIYA_SDK_OUTBOUND_QUERY_FAILED`/`WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED`/`WH_AIYA_OUTBOUND_CODE_REQUIRED`/`WH_AIYA_OUTBOUND_DETAIL_EMPTY`（`ApiErrorWms` 11250~11254）。

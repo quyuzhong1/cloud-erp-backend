@@ -452,6 +452,11 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_PACKING_BOX_NO_VALID_SKU = new ApiError("WH_AIYA_PACKING_BOX_NO_VALID_SKU", 11247, "装箱清单箱内无有效SKU明细，发货单号【{0}】，箱号【{1}】");
     public static final ApiError WH_AIYA_PACKING_LIST_MISSING_BOX_NO = new ApiError("WH_AIYA_PACKING_LIST_MISSING_BOX_NO", 11248, "装箱清单缺少箱号");
     public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED", 11249, "AIYA解析入库签收明细JSON失败，签收数据不完整，inboundId={0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE", 11250, "AIYA 查询2C出库单接口无响应");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_FAILED", 11251, "AIYA 查询2C出库单接口失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED", 11252, "AIYA 查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_OUTBOUND_CODE_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_CODE_REQUIRED", 11253, "AIYA出库单号不能为空");
+    public static final ApiError WH_AIYA_OUTBOUND_DETAIL_EMPTY = new ApiError("WH_AIYA_OUTBOUND_DETAIL_EMPTY", 11254, "AIYA创建出库单明细为空");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -899,6 +904,11 @@ public final class ApiErrorWms {
                 WH_AIYA_PACKING_BOX_NO_VALID_SKU,
                 WH_AIYA_PACKING_LIST_MISSING_BOX_NO,
                 WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED,
+                WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE,
+                WH_AIYA_SDK_OUTBOUND_QUERY_FAILED,
+                WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED,
+                WH_AIYA_OUTBOUND_CODE_REQUIRED,
+                WH_AIYA_OUTBOUND_DETAIL_EMPTY,
         };
     }
 }

@@ -374,82 +374,75 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 调用 AIYA 2c.order.search 按单号列表精确查询 2C 出库单。
+     * 调用 AIYA {@code GLINK_QUERY_ORDER_NOTIFY} 查询 2C 出库单。
      * <p>
-     * 与 wego 保持一致：接口返回 {@code success=false} 视为真实失败，抛出 {@link ServiceException}；
-     * 仅当调用成功但 {@code result} 为空数组时返回空列表。
+     * 骨架时期曾拆成 {@code search2cOrder}（按单号列表精确查）与 {@code query2cOrderPage}（分页查）
+     * 两个方法，但两者指向同一个 {@code serviceType}（{@code TWO_C_ORDER_SEARCH}/{@code TWO_C_ORDER_QUERY_PAGE}
+     * 常量值相同），推测 AIYA 出库单查询实际只有一个接口，本次合并为一个方法，按单号列表和/或订单时间范围过滤，
+     * 支持分页。<b>未有真实响应样例验证</b>，参数名/是否支持时间范围过滤均为推测，详见
+     * docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+     * <p>
+     * 接口返回 {@code success=false} 视为真实失败，抛出 {@link ServiceException}；
+     * 仅当调用成功但 {@code resultList} 为空数组时返回空列表。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
-     * @param customerCode AIYA 客户code（必填业务参数）
-     * @param noList       AIYA 出库单号列表
+     * @param accessToken    AIYA partnerId（客户ID）
+     * @param secret         AIYA partnerKey（仅用于本地签名）
+     * @param customerCode   AIYA 客户code（必填业务参数）
+     * @param orderNumbers   AIYA 出库单号（建单幂等键 orderNumber）列表，可为 null
+     * @param orderTimeFrom  订单时间范围起（格式待联调确认，推测同建单 orderTime），可为 null
+     * @param orderTimeTo    订单时间范围止，可为 null
+     * @param pageNum        页码（从 1 开始），可为 null（不分页）
+     * @param pageSize       每页数量，可为 null（不分页）
      * @return 出库单详情列表；调用成功但无匹配单据时返回空列表
      */
-    public List<AiyaOutboundResp.OutboundOrderDTO> search2cOrder(String accessToken, String secret, String customerCode, List<String> noList) {
+    public List<AiyaOutboundResp.OutboundOrderDTO> query2cOrder(String accessToken, String secret, String customerCode,
+                                                                List<String> orderNumbers, String orderTimeFrom, String orderTimeTo,
+                                                                Integer pageNum, Integer pageSize) {
         Map<String, Object> params = new HashMap<>();
-        params.put("noList", JSON.toJSON(noList));
+        if (orderNumbers != null && !orderNumbers.isEmpty()) {
+            params.put("orderNumbers", JSON.toJSON(orderNumbers));
+        }
+        putIfNotBlank(params, "orderTimeFrom", orderTimeFrom);
+        putIfNotBlank(params, "orderTimeTo", orderTimeTo);
+        if (pageNum != null) {
+            params.put("pageNum", pageNum);
+        }
+        if (pageSize != null) {
+            params.put("pageSize", pageSize);
+        }
         JSONObject response = doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_ORDER_SEARCH, params, "查询2C出库单");
         if (response == null) {
             log.error("[AIYA查询2C出库单] 接口无响应");
-            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE);
+            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE);
         }
         if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
             log.error("[AIYA查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
-            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED, response.getString("errorMsg"));
+            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_QUERY_FAILED, response.getString("message"));
         }
-        JSONArray resultArray = response.getJSONArray("result");
+        JSONArray resultArray = response.getJSONArray("resultList");
         if (resultArray == null || resultArray.isEmpty()) {
             return Collections.emptyList();
         }
         try {
             return resultArray.toJavaList(AiyaOutboundResp.OutboundOrderDTO.class);
         } catch (Exception ex) {
-            log.error("[AIYA查询2C出库单] result数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED, ex.getMessage());
+            log.error("[AIYA查询2C出库单] resultList数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
+            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED, ex.getMessage());
         }
     }
 
     /**
-     * 调用 AIYA 2c.order.queryPage 分页查询 2C 出库单。
+     * 调用 AIYA {@code GLINK_CANCEL_ORDER_NOTIFY} 截单（取消）2C 出库单。
      *
      * @param accessToken  AIYA partnerId（客户ID）
      * @param secret       AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
-     * @param pageNum      页码（从 1 开始）
-     * @param pageSize     每页数量
-     * @param bizParams    过滤条件（可为 null）
-     * @return 分页结果；无响应时返回 null
-     */
-    public AiyaOutboundResp query2cOrderPage(String accessToken, String secret, String customerCode, int pageNum, int pageSize, Map<String, Object> bizParams) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("pageNum", pageNum);
-        params.put("pageSize", pageSize);
-        mergeBizParams(params, bizParams, "分页查询2C出库单", PAGE_RESERVED_PARAM_KEYS);
-        JSONObject response = doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_ORDER_QUERY_PAGE, params, "分页查询2C出库单");
-        if (response == null) {
-            log.warn("[AIYA分页查询2C出库单] 接口无响应");
-            return null;
-        }
-        try {
-            return response.toJavaObject(AiyaOutboundResp.class);
-        } catch (Exception ex) {
-            log.error("[AIYA分页查询2C出库单] 响应JSON转换AiyaOutboundResp失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
-        }
-    }
-
-    /**
-     * 调用 AIYA 2c.order.intercept 截单（取消）2C 出库单。
-     *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
-     * @param customerCode AIYA 客户code（必填业务参数）
-     * @param no           AIYA 出库单号
+     * @param orderNumber  AIYA 出库单号（建单幂等键 orderNumber，与建单/查询保持一致，而非骨架时期的 {@code no}）
      * @return AIYA 接口原始响应解析后的 JSONObject
      */
-    public JSONObject intercept2cOrder(String accessToken, String secret, String customerCode, String no) {
+    public JSONObject intercept2cOrder(String accessToken, String secret, String customerCode, String orderNumber) {
         Map<String, Object> params = new HashMap<>();
-        params.put("no", no);
+        params.put("orderNumber", orderNumber);
         return doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_ORDER_INTERCEPT, params, "截单2C出库单");
     }
 

@@ -1135,6 +1135,11 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AIYA_PACKING_BOX_NO_VALID_SKU = ApiErrorWms.WH_AIYA_PACKING_BOX_NO_VALID_SKU;
     public static final ApiError WH_AIYA_PACKING_LIST_MISSING_BOX_NO = ApiErrorWms.WH_AIYA_PACKING_LIST_MISSING_BOX_NO;
     public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = ApiErrorWms.WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_FAILED = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_QUERY_FAILED;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED;
+    public static final ApiError WH_AIYA_OUTBOUND_CODE_REQUIRED = ApiErrorWms.WH_AIYA_OUTBOUND_CODE_REQUIRED;
+    public static final ApiError WH_AIYA_OUTBOUND_DETAIL_EMPTY = ApiErrorWms.WH_AIYA_OUTBOUND_DETAIL_EMPTY;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

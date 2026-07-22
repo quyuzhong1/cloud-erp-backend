@@ -254,26 +254,32 @@ public class AiyaOpenApiServiceManualTest {
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
+    /**
+     * 查询 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}）。
+     * <p>
+     * 骨架时期曾拆成 {@code search2cOrderTest}（按单号）/{@code query2cOrderPageTest}（分页）两个测试，
+     * 因两个方法指向同一 serviceType 已合并为 {@code query2cOrder}，本测试演示按单号列表精确查；
+     * 传 {@code orderNumbers=null} 即可改为按 orderTimeFrom/orderTimeTo 时间窗口分页查询。
+     * <p>
+     * 重点核对：{@code resultList} 字段名是否正确（推测值，未有真实样例验证）。
+     */
     @Test
-    public void search2cOrderTest() {
-        List<String> noList = Arrays.asList("TODO-填真实出库单号");
-        List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.search2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, noList);
+    public void query2cOrderTest() {
+        List<String> orderNumbers = Arrays.asList("TODO-填真实出库单号(即建单时下发的orderNumber)");
+        List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(
+                ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumbers, null, null, null, null);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
-    @Test
-    public void query2cOrderPageTest() {
-        Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填
-        bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
-        AiyaOutboundResp response = aiyaOpenApiService.query2cOrderPage(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, 1, 100, bizParams);
-        System.out.println(JSONUtil.toJsonStr(response));
-    }
-
+    /**
+     * 截单（取消）2C 出库单（{@code GLINK_CANCEL_ORDER_NOTIFY}）。
+     * <p>
+     * 入参已从骨架时期的 {@code no} 改为 {@code orderNumber}，与建单/查询保持一致的幂等键命名。
+     */
     @Test
     public void intercept2cOrderTest() {
-        String no = "TODO-填真实出库单号";
-        JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, no);
+        String orderNumber = "TODO-填真实出库单号(即建单时下发的orderNumber)";
+        JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumber);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
