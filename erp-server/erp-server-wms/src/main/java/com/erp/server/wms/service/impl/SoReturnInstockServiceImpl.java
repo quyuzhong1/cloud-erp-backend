@@ -1202,6 +1202,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+        // 循环内只收集需流转状态的 B2C 售后单，建单完成后统一 updateBatch，避免逐单 Feign 写拉长全局事务
+        List<SoB2cReturnEntity> b2cStatusUpdateList = new ArrayList<>();
         for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : instockDetailsByMainId.entrySet()) {
             String mainId = entry.getKey();
             List<SoReturnInstockDetailEntity> detailEntityList = entry.getValue();
@@ -1218,12 +1220,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 continue;
             }
             SoReturnInstockEntity instockEntity = buildInstockEntityFromB2cReturn(dto, warehouseEntity, company, b2cReturn, b2cContext);
-            // B2C售后单若为"待退货"，同步流转为"已退货"
+            // B2C售后单若为"待退货"，同步流转为"已退货"（先改内存，循环外批量落库）
             if (SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(b2cReturn.getStatus())) {
                 b2cReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
-                soB2cReturnFeign.updateBatch(Collections.singletonList(b2cReturn));
+                b2cStatusUpdateList.add(b2cReturn);
             }
             this.addByThirdWarehouse(instockEntity, detailEntityList);
+        }
+        if (CollUtil.isNotEmpty(b2cStatusUpdateList)) {
+            for (List<SoB2cReturnEntity> batch : CollUtil.split(b2cStatusUpdateList, IMPORT_UPDATE_BATCH_SIZE)) {
+                soB2cReturnFeign.updateBatch(batch);
+            }
         }
         return remaining;
     }
@@ -1365,7 +1372,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     /**
-     * 批量预取B2C候选售后单所需的店铺→客户依赖数据
+     * 批量预取B2C候选售后单所需的店铺→客户→销售部门依赖数据。
+     * 销售部门通过 {@code sysUserFeign.listDeptByIds} 一次拉取，避免后续按售后单循环单条 Feign。
      */
     private ReturnLogisticB2cContext buildReturnLogisticB2cContext(List<SoB2cReturnEntity> b2cReturnList) {
         ReturnLogisticB2cContext context = new ReturnLogisticB2cContext();
@@ -1386,6 +1394,20 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             context.customerInfoMap = FeignQuery.getByIds(CustomerInfoEntity.class, customerIds).stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                     .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
+        }
+        List<String> salesDeptIds = context.customerInfoMap.values().stream()
+                .map(CustomerInfoEntity::getSalesDeptId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(salesDeptIds)) {
+            List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(salesDeptIds);
+            if (CollUtil.isNotEmpty(deptList)) {
+                context.deptNameMap = deptList.stream()
+                        .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
+                        .collect(Collectors.toMap(SysDepartmentEntity::getId,
+                                d -> CharSequenceUtil.emptyToDefault(d.getName(), ""), (a, b) -> a));
+            }
         }
         return context;
     }
@@ -1480,12 +1502,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setSalesOrgName(customerInfo.getUseOrgName());
         entity.setCustomerId(shopInfo.getCustomerId());
         entity.setCustomerName(customerInfo.getName());
-        if (CharSequenceUtil.isNotBlank(customerInfo.getSalesDeptId())) {
-            SysDepartmentDTO department = sysUserFeign.getUserDeptById(customerInfo.getSalesDeptId());
-            if (Objects.nonNull(department)) {
-                entity.setSalesDeptId(customerInfo.getSalesDeptId());
-                entity.setSalesDeptName(department.getName());
-            }
+        // 销售部门名称已在 ReturnLogisticB2cContext 批量预取，此处仅读 Map，避免循环内单条 Feign
+        if (CharSequenceUtil.isNotBlank(customerInfo.getSalesDeptId())
+                && context.deptNameMap.containsKey(customerInfo.getSalesDeptId())) {
+            entity.setSalesDeptId(customerInfo.getSalesDeptId());
+            entity.setSalesDeptName(context.deptNameMap.get(customerInfo.getSalesDeptId()));
         }
         entity.setSellerId(customerInfo.getSellerId());
         entity.setSellerName(customerInfo.getSellerName());
@@ -1511,11 +1532,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     /**
-     * matchAndCreateByReturnLogisticCode 中B2C分支所需的批量预取依赖（店铺→客户）
+     * matchAndCreateByReturnLogisticCode 中B2C分支所需的批量预取依赖（店铺→客户→销售部门）
      */
     private static class ReturnLogisticB2cContext {
         Map<String, ShopInfoEntity> shopInfoMap = Collections.emptyMap();
         Map<String, CustomerInfoEntity> customerInfoMap = Collections.emptyMap();
+        /** 销售部门 id → 名称（来自 listDeptByIds） */
+        Map<String, String> deptNameMap = Collections.emptyMap();
     }
 
     @Override
@@ -1598,13 +1621,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //平台：B2C取售后单平台，否则取客户归属平台（可能为空）；客户/类型在上方"海外仓退货"分支可能已变更，此处按更新后的entity重新计算
         SoB2cReturnEntity soB2cReturnEntityForPlatform = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CharSequenceUtil.isNotBlank(entity.getSoReturnId())
                 ? FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId()) : null;
-        //上方"海外仓退货允许改客户"分支已按相同客户id查询过customerInfo，此处直接复用，避免重复Feign调用
+        //上方"海外仓退货允许改客户"分支已按相同客户id查询过customerInfo，此处直接复用，避免重复Feign调用；
+        //非该分支时 Feign 也可能返回 null（客户停用/删除等），平台字段允许为空，不得直接解引用
         CustomerInfoEntity customerInfoForPlatform = Objects.nonNull(customerInfoFromEdit) && customerInfoFromEdit.getId().equals(entity.getCustomerId())
                 ? customerInfoFromEdit
-                : (CharSequenceUtil.isNotBlank(entity.getCustomerId()) ? customerFeign.getCustomerById(entity.getCustomerId()) : new CustomerInfoEntity());
+                : (CharSequenceUtil.isNotBlank(entity.getCustomerId()) ? customerFeign.getCustomerById(entity.getCustomerId()) : null);
+        String customerPlatformType = Objects.nonNull(customerInfoForPlatform) ? customerInfoForPlatform.getPlatformType() : null;
         entity.setDictPlatform(resolveDictPlatform(entity.getType(),
                 Objects.nonNull(soB2cReturnEntityForPlatform) ? soB2cReturnEntityForPlatform.getDictPlatform() : null,
-                customerInfoForPlatform.getPlatformType()));
+                customerPlatformType));
         if (!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())) {
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}", entity.getReturnLogisticCode(), dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
         }

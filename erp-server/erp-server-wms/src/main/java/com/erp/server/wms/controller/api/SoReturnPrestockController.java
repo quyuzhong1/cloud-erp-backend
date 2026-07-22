@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -168,21 +167,4 @@ public class SoReturnPrestockController extends BaseController {
         return result.getSuccess() ? success(result) : failure(result);
     }
 
-    /**
-     * 批量删除（软删）
-     */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除预入库单 id：{ids}")
-    @PostMapping("/delete")
-    @DataPermission(
-            operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soReturnPrestock:delete",
-            serviceClass = SoReturnPrestockService.class,
-            keyIdName = "ids"
-    )
-    public ApiResult<List<BatchResultDTO>> delete(
-            @RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<BatchResultDTO> results = soReturnPrestockService.deleteByIds(idsDTO.getIds());
-        return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
-    }
 }
