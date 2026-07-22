@@ -49,6 +49,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -1052,6 +1054,14 @@ public class SoReturnPrestockServiceImpl
                 log.error("删除预入库单失败, id={}", id, e);
                 results.add(BatchResultDTO.fail(id, id, e.getMessage()));
             }
+        }
+        // 只要本批次中出现任意一条失败（包含"主表已软删成功、但详情软删失败"这种半成品状态），
+        // 就将当前事务标记为仅回滚：撤销本次调用内已执行的全部软删（含批内其它已成功的条目），
+        // 避免主表与明细软删状态不一致；仍正常返回逐条结果，便于前端展示具体哪些失败，
+        // 定位问题后整批重新发起删除
+        if (results.stream().anyMatch(r -> !Boolean.TRUE.equals(r.getSuccess()))
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
         return results;
     }
