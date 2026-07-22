@@ -1944,6 +1944,11 @@ public class LogisticsReconServiceImpl
         long preloadMs = 0L;
         long lockWaitMs = 0L;
         long prepareMs = 0L;
+        long staleCleanupMs = 0L;
+        long expandMs = 0L;
+        long taskDetailMs = 0L;
+        long groupKeyMs = 0L;
+        long packMs = 0L;
         long chunkMatchMs = 0L;
         long statsRefreshMs = 0L;
         int expandedSubCount = seedSubIds.size();
@@ -1996,15 +2001,25 @@ public class LogisticsReconServiceImpl
             }
             long prepareStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             // 锁内先清理超时 MATCHING（宕机残留），再扩组认领，避免费用项永久卡在 matching
+            long staleCleanupStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             self.failStaleMatchingSubsAndApplyMainStats(mainId);
+            staleCleanupMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - staleCleanupStartMs;
             // ① 锁内扩组：保证与同步匹配互斥后再凑齐同识别组 PENDING
+            long expandStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             List<String> expandedSubIds = expandTaskPendingSubIdsByIdentifyGroup(
                     taskId, mainId, seedSubIds, uniqueKeyList);
+            expandMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - expandStartMs;
+            long taskDetailStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, mainId, expandedSubIds));
+            taskDetailMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - taskDetailStartMs;
+            long groupKeyStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, expandedSubIds, uniqueKeyList);
+            groupKeyMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - groupKeyStartMs;
             // ② 扩组后按识别组打包，避免单次匹配体量过大
+            long packStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             List<List<String>> chunks = packSubIdsByIdentifyGroup(
                     mainId, expandedSubIds, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
+            packMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - packStartMs;
             expandedSubCount = expandedSubIds.size();
             chunkCount = chunks.size();
             prepareMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - prepareStartMs;
@@ -2054,13 +2069,15 @@ public class LogisticsReconServiceImpl
             String outcome = lockTimeout ? "lock-timeout" : batchFailed || refreshError != null
                     ? "failed" : failed > 0 ? "partial" : "success";
             if (batchFailed || refreshError != null || totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
-                log.info("[reconMatchTiming] source=batch taskId={} mainId={} confirm={} seedCount={} expandedCount={} chunkCount={} successCount={} failedCount={} outcome={} preloadMs={} lockWaitMs={} prepareMs={} chunkMatchMs={} statsRefreshMs={} totalMs={}",
+                log.info("[reconMatchTiming] source=batch taskId={} mainId={} confirm={} seedCount={} expandedCount={} chunkCount={} successCount={} failedCount={} outcome={} preloadMs={} lockWaitMs={} prepareMs={} staleCleanupMs={} expandMs={} taskDetailMs={} groupKeyMs={} packMs={} chunkMatchMs={} statsRefreshMs={} totalMs={}",
                         taskId, mainId, isConfirm, seedSubIds.size(), expandedSubCount, chunkCount, success, failed,
-                        outcome, preloadMs, lockWaitMs, prepareMs, chunkMatchMs, statsRefreshMs, totalMs);
+                        outcome, preloadMs, lockWaitMs, prepareMs, staleCleanupMs, expandMs, taskDetailMs,
+                        groupKeyMs, packMs, chunkMatchMs, statsRefreshMs, totalMs);
             } else if (log.isDebugEnabled()) {
-                log.debug("[reconMatchTiming] source=batch taskId={} mainId={} confirm={} seedCount={} expandedCount={} chunkCount={} successCount={} failedCount={} outcome={} preloadMs={} lockWaitMs={} prepareMs={} chunkMatchMs={} statsRefreshMs={} totalMs={}",
+                log.debug("[reconMatchTiming] source=batch taskId={} mainId={} confirm={} seedCount={} expandedCount={} chunkCount={} successCount={} failedCount={} outcome={} preloadMs={} lockWaitMs={} prepareMs={} staleCleanupMs={} expandMs={} taskDetailMs={} groupKeyMs={} packMs={} chunkMatchMs={} statsRefreshMs={} totalMs={}",
                         taskId, mainId, isConfirm, seedSubIds.size(), expandedSubCount, chunkCount, success, failed,
-                        outcome, preloadMs, lockWaitMs, prepareMs, chunkMatchMs, statsRefreshMs, totalMs);
+                        outcome, preloadMs, lockWaitMs, prepareMs, staleCleanupMs, expandMs, taskDetailMs,
+                        groupKeyMs, packMs, chunkMatchMs, statsRefreshMs, totalMs);
             }
             if (refreshError != null) {
                 throw refreshError;
