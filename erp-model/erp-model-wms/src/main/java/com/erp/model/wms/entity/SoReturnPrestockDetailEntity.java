@@ -45,6 +45,7 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     public static final String SALES_DEPT_ID = "sales_dept_id";
     public static final String SELLER_ID = "seller_id";
     public static final String SELLER_NAME = "seller_name";
+    public static final String DEFECTIVE_PRODUCT_FLAG = "defective_product_flag";
     /**
      * 主表 ID（so_return_prestock.id）
      */
@@ -186,6 +187,11 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 是否不良品（true=不良品，false=可用），默认可用
+     */
+    @TableField("defective_product_flag")
+    private Boolean defectiveProductFlag;
 
     @Override
     public Serializable pkVal() {

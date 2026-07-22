@@ -77,22 +77,6 @@ public class SoReturnPrestockController extends BaseController {
     }
 
     /**
-     * 修改
-     */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改预入库单")
-    @PostMapping("/update")
-    @DataPermission(
-            operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soReturnPrestock:update",
-            serviceClass = SoReturnPrestockService.class,
-            keyIdName = "id"
-    )
-    public ApiResult<Boolean> update(@RequestBody @Validated SoReturnPrestockDTO.Update dto) {
-        return success(soReturnPrestockService.update(dto));
-    }
-
-    /**
      * 详情查询
      */
     @LogViewService

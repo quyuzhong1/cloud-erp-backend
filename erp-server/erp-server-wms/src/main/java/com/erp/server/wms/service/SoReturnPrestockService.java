@@ -36,14 +36,6 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     String add(SoReturnPrestockDTO.Add dto);
 
     /**
-     * 修改预入库单基础信息
-     *
-     * @param dto 修改入参
-     * @return 是否成功
-     */
-    Boolean update(SoReturnPrestockDTO.Update dto);
-
-    /**
      * 查询详情（含详情行列表）
      *
      * @param id 主表 ID
