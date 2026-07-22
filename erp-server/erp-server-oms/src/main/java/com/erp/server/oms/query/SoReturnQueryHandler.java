@@ -18,7 +18,7 @@ public class SoReturnQueryHandler extends AbstractQueryHandler {
      * postgres_fdw 外部表，禁止使用关联子查询（会退化为逐行远程查询导致分页/统计卡死）。
      * 子查询内部 join 本地表 so_return_detail 取 return_qty，按 so_return_detail_id 汇总 real_qty，
      * 只需扫描/下推一次外部表；口径与列表展示一致：非删除、入库主单未作废。
-     * having 占位由各状态拼接后，以 srd.id in (...) 使用。
+     * having 占位由各状态拼接后，以 srd.id in (...) 或 NOT EXISTS 使用。
      */
     private static final String IN_STOCK_QTY_SUB_PREFIX =
             " (select b.so_return_detail_id "
@@ -43,7 +43,8 @@ public class SoReturnQueryHandler extends AbstractQueryHandler {
 
     /**
      * 入库状态过滤：not 未入库 / partial 部分入库 / instocked 已入库 / beyond 超出退货。
-     * 采用非关联 srd.id in / not in 子查询，避免在 fdw 外部表上做逐行关联查询。
+     * 已入库/部分/超出采用非关联 srd.id in 子查询；未入库采用 NOT EXISTS 关联预聚合结果，
+     * 内层子查询仍只扫描一次 FDW 外部表，避免 NOT IN 的三值逻辑问题。
      * @param value 状态编码
      * @return String
      */
@@ -53,8 +54,9 @@ public class SoReturnQueryHandler extends AbstractQueryHandler {
         }
         String type = value.toString();
         if (SoReturnInstockStatusEnum.NOT.getCode().equals(type)) {
-            //无入库明细或汇总实退数量为 0：不在“汇总实退>0”的明细集合中
-            return " srd.id not in " + IN_STOCK_QTY_SUB_PREFIX + " sum(b.real_qty) > 0 ) ";
+            // 无入库明细或汇总实退数量为 0：不在“汇总实退>0”的明细集合中
+            return " not exists ( select 1 from " + IN_STOCK_QTY_SUB_PREFIX
+                    + " sum(b.real_qty) > 0 ) instocked_ids where instocked_ids.so_return_detail_id = srd.id ) ";
         } else if (SoReturnInstockStatusEnum.PARTIAL.getCode().equals(type)) {
             return " srd.id in " + IN_STOCK_QTY_SUB_PREFIX + " sum(b.real_qty) > 0 and sum(b.real_qty) < d.return_qty ) ";
         } else if (SoReturnInstockStatusEnum.INSTOCKED.getCode().equals(type)) {
