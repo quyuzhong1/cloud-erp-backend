@@ -145,6 +145,12 @@
         LEFT JOIN after_sale_pack_detail dt ON t.id = dt.main_id AND dt.is_deleted = FALSE
         LEFT JOIN warehouse_location wl ON dt.out_warehouse_location_id = wl.id AND wl.is_deleted = FALSE
         WHERE t.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            AND t.id IN
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
         </if>
