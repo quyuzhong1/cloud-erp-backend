@@ -273,15 +273,21 @@
             sbr.reason AS returnReason,
             sbrd.sku_id AS skuId,
             sbrd.sku_no AS skuNo,
-            sbrd.return_qty AS returnQty,
+            ${params.remainReturnQtyExpr} AS returnQty,
             sbd.warehouse_id AS warehouseId,
             sbd.warehouse_name AS warehouseName
         FROM so_b2c_return_detail sbrd
         INNER JOIN so_b2c_return sbr ON sbrd.main_id = sbr.id AND sbrd.is_deleted = FALSE
         LEFT JOIN so_b2c_detail sbd ON sbrd.so_detail_id = sbd.id AND sbd.is_deleted = FALSE
+        ${params.instockJoinSql}
         WHERE
         ${params.sqlMap.default}
         AND sbr.is_deleted = FALSE
+        AND ${params.remainReturnQtyFilter}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         <if test="params.skuNoList != null and params.skuNoList.size > 0">
             AND sbrd.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">

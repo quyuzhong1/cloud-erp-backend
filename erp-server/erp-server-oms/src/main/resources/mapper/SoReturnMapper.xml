@@ -235,13 +235,19 @@
             srd.return_reason_dict AS returnReason,
             srd.sku_id AS skuId,
             srd.sku_no AS skuNo,
-            srd.return_qty AS returnQty
+            ${params.remainReturnQtyExpr} AS returnQty
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        ${params.instockJoinSql}
         WHERE
         ${params.sqlMap.default}
         AND sr.is_deleted = FALSE
         AND sr.invalid_status = FALSE
+        AND ${params.remainReturnQtyFilter}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         <if test="params.skuNoList != null and params.skuNoList.size > 0">
             AND srd.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">

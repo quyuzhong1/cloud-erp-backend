@@ -62,12 +62,14 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.SoReturnConverter;
 import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.mapper.SoReturnMapper;
 import com.erp.server.oms.query.LinkAfterSaleQueryContext;
+import com.erp.server.oms.query.SoReturnLinkAfterSaleQueryHandler;
 import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -103,6 +105,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RETURN;
 @Slf4j
 @Service
 public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoReturnEntity> implements SoReturnService {
+
+    /**
+     * WMS 预入库「关联售后单」菜单权限码（与 {@code SoReturnPrestockController#confirmLinkAfterSale} 一致）。
+     */
+    private static final String LINK_AFTER_SALE_MENU_CODE = "wms:soReturnPrestock:linkAfterSale";
 
     @Resource
     private SoReturnDetailService soReturnDetailService;
@@ -168,6 +175,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private RedisUtil redisUtil;
     @Resource
     private AuthDataFeign authDataFeign;
+    @Resource
+    private UserInfoFeign userInfoFeign;
     @Resource
     private ShopInfoService shopInfoService;
     @Resource
@@ -263,53 +272,24 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public PagingVO<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSale(PagingDTO<SoReturnDTO.LinkAfterSalePagingParam> dto) {
         SoReturnDTO.LinkAfterSalePagingParam params = dto.getParams();
-        long pageNo = dto.getPage();
-        long pageSize = dto.getPageSize();
         try {
-            //单据类型经高级查询传入：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件
             String billType = resolveLinkAfterSaleBillType(params);
-            //单据类型为空时不得默认 B2C，避免 B2B 预入库查到错误候选集导致误关联
             if (StringUtils.isBlank(billType)) {
                 throw new ServiceException("单据类型不能为空");
             }
-            //售后单据类型分流：B2B 查 so_return，B2C 查 so_b2c_return
             boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
-            //剩余应退货数量依赖 WMS 入库数据（跨库 feign 取值），无法下推到 SQL 过滤。
-            //为保证过滤后 total 与分页结果一致，这里不在 SQL 层分页（size=-1 时 MyBatis-Plus 不追加 LIMIT，
-            //searchCount=false 跳过 count 查询），取全量候选后在内存过滤，再手动分页。
-            //候选集已被高级查询条件（客户/订单/SKU 等）与 skuNoList 收敛，数据量可控。
-            Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(1, -1, false);
+            // B2B/B2C 分表别名不同，行级数据权限在 Service 按单据类型动态拼装后写入 params.permissionSql
+            applyLinkAfterSaleDataPermission(params, isB2b);
+            // 剩余应退货数量在 SQL 层计算并过滤（OMS 本地 so_return_instock* 表，片段由高级查询 Handler 统一生成）
+            SoReturnLinkAfterSaleQueryHandler.fillRemainReturnQtySql(params, isB2b);
+            Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(dto.getPage(), dto.getPageSize());
             IPage<SoReturnDTO.LinkAfterSaleView> pageData = isB2b
                     ? this.baseMapper.pagingLinkAfterSaleB2B(query, params)
                     : soB2cReturnMapper.pagingLinkAfterSaleB2C(query, params);
             List<SoReturnDTO.LinkAfterSaleView> records = pageData.getRecords();
             if (CollectionUtils.isEmpty(records)) {
-                return new PagingVO<>(new Page<>(pageNo, pageSize));
+                return new PagingVO<>(pageData);
             }
-            //剩余应退货数量所需：按退货明细维度预聚合已入库实退数量，避免循环内查库/重复扫描。
-            //口径对齐各自分页接口：B2B 同 /soReturn/paging 的 returnInStockQty（按退货明细汇总全部实退）；
-            //B2C 同 /soB2cReturn/paging 的 instockQty（按退货明细汇总已审核实退）
-            Map<String, Integer> instockQtyByDetailId;
-            if (isB2b) {
-                List<String> detailIdList = records.stream().map(SoReturnDTO.LinkAfterSaleView::getDetailId)
-                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-                List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(detailIdList)
-                        ? Collections.emptyList() : soReturnInstockFeign.listDetailBySoReturnDetailIds(detailIdList);
-                instockQtyByDetailId = instockDetails.stream()
-                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId()))
-                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
-                                Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
-            } else {
-                List<String> mainIdList = records.stream().map(SoReturnDTO.LinkAfterSaleView::getId)
-                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-                List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(mainIdList)
-                        ? Collections.emptyList() : soReturnInstockFeign.getSoReturnInstockByReturnIds(mainIdList);
-                instockQtyByDetailId = instockDetails.stream()
-                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId()))
-                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
-                                Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
-            }
-            //B2C 需要根据店铺 id 批量查询店铺名称（避免循环内单条查询）
             Map<String, String> shopNameMap = Collections.emptyMap();
             if (!isB2b) {
                 List<String> shopIds = records.stream().map(SoReturnDTO.LinkAfterSaleView::getShopId)
@@ -322,14 +302,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             for (SoReturnDTO.LinkAfterSaleView view : records) {
                 view.setType(billType);
                 view.setTypeName(BillTypeEnum.getName(billType));
-                //退货数量改为“剩余应退货数量 = 退货数量 - 已入库实退”，负数兜底为0，避免关联时出现负数可关联量
-                Integer originReturnQty = ObjectUtil.defaultIfNull(view.getReturnQty(), MathUtil.ZERO);
-                Integer instockQty = instockQtyByDetailId.getOrDefault(view.getDetailId(), MathUtil.ZERO);
-                int remainReturnQty = originReturnQty - instockQty;
-                view.setReturnQty(remainReturnQty > MathUtil.ZERO ? remainReturnQty : MathUtil.ZERO);
-                //退货类型名称：字典枚举优先，兜底原值
                 view.setReturnTypeName(CharSequenceUtil.blankToDefault(ReturnTypeEnum.getName(view.getReturnType()), view.getReturnType()));
-                //退货原因名称：先 ReturnReasonEnum，再 B2C 退货原因枚举，最后兜底原值
                 String reasonName = ReturnReasonEnum.getName(view.getReturnReason());
                 if (StringUtils.isBlank(reasonName)) {
                     reasonName = CharSequenceUtil.blankToDefault(SoB2cReturnReasonEnum.getName(view.getReturnReason()), view.getReturnReason());
@@ -340,23 +313,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     view.setShopName(shopNameMap.get(view.getShopId()));
                 }
             }
-            //剩余应退货数量 <= 0（已退完/超退）的记录无可关联量，不返回
-            List<SoReturnDTO.LinkAfterSaleView> validRecords = records.stream()
-                    .filter(v -> ObjectUtil.defaultIfNull(v.getReturnQty(), MathUtil.ZERO) > MathUtil.ZERO)
-                    .collect(Collectors.toList());
-            //内存手动分页：total 取过滤后的真实条数，避免 total 与分页结果不一致
-            long total = validRecords.size();
-            Page<SoReturnDTO.LinkAfterSaleView> resultPage = new Page<>(pageNo, pageSize, total);
-            int fromIndex = (int) Math.max(0, (pageNo - 1) * pageSize);
-            if (fromIndex >= total) {
-                resultPage.setRecords(Collections.emptyList());
-            } else {
-                int toIndex = (int) Math.min(total, fromIndex + pageSize);
-                resultPage.setRecords(validRecords.subList(fromIndex, toIndex));
-            }
-            return new PagingVO<>(resultPage);
+            return new PagingVO<>(pageData);
         } finally {
-            //清理高级查询处理类写入的上下文，避免线程复用脏值
             LinkAfterSaleQueryContext.remove();
         }
     }
@@ -379,6 +337,48 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
         }
         return null;
+    }
+
+    /**
+     * 预入库-关联售后单：按 B2B/B2C 分表别名拼装数据权限 SQL（创建人 / 仓库 / 店铺），写入 {@code params.permissionSql}。
+     * <p>Controller {@code @DataPermission} 仅校验 WMS 菜单 {@link #LINK_AFTER_SALE_MENU_CODE}；
+     * 本方法负责与各自分页接口一致的行级过滤字段：</p>
+     * <ul>
+     *   <li>B2B：{@code sr.create_user_id}、{@code sr.warehouse_id}、{@code sr.customer_id}</li>
+     *   <li>B2C：{@code sbr.create_user_id}、{@code sbd.warehouse_id}、{@code sbr.shop_id}</li>
+     * </ul>
+     *
+     * @param params 分页入参
+     * @param isB2b  是否 B2B 售后单
+     */
+    private void applyLinkAfterSaleDataPermission(SoReturnDTO.LinkAfterSalePagingParam params, boolean isB2b) {
+        if (params == null) {
+            return;
+        }
+        StringBuilder permissionSql = new StringBuilder();
+        if (isB2b) {
+            appendPermissionSqlFragment(permissionSql, userInfoFeign.getUserDatePermissionSql("sr.create_user_id", LINK_AFTER_SALE_MENU_CODE));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getWarehousePermissionSql("sr.warehouse_id"));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getShopPermissionSql("sr.customer_id"));
+        } else {
+            appendPermissionSqlFragment(permissionSql, userInfoFeign.getUserDatePermissionSql("sbr.create_user_id", LINK_AFTER_SALE_MENU_CODE));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getWarehousePermissionSql("sbd.warehouse_id"));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getShopPermissionSql("sbr.shop_id"));
+        }
+        params.setPermissionSql(permissionSql.toString());
+    }
+
+    /**
+     * 追加非空的数据权限 SQL 片段。
+     *
+     * @param target  目标 StringBuilder
+     * @param fragment 权限 SQL 片段
+     */
+    private static void appendPermissionSqlFragment(StringBuilder target, String fragment) {
+        if (target == null || StringUtils.isBlank(fragment)) {
+            return;
+        }
+        target.append(fragment);
     }
 
     @Override
