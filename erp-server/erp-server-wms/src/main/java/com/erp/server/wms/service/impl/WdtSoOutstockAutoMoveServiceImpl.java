@@ -269,7 +269,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
     }
 
     /**
-     * 源仓位选取优先级：code 以 3 开头 → 以 4 开头 → 任意 → code 等于 2
+     * 源仓位选取优先级：code 以 3 开头 → 以 4 开头 → 任意
      */
     private static List<Predicate<? super LocationListDTO>> buildPriorityPredicates() {
         List<Predicate<? super LocationListDTO>> predicateList = new ArrayList<>();
