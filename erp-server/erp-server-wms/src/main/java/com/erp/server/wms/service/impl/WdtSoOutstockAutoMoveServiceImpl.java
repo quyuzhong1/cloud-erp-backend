@@ -192,8 +192,8 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             return;
         }
 
-        // 全量移入空仓位；候选源仓来自本仓批量库存缓存（等价于原 pagingSelect + filterZero）
-        int moveQty = need.getQty();
+        // 仅补足当前库位缺口；候选源仓来自本仓批量库存缓存（等价于原 pagingSelect + filterZero）
+        int moveQty = need.getQty() - haveQty;
         List<LocationListDTO> sourceLocations = inventoryCache.locationsBySkuId.get(need.getSkuId());
         if (CollUtil.isEmpty(sourceLocations)) {
             return;
