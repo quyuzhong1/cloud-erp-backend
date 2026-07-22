@@ -2131,100 +2131,130 @@ public class LogisticsReconServiceImpl
                                          Map<String, TmsAsyncTaskDetailEntity> detailMap,
                                          List<String> feeItemsClaimedMatching,
                                          Set<String> taskDetailsClaimedByCurrentWorker) {
+        Stopwatch chunkStopwatch = Stopwatch.createStarted();
+        long taskClaimMs = 0L;
+        long statusLoadMs = 0L;
+        long feeClaimMs = 0L;
+        long groupCheckMs = 0L;
+        long matchMs = 0L;
+        long settleMs = 0L;
+        int executableCount = 0;
         int success = 0;
         int failed = 0;
         if (CollUtil.isEmpty(chunkSubIds)) {
             return new int[]{0, 0};
         }
-        List<TmsAsyncTaskDetailEntity> claimedDetails = new ArrayList<>();
-        for (String subId : chunkSubIds) {
-            TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
-            int[] claimCounted = tryClaimTaskDetailForBatch(detail);
-            if (claimCounted != null) {
-                success += claimCounted[0];
-                failed += claimCounted[1];
-                continue;
-            }
-            claimedDetails.add(detail);
-            if (taskDetailsClaimedByCurrentWorker != null
-                    && StrUtil.isNotBlank(detail.getBusinessId())) {
-                taskDetailsClaimedByCurrentWorker.add(detail.getBusinessId());
-            }
-        }
-        if (CollUtil.isEmpty(claimedDetails)) {
-            return new int[]{success, failed};
-        }
-        List<String> attemptSubIds = claimedDetails.stream()
-                .map(TmsAsyncTaskDetailEntity::getBusinessId)
-                .collect(Collectors.toList());
-        Map<String, LogisticsReconDetailSubEntity> currentSubMap = loadFeeItemMatchStatusMap(attemptSubIds);
-        List<TmsAsyncTaskDetailEntity> alreadyMatchedDetails = claimedDetails.stream()
-                .filter(detail -> {
-                    LogisticsReconDetailSubEntity sub = currentSubMap.get(detail.getBusinessId());
-                    return sub != null
-                            && LogisticsReconDetailMatchStatusEnum.MATCHED.getCode().equals(sub.getMatchStatus());
-                })
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(alreadyMatchedDetails)) {
-            success += finishTaskDetailsBatch(alreadyMatchedDetails, true, null);
-            claimedDetails.removeAll(alreadyMatchedDetails);
-        }
-        if (CollUtil.isEmpty(claimedDetails)) {
-            return new int[]{success, failed};
-        }
-        attemptSubIds = claimedDetails.stream()
-                .map(TmsAsyncTaskDetailEntity::getBusinessId)
-                .collect(Collectors.toList());
-        List<String> claimedSubIds = logisticsReconDetailSubService.batchClaimMatchStatus(
-                attemptSubIds, LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null, MATCH_CLAIM_FROM_STATUSES);
-        feeItemsClaimedMatching.addAll(claimedSubIds);
-        Set<String> claimedSet = new HashSet<>(claimedSubIds);
-
-        List<String> incompleteSubIds = new ArrayList<>();
-        // 以分包内费用项为期望全集（排除任务明细已 FINISH），避免同组其它成员认领失败时半组匹配
-        List<String> executableSubIds = filterCompleteIdentifyGroups(
-                mainId, chunkSubIds, claimedSet, uniqueKeyList, groupKeyMap, detailMap, incompleteSubIds);
-        if (CollUtil.isNotEmpty(incompleteSubIds)) {
-            String incompleteReason = "识别组未完整认领，已跳过避免费用覆盖";
-            List<String> revertMatchingIds = incompleteSubIds.stream()
-                    .filter(claimedSet::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(revertMatchingIds)) {
-                self.markReconMatchFailed(mainId, revertMatchingIds, incompleteReason);
-            }
-            for (String subId : incompleteSubIds) {
+        try {
+            long taskClaimStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            List<TmsAsyncTaskDetailEntity> claimedDetails = new ArrayList<>();
+            for (String subId : chunkSubIds) {
                 TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
-                if (detail != null
-                        && taskDetailsClaimedByCurrentWorker != null
-                        && taskDetailsClaimedByCurrentWorker.contains(subId)
-                        && !isTaskDetailTerminal(detail.getStatus())) {
-                    finishTaskDetail(detail, false, incompleteReason);
-                    failed++;
+                int[] claimCounted = tryClaimTaskDetailForBatch(detail);
+                if (claimCounted != null) {
+                    success += claimCounted[0];
+                    failed += claimCounted[1];
+                    continue;
+                }
+                claimedDetails.add(detail);
+                if (taskDetailsClaimedByCurrentWorker != null
+                        && StrUtil.isNotBlank(detail.getBusinessId())) {
+                    taskDetailsClaimedByCurrentWorker.add(detail.getBusinessId());
                 }
             }
-        }
-        if (CollUtil.isEmpty(executableSubIds)) {
+            taskClaimMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - taskClaimStartMs;
+            if (CollUtil.isEmpty(claimedDetails)) {
+                return new int[]{success, failed};
+            }
+            List<String> attemptSubIds = claimedDetails.stream()
+                    .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                    .collect(Collectors.toList());
+            long statusLoadStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            Map<String, LogisticsReconDetailSubEntity> currentSubMap = loadFeeItemMatchStatusMap(attemptSubIds);
+            statusLoadMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - statusLoadStartMs;
+            List<TmsAsyncTaskDetailEntity> alreadyMatchedDetails = claimedDetails.stream()
+                    .filter(detail -> {
+                        LogisticsReconDetailSubEntity sub = currentSubMap.get(detail.getBusinessId());
+                        return sub != null
+                                && LogisticsReconDetailMatchStatusEnum.MATCHED.getCode().equals(sub.getMatchStatus());
+                    })
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(alreadyMatchedDetails)) {
+                success += finishTaskDetailsBatch(alreadyMatchedDetails, true, null);
+                claimedDetails.removeAll(alreadyMatchedDetails);
+            }
+            if (CollUtil.isEmpty(claimedDetails)) {
+                return new int[]{success, failed};
+            }
+            attemptSubIds = claimedDetails.stream()
+                    .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                    .collect(Collectors.toList());
+            long feeClaimStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            List<String> claimedSubIds = logisticsReconDetailSubService.batchClaimMatchStatus(
+                    attemptSubIds, LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null, MATCH_CLAIM_FROM_STATUSES);
+            feeClaimMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - feeClaimStartMs;
+            feeItemsClaimedMatching.addAll(claimedSubIds);
+            Set<String> claimedSet = new HashSet<>(claimedSubIds);
+
+            List<String> incompleteSubIds = new ArrayList<>();
+            // 以分包内费用项为期望全集（排除任务明细已 FINISH），避免同组其它成员认领失败时半组匹配
+            long groupCheckStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            List<String> executableSubIds = filterCompleteIdentifyGroups(
+                    mainId, chunkSubIds, claimedSet, uniqueKeyList, groupKeyMap, detailMap, incompleteSubIds);
+            if (CollUtil.isNotEmpty(incompleteSubIds)) {
+                String incompleteReason = "识别组未完整认领，已跳过避免费用覆盖";
+                List<String> revertMatchingIds = incompleteSubIds.stream()
+                        .filter(claimedSet::contains)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(revertMatchingIds)) {
+                    self.markReconMatchFailed(mainId, revertMatchingIds, incompleteReason);
+                }
+                for (String subId : incompleteSubIds) {
+                    TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
+                    if (detail != null
+                            && taskDetailsClaimedByCurrentWorker != null
+                            && taskDetailsClaimedByCurrentWorker.contains(subId)
+                            && !isTaskDetailTerminal(detail.getStatus())) {
+                        finishTaskDetail(detail, false, incompleteReason);
+                        failed++;
+                    }
+                }
+            }
+            groupCheckMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - groupCheckStartMs;
+            executableCount = CollUtil.size(executableSubIds);
+            if (CollUtil.isEmpty(executableSubIds)) {
+                return new int[]{success, failed};
+            }
+            List<TmsAsyncTaskDetailEntity> executableDetails = executableSubIds.stream()
+                    .map(detailMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            long matchStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            try {
+                // 写路径前异常可重试；进入费用落库后才标不可重放（见 resolveMatchChunkFailureReason）。
+                self.doMatchSubsChunk(mainId, executableSubIds, isConfirm, preload);
+            } catch (Exception e) {
+                String reason = resolveMatchChunkFailureReason(executableSubIds, e);
+                log.error("[processMatchBatchChunk] 分片匹配失败 taskId={} mainId={} chunkSize={} nonRetryable={}",
+                        taskId, mainId, executableSubIds.size(),
+                        LogisticsReconMatchFailReasonSupport.isNonRetryable(reason), e);
+                self.markReconMatchFailed(mainId, executableSubIds, reason);
+            }
+            matchMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - matchStartMs;
+            long settleStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            int[] settled = settleMatchTaskDetailsByFeeStatus(mainId, executableDetails, "匹配未完成");
+            settleMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - settleStartMs;
+            success += settled[0];
+            failed += settled[1];
             return new int[]{success, failed};
+        } finally {
+            long totalMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+                log.info("[reconMatchTiming] source=batch-chunk taskId={} mainId={} requestedCount={} executableCount={} successCount={} failedCount={} taskClaimMs={} statusLoadMs={} feeClaimMs={} groupCheckMs={} matchMs={} settleMs={} totalMs={}",
+                        taskId, mainId, chunkSubIds.size(), executableCount, success, failed,
+                        taskClaimMs, statusLoadMs, feeClaimMs, groupCheckMs, matchMs, settleMs, totalMs);
+            }
         }
-        List<TmsAsyncTaskDetailEntity> executableDetails = executableSubIds.stream()
-                .map(detailMap::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        try {
-            // 写路径前异常可重试；进入费用落库后才标不可重放（见 resolveMatchChunkFailureReason）。
-            self.doMatchSubsChunk(mainId, executableSubIds, isConfirm, preload);
-        } catch (Exception e) {
-            String reason = resolveMatchChunkFailureReason(executableSubIds, e);
-            log.error("[processMatchBatchChunk] 分片匹配失败 taskId={} mainId={} chunkSize={} nonRetryable={}",
-                    taskId, mainId, executableSubIds.size(),
-                    LogisticsReconMatchFailReasonSupport.isNonRetryable(reason), e);
-            self.markReconMatchFailed(mainId, executableSubIds, reason);
-        }
-        int[] settled = settleMatchTaskDetailsByFeeStatus(mainId, executableDetails, "匹配未完成");
-        success += settled[0];
-        failed += settled[1];
-        return new int[]{success, failed};
     }
 
     /**
