@@ -96,8 +96,8 @@ public class LogisticsReconDTO implements Serializable {
 
     /**
      * 分页列表
-     * <p>排序说明：仅主表字段支持 ORDER BY（与 paging SQL 别名一致）；
-     * 统计/派生字段由当前页二次聚合或 fillList 回填，不可排序。</p>
+     * <p>排序说明：主表冗余字段支持 ORDER BY（与 paging SQL 别名一致）；
+     * matchStatus / *Name / *Str 等展示派生字段由 fillList 计算，不可排序。</p>
      */
     @Data
     @NoArgsConstructor
@@ -159,7 +159,7 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String checkStatusName;
         /**
-         * 对账确认状态（不可排序；统计派生）toBeConfirm / partialConfirm / confirmed
+         * 对账确认状态（可排序；主表冗余）toBeConfirm / partialConfirm / confirmed
          */
         private String reconciliationStatus;
         /**
@@ -167,7 +167,7 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String reconciliationStatusName;
         /**
-         * 匹配状态（不可排序；统计派生）unmatched / partial / matched
+         * 匹配状态（不可排序；由 matchCount/costCount 派生）unmatched / partial / matched
          */
         private String matchStatus;
         /**
@@ -179,15 +179,15 @@ public class LogisticsReconDTO implements Serializable {
          */
         private Integer importCount;
         /**
-         * 导入费用项条数（可排序；主表冗余；列表展示可能被 validCostCount 覆盖）
+         * 导入费用项条数（可排序；主表冗余）
          */
         private Integer costCount;
         /**
-         * 已匹配费用项数（不可排序；当前页二次聚合统计）
+         * 已匹配费用项数（可排序；主表冗余）
          */
         private Integer matchCount;
         /**
-         * 有效费用项总数（不可排序；当前页二次聚合统计）
+         * 有效费用项总数（与 costCount 同口径，兼容旧前端字段）
          */
         private Integer validCostCount;
         /**
@@ -199,7 +199,7 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String totalAmountStr;
         /**
-         * 匹配成功金额（不可排序；当前页二次聚合统计）
+         * 匹配成功金额（可排序；主表冗余）
          */
         private BigDecimal matchSuccessAmount;
         /**
@@ -207,7 +207,7 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String matchSuccessAmountStr;
         /**
-         * 匹配失败金额（不可排序；当前页二次聚合统计）
+         * 匹配失败金额（可排序；主表冗余）
          */
         private BigDecimal matchFailAmount;
         /**
@@ -249,7 +249,7 @@ public class LogisticsReconDTO implements Serializable {
     }
 
     /**
-     * 分页列表费用项统计（按 mainId 批量聚合后回填 ListDTO）
+     * 主表列表冗余统计聚合结果（用于 refreshMainPagingStats 回刷 logistics_recon）
      */
     @Data
     @NoArgsConstructor
@@ -263,6 +263,45 @@ public class LogisticsReconDTO implements Serializable {
         private Integer reconciliationTotalCount;
         private Integer reconciliationConfirmedCount;
         private Integer reconciliationPartialCount;
+    }
+
+    /**
+     * 匹配状态迁移增量（MATCHING→MATCHED/FAILED），用于主表冗余字段原子累加。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MatchTransitionStats {
+        private int matchedCount;
+        private BigDecimal matchedAmount = BigDecimal.ZERO;
+        private int failedCount;
+        private BigDecimal failedAmount = BigDecimal.ZERO;
+
+        public boolean hasChange() {
+            return matchedCount > 0 || failedCount > 0
+                    || (matchedAmount != null && matchedAmount.compareTo(BigDecimal.ZERO) != 0)
+                    || (failedAmount != null && failedAmount.compareTo(BigDecimal.ZERO) != 0);
+        }
+
+        public void addMatched(BigDecimal amount) {
+            matchedCount++;
+            matchedAmount = matchedAmount.add(amount == null ? BigDecimal.ZERO : amount);
+        }
+
+        public void addFailed(BigDecimal amount) {
+            failedCount++;
+            failedAmount = failedAmount.add(amount == null ? BigDecimal.ZERO : amount);
+        }
+
+        public void merge(MatchTransitionStats other) {
+            if (other == null) {
+                return;
+            }
+            matchedCount += other.matchedCount;
+            failedCount += other.failedCount;
+            matchedAmount = matchedAmount.add(other.matchedAmount == null ? BigDecimal.ZERO : other.matchedAmount);
+            failedAmount = failedAmount.add(other.failedAmount == null ? BigDecimal.ZERO : other.failedAmount);
+        }
     }
 
     /**

@@ -735,6 +735,8 @@ public class LogisticsReconServiceImpl
                     .set(LogisticsReconEntity::getCheckTime, checkTime);
         }
         updateChain.update();
+        // 重导可能保留已匹配/已确认费用项，禁止盲目清零；按库内实际聚合回刷列表冗余
+        refreshMainPagingStats(mainId);
     }
 
     /**
@@ -1824,7 +1826,11 @@ public class LogisticsReconServiceImpl
                 .setFileName(dto.getFileName())
                 .setCheckStatus(LogisticsReconCheckStatusEnum.IMPORTING.getCode())
                 .setImportCount(0)
-                .setCostCount(0);
+                .setCostCount(0)
+                .setMatchCount(0)
+                .setMatchSuccessAmount(BigDecimal.ZERO)
+                .setMatchFailAmount(BigDecimal.ZERO)
+                .setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
         boolean save = super.save(entity);
         if (!save) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
@@ -2030,7 +2036,7 @@ public class LogisticsReconServiceImpl
                 throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
             }
             // 锁内先清理超时 MATCHING（宕机残留），再扩组认领，避免费用项永久卡在匹配中
-            logisticsReconDetailSubService.failStaleMatchingSubsByMainId(mainId);
+            self.failStaleMatchingSubsAndApplyMainStats(mainId);
             // ① 锁内扩组：保证与同步匹配互斥后再凑齐同识别组 PENDING
             List<String> expandedSubIds = expandTaskPendingSubIdsByIdentifyGroup(
                     taskId, mainId, seedSubIds, uniqueKeyList);
@@ -2054,6 +2060,16 @@ public class LogisticsReconServiceImpl
             success += settled[0];
             failed += settled[1];
         } finally {
+            RuntimeException refreshError = null;
+            if (locked && isConfirm) {
+                try {
+                    // 确认匹配会改 detail_sub.reconciliation_status，持锁全量回刷；失败上抛避免静默不准
+                    refreshMainPagingStats(mainId);
+                } catch (RuntimeException ex) {
+                    log.error("[processMatchBatch] 回刷主表统计失败 mainId={}", mainId, ex);
+                    refreshError = ex;
+                }
+            }
             if (prev != null) {
                 UserContext.setLoginUser(prev);
             } else {
@@ -2065,6 +2081,9 @@ public class LogisticsReconServiceImpl
                 } catch (Exception ex) {
                     log.error("[processMatchBatch] 释放锁失败 mainId={}", mainId, ex);
                 }
+            }
+            if (refreshError != null) {
+                throw refreshError;
             }
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
@@ -2211,7 +2230,7 @@ public class LogisticsReconServiceImpl
         try {
             UserContext.setLoginUser(user);
             // 锁内先清理超时 MATCHING，再认领（与 processMatchBatch 入口策略一致）
-            logisticsReconDetailSubService.failStaleMatchingSubsByMainId(mainId);
+            self.failStaleMatchingSubsAndApplyMainStats(mainId);
             // 阶段一：认领全部可匹配费用项（置 matching），仅锁定范围不累积 id，避免大 List 常驻内存
             boolean claimedAny = false;
             while (true) {
@@ -2234,6 +2253,15 @@ public class LogisticsReconServiceImpl
                 log.error("[asyncClaimAndMatchByMain] 回写失败状态异常 mainId={}", mainId, ex);
             }
         } finally {
+            RuntimeException refreshError = null;
+            if (isConfirm) {
+                try {
+                    refreshMainPagingStats(mainId);
+                } catch (RuntimeException ex) {
+                    log.error("[asyncClaimAndMatchByMain] 回刷主表统计失败 mainId={}", mainId, ex);
+                    refreshError = ex;
+                }
+            }
             if (prev != null) {
                 UserContext.setLoginUser(prev);
             } else {
@@ -2245,6 +2273,9 @@ public class LogisticsReconServiceImpl
                 } catch (Exception ex) {
                     log.error("[asyncClaimAndMatchByMain] 释放匹配锁失败 mainId={}", mainId, ex);
                 }
+            }
+            if (refreshError != null) {
+                throw refreshError;
             }
         }
     }
@@ -2357,6 +2388,9 @@ public class LogisticsReconServiceImpl
                         LogisticsReconMatchFailReasonSupport.isNonRetryable(reason), e);
                 self.markReconMatchFailed(mainId, chunk, reason);
             }
+        }
+        if (isConfirm) {
+            refreshMainPagingStats(mainId);
         }
     }
 
@@ -2832,7 +2866,7 @@ public class LogisticsReconServiceImpl
             return;
         }
         // 先收敛确认结果已落库但仍残留 MATCHING 的费用项，避免本分片将其静默跳过。
-        logisticsReconDetailSubService.settleConfirmedMatchingSubsByMainId(mainId);
+        self.settleConfirmedMatchingSubsAndApplyMainStats(mainId);
         // 分片可能包含较长的计算/远程调用，入口和实际写入前都刷新心跳，避免被 stale cleanup 误判。
         touchMatchingSubsUpdateTime(detailSubIds);
         LogisticsReconEntity entity = super.getByIdOpt(mainId)
@@ -2873,8 +2907,8 @@ public class LogisticsReconServiceImpl
                 .filter(id -> !processedSubIds.contains(id))
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(orphanSubIds)) {
-            logisticsReconDetailSubService.batchUpdateMatchStatus(orphanSubIds,
-                    LogisticsReconDetailMatchStatusEnum.FAILED.getCode(), "对账明细不存在", MATCHING_FROM_STATUS);
+            // 走 markReconMatchFailed：明细 FAILED + 主表统计同事务更新
+            self.markReconMatchFailed(mainId, orphanSubIds, "对账明细不存在");
         }
         if (CollUtil.isEmpty(units)) {
             return;
@@ -3075,11 +3109,13 @@ public class LogisticsReconServiceImpl
     public void markReconMatchFailed(String mainId, List<String> detailSubIds, String reason) {
         List<LogisticsReconDetailSubEntity> matchingRows = logisticsReconDetailSubService.lambdaQuery()
                 .select(LogisticsReconDetailSubEntity::getId,
-                        LogisticsReconDetailSubEntity::getMatchFailReason)
+                        LogisticsReconDetailSubEntity::getMatchFailReason,
+                        LogisticsReconDetailSubEntity::getLocalAmount)
                 .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
                 .in(CollUtil.isNotEmpty(detailSubIds), LogisticsReconDetailSubEntity::getId, detailSubIds)
                 .eq(LogisticsReconDetailSubEntity::getMatchStatus,
                         LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
+                .last("FOR UPDATE")
                 .list();
         if (CollUtil.isEmpty(matchingRows)) {
             return;
@@ -3102,6 +3138,11 @@ public class LogisticsReconServiceImpl
             logisticsReconDetailSubService.batchUpdateMatchStatus(ordinaryIds,
                     LogisticsReconDetailMatchStatusEnum.FAILED.getCode(), reason, MATCHING_FROM_STATUS);
         }
+        LogisticsReconDTO.MatchTransitionStats stats = new LogisticsReconDTO.MatchTransitionStats();
+        for (LogisticsReconDetailSubEntity row : matchingRows) {
+            stats.addFailed(row.getLocalAmount());
+        }
+        applyMainMatchStatsDelta(mainId, stats);
     }
 
     /**
@@ -3249,7 +3290,7 @@ public class LogisticsReconServiceImpl
                 return;
             }
             touchMatchingSubsUpdateTime(claimIds);
-            logisticsReconDetailSubService.failStaleMatchingSubsByMainId(mainId);
+            self.failStaleMatchingSubsAndApplyMainStats(mainId);
             self.matchDetailSubsByErp(mainId, inputs, matchType);
         } catch (Exception e) {
             log.error("[asyncMatchDetailSubsByErp] 匹配失败 mainId={}", mainId, e);
@@ -3307,7 +3348,7 @@ public class LogisticsReconServiceImpl
                     || !LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(mainEntity.getCheckStatus())) {
                 return Collections.emptyList();
             }
-            logisticsReconDetailSubService.failStaleMatchingSubsByMainId(mainId);
+            self.failStaleMatchingSubsAndApplyMainStats(mainId);
             return logisticsReconDetailSubService.batchClaimMatchStatus(claimIds,
                     LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null, MATCH_CLAIM_FROM_STATUSES);
         } finally {
@@ -3641,15 +3682,16 @@ public class LogisticsReconServiceImpl
                 }
             }
         }
+        List<String> updatedFailedSubIds = new ArrayList<>();
         for (Map.Entry<String, List<String>> failedEntry : failedSubIdsByReason.entrySet()) {
-            logisticsReconDetailSubService.batchUpdateMatchStatus(
+            updatedFailedSubIds.addAll(logisticsReconDetailSubService.batchUpdateMatchStatus(
                     failedEntry.getValue(), LogisticsReconDetailMatchStatusEnum.FAILED.getCode(),
-                    failedEntry.getKey(), MATCHING_FROM_STATUS);
+                    failedEntry.getKey(), MATCHING_FROM_STATUS));
         }
         if (CollUtil.isNotEmpty(successWithoutRefSubIds)) {
-            logisticsReconDetailSubService.batchUpdateMatchStatus(successWithoutRefSubIds,
+            updatedFailedSubIds.addAll(logisticsReconDetailSubService.batchUpdateMatchStatus(successWithoutRefSubIds,
                     LogisticsReconDetailMatchStatusEnum.FAILED.getCode(), "匹配成功但未生成关联关系",
-                    MATCHING_FROM_STATUS);
+                    MATCHING_FROM_STATUS));
         }
         if (byDetail) {
             logisticsReconRefLogisticsBillService.saveBatchByDetail(refList);
@@ -3657,8 +3699,30 @@ public class LogisticsReconServiceImpl
             logisticsReconRefLogisticsBillService.saveBatchByDetailSub(refList);
         }
         updateMatchedSubResolvedCfgCost(matchResults, matchedSubIds);
-        logisticsReconDetailSubService.batchUpdateMatchStatus(matchedSubIds,
+        List<String> updatedMatchedSubIds = logisticsReconDetailSubService.batchUpdateMatchStatus(matchedSubIds,
                 LogisticsReconDetailMatchStatusEnum.MATCHED.getCode(), null, MATCHING_FROM_STATUS);
+        // 与明细状态同事务维护主表冗余；失败金额由 SQL 按当前 FAILED 状态重算
+        Map<String, LogisticsReconDetailSubEntity> subById = new HashMap<>();
+        for (List<LogisticsReconDetailSubEntity> subs : rowKeyToSubs.values()) {
+            if (CollUtil.isEmpty(subs)) {
+                continue;
+            }
+            for (LogisticsReconDetailSubEntity sub : subs) {
+                if (sub != null && StrUtil.isNotBlank(sub.getId())) {
+                    subById.putIfAbsent(sub.getId(), sub);
+                }
+            }
+        }
+        LogisticsReconDTO.MatchTransitionStats stats = new LogisticsReconDTO.MatchTransitionStats();
+        for (String subId : updatedMatchedSubIds) {
+            LogisticsReconDetailSubEntity sub = subById.get(subId);
+            stats.addMatched(sub == null ? null : sub.getLocalAmount());
+        }
+        for (String subId : updatedFailedSubIds) {
+            LogisticsReconDetailSubEntity sub = subById.get(subId);
+            stats.addFailed(sub == null ? null : sub.getLocalAmount());
+        }
+        applyMainMatchStatsDelta(mainId, stats);
     }
 
     /**
@@ -4039,10 +4103,12 @@ public class LogisticsReconServiceImpl
                 Set<String> refreshSubIds = new LinkedHashSet<>(batchSubIdSet);
                 refreshSubIds.addAll(listDetailSubIdsByCostIds(mainId, eligibleCostIds));
                 self.refreshDetailSubReconciliationStatusInTx(mainId, refreshSubIds);
+                refreshMainPagingStats(mainId);
                 self.syncReconStatusByCostIds(eligibleCostIds, mainId);
             } else {
                 // 本批无可更新 cost：仍刷新本批聚合状态（可能已被同主单其它批次/共享费用单连带确认）
                 self.refreshDetailSubReconciliationStatusInTx(mainId, batchSubIdSet);
+                refreshMainPagingStats(mainId);
             }
             Map<String, LogisticsReconDetailSubEntity> subStatusMap = logisticsReconDetailSubService.lambdaQuery()
                     .select(LogisticsReconDetailSubEntity::getId,
@@ -4771,7 +4837,7 @@ public class LogisticsReconServiceImpl
                 log.info("[{}] 主单正在执行匹配/确认，跳过超时 MATCHING 清理 mainId={}", action, mainId);
                 return false;
             }
-            logisticsReconDetailSubService.failStaleMatchingSubsByMainId(mainId);
+            self.failStaleMatchingSubsAndApplyMainStats(mainId);
             return true;
         } finally {
             if (locked && lock.isHeldByCurrentThread()) {
@@ -4978,9 +5044,10 @@ public class LogisticsReconServiceImpl
                 updateRefReconciliationStatus(entry.getValue(), entry.getKey());
             }
         }
-        // ref 快照变更后，按受影响的费用项范围重算 detail_sub 聚合确认状态
+        // ref 快照变更后，按受影响的费用项范围重算 detail_sub 聚合确认状态，并持锁回刷主表列表冗余
         for (Map.Entry<String, Set<String>> entry : affectedSubIdsByMain.entrySet()) {
             refreshDetailSubReconciliationStatus(entry.getKey(), entry.getValue());
+            refreshMainPagingStatsWithLock(entry.getKey());
         }
     }
 
@@ -5146,20 +5213,25 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        fillPagingStats(list);
         Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream()
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDTO.ListDTO data : list) {
             data.setReconciliationMonth(DateUtil.formatCnYearMonth(data.getReconciliationMonth()));
             data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(data.getCheckStatus()));
+            if (StrUtil.isBlank(data.getReconciliationStatus())) {
+                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            }
             data.setReconciliationStatusName(
                     LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));
-            // match_count / valid_cost_count 由当前页 mainId 二次聚合（与详情页口径一致），match_status 据此派生
+            // 列表统计读主表冗余；matchStatus 由 matchCount/costCount 派生
             int matchCount = data.getMatchCount() == null ? 0 : data.getMatchCount();
-            int costCount = data.getValidCostCount() != null ? data.getValidCostCount()
-                    : (data.getCostCount() == null ? 0 : data.getCostCount());
-            if (data.getValidCostCount() != null) {
-                data.setCostCount(data.getValidCostCount());
+            int costCount = data.getCostCount() == null ? 0 : data.getCostCount();
+            data.setValidCostCount(costCount);
+            if (data.getMatchSuccessAmount() == null) {
+                data.setMatchSuccessAmount(BigDecimal.ZERO);
+            }
+            if (data.getMatchFailAmount() == null) {
+                data.setMatchFailAmount(BigDecimal.ZERO);
             }
             String matchStatus = LogisticsReconMatchStatusEnum.resolve(matchCount, costCount);
             data.setMatchStatus(matchStatus);
@@ -5173,44 +5245,116 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 按当前页主表 id 批量聚合费用项统计并回填，避免 paging 对全表 detail_sub 做 GROUP BY。
+     * 清理超时 MATCHING 并同事务增量回写主表匹配冗余。
      */
-    private void fillPagingStats(List<LogisticsReconDTO.ListDTO> list) {
-        List<String> mainIds = list.stream()
-                .map(LogisticsReconDTO.ListDTO::getId)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, LogisticsReconDTO.PagingStatsDTO> statsMap = CollUtil.isEmpty(mainIds)
-                ? Collections.emptyMap()
-                : logisticsReconDetailSubService.listPagingStatsByMainIds(mainIds).stream()
-                .filter(Objects::nonNull)
-                .filter(item -> StrUtil.isNotBlank(item.getMainId()))
-                .collect(Collectors.toMap(LogisticsReconDTO.PagingStatsDTO::getMainId, item -> item, (a, b) -> a));
-        for (LogisticsReconDTO.ListDTO data : list) {
-            LogisticsReconDTO.PagingStatsDTO stats = statsMap.get(data.getId());
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void failStaleMatchingSubsAndApplyMainStats(String mainId) {
+        LogisticsReconDTO.MatchTransitionStats stats =
+                logisticsReconDetailSubService.failStaleMatchingSubsByMainId(mainId);
+        applyMainMatchStatsDelta(mainId, stats);
+    }
+
+    /**
+     * 收敛已确认仍 MATCHING 的费用项，并同事务增量回写主表匹配冗余。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void settleConfirmedMatchingSubsAndApplyMainStats(String mainId) {
+        LogisticsReconDTO.MatchTransitionStats stats =
+                logisticsReconDetailSubService.settleConfirmedMatchingSubsByMainId(mainId);
+        applyMainMatchStatsDelta(mainId, stats);
+    }
+
+    /**
+     * 原子维护主表匹配冗余（与明细状态变更同事务调用，失败则整单回滚）。
+     */
+    private void applyMainMatchStatsDelta(String mainId, LogisticsReconDTO.MatchTransitionStats stats) {
+        if (StrUtil.isBlank(mainId) || stats == null || !stats.hasChange()) {
+            return;
+        }
+        BigDecimal successDelta = stats.getMatchedAmount() == null ? BigDecimal.ZERO : stats.getMatchedAmount();
+        int updated = baseMapper.applyMatchStatsDelta(mainId, stats.getMatchedCount(), successDelta);
+        if (updated <= 0) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
+        }
+    }
+
+    /**
+     * 持主单锁回刷列表冗余，避免与匹配/确认并发交叉写。
+     */
+    private void refreshMainPagingStatsWithLock(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return;
+        }
+        RLock lock = redissonClient.getLock(buildReconMainLockKey(mainId));
+        boolean locked = false;
+        try {
+            locked = tryLockReconMain(lock, mainId, "refreshMainPagingStats");
+            if (!locked) {
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
+            }
+            refreshMainPagingStats(mainId);
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception ex) {
+                    log.error("[refreshMainPagingStatsWithLock] 释放锁失败 mainId={}", mainId, ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * 按有效费用项聚合回刷主表列表冗余统计（单主单）。
+     * 用于导入完成、确认批次、确认匹配结束等低频路径；匹配分片请走 {@link #applyMainMatchStatsDelta}。
+     * 失败直接抛错，禁止静默吞掉导致列表不准。
+     */
+    private void refreshMainPagingStats(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return;
+        }
+        try {
+            List<LogisticsReconDTO.PagingStatsDTO> statsList =
+                    logisticsReconDetailSubService.listPagingStatsByMainIds(Collections.singletonList(mainId));
+            LogisticsReconDTO.PagingStatsDTO stats = CollUtil.isEmpty(statsList) ? null : statsList.get(0);
             int validCostCount = stats == null || stats.getValidCostCount() == null ? 0 : stats.getValidCostCount();
             int matchCount = stats == null || stats.getMatchCount() == null ? 0 : stats.getMatchCount();
+            BigDecimal matchSuccessAmount = stats == null || stats.getMatchSuccessAmount() == null
+                    ? BigDecimal.ZERO : stats.getMatchSuccessAmount();
+            BigDecimal matchFailAmount = stats == null || stats.getMatchFailAmount() == null
+                    ? BigDecimal.ZERO : stats.getMatchFailAmount();
             int reconTotal = stats == null || stats.getReconciliationTotalCount() == null
                     ? 0 : stats.getReconciliationTotalCount();
             int reconConfirmed = stats == null || stats.getReconciliationConfirmedCount() == null
                     ? 0 : stats.getReconciliationConfirmedCount();
             int reconPartial = stats == null || stats.getReconciliationPartialCount() == null
                     ? 0 : stats.getReconciliationPartialCount();
-            data.setValidCostCount(validCostCount);
-            data.setMatchCount(matchCount);
-            data.setMatchSuccessAmount(stats == null || stats.getMatchSuccessAmount() == null
-                    ? BigDecimal.ZERO : stats.getMatchSuccessAmount());
-            data.setMatchFailAmount(stats == null || stats.getMatchFailAmount() == null
-                    ? BigDecimal.ZERO : stats.getMatchFailAmount());
-            // 与原 paging CASE 口径一致
+            String reconciliationStatus;
             if (reconTotal <= 0 || (reconConfirmed <= 0 && reconPartial <= 0)) {
-                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+                reconciliationStatus = LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode();
             } else if (reconConfirmed >= reconTotal) {
-                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode());
+                reconciliationStatus = LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode();
             } else {
-                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode());
+                reconciliationStatus = LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode();
             }
+            boolean updated = lambdaUpdate()
+                    .eq(LogisticsReconEntity::getId, mainId)
+                    .set(LogisticsReconEntity::getCostCount, validCostCount)
+                    .set(LogisticsReconEntity::getMatchCount, matchCount)
+                    .set(LogisticsReconEntity::getMatchSuccessAmount, matchSuccessAmount)
+                    .set(LogisticsReconEntity::getMatchFailAmount, matchFailAmount)
+                    .set(LogisticsReconEntity::getReconciliationStatus, reconciliationStatus)
+                    .update();
+            if (!updated) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
+            }
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[refreshMainPagingStats] 回刷主表列表冗余失败 mainId={}", mainId, e);
+            throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
         }
     }
 

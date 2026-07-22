@@ -8,6 +8,7 @@ import com.erp.model.tms.entity.LogisticsReconEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -40,5 +41,12 @@ public interface LogisticsReconMapper extends BaseMapper<LogisticsReconEntity> {
      * @return List<LogisticsReconDTO.TabListDTO>
      */
     List<LogisticsReconDTO.TabListDTO> tabList(@Param("params") LogisticsReconDTO.PagingParamDTO params);
+
+    /**
+     * 原子维护主表匹配冗余统计（匹配数/成功金额增量，失败金额按当前状态重算）
+     */
+    int applyMatchStatsDelta(@Param("mainId") String mainId,
+                             @Param("matchCountDelta") int matchCountDelta,
+                             @Param("matchSuccessAmountDelta") BigDecimal matchSuccessAmountDelta);
 
 }

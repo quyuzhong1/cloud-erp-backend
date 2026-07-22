@@ -28,6 +28,10 @@
         <result column="import_count" property="importCount"/>
         <result column="cost_count" property="costCount"/>
         <result column="total_amount" property="totalAmount"/>
+        <result column="match_count" property="matchCount"/>
+        <result column="match_success_amount" property="matchSuccessAmount"/>
+        <result column="match_fail_amount" property="matchFailAmount"/>
+        <result column="reconciliation_status" property="reconciliationStatus"/>
         <result column="currency" property="currency"/>
         <result column="check_user_id" property="checkUserId"/>
         <result column="check_user_name" property="checkUserName"/>
@@ -41,11 +45,13 @@
         code, reconciliation_month, business_type, cfg_import_id, cfg_type,
         supplier_id, supplier_name, sheet_name, file_url, file_name,
         import_fail_reason, check_status,
-        import_count, cost_count, total_amount, currency,
+        import_count, cost_count, total_amount,
+        match_count, match_success_amount, match_fail_amount, reconciliation_status,
+        currency,
         check_user_id, check_user_name, check_time, remark
     </sql>
 
-    <!-- 分页查询列（驼峰别名，与前端排序字段一致） -->
+    <!-- 分页查询列（驼峰别名，与前端排序字段一致；列表统计读主表冗余，不再二次聚合 detail_sub） -->
     <sql id="Paging_Column_List">
         logistics_recon.id AS id,
         logistics_recon.create_time AS createTime,
@@ -70,7 +76,12 @@
         logistics_recon.check_status AS checkStatus,
         logistics_recon.import_count AS importCount,
         logistics_recon.cost_count AS costCount,
+        logistics_recon.cost_count AS validCostCount,
         logistics_recon.total_amount AS totalAmount,
+        logistics_recon.match_count AS matchCount,
+        logistics_recon.match_success_amount AS matchSuccessAmount,
+        logistics_recon.match_fail_amount AS matchFailAmount,
+        logistics_recon.reconciliation_status AS reconciliationStatus,
         logistics_recon.currency AS currency,
         logistics_recon.check_user_id AS checkUserId,
         logistics_recon.check_user_name AS checkUserName,
@@ -78,7 +89,7 @@
         logistics_recon.remark AS remark
     </sql>
 
-    <!-- 分页只查主表；费用项统计由 listPagingStatsByMainIds 按当前页 main_id 二次聚合补齐 -->
+    <!-- 分页只查主表冗余字段 -->
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDTO$ListDTO">
         SELECT <include refid="Paging_Column_List"/>
         FROM logistics_recon
@@ -106,4 +117,26 @@
         </if>
         GROUP BY check_status
     </select>
+
+    <update id="applyMatchStatsDelta">
+        UPDATE logistics_recon
+        SET match_count = COALESCE(match_count, 0) + #{matchCountDelta},
+            match_success_amount = COALESCE(match_success_amount, 0) + #{matchSuccessAmountDelta},
+            -- 失败金额是当前 FAILED 状态的汇总，不是失败尝试次数的累计值。
+            -- 重试场景下同一费用项可能多次进入 FAILED，必须按明细当前状态重算。
+            match_fail_amount = COALESCE((
+                SELECT SUM(sub.local_amount)
+                FROM logistics_recon_detail_sub sub
+                INNER JOIN logistics_recon_detail d
+                    ON d.id = sub.detail_id
+                   AND d.is_deleted = false
+                   AND d.main_id = sub.main_id
+                WHERE sub.main_id = logistics_recon.id
+                  AND sub.is_deleted = false
+                  AND sub.match_status = 'failed'
+            ), 0),
+            update_time = NOW()
+        WHERE id = #{mainId}
+          AND is_deleted = false
+    </update>
 </mapper>

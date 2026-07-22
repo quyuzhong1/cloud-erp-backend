@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
+import com.erp.server.tms.service.LogisticsReconService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -20,15 +21,18 @@ public class LogisticsReconServiceImplStaleCleanupTest {
 
     private LogisticsReconServiceImpl service;
     private LogisticsReconDetailSubService detailSubService;
+    private LogisticsReconService self;
     private RLock lock;
 
     @Before
     public void setUp() {
         service = new LogisticsReconServiceImpl();
         detailSubService = Mockito.mock(LogisticsReconDetailSubService.class);
+        self = Mockito.mock(LogisticsReconService.class);
         RedissonClient redissonClient = Mockito.mock(RedissonClient.class);
         lock = Mockito.mock(RLock.class);
         ReflectionTestUtils.setField(service, "logisticsReconDetailSubService", detailSubService);
+        ReflectionTestUtils.setField(service, "self", self);
         ReflectionTestUtils.setField(service, "redissonClient", redissonClient);
         when(redissonClient.getLock(anyString())).thenReturn(lock);
     }
@@ -41,7 +45,7 @@ public class LogisticsReconServiceImplStaleCleanupTest {
                 service, "cleanupStaleMatchingSubsIfMainIdle", "main-1", "test");
 
         assertFalse(Boolean.TRUE.equals(cleaned));
-        verify(detailSubService, never()).failStaleMatchingSubsByMainId(anyString());
+        verify(self, never()).failStaleMatchingSubsAndApplyMainStats(anyString());
         verify(lock, never()).unlock();
     }
 
@@ -54,7 +58,7 @@ public class LogisticsReconServiceImplStaleCleanupTest {
                 service, "cleanupStaleMatchingSubsIfMainIdle", "main-1", "test");
 
         assertTrue(Boolean.TRUE.equals(cleaned));
-        verify(detailSubService).failStaleMatchingSubsByMainId("main-1");
+        verify(self).failStaleMatchingSubsAndApplyMainStats("main-1");
         verify(lock).unlock();
     }
 

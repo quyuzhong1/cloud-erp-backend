@@ -79,15 +79,15 @@ public class LogisticsReconDetailSubServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason) {
-        batchUpdateMatchStatus(detailSubIds, matchStatus, failReason, null);
+    public List<String> batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason) {
+        return batchUpdateMatchStatus(detailSubIds, matchStatus, failReason, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
-                                       Collection<String> fromMatchStatuses) {
-        batchClaimMatchStatus(detailSubIds, matchStatus, failReason, fromMatchStatuses);
+    public List<String> batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
+                                               Collection<String> fromMatchStatuses) {
+        return batchClaimMatchStatus(detailSubIds, matchStatus, failReason, fromMatchStatuses);
     }
 
     /**
@@ -257,11 +257,12 @@ public class LogisticsReconDetailSubServiceImpl
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public int failStaleMatchingSubsByMainId(String mainId) {
+    public LogisticsReconDTO.MatchTransitionStats failStaleMatchingSubsByMainId(String mainId) {
+        LogisticsReconDTO.MatchTransitionStats stats = new LogisticsReconDTO.MatchTransitionStats();
         if (StrUtil.isBlank(mainId)) {
-            return 0;
+            return stats;
         }
-        settleConfirmedMatchingSubsByMainId(mainId);
+        stats.merge(settleConfirmedMatchingSubsByMainId(mainId));
         long staleMinutes = resolveMatchingStaleMinutes();
         LocalDateTime staleThreshold = LocalDateTime.now().minusMinutes(staleMinutes);
         int total = 0;
@@ -280,7 +281,8 @@ public class LogisticsReconDetailSubServiceImpl
                             .eq(LogisticsReconDetailSubEntity::getReconciliationStatus,
                                     LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))
                     .select(LogisticsReconDetailSubEntity::getId,
-                            LogisticsReconDetailSubEntity::getMatchFailReason)
+                            LogisticsReconDetailSubEntity::getMatchFailReason,
+                            LogisticsReconDetailSubEntity::getLocalAmount)
                     .orderByAsc(LogisticsReconDetailSubEntity::getId)
                     .last("LIMIT " + UPDATE_BATCH_SIZE + " FOR UPDATE")
                     .list();
@@ -297,6 +299,9 @@ public class LogisticsReconDetailSubServiceImpl
                     .collect(Collectors.toList());
             failStaleMatchingRows(uncertainIds, staleThreshold, null);
             failStaleMatchingRows(retryableIds, staleThreshold, STALE_MATCHING_FAIL_REASON);
+            for (LogisticsReconDetailSubEntity row : lockedRows) {
+                stats.addFailed(row.getLocalAmount());
+            }
             total += lockedRows.size();
             if (lockedRows.size() < UPDATE_BATCH_SIZE) {
                 break;
@@ -306,33 +311,35 @@ public class LogisticsReconDetailSubServiceImpl
             log.warn("[failStaleMatchingSubsByMainId] 超时匹配中已打回失败 mainId={} count={} thresholdMinutes={}",
                     mainId, total, staleMinutes);
         }
-        return total;
+        return stats;
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public int settleConfirmedMatchingSubsByMainId(String mainId) {
+    public LogisticsReconDTO.MatchTransitionStats settleConfirmedMatchingSubsByMainId(String mainId) {
+        LogisticsReconDTO.MatchTransitionStats stats = new LogisticsReconDTO.MatchTransitionStats();
         if (StrUtil.isBlank(mainId)) {
-            return 0;
+            return stats;
         }
-        int total = 0;
         while (true) {
-            List<String> ids = lambdaQuery()
+            List<LogisticsReconDetailSubEntity> lockedRows = lambdaQuery()
                     .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
                     .eq(LogisticsReconDetailSubEntity::getMatchStatus,
                             LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
                     .in(LogisticsReconDetailSubEntity::getReconciliationStatus,
                             CONFIRMED_RECONCILIATION_STATUSES)
-                    .select(LogisticsReconDetailSubEntity::getId)
+                    .select(LogisticsReconDetailSubEntity::getId,
+                            LogisticsReconDetailSubEntity::getLocalAmount)
                     .orderByAsc(LogisticsReconDetailSubEntity::getId)
                     .last("LIMIT " + UPDATE_BATCH_SIZE + " FOR UPDATE")
-                    .list().stream()
+                    .list();
+            if (CollUtil.isEmpty(lockedRows)) {
+                break;
+            }
+            List<String> ids = lockedRows.stream()
                     .map(LogisticsReconDetailSubEntity::getId)
                     .filter(StrUtil::isNotBlank)
                     .collect(Collectors.toList());
-            if (CollUtil.isEmpty(ids)) {
-                break;
-            }
             lambdaUpdate()
                     .in(LogisticsReconDetailSubEntity::getId, ids)
                     .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
@@ -345,12 +352,14 @@ public class LogisticsReconDetailSubServiceImpl
                     .set(LogisticsReconDetailSubEntity::getMatchFailReason, "")
                     .set(LogisticsReconDetailSubEntity::getUpdateTime, LocalDateTime.now())
                     .update();
-            total += ids.size();
-            if (ids.size() < UPDATE_BATCH_SIZE) {
+            for (LogisticsReconDetailSubEntity row : lockedRows) {
+                stats.addMatched(row.getLocalAmount());
+            }
+            if (lockedRows.size() < UPDATE_BATCH_SIZE) {
                 break;
             }
         }
-        return total;
+        return stats;
     }
 
     private void failStaleMatchingRows(List<String> ids, LocalDateTime staleThreshold, String failReason) {

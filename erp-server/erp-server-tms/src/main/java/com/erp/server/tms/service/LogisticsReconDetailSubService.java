@@ -36,15 +36,15 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
      * @param detailSubIds
      * @param matchStatus
      * @param failReason
-     * @return void
+     * @return 本次实际更新成功的费用项 id
      */
-    void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason);
+    List<String> batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason);
 
     /**
      * 批量更新费用项匹配状态（带前置 match_status 条件，防并发覆盖）
      */
-    void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
-                                Collection<String> fromMatchStatuses);
+    List<String> batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
+                                        Collection<String> fromMatchStatuses);
 
     /**
      * 匹配成功回写 ERP 费用配置（仅 matching 状态、分批 updateBatchById）
@@ -77,19 +77,20 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
     /**
      * 将主单下「匹配中且 update_time 已超时」的费用项打回匹配失败，供后续重新认领匹配。
      * <p>用于进程宕机等场景下 MATCHING 残留；在跑任务会刷新 update_time，未超时的不会被误伤。</p>
+     * <p>同时返回 MATCHING→MATCHED（settle）/ FAILED 的金额增量，供主表冗余统计累加。</p>
      *
      * @param mainId 对账单 id
-     * @return 本次打回失败的费用项数量
+     * @return 本次状态迁移增量
      */
-    int failStaleMatchingSubsByMainId(String mainId);
+    LogisticsReconDTO.MatchTransitionStats failStaleMatchingSubsByMainId(String mainId);
 
     /**
      * 收敛已经产生确认结果但仍残留 MATCHING 的费用项，避免确认状态与匹配状态长期不一致。
      *
      * @param mainId 对账单 id
-     * @return 本次收敛为 MATCHED 的费用项数量
+     * @return 本次收敛为 MATCHED 的增量（含金额）
      */
-    int settleConfirmedMatchingSubsByMainId(String mainId);
+    LogisticsReconDTO.MatchTransitionStats settleConfirmedMatchingSubsByMainId(String mainId);
 
     /**
      * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）

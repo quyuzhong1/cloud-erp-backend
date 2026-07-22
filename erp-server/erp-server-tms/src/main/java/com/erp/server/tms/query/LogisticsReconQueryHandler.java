@@ -2,7 +2,6 @@ package com.erp.server.tms.query;
 
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
-import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import org.springframework.stereotype.Component;
@@ -64,73 +63,38 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
 
 
     /**
-     * 匹配状态筛选：用 EXISTS 半连接代替逐行 COUNT 聚合。
+     * 匹配状态筛选：读主表冗余 match_count / cost_count（与列表展示口径一致）。
      * <ul>
-     *   <li>unmatched ≡ 不存在已匹配有效费用项（等价于原 valid&lt;=0 OR match&lt;=0）</li>
-     *   <li>partial ≡ 同时存在已匹配与未匹配有效费用项</li>
-     *   <li>matched ≡ 存在有效费用项且全部为已匹配</li>
+     *   <li>unmatched ≡ cost&lt;=0 OR match&lt;=0</li>
+     *   <li>partial ≡ 0 &lt; match &lt; cost</li>
+     *   <li>matched ≡ match &gt;= cost AND cost &gt; 0</li>
      * </ul>
      */
     private String matchStatusSql(String status) {
-        String matched = LogisticsReconDetailMatchStatusEnum.MATCHED.getCode();
         if (LogisticsReconMatchStatusEnum.UNMATCHED.getCode().equals(status)) {
-            return "(NOT " + validSubExists("sub.match_status = '" + matched + "'") + ")";
+            return "(COALESCE(logistics_recon.cost_count, 0) <= 0 OR COALESCE(logistics_recon.match_count, 0) <= 0)";
         }
         if (LogisticsReconMatchStatusEnum.PARTIAL.getCode().equals(status)) {
-            return "(" + validSubExists("sub.match_status = '" + matched + "'")
-                    + " AND " + validSubExists("sub.match_status IS DISTINCT FROM '" + matched + "'") + ")";
+            return "(COALESCE(logistics_recon.match_count, 0) > 0"
+                    + " AND COALESCE(logistics_recon.match_count, 0) < COALESCE(logistics_recon.cost_count, 0))";
         }
         if (LogisticsReconMatchStatusEnum.MATCHED.getCode().equals(status)) {
-            return "(" + validSubExists(null)
-                    + " AND NOT " + validSubExists("sub.match_status IS DISTINCT FROM '" + matched + "'") + ")";
+            return "(COALESCE(logistics_recon.cost_count, 0) > 0"
+                    + " AND COALESCE(logistics_recon.match_count, 0) >= COALESCE(logistics_recon.cost_count, 0))";
         }
         return "";
     }
 
     /**
-     * 对账确认状态筛选：用 EXISTS 半连接代替逐行 COUNT 聚合。
-     * <ul>
-     *   <li>toBeConfirm ≡ 不存在 confirmed/partialConfirm 有效费用项</li>
-     *   <li>partialConfirm ≡ 存在 partialConfirm，或存在 confirmed 且存在非 confirmed</li>
-     *   <li>confirmed ≡ 存在有效费用项且全部为 confirmed</li>
-     * </ul>
+     * 对账确认状态筛选：读主表冗余 reconciliation_status。
      */
     private String reconciliationStatusSql(String status) {
-        String confirmed = LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode();
-        String partial = LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode();
-        if (LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(status)) {
-            return "(NOT " + validSubExists(
-                    "sub.reconciliation_status IN ('" + confirmed + "', '" + partial + "')") + ")";
-        }
-        if (LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(status)) {
-            return "(" + validSubExists("sub.reconciliation_status = '" + partial + "'")
-                    + " OR (" + validSubExists("sub.reconciliation_status = '" + confirmed + "'")
-                    + " AND " + validSubExists("sub.reconciliation_status IS DISTINCT FROM '" + confirmed + "'")
-                    + "))";
-        }
-        if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(status)) {
-            return "(" + validSubExists(null)
-                    + " AND NOT " + validSubExists(
-                    "sub.reconciliation_status IS DISTINCT FROM '" + confirmed + "'") + ")";
+        if (LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(status)
+                || LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(status)
+                || LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(status)) {
+            return "(logistics_recon.reconciliation_status = '" + status + "')";
         }
         return "";
-    }
-
-    /**
-     * 有效费用项 EXISTS（detail 归属与 sub.main_id 一致，与统计口径相同）。
-     * @param extraAnd 追加到 WHERE 的 AND 条件，可为 null
-     */
-    private String validSubExists(String extraAnd) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("EXISTS (SELECT 1 FROM logistics_recon_detail_sub sub ")
-                .append("INNER JOIN logistics_recon_detail d ")
-                .append("ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id ")
-                .append("WHERE sub.is_deleted = false AND sub.main_id = logistics_recon.id");
-        if (extraAnd != null && !extraAnd.isEmpty()) {
-            sql.append(" AND ").append(extraAnd);
-        }
-        sql.append(')');
-        return sql.toString();
     }
 
     /**
