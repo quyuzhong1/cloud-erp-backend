@@ -46,6 +46,7 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -130,6 +131,15 @@ public class SoReturnPrestockServiceImpl
     @Resource
     private OperateLogService operateLogService;
 
+    /**
+     * 自注入代理：forceCloseUnclaimedPrestock 需要让每个批次的 forceCloseBatch 在独立事务中提交，
+     * 必须通过 Spring 代理调用（而非 this.forceCloseBatch(...)）才能使方法上的 @Transactional 生效；
+     * 使用 @Lazy 避免 Bean 初始化阶段的循环依赖。
+     */
+    @Lazy
+    @Resource
+    private SoReturnPrestockService self;
+
     // ===================== 分页查询 =====================
 
     @Override
@@ -149,7 +159,7 @@ public class SoReturnPrestockServiceImpl
             v.setTypeName(BillTypeEnum.getName(v.getType()));
             v.setClaimStatusName(PrestockClaimStatusEnum.getName(v.getClaimStatus()));
             v.setSourceTypeName(PrestockSourceTypeEnum.getName(v.getSourceType()));
-            List<SoReturnPrestockDetailEntity> details = detailMap.get(v.getId());
+            List<SoReturnPrestockDetailEntity> details = detailMap.getOrDefault(v.getId(), Collections.emptyList());
             v.setDetailList(details.stream().map(d -> convertDetailToView(d, returnInstockByPrestockDetailId)).collect(Collectors.toList()));
         });
         return new PagingVO<>(result);
@@ -903,13 +913,20 @@ public class SoReturnPrestockServiceImpl
         if (pairsByShop.size() > LINK_GROUP_MAX_SIZE) {
             throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_LINK_SHOP_GROUP_EXCEEDS, pairsByShop.size());
         }
-        long loopStart = System.currentTimeMillis();
         boolean isB2b = BillTypeEnum.B2B.getCode().equals(main.getType());
+        // B2C 场景下解析客户id需按店铺反查归属客户；分组循环前一次性批量预取本次涉及的全部店铺信息，
+        // 避免 resolveLinkCustomerId 在循环内逐组发起单条 Feign 查询（B2B 无需查店铺，返回空 Map）
+        Map<String, ShopInfoEntity> shopInfoMap = isB2b ? Collections.emptyMap()
+                : listShopInfoMap(pairsByShop.values().stream()
+                        .map(pairs -> pairs.get(0).item.getShopId())
+                        .collect(Collectors.toList()));
+        long loopStart = System.currentTimeMillis();
         for (List<LinkedShopPair> pairs : pairsByShop.values()) {
             SoReturnPrestockDetailDTO.ShopItem head = pairs.get(0).item;
             // 关联生成退货入库单仍需客户id（生成明细时需按客户查平台SKU映射）：
-            // B2B 前端直接传客户id；B2C 前端传店铺id，需按店铺反查归属客户，与 SoReturnInstockServiceImpl B2C 分支口径一致
-            String customerId = resolveLinkCustomerId(main.getType(), head.getShopId(), head.getShopName(), head.getCustomerId());
+            // B2B 前端直接传客户id；B2C 前端传店铺id，需按已预取的店铺信息反查归属客户，
+            // 与 SoReturnInstockServiceImpl B2C 分支口径一致
+            String customerId = resolveLinkCustomerId(main.getType(), head.getShopId(), head.getShopName(), head.getCustomerId(), shopInfoMap);
             SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
             add.setType(main.getType());
             // B2B 无店铺概念（前端传的是客户id），退货入库单不落 shopId
@@ -948,12 +965,15 @@ public class SoReturnPrestockServiceImpl
      * 解析关联对象的客户id并做必填校验。关联生成退货入库单及其明细时必须带客户id，缺失会导致下游抛出含义模糊的“客户id不能为空”。
      * <ul>
      *   <li>B2B：前端直接传客户id（无店铺-客户关联环节），customerId 必填；</li>
-     *   <li>B2C：前端传店铺id，shopId 必填，按店铺反查归属客户，店铺不存在或未绑定客户时抛出明确异常。</li>
+     *   <li>B2C：前端传店铺id，shopId 必填，按已预取的店铺信息反查归属客户，店铺不存在或未绑定客户时抛出明确异常。</li>
      * </ul>
      *
-     * @param type 预入库单单据类型（{@link BillTypeEnum}）
+     * @param type        预入库单单据类型（{@link BillTypeEnum}）
+     * @param shopInfoMap 调用方在分组循环前批量预取的 shopId -> ShopInfoEntity 映射（见 {@link #listShopInfoMap}），
+     *                    避免本方法在循环内逐次发起单条 Feign 查询；B2B 场景可传空 Map
      */
-    private String resolveLinkCustomerId(String type, String shopId, String shopName, String customerId) {
+    private String resolveLinkCustomerId(String type, String shopId, String shopName, String customerId,
+                                         Map<String, ShopInfoEntity> shopInfoMap) {
         // B2B：前端直接传客户id
         if (BillTypeEnum.B2B.getCode().equals(type)) {
             if (CharSequenceUtil.isBlank(customerId)) {
@@ -961,11 +981,11 @@ public class SoReturnPrestockServiceImpl
             }
             return customerId;
         }
-        // B2C：前端传店铺id，按店铺反查归属客户
+        // B2C：前端传店铺id，按已预取的店铺信息反查归属客户
         if (CharSequenceUtil.isBlank(shopId)) {
             throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_LINK_SHOP_REQUIRED);
         }
-        ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shopId);
+        ShopInfoEntity shopInfo = shopInfoMap.get(shopId);
         String shopDesc = CharSequenceUtil.emptyToDefault(shopName, shopId);
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_LINK_SHOP_NOT_FOUND, shopDesc);
@@ -974,6 +994,23 @@ public class SoReturnPrestockServiceImpl
             throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_LINK_SHOP_CUSTOMER_REQUIRED, shopDesc);
         }
         return shopInfo.getCustomerId();
+    }
+
+    /**
+     * 按店铺 ID 批量查询店铺信息，返回 shopId -&gt; ShopInfoEntity 映射（未命中的 shopId 不进入 Map）。
+     * 供 {@link #generateReturnInstockByShop} 在按店铺分组的循环开始前一次性预取，
+     * 避免 {@link #resolveLinkCustomerId} 在循环内逐组单独发起 Feign 查询。
+     */
+    private Map<String, ShopInfoEntity> listShopInfoMap(List<String> shopIds) {
+        List<String> distinctShopIds = shopIds.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctShopIds)) {
+            return Collections.emptyMap();
+        }
+        List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, distinctShopIds);
+        if (CollUtil.isEmpty(shopInfoList)) {
+            return Collections.emptyMap();
+        }
+        return shopInfoList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (a, b) -> a));
     }
 
     /**
@@ -1109,26 +1146,28 @@ public class SoReturnPrestockServiceImpl
     // ===================== 强制关闭剩余未认领预入库单（定时任务） =====================
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public int forceCloseUnclaimedPrestock() {
-        // 查询仍存在未认领明细的预入库单：主表关联状态为未关联或部分关联，排除已关联、已强制关闭、已删除
-        List<SoReturnPrestockEntity> mains = lambdaQuery()
+        // 仅查询主表 ID（不查询全部字段），减少一次性加载到内存的数据量：
+        // 主表关联状态为未关联或部分关联，排除已关联、已强制关闭、已删除
+        List<String> mainIds = lambdaQuery()
+                .select(SoReturnPrestockEntity::getId)
                 .in(SoReturnPrestockEntity::getClaimStatus,
                         PrestockClaimStatusEnum.UNLINKED.getStatus(),
                         PrestockClaimStatusEnum.PARTIAL.getStatus())
                 .eq(SoReturnPrestockEntity::getIsDeleted, false)
-                .list();
-        if (CollUtil.isEmpty(mains)) {
+                .list()
+                .stream().map(SoReturnPrestockEntity::getId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainIds)) {
             log.info("[预入库单强制关闭]无待处理的未认领预入库单");
             return 0;
         }
-        List<String> mainIds = mains.stream().map(SoReturnPrestockEntity::getId).collect(Collectors.toList());
 
         LocalDateTime now = LocalDateTime.now();
         int processedCount = 0;
-        // 分批处理，控制 in 参数规模与批量更新粒度
+        // 分批处理，控制 in 参数规模与批量更新粒度；通过自注入代理调用，使每批在独立事务中提交，
+        // 避免所有批次共用同一个长事务导致锁持有时间过长
         for (List<String> batchIds : ListUtil.split(mainIds, FORCE_CLOSE_BATCH_SIZE)) {
-            processedCount += forceCloseBatch(batchIds, now);
+            processedCount += self.forceCloseBatch(batchIds, now);
         }
         log.info("[预入库单强制关闭]本次处理预入库单数量：{}", processedCount);
         return processedCount;
@@ -1137,10 +1176,16 @@ public class SoReturnPrestockServiceImpl
     /**
      * 强制关闭一批预入库单：将其下「未关联」明细行 claim_status 置为「强制关闭」（已关联明细不变），
      * 再按明细最新关联状态重算并批量回写主表关联状态。均为集合式批量更新，避免逐行查改。
+     * <p>独立标注事务并通过 {@code self} 代理调用（见 {@link #forceCloseUnclaimedPrestock}），
+     * 使每批在自己的事务中提交，避免分批循环全部处于同一个长事务内。</p>
      *
+     * @param mainIds     本批处理的预入库单主表 ID
+     * @param operateTime 本次强制关闭操作的统一操作时间
      * @return 本批处理的预入库单数量
      */
-    private int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime) {
         // 明细：仅将「未关联」行强制关闭，已关联行保持不变
         soReturnPrestockDetailService.lambdaUpdate()
                 .in(SoReturnPrestockDetailEntity::getMainId, mainIds)

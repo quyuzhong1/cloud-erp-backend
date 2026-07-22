@@ -1143,6 +1143,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             int mustQtyLeft = mustQty;
             int receiveQtyLeft = receiveQty;
             int realQtyLeft = realQty;
+            // 记录本行最后一次分配产生的入库明细，用于在应退数量分配完毕后补齐按比例向下取整产生的舍入余数
+            SoReturnInstockDetailEntity lastInstockDetail = null;
             for (ReturnGapDetail candidate : candidates) {
                 if (mustQtyLeft <= 0) {
                     break;
@@ -1175,6 +1177,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 mustQtyLeft -= allocateQty;
                 receiveQtyLeft -= allocateReceiveQty;
                 realQtyLeft -= allocateRealQty;
+                lastInstockDetail = instockDetail;
+            }
+            // 应退数量（mustQty）已在候选间全部分配完毕，但签收/实退数量按比例向下取整可能残留舍入余数，
+            // 此时不会再进入下方"remaining"未匹配分支承接，需补齐到本行最后一条入库明细，保证总量守恒
+            if (mustQtyLeft <= 0 && Objects.nonNull(lastInstockDetail) && (receiveQtyLeft > 0 || realQtyLeft > 0)) {
+                lastInstockDetail.setReceiveQty(lastInstockDetail.getReceiveQty() + receiveQtyLeft);
+                lastInstockDetail.setRealQty(lastInstockDetail.getRealQty() + realQtyLeft);
             }
             if (mustQtyLeft > 0) {
                 PlatformReturnInstockDTO.Detail remainingDetail = new PlatformReturnInstockDTO.Detail();
