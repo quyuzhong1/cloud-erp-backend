@@ -41,6 +41,8 @@ import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.enums.ThirdMappingSystemEnum;
+import com.erp.model.dmp.validator.AfterSaleLogisticsManualOrderGroup;
+import com.erp.model.dmp.validator.AfterSaleLogisticsPlatformOrderGroup;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -100,6 +102,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -187,6 +191,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+
+    @Resource
+    private Validator validator;
 
     private static final String AFTER_SALE_LOCK = "dmp:after:sale";
 
@@ -1826,16 +1833,43 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Override
-    @DistributeLocker(businessType = AFTER_SALE_LOCK, keyName = "ids", waiteTime = 60)
-    public List<BatchResultDTO> logisticsOrder(List<String> ids, AfterSaleDTO.LogisticsOrderDTO dto) {
+    public List<BatchResultDTO> logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto) {
+        validateLogisticsOrderDto(dto);
+        return ApplicationContextUtils.getBean(AfterSaleServiceImpl.class).logisticsOrderWithLock(dto);
+    }
+
+    /**
+     * 寄修物流下单（加分布式锁后执行）：校验通过后按下单方式分流至平台/自行寄出逻辑。
+     *
+     * @param dto 已通过 {@link #validateLogisticsOrderDto} 校验的物流下单入参
+     * @return 各售后单下单结果
+     */
+    @DistributeLocker(businessType = AFTER_SALE_LOCK, keyName = "dto.orderInfoDTOList.id", waiteTime = 60)
+    public List<BatchResultDTO> logisticsOrderWithLock(AfterSaleDTO.LogisticsOrderDTO dto) {
         AfterSaleLogisticsOrderModeEnum orderMode = AfterSaleLogisticsOrderModeEnum.getByCode(dto.getOrderMode());
-        if (orderMode == null) {
-            throw new ServiceException("物流下单方式不正确");
-        }
         if (AfterSaleLogisticsOrderModeEnum.MANUAL.equals(orderMode)) {
             return manualLogisticsOrder(dto);
         }
         return platformLogisticsOrder(dto);
+    }
+
+    /**
+     * 按物流下单方式校验入参：PLATFORM 校验渠道等平台字段，MANUAL 校验自行寄出运单号等字段。
+     *
+     * @param dto 物流下单入参
+     */
+    private void validateLogisticsOrderDto(AfterSaleDTO.LogisticsOrderDTO dto) {
+        AfterSaleLogisticsOrderModeEnum orderMode = AfterSaleLogisticsOrderModeEnum.getByCode(dto.getOrderMode());
+        if (orderMode == null) {
+            throw new ServiceException("物流下单方式不正确");
+        }
+        Class<?> validateGroup = AfterSaleLogisticsOrderModeEnum.MANUAL.equals(orderMode)
+                ? AfterSaleLogisticsManualOrderGroup.class
+                : AfterSaleLogisticsPlatformOrderGroup.class;
+        Set<ConstraintViolation<AfterSaleDTO.LogisticsOrderDTO>> violations = validator.validate(dto, validateGroup);
+        if (CollectionUtils.isNotEmpty(violations)) {
+            throw new ServiceException(violations.iterator().next().getMessage());
+        }
     }
 
     private static final String EXISTING_OUTBOUND_TRACK_MSG = "商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作";

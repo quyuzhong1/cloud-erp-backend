@@ -197,7 +197,7 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
      *
      * @param dto AfterSaleDTO.LogisticsOrderDTO
      */
-    List<BatchResultDTO> logisticsOrder(List<String> ids, AfterSaleDTO.LogisticsOrderDTO dto);
+    List<BatchResultDTO> logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto);
 
     /**
      * 取消物流下单
