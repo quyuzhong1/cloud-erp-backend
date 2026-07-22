@@ -118,6 +118,60 @@
         GROUP BY check_status
     </select>
 
+    <update id="refreshPagingStats">
+        WITH stats AS (
+            SELECT m.id,
+                   COUNT(v.id)::int AS valid_cost_count,
+                   (COUNT(v.id) FILTER (WHERE v.match_status = 'matched'))::int AS match_count,
+                   COALESCE(SUM(v.local_amount) FILTER (WHERE v.match_status = 'matched'), 0) AS match_success_amount,
+                   COALESCE(SUM(v.local_amount) FILTER (WHERE v.match_status = 'failed'), 0) AS match_fail_amount,
+                   COUNT(v.id)::int AS reconciliation_total_count,
+                   (COUNT(v.id) FILTER (WHERE v.reconciliation_status = 'confirmed'))::int
+                       AS reconciliation_confirmed_count,
+                   (COUNT(v.id) FILTER (WHERE v.reconciliation_status = 'partialConfirm'))::int
+                       AS reconciliation_partial_count
+            FROM logistics_recon m
+            LEFT JOIN (
+                SELECT sub.id,
+                       sub.main_id,
+                       sub.match_status,
+                       sub.local_amount,
+                       sub.reconciliation_status
+                FROM logistics_recon_detail_sub sub
+                INNER JOIN logistics_recon_detail d
+                    ON d.id = sub.detail_id
+                   AND d.is_deleted = false
+                   AND d.main_id = sub.main_id
+                WHERE sub.is_deleted = false
+                  AND sub.main_id = #{mainId}
+            ) v ON v.main_id = m.id
+            WHERE m.id = #{mainId}
+              AND m.is_deleted = false
+            GROUP BY m.id
+        )
+        UPDATE logistics_recon m
+        SET cost_count = stats.valid_cost_count,
+            match_count = stats.match_count,
+            match_success_amount = stats.match_success_amount,
+            match_fail_amount = stats.match_fail_amount,
+            reconciliation_status = CASE
+                WHEN stats.reconciliation_total_count &lt;= 0
+                    OR (stats.reconciliation_confirmed_count &lt;= 0
+                        AND stats.reconciliation_partial_count &lt;= 0)
+                    THEN 'toBeConfirm'
+                WHEN stats.reconciliation_confirmed_count &gt;= stats.reconciliation_total_count
+                    THEN 'confirmed'
+                ELSE 'partialConfirm'
+            END,
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName},
+            version = COALESCE(version, 0) + 1,
+            update_time = NOW()
+        FROM stats
+        WHERE m.id = stats.id
+          AND m.is_deleted = false
+    </update>
+
     <update id="applyMatchStatsDelta">
         UPDATE logistics_recon
         SET match_count = COALESCE(match_count, 0) + #{matchCountDelta},
@@ -135,6 +189,9 @@
                   AND sub.is_deleted = false
                   AND sub.match_status = 'failed'
             ), 0),
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName},
+            version = COALESCE(version, 0) + 1,
             update_time = NOW()
         WHERE id = #{mainId}
           AND is_deleted = false

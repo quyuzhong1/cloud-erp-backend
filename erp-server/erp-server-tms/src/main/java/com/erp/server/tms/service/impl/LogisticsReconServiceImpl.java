@@ -734,7 +734,7 @@ public class LogisticsReconServiceImpl
         }
         updateChain.update();
         // 重导可能保留已匹配/已确认费用项，禁止盲目清零；按库内实际聚合回刷列表冗余
-        refreshMainPagingStats(mainId);
+        refreshMainPagingStatsWithLock(mainId);
     }
 
     /**
@@ -2061,7 +2061,7 @@ public class LogisticsReconServiceImpl
             if (locked && isConfirm) {
                 try {
                     // 确认匹配会改 detail_sub.reconciliation_status，持锁全量回刷；失败上抛避免静默不准
-                    refreshMainPagingStats(mainId);
+                    refreshMainPagingStatsWithLock(mainId);
                 } catch (RuntimeException ex) {
                     log.error("[processMatchBatch] 回刷主表统计失败 mainId={}", mainId, ex);
                     refreshError = ex;
@@ -2253,7 +2253,7 @@ public class LogisticsReconServiceImpl
             RuntimeException refreshError = null;
             if (isConfirm) {
                 try {
-                    refreshMainPagingStats(mainId);
+                    refreshMainPagingStatsWithLock(mainId);
                 } catch (RuntimeException ex) {
                     log.error("[asyncClaimAndMatchByMain] 回刷主表统计失败 mainId={}", mainId, ex);
                     refreshError = ex;
@@ -2360,34 +2360,50 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(scopeSubIds)) {
             return;
         }
-        LogisticsReconEntity entity = super.getByIdOpt(mainId)
-                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
-        if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
-        }
-        List<String> sortedScope = scopeSubIds.stream().filter(StrUtil::isNotBlank).distinct().sorted()
-                .collect(Collectors.toList());
-        // 整单级预加载：导入配置 + 币别/汇率/费用配置对同一对账单不变，仅加载一次供各分片复用。
-        LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
-        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = resolveUniqueKeyList(preload);
-        // 先在 scope 内按识别组补齐同组成员，再打包分片（单组不拆分）
-        List<String> groupedScope = expandSubIdsByIdentifyGroup(mainId, sortedScope, sortedScope, uniqueKeyList);
-        Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, groupedScope, uniqueKeyList);
-        List<List<String>> chunks = packSubIdsByIdentifyGroup(
-                mainId, groupedScope, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
-        for (List<String> chunk : chunks) {
-            try {
-                self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
-            } catch (Exception e) {
-                String reason = resolveMatchChunkFailureReason(chunk, e);
-                log.error("[doMatchByMain] 分片匹配失败 mainId={} chunkSize={} nonRetryable={}",
-                        mainId, chunk.size(),
-                        LogisticsReconMatchFailReasonSupport.isNonRetryable(reason), e);
-                self.markReconMatchFailed(mainId, chunk, reason);
+        RLock lock = redissonClient.getLock(buildReconMainLockKey(mainId));
+        boolean locked = false;
+        try {
+            locked = tryLockReconMain(lock, mainId, "doMatchByMain");
+            if (!locked) {
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
-        }
-        if (isConfirm) {
-            refreshMainPagingStats(mainId);
+            LogisticsReconEntity entity = super.getByIdOpt(mainId)
+                    .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
+            if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
+            }
+            List<String> sortedScope = scopeSubIds.stream().filter(StrUtil::isNotBlank).distinct().sorted()
+                    .collect(Collectors.toList());
+            // 整单级预加载：导入配置 + 币别/汇率/费用配置对同一对账单不变，仅加载一次供各分片复用。
+            LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
+            List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = resolveUniqueKeyList(preload);
+            // 先在 scope 内按识别组补齐同组成员，再打包分片（单组不拆分）
+            List<String> groupedScope = expandSubIdsByIdentifyGroup(mainId, sortedScope, sortedScope, uniqueKeyList);
+            Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, groupedScope, uniqueKeyList);
+            List<List<String>> chunks = packSubIdsByIdentifyGroup(
+                    mainId, groupedScope, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
+            for (List<String> chunk : chunks) {
+                try {
+                    self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
+                } catch (Exception e) {
+                    String reason = resolveMatchChunkFailureReason(chunk, e);
+                    log.error("[doMatchByMain] 分片匹配失败 mainId={} chunkSize={} nonRetryable={}",
+                            mainId, chunk.size(),
+                            LogisticsReconMatchFailReasonSupport.isNonRetryable(reason), e);
+                    self.markReconMatchFailed(mainId, chunk, reason);
+                }
+            }
+            if (isConfirm) {
+                refreshMainPagingStatsWithLock(mainId);
+            }
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception e) {
+                    log.error("[doMatchByMain] 释放主单锁失败 mainId={}", mainId, e);
+                }
+            }
         }
     }
 
@@ -4100,12 +4116,12 @@ public class LogisticsReconServiceImpl
                 Set<String> refreshSubIds = new LinkedHashSet<>(batchSubIdSet);
                 refreshSubIds.addAll(listDetailSubIdsByCostIds(mainId, eligibleCostIds));
                 self.refreshDetailSubReconciliationStatusInTx(mainId, refreshSubIds);
-                refreshMainPagingStats(mainId);
+                refreshMainPagingStatsWithLock(mainId);
                 self.syncReconStatusByCostIds(eligibleCostIds, mainId);
             } else {
                 // 本批无可更新 cost：仍刷新本批聚合状态（可能已被同主单其它批次/共享费用单连带确认）
                 self.refreshDetailSubReconciliationStatusInTx(mainId, batchSubIdSet);
-                refreshMainPagingStats(mainId);
+                refreshMainPagingStatsWithLock(mainId);
             }
             Map<String, LogisticsReconDetailSubEntity> subStatusMap = logisticsReconDetailSubService.lambdaQuery()
                     .select(LogisticsReconDetailSubEntity::getId,
@@ -5270,7 +5286,9 @@ public class LogisticsReconServiceImpl
             return;
         }
         BigDecimal successDelta = stats.getMatchedAmount() == null ? BigDecimal.ZERO : stats.getMatchedAmount();
-        int updated = baseMapper.applyMatchStatsDelta(mainId, stats.getMatchedCount(), successDelta);
+        LoginUser updateUser = UserContext.getDefaultLoginUser();
+        int updated = baseMapper.applyMatchStatsDelta(mainId, stats.getMatchedCount(), successDelta,
+                updateUser.getUid(), updateUser.getUserName());
         if (updated <= 0) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
         }
@@ -5312,38 +5330,10 @@ public class LogisticsReconServiceImpl
             return;
         }
         try {
-            List<LogisticsReconDTO.PagingStatsDTO> statsList =
-                    logisticsReconDetailSubService.listPagingStatsByMainIds(Collections.singletonList(mainId));
-            LogisticsReconDTO.PagingStatsDTO stats = CollUtil.isEmpty(statsList) ? null : statsList.get(0);
-            int validCostCount = stats == null || stats.getValidCostCount() == null ? 0 : stats.getValidCostCount();
-            int matchCount = stats == null || stats.getMatchCount() == null ? 0 : stats.getMatchCount();
-            BigDecimal matchSuccessAmount = stats == null || stats.getMatchSuccessAmount() == null
-                    ? BigDecimal.ZERO : stats.getMatchSuccessAmount();
-            BigDecimal matchFailAmount = stats == null || stats.getMatchFailAmount() == null
-                    ? BigDecimal.ZERO : stats.getMatchFailAmount();
-            int reconTotal = stats == null || stats.getReconciliationTotalCount() == null
-                    ? 0 : stats.getReconciliationTotalCount();
-            int reconConfirmed = stats == null || stats.getReconciliationConfirmedCount() == null
-                    ? 0 : stats.getReconciliationConfirmedCount();
-            int reconPartial = stats == null || stats.getReconciliationPartialCount() == null
-                    ? 0 : stats.getReconciliationPartialCount();
-            String reconciliationStatus;
-            if (reconTotal <= 0 || (reconConfirmed <= 0 && reconPartial <= 0)) {
-                reconciliationStatus = LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode();
-            } else if (reconConfirmed >= reconTotal) {
-                reconciliationStatus = LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode();
-            } else {
-                reconciliationStatus = LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode();
-            }
-            boolean updated = lambdaUpdate()
-                    .eq(LogisticsReconEntity::getId, mainId)
-                    .set(LogisticsReconEntity::getCostCount, validCostCount)
-                    .set(LogisticsReconEntity::getMatchCount, matchCount)
-                    .set(LogisticsReconEntity::getMatchSuccessAmount, matchSuccessAmount)
-                    .set(LogisticsReconEntity::getMatchFailAmount, matchFailAmount)
-                    .set(LogisticsReconEntity::getReconciliationStatus, reconciliationStatus)
-                    .update();
-            if (!updated) {
+            LoginUser updateUser = UserContext.getDefaultLoginUser();
+            int updated = baseMapper.refreshPagingStats(mainId,
+                    updateUser.getUid(), updateUser.getUserName());
+            if (updated <= 0) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
             }
         } catch (ServiceException e) {
