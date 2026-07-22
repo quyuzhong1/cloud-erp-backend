@@ -22,6 +22,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -288,6 +289,14 @@ public class SoReturnPrestockServiceImpl
         List<SoReturnPrestockDetailEntity> newRows = new ArrayList<>();
         for (SoReturnPrestockDetailDTO.AfterSaleItem item : dto.getAfterSaleList()) {
             allocateAfterSaleItem(skuRowQueue.get(item.getSkuNo()), item, linkedPairs, newRows);
+        }
+
+        // 关联售后单会回填 skuId；回填后仍为空则禁止进入退货入库/库存联动，要求运营先维护映射
+        for (LinkedDetailPair pair : linkedPairs) {
+            if (CharSequenceUtil.isBlank(pair.detail.getSkuId())) {
+                throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_SKU_REQUIRED,
+                        CharSequenceUtil.emptyToDefault(pair.detail.getSkuNo(), pair.detail.getId()));
+            }
         }
 
         // 联动处理：为本次已关联的 SKU 按售后单分组生成《退货入库单》，并把生成的入库单号回写到对应明细行（内存）
@@ -561,6 +570,16 @@ public class SoReturnPrestockServiceImpl
                 results.add(BatchResultDTO.fail(main.getId(), main.getCode(), "无可关联的明细行（均已关联或已强制关闭）"));
                 continue;
             }
+            // 空 skuId 明细不允许进入关联店铺→退货入库/库存联动，需运营先维护内部SKU映射
+            SoReturnPrestockDetailEntity blankSkuDetail = unlinked.stream()
+                    .filter(d -> CharSequenceUtil.isBlank(d.getSkuId()))
+                    .findFirst().orElse(null);
+            if (Objects.nonNull(blankSkuDetail)) {
+                results.add(BatchResultDTO.fail(main.getId(), main.getCode(),
+                        MessageUtils.getMessage(ApiError.SO_RETURN_PRESTOCK_SKU_REQUIRED,
+                                CharSequenceUtil.emptyToDefault(blankSkuDetail.getSkuNo(), blankSkuDetail.getId()))));
+                continue;
+            }
             // 整单关联：每条未关联明细行默认整行数量全部关联到本次选定的同一店铺（不拆行）
             List<LinkedShopPair> linkedPairs = new ArrayList<>(unlinked.size());
             for (SoReturnPrestockDetailEntity detail : unlinked) {
@@ -700,7 +719,8 @@ public class SoReturnPrestockServiceImpl
 
     /**
      * 为预入库单指定的明细行生成一张普通(增库存)其他入库单占位并直接已审核，写法参照
-     * {@code generateOtherInstockForPrestock}（预入库单创建时生成占位入库的范式）。明细行为空时不生成。
+     * {@code generateOtherInstockForPrestock}（预入库单创建时生成占位入库的范式）。
+     * 明细行为空时不生成；仅对已解析出内部 skuId 的行组单，空 skuId 行与创建路径一致跳过，避免进入库存核心。
      *
      * @param dept 已由调用方预取的仓储兜底部门，作为占位单归属部门，避免在此方法内重复发起 Feign 调用
      */
@@ -709,7 +729,19 @@ public class SoReturnPrestockServiceImpl
         if (CollUtil.isEmpty(details)) {
             return;
         }
-        Map<String, SkuVO> skuVOMap = listSkuVOMap(details.stream()
+        List<SoReturnPrestockDetailEntity> validDetails = details.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toList());
+        if (validDetails.isEmpty()) {
+            log.warn("[预入库单未关联占位其他入库单]全部明细行均未解析到内部SKU，跳过生成：预入库单={}，原行数={}",
+                    main.getCode(), details.size());
+            return;
+        }
+        if (validDetails.size() < details.size()) {
+            log.warn("[预入库单未关联占位其他入库单]部分明细行未解析到内部SKU，未计入本次库存联动：预入库单={}，总行数={}，已联动行数={}",
+                    main.getCode(), details.size(), validDetails.size());
+        }
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(validDetails.stream()
                 .map(SoReturnPrestockDetailEntity::getSkuId).collect(Collectors.toList()));
 
         OtherInstockEntity entity = new OtherInstockEntity();
@@ -731,7 +763,7 @@ public class SoReturnPrestockServiceImpl
         entity.setRemark(CharSequenceUtil.format("预入库单【{}】关联店铺后未关联SKU自动占位", main.getCode()));
 
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
-        for (SoReturnPrestockDetailEntity d : details) {
+        for (SoReturnPrestockDetailEntity d : validDetails) {
             SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
             detailEntity.setSkuId(d.getSkuId());
@@ -807,6 +839,12 @@ public class SoReturnPrestockServiceImpl
             }
             if (PrestockClaimStatusEnum.FORCE_CLOSE.getStatus().equals(detail.getClaimStatus())) {
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已强制关闭，不可再关联");
+            }
+            if (CharSequenceUtil.isBlank(detail.getSkuId())) {
+                return BatchResultDTO.fail(detail.getId(),
+                        CharSequenceUtil.emptyToDefault(detail.getSkuNo(), detail.getId()),
+                        MessageUtils.getMessage(ApiError.SO_RETURN_PRESTOCK_SKU_REQUIRED,
+                                CharSequenceUtil.emptyToDefault(detail.getSkuNo(), detail.getId())));
             }
             int receivedQty = Objects.nonNull(detail.getReceivedQty()) ? detail.getReceivedQty() : 0;
             int claimQty = Objects.nonNull(item.getClaimedQty()) ? item.getClaimedQty() : receivedQty;

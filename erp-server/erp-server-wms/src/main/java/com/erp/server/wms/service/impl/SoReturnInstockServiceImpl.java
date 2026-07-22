@@ -1240,7 +1240,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     /**
      * 批量取B2B/B2C候选售后单明细，按已审核入库数量计算剩余缺口（缺口<=0的行剔除），
-     * 按售后单创建时间升序排列，保证同SKU多候选场景下的分配顺序确定
+     * 跨B2B/B2C全局按售后单创建时间升序排列（createTime → mainId → detailId），
+     * 保证同SKU多候选场景下的分配顺序与业务口径一致，不再因分段收集导致B2B整体优先于B2C。
      */
     private List<ReturnGapDetail> buildReturnGapDetails(List<SoReturnEntity> b2bReturnList, List<SoB2cReturnEntity> b2cReturnList) {
         List<ReturnGapDetail> result = new ArrayList<>();
@@ -1252,24 +1253,25 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         b2bDetailList.stream().map(SoReturnDetailEntity::getId).collect(Collectors.toList()));
                 Map<String, LocalDateTime> mainCreateTimeMap = b2bReturnList.stream()
                         .collect(Collectors.toMap(SoReturnEntity::getId, SoReturnEntity::getCreateTime, (a, b) -> a));
-                b2bDetailList.stream()
-                        .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
-                        .sorted(Comparator.comparing((SoReturnDetailEntity d) -> mainCreateTimeMap.getOrDefault(d.getMainId(), LocalDateTime.MAX)))
-                        .forEach(d -> {
-                            int returnQty = Objects.nonNull(d.getReturnQty()) ? d.getReturnQty() : 0;
-                            int gap = returnQty - instockQtyMap.getOrDefault(d.getId(), 0);
-                            if (gap > 0) {
-                                ReturnGapDetail gapDetail = new ReturnGapDetail();
-                                gapDetail.mainId = d.getMainId();
-                                gapDetail.detailId = d.getId();
-                                gapDetail.skuId = d.getSkuId();
-                                gapDetail.gapQty = gap;
-                                // B2B退货类型/原因取自退货单明细
-                                gapDetail.returnTypeDict = d.getReturnTypeDict();
-                                gapDetail.returnReasonDict = d.getReturnReasonDict();
-                                result.add(gapDetail);
-                            }
-                        });
+                for (SoReturnDetailEntity d : b2bDetailList) {
+                    if (CharSequenceUtil.isBlank(d.getSkuId())) {
+                        continue;
+                    }
+                    int returnQty = Objects.nonNull(d.getReturnQty()) ? d.getReturnQty() : 0;
+                    int gap = returnQty - instockQtyMap.getOrDefault(d.getId(), 0);
+                    if (gap > 0) {
+                        ReturnGapDetail gapDetail = new ReturnGapDetail();
+                        gapDetail.mainId = d.getMainId();
+                        gapDetail.detailId = d.getId();
+                        gapDetail.skuId = d.getSkuId();
+                        gapDetail.gapQty = gap;
+                        gapDetail.createTime = mainCreateTimeMap.get(d.getMainId());
+                        // B2B退货类型/原因取自退货单明细
+                        gapDetail.returnTypeDict = d.getReturnTypeDict();
+                        gapDetail.returnReasonDict = d.getReturnReasonDict();
+                        result.add(gapDetail);
+                    }
+                }
             }
         }
         if (CollUtil.isNotEmpty(b2cReturnList)) {
@@ -1283,29 +1285,35 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 // B2C退货类型/原因在售后单主表上，按 mainId 取用
                 Map<String, SoB2cReturnEntity> b2cReturnMap = b2cReturnList.stream()
                         .collect(Collectors.toMap(SoB2cReturnEntity::getId, Function.identity(), (a, b) -> a));
-                b2cDetailList.stream()
-                        .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
-                        .sorted(Comparator.comparing((SoB2cReturnDetailDTO.ViewDTO d) -> mainCreateTimeMap.getOrDefault(d.getMainId(), LocalDateTime.MAX)))
-                        .forEach(d -> {
-                            int returnQty = Objects.nonNull(d.getReturnQty()) ? d.getReturnQty() : 0;
-                            int gap = returnQty - instockQtyMap.getOrDefault(d.getId(), 0);
-                            if (gap > 0) {
-                                ReturnGapDetail gapDetail = new ReturnGapDetail();
-                                gapDetail.mainId = d.getMainId();
-                                gapDetail.detailId = d.getId();
-                                gapDetail.skuId = d.getSkuId();
-                                gapDetail.gapQty = gap;
-                                // B2C退货类型/原因取自售后单主表（type/reason）
-                                SoB2cReturnEntity b2cReturn = b2cReturnMap.get(d.getMainId());
-                                if (Objects.nonNull(b2cReturn)) {
-                                    gapDetail.returnTypeDict = b2cReturn.getType();
-                                    gapDetail.returnReasonDict = b2cReturn.getReason();
-                                }
-                                result.add(gapDetail);
-                            }
-                        });
+                for (SoB2cReturnDetailDTO.ViewDTO d : b2cDetailList) {
+                    if (CharSequenceUtil.isBlank(d.getSkuId())) {
+                        continue;
+                    }
+                    int returnQty = Objects.nonNull(d.getReturnQty()) ? d.getReturnQty() : 0;
+                    int gap = returnQty - instockQtyMap.getOrDefault(d.getId(), 0);
+                    if (gap > 0) {
+                        ReturnGapDetail gapDetail = new ReturnGapDetail();
+                        gapDetail.mainId = d.getMainId();
+                        gapDetail.detailId = d.getId();
+                        gapDetail.skuId = d.getSkuId();
+                        gapDetail.gapQty = gap;
+                        gapDetail.createTime = mainCreateTimeMap.get(d.getMainId());
+                        // B2C退货类型/原因取自售后单主表（type/reason）
+                        SoB2cReturnEntity b2cReturn = b2cReturnMap.get(d.getMainId());
+                        if (Objects.nonNull(b2cReturn)) {
+                            gapDetail.returnTypeDict = b2cReturn.getType();
+                            gapDetail.returnReasonDict = b2cReturn.getReason();
+                        }
+                        result.add(gapDetail);
+                    }
+                }
             }
         }
+        // 跨B2B/B2C全局排序，保证同SKU分配时早创建的售后单优先，而非B2B整体排在B2C之前
+        result.sort(Comparator
+                .comparing((ReturnGapDetail g) -> g.createTime, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(g -> g.mainId, Comparator.nullsLast(String::compareTo))
+                .thenComparing(g -> g.detailId, Comparator.nullsLast(String::compareTo)));
         return result;
     }
 
@@ -1494,6 +1502,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String detailId;
         String skuId;
         int gapQty;
+        /** 售后单主表创建时间，用于跨B2B/B2C全局按创建时间升序分配 */
+        LocalDateTime createTime;
         /** 匹配到的售后单退货类型字典值（B2B取明细，B2C取售后单主表 type），用于回写退货入库单明细 */
         String returnTypeDict;
         /** 匹配到的售后单退货原因字典值（B2B取明细，B2C取售后单主表 reason），用于回写退货入库单明细 */

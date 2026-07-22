@@ -452,4 +452,5 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}】实际收货数量不可<累计的剩余应退货数量");
     public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
     public static final ApiError SO_RETURN_PRESTOCK_REAL_QTY_INVALID = new ApiError("SO_RETURN_PRESTOCK_REAL_QTY_INVALID", 10808, "实退数量必须大于0：{0}");
+    public static final ApiError SO_RETURN_PRESTOCK_SKU_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_SKU_REQUIRED", 10809, "明细行未解析到内部SKU，请先维护SKU映射后再关联：{0}");
 }
