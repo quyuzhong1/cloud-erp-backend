@@ -34,29 +34,24 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.tms.dto.ImportHistoryRecordDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsReconMatchDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
-import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
-import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
-import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
-import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
-import com.erp.server.tms.util.LogisticsCostImportMatchHelper;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
 import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
 import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
+import com.erp.server.tms.util.LogisticsCostImportMatchHelper;
+import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -77,8 +72,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,7 +110,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     /**
      * 对账匹配落库分片大小，避免单事务过大。
      */
-    private static final int RECON_MATCH_PERSIST_BATCH_SIZE = 150;
+    private static final int RECON_MATCH_PERSIST_BATCH_SIZE = 1000;
 
     /**
      * 识别组并行计算时，每个线程任务处理的识别组数量（与导入纵向/横向分组批大小对齐）。

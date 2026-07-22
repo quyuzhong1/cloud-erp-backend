@@ -114,11 +114,34 @@ public class LogisticsReconEntity extends BaseEntity<LogisticsReconEntity> {
 
     /**
      * 对账总金额（本位币：logistics_recon_detail_sub.local_amount 求和）
-     * 说明：匹配状态 match_status / 已匹配行数 match_count 不在主表冗余存储，
-     * 由列表/详情查询时实时聚合 logistics_recon_detail 派生，避免明细海量数据下每次匹配回写主表。
      */
     @TableField("total_amount")
     private BigDecimal totalAmount;
+
+    /**
+     * 已匹配费用项数（冗余：listPagingStats.matchCount；匹配批次结束后回刷）
+     */
+    @TableField("match_count")
+    private Integer matchCount;
+
+    /**
+     * 匹配成功金额（冗余：matched 费用项 local_amount 之和）
+     */
+    @TableField("match_success_amount")
+    private BigDecimal matchSuccessAmount;
+
+    /**
+     * 匹配失败金额（冗余：failed 费用项 local_amount 之和）
+     */
+    @TableField("match_fail_amount")
+    private BigDecimal matchFailAmount;
+
+    /**
+     * 对账确认状态汇总（冗余：toBeConfirm / partialConfirm / confirmed）
+     * 枚举：LogisticsReconReconciliationStatusEnum
+     */
+    @TableField("reconciliation_status")
+    private String reconciliationStatus;
 
     /**
      * 总金额币别（多币别则空）
@@ -165,6 +188,10 @@ public class LogisticsReconEntity extends BaseEntity<LogisticsReconEntity> {
     public static final String IMPORT_COUNT = "import_count";
     public static final String COST_COUNT = "cost_count";
     public static final String TOTAL_AMOUNT = "total_amount";
+    public static final String MATCH_COUNT = "match_count";
+    public static final String MATCH_SUCCESS_AMOUNT = "match_success_amount";
+    public static final String MATCH_FAIL_AMOUNT = "match_fail_amount";
+    public static final String RECONCILIATION_STATUS = "reconciliation_status";
     public static final String CURRENCY = "currency";
     public static final String CHECK_USER_ID = "check_user_id";
     public static final String CHECK_USER_NAME = "check_user_name";

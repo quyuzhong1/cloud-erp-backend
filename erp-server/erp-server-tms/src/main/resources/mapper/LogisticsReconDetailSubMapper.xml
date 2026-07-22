@@ -50,7 +50,7 @@
           AND d.main_id = #{mainId}
     </select>
 
-    <!-- 按主表 id 批量聚合有效费用项统计（与原 paging 子查询口径一致，仅限定当前页） -->
+    <!-- 按主表 id 聚合有效费用项统计，供 refreshMainPagingStats 回刷主表冗余字段 -->
     <select id="listPagingStatsByMainIds"
             resultType="com.erp.model.tms.dto.LogisticsReconDTO$PagingStatsDTO">
         SELECT d.main_id AS mainId,
