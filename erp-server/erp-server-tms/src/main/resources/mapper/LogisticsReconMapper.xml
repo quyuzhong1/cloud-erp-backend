@@ -193,7 +193,7 @@
                     ON d.id = sub.detail_id
                    AND d.is_deleted = false
                    AND d.main_id = sub.main_id
-                WHERE sub.main_id = logistics_recon.id
+                WHERE sub.main_id = m.id
                   AND sub.is_deleted = false
                   AND sub.match_status = 'failed'
             ), 0),
