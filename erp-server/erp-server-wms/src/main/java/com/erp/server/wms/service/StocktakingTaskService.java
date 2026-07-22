@@ -170,6 +170,35 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     void releaseInventoryLockByPlanCode(String planCode);
 
     /**
+     * 在 planCode 分布式锁内按任务释锁，与下推加锁共用同一互斥键，避免「查引用→删锁」与「新任务复用锁」竞态。
+     * 须经 Spring 代理调用以触发 {@code @DistributeLocker}。
+     *
+     * @param planCode 计划单号
+     * @param taskId   任务 id
+     */
+    void releaseInventoryLockByTaskUnderPlanLock(String planCode, String taskId);
+
+    /**
+     * 在 planCode 分布式锁内释放计划全部 Redis 库存锁；须经 Spring 代理调用。
+     *
+     * @param planCode 计划单号
+     */
+    void releaseInventoryLockByPlanCodeUnderPlanLock(String planCode);
+
+    /**
+     * 在 planCode 分布式锁内完成盘点库存加锁、任务落库与 task-keys 索引注册（下推统一入口）。
+     * <p>
+     * 事务边界：plan 锁随本方法返回释放，外层 {@code createTaskList} DB 事务可能尚未 commit；不使用 {@code unlockAfterTx}，
+     * 避免大计划下推长临界区阻塞同 plan 释锁。下推主路径必须使用本方法，勿直接调用 {@link #acquireStocktakingInventoryLocks}。
+     * 须经 Spring 代理调用以触发 {@code @DistributeLocker}。
+     *
+     * @param planCode      计划单号
+     * @param entity        盘点计划
+     * @param inventoryList 待盘点库存行（已查询）
+     */
+    void createStocktakingTasksUnderPlanLock(String planCode, StocktakingPlanEntity entity, List<InventoryEntity> inventoryList);
+
+    /**
      * 判断指定库存维度是否已被其它盘点计划占用（同 planCode 的锁不计入冲突）。
      *
      * @param planCode             当前计划单号；为空时任意已存在锁均视为占用
@@ -184,6 +213,9 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
 
     /**
      * 在库存维度分布式锁内执行盘点 Redis 库存锁预检与写入（须通过 Spring 代理调用以触发 {@code @DistributeLocker}）。
+     * <p>
+     * <b>非下推主路径：</b>盘点计划下推须使用 {@link #createStocktakingTasksUnderPlanLock}（含 plan 级互斥）；
+     * 本方法仅维度锁，无 planCode 互斥，勿用于 {@code createTaskList} 链路。
      *
      * @param planCode      计划单号
      * @param inventoryList 待加锁库存行
@@ -203,7 +235,8 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     /**
      * 大计划分批加锁：planCode 分布式锁覆盖全部分批过程，各批内再调用 {@link #acquireStocktakingInventoryLocksAfterValidated(String, List)} 获取维度 MultiLock。
      * <p>
-     * 维度数超过实现类阈值时由 {@code lockInventoryForStocktaking} 经 Spring 代理调用。
+     * <b>非下推主路径：</b>盘点计划下推须使用 {@link #createStocktakingTasksUnderPlanLock}；
+     * 本方法不含任务落库与 task-keys 注册，仅保留供 legacy/单独加锁场景。
      *
      * @param planCode      计划单号
      * @param inventoryList 待加锁库存行（库位已规范化）
