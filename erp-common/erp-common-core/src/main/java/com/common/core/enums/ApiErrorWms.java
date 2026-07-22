@@ -434,6 +434,7 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED", 10788, "退货入库单生成失败，无法审核");
     public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_SUBMIT_FAILED = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_SUBMIT_FAILED", 10789, "退货入库单提交失败：{0}");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_GROUP_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_GROUP_EXCEEDS", 10790, "本次关联涉及店铺数量过多（{0}个），单次事务内生成退货入库单数量超限，请分批关联");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_BATCH_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_BATCH_EXCEEDS", 10809, "本次批量关联预入库单数量过多（{0}张），单次全局事务超限，请分批关联（单次最多{1}张）");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_REQUIRED", 10791, "关联店铺不能为空");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_CUSTOMER_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_LINK_CUSTOMER_REQUIRED", 10803, "关联客户不能为空");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_NOT_FOUND = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_NOT_FOUND", 10792, "关联店铺不存在：{0}");

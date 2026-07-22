@@ -64,7 +64,8 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * 批量关联店铺
      * <p>入参 ids 为预入库单主表 ID 列表，将多张预入库单下未关联的明细行整行关联到同一店铺。
      * B2B 与 B2C 关联的店铺不同，因此校验本次所选预入库单的单据类型必须一致，混合类型则整批拒绝。
-     * 更新明细行的店铺信息与关联状态，并联动刷新主表的关联状态。</p>
+     * 更新明细行的店铺信息与关联状态，并联动刷新主表的关联状态。
+     * 单次去重后预入库单数量有硬上限（超过则整批拒绝并提示分批），以避免超长全局事务超时回滚。</p>
      *
      * @param dto 批量关联店铺入参
      * @return 每张预入库单的操作结果
@@ -87,14 +88,6 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * @return 操作结果
      */
     BatchResultDTO confirmLinkShop(SoReturnPrestockDetailDTO.ConfirmLinkShop dto);
-
-    /**
-     * 批量删除预入库单（软删）
-     *
-     * @param ids 主表 ID 列表
-     * @return 批量结果
-     */
-    List<BatchResultDTO> deleteByIds(List<String> ids);
 
     /**
      * 按第三方/平台退货单号查询全部未删除预入库单（用于海外仓消息重试时与退货入库单一并做明细缺口对账）。

@@ -81,6 +81,14 @@ public class SoReturnPrestockServiceImpl
     private static final int LINK_GROUP_MAX_SIZE = 50;
 
     /**
+     * 批量关联店铺（linkShop）单次允许处理的预入库单数量上限。
+     * linkShop 在同一个 {@code @GlobalTransactional} 内逐张生成/审核退货入库单并做其他入库平账，
+     * 外层 mains 数量不受 {@link #LINK_GROUP_MAX_SIZE} 约束（该常量只限单张单内店铺分组数）；
+     * 超过本阈值直接拒绝并提示分批，避免 120s 超时整批回滚与长时间持锁。
+     */
+    private static final int LINK_SHOP_BATCH_MAX_SIZE = 50;
+
+    /**
      * 确认关联循环耗时告警阈值（毫秒），超过该阈值仅记录警告日志，便于后续评估是否需要拆分事务，不阻断业务
      */
     private static final long LINK_LOOP_WARN_THRESHOLD_MS = 3000L;
@@ -507,6 +515,11 @@ public class SoReturnPrestockServiceImpl
         if (CollUtil.isEmpty(distinctIds)) {
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "预入库单");
         }
+        // 写操作前硬限制：单全局事务内逐张预入库单都会生成退货入库单并平账，数量过大易超时整批回滚
+        if (distinctIds.size() > LINK_SHOP_BATCH_MAX_SIZE) {
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_LINK_SHOP_BATCH_EXCEEDS,
+                    distinctIds.size(), LINK_SHOP_BATCH_MAX_SIZE);
+        }
 
         // 批量查询主表（MyBatis-Plus 逻辑删除自动过滤已软删数据）
         List<SoReturnPrestockEntity> mains = listByIds(distinctIds);
@@ -929,8 +942,8 @@ public class SoReturnPrestockServiceImpl
         // 避免 resolveLinkCustomerId 在循环内逐组发起单条 Feign 查询（B2B 无需查店铺，返回空 Map）
         Map<String, ShopInfoEntity> shopInfoMap = isB2b ? Collections.emptyMap()
                 : listShopInfoMap(pairsByShop.values().stream()
-                        .map(pairs -> pairs.get(0).item.getShopId())
-                        .collect(Collectors.toList()));
+                .map(pairs -> pairs.get(0).item.getShopId())
+                .collect(Collectors.toList()));
         long loopStart = System.currentTimeMillis();
         for (List<LinkedShopPair> pairs : pairsByShop.values()) {
             SoReturnPrestockDetailDTO.ShopItem head = pairs.get(0).item;
@@ -1043,25 +1056,6 @@ public class SoReturnPrestockServiceImpl
             this.detail = detail;
             this.item = item;
         }
-    }
-
-    // ===================== 删除 =====================
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> deleteByIds(List<String> ids) {
-        // 批量删除按整批原子处理：任意一条失败直接抛出异常，交由 @Transactional 整批回滚，
-        // 不再吞异常拼装逐条结果，避免"部分条目标记成功但实际被回滚"的结果与数据库状态不一致问题
-        List<BatchResultDTO> results = new ArrayList<>(ids.size());
-        for (String id : ids) {
-            SoReturnPrestockEntity entity = getByIdOrThrow(id);
-            // 软删主表
-            removeById(entity.getId());
-            // 软删详情行
-            soReturnPrestockDetailService.deleteByMainId(entity.getId());
-            results.add(BatchResultDTO.success(id, entity.getCode()));
-        }
-        return results;
     }
 
     // ===================== 无物流单号+无参考单号自动创建（系统内部） =====================
