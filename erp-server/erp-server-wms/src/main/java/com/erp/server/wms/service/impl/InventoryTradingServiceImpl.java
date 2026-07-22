@@ -111,8 +111,11 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 this.deleteTransactionFlowList(ids);
             }
 
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("库存交易失败", e);
+            throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
         } finally {
             stopwatch.stop();
             // 计时器-结束

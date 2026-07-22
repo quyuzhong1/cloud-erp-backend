@@ -127,7 +127,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      */
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY,
-            keyName = "dto.sourceTypeEnum.code,dto.sourceId", unlockAfterTx = true)
+            keyName = "dto.sourceTypeEnum.code,dto.sourceId", unlockAfterTx = false)
     public void startOrResumeWithLock(WorkflowTaskRecordDTO.AddTaskDTO dto) {
         WorkflowTaskInstanceEntity latest = workflowTaskInstanceService.getLatestBySource(
                 dto.getSourceId(), dto.getSourceTypeEnum().getCode());
@@ -156,6 +156,20 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 return;
             }
             WorkflowTaskRecordEntity currentStep = resolveCurrentStep(latest);
+            // 纠偏/判断仅看当前实例节点，避免 listBySourceId 混入历史实例节点误收口
+            List<WorkflowTaskRecordEntity> instanceSteps = CharSequenceUtil.isNotBlank(latest.getId())
+                    ? this.lambdaQuery()
+                    .eq(WorkflowTaskRecordEntity::getInstanceId, latest.getId())
+                    .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                    .list()
+                    : Collections.emptyList();
+            if (CollUtil.isNotEmpty(instanceSteps)
+                    && instanceSteps.stream().allMatch(e -> WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()))) {
+                int maxIndex = instanceSteps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
+                workflowTaskInstanceService.markSuccess(latest.getId(), maxIndex, instanceSteps.size());
+                log.warn("编排实例节点已全部成功，纠偏实例状态，instanceId={}", latest.getId());
+                return;
+            }
             if (currentStep == null) {
                 log.warn("编排实例无有效节点，instanceId={}", latest.getId());
                 return;
@@ -844,21 +858,29 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             if (CollUtil.isEmpty(steps)) {
                 continue;
             }
+            // 以「是否存在未成功节点」为准收口；仅全部成功时 markSuccess，避免 currentIndex 漂移误收口
+            WorkflowTaskRecordEntity next = steps.stream()
+                    .filter(e -> !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()))
+                    .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
+                    .orElse(null);
+            if (next == null) {
+                int maxIndex = steps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
+                workflowTaskInstanceService.markSuccess(instance.getId(), maxIndex, steps.size());
+                XxlJobHelper.log(StrUtil.format("节点已全部成功，补偿实例状态为成功，instanceId={}", instance.getId()));
+                continue;
+            }
+            // 链式 MQ 补偿仍要求 currentIndex 节点已成功，避免与进行中节点抢调度
             Map<Integer, WorkflowTaskRecordEntity> indexMap = buildIndexTaskMap(steps);
             WorkflowTaskRecordEntity current = indexMap.get(instance.getCurrentIndex());
             if (current == null
                     || !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(current.getStatus())) {
                 continue;
             }
-            int nextIndex = instance.getCurrentIndex() + 1;
-            WorkflowTaskRecordEntity next = indexMap.get(nextIndex);
-            if (next == null) {
-                continue;
-            }
             if (!WorkflowTaskRecordStatusEnum.PENDING.getCode().equals(next.getStatus())
                     && !WorkflowTaskRecordStatusEnum.FAILED.getCode().equals(next.getStatus())) {
                 continue;
             }
+            int nextIndex = next.getIndex();
             WorkflowTaskRecordDTO.AddTaskDTO template = new WorkflowTaskRecordDTO.AddTaskDTO();
             template.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
             template.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByCode(instance.getSourceType()));

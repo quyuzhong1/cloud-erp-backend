@@ -123,7 +123,7 @@ public class DmpOutputUtils{
 	        }
 	        
 	        boolean isSend = true;
-	        if(StringUtils.isNotBlank(message) && message.contains("旺店通出库") && message.contains("msg=库存不足")) {
+	        if(StringUtils.isNotBlank(message) && message.contains("旺店通出库") && message.contains("库存不足")) {
 	        	String redisKey = RedisCacheConstants.WDT_ERROR_CODE_KEY + code;
 	        	Object object = redisUtil.get(redisKey);
 	        	
