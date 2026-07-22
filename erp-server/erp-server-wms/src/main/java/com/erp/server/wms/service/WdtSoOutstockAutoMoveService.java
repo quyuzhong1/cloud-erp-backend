@@ -15,6 +15,8 @@ public interface WdtSoOutstockAutoMoveService {
     /**
      * 按出库仓位推荐规则和库区优先级匹配可用库存仓位。
      * <p>拣货区仓位直接出库；非拣货区先移至空仓位；无可用仓位时抛出业务异常。</p>
+     * <p>移仓按 sourceId + sourceType + warehouseId 幂等：解析前若已存在已审核移仓单，
+     * 按移仓明细回写目标仓位后再推荐剩余明细，避免重试时因库存已移至空仓位而误报缺货。</p>
      *
      * @param soOutstock    本单出库主单（用于规则匹配）
      * @param detailList     本单出库明细（不足时会改写 warehouseLocation 为空仓位）

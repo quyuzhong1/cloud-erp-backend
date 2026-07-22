@@ -340,6 +340,11 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 发货缺货--补货推荐仓位
          */
         private String toWarehouseLocation;
+
+        /**
+         * 建议补货数量（仅服务端 addList 批量预计算使用；公开 add 入口会忽略该字段）
+         */
+        private Integer suggestQty;
     }
 
     @Data

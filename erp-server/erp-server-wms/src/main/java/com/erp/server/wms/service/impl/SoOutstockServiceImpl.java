@@ -1025,16 +1025,41 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (CollectionUtils.isEmpty(details)) {
                 return;
             }
+            // 无需管理库存的 SKU 不参与仓位推荐
+            Set<String> noInventorySkuNos = plmTaskFeign.getNoInventorySku().stream()
+                    .map(SkuVO::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .collect(Collectors.toSet());
+            if (!noInventorySkuNos.isEmpty()) {
+                details = details.stream()
+                        .filter(d -> !noInventorySkuNos.contains(d.getSkuNo()))
+                        .collect(Collectors.toList());
+            }
+            if (CollectionUtils.isEmpty(details)) {
+                return;
+            }
             CfgRulePickingDTO.CfgExecutionDataDTO executionData = buildOutStockExecutionData(entity, details);
             Map<String, List<SoOutstockDetailEntity>> warehouseDetailMap = details.stream()
                     .collect(Collectors.groupingBy(d -> CharSequenceUtil.isNotBlank(d.getWarehouseId())
                             ? d.getWarehouseId() : entity.getWarehouseId()));
+            Map<String, WarehouseEntity> warehouseMap = warehouseService.listByIds(warehouseDetailMap.keySet()).stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(WarehouseEntity::getId, Function.identity(), (a, b) -> a));
             List<SoOutstockDetailEntity> updateDetails = new ArrayList<>();
             Map<String, List<WarehouseLocationMoveDetailDTO.AddDTO>> moveByWarehouse = new LinkedHashMap<>();
             for (Map.Entry<String, List<SoOutstockDetailEntity>> entry : warehouseDetailMap.entrySet()) {
                 String warehouseId = entry.getKey();
                 if (CharSequenceUtil.isBlank(warehouseId)) {
                     throw new ServiceException(ApiError.WH_OUT_STOCK_RULE_NOT_FOUND);
+                }
+                WarehouseEntity warehouse = warehouseMap.get(warehouseId);
+                // 未启用仓位管理：统一空仓位，跳过规则
+                if (warehouse != null && Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
+                    for (SoOutstockDetailEntity detail : entry.getValue()) {
+                        detail.setWarehouseLocation("");
+                        updateDetails.add(detail);
+                    }
+                    continue;
                 }
                 List<CfgRulePickingDTO.OutStockItemDTO> items = entry.getValue().stream()
                         .map(d -> new CfgRulePickingDTO.OutStockItemDTO(d.getId(), d.getSkuId(), d.getSkuNo(), d.getActualQty()))
@@ -1085,8 +1110,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                                 CharSequenceUtil.blankToDefault(e.getMsg(), e.getMessage()));
                     } catch (Exception e) {
                         String skuNo = moveDetailList.get(0).getSkuNo();
-                        throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, skuNo,
-                                CharSequenceUtil.blankToDefault(e.getMessage(), "未知异常"));
+                        log.error("出库前自动移仓失败 businessId={} skuNo={}", entity.getId(), skuNo, e);
+                        throw new ServiceException(ApiError.WH_OUT_STOCK_MOVE_FAILED, skuNo, "系统异常");
                     }
                 }
             }

@@ -1,8 +1,9 @@
 package com.erp.server.wms.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleActionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
@@ -18,6 +19,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -72,7 +75,12 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
         List<CfgRulePackingActionEntity> oldActions = list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery()
                 .eq(CfgRulePackingActionEntity::getRuleType, ruleType)
                 .eq(CfgRulePackingActionEntity::getRuleId, ruleId));
-        List<String> actionIds = actionList.stream().map(CfgRuleActionDTO.Update::getId).collect(Collectors.toList());
+        List<String> actionIds = actionList.stream()
+                .map(CfgRuleActionDTO.Update::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        // 更新 ID 必须属于当前规则 + 动作类型，防止跨规则覆盖
+        validateActionIdsBelongToRule(ruleId, ruleType, actionIds);
         if (!CollectionUtils.isEmpty(actionIds)) {
             List<String> removeIds = oldActions.stream()
                     .map(CfgRulePackingActionEntity::getId)
@@ -91,6 +99,26 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
                     return entity;
                 }).collect(Collectors.toList());
         service.saveOrUpdateBatch(actions);
+    }
+
+    private void validateActionIdsBelongToRule(String ruleId, String ruleType, List<String> actionIds) {
+        if (CollectionUtils.isEmpty(actionIds)) {
+            return;
+        }
+        List<CfgRulePackingActionEntity> existingActions = listByIds(actionIds);
+        if (existingActions.size() != actionIds.stream().distinct().count()) {
+            throw new ServiceException("仓位推荐动作不存在或已删除，请刷新后重试");
+        }
+        Set<String> ownedIds = existingActions.stream()
+                .filter(action -> Objects.equals(ruleId, action.getRuleId())
+                        && Objects.equals(ruleType, action.getRuleType()))
+                .map(CfgRulePackingActionEntity::getId)
+                .collect(Collectors.toSet());
+        for (String actionId : actionIds) {
+            if (!ownedIds.contains(actionId)) {
+                throw new ServiceException("仓位推荐动作不属于当前规则，请检查");
+            }
+        }
     }
 
     /**

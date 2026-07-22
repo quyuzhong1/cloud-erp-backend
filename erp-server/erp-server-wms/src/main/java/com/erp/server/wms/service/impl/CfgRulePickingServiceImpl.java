@@ -92,6 +92,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "补货仓位推荐");
         validateEnabledActionUnique(dto.getDisabled(), dto.getOutStockDisabled(), dto.getOutStockActions(),
                 action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "出库仓位推荐");
+        validateReplenishInWarehouseLocation(dto.getDisabled(), dto.getReplenishDisabled(), dto.getInWarehouseLocation());
         CfgRulePickingEntity entity = BeanMapperUtils.map(CfgRulePickingEntity.class, dto);
         save(entity);
         // 操作日志
@@ -116,6 +117,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "补货仓位推荐");
         validateEnabledActionUnique(dto.getDisabled(), dto.getOutStockDisabled(), dto.getOutStockActions(),
                 action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "出库仓位推荐");
+        validateReplenishInWarehouseLocation(dto.getDisabled(), dto.getReplenishDisabled(), dto.getInWarehouseLocation());
         CfgRulePickingEntity entity = BeanMapperUtils.map(CfgRulePickingEntity.class, dto);
         updateById(entity);
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
@@ -230,6 +232,23 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     filterActionByType(ruleActions, RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode()),
                     action -> action.getWarehouseId(),
                     action -> action.getWarehouseAreaId(), "出库仓位推荐");
+            validateReplenishInWarehouseLocation(Boolean.FALSE, rule.getReplenishDisabled(),
+                    rule.getInWarehouseLocation());
+        }
+    }
+
+    /**
+     * 规则与补货类型均启用时，上架仓位必须为 large/small/recent。
+     */
+    private void validateReplenishInWarehouseLocation(Boolean ruleDisabled,
+                                                      Boolean replenishDisabled,
+                                                      String inWarehouseLocation) {
+        if (Boolean.TRUE.equals(ruleDisabled) || Boolean.TRUE.equals(replenishDisabled)) {
+            return;
+        }
+        if (CharSequenceUtil.isBlank(inWarehouseLocation)
+                || InWarehouseLocationEnum.getEnum(inWarehouseLocation) == null) {
+            throw new ServiceException("补货仓位推荐启用时，上架仓位配置不能为空");
         }
     }
 
@@ -320,16 +339,35 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 }
             }
             if (0 != quantity.get()) {
-                if (stockSku.containsKey(detail.getSkuNo())) {
-                    stockSku.put(detail.getSkuNo(), stockSku.get(detail.getSkuNo()) + quantity.get());
-                }else {
-                    stockSku.put(detail.getSkuNo(), quantity.get());
-                }
-                result = result.stream().filter(v -> !v.getSkuNo().equals(detail.getSkuNo())).collect(Collectors.toList());
+                // 缺货 key：warehouseId#skuNo，避免跨仓汇总后重复补货
+                String shortageKey = buildShortageKey(detail.getWarehouseId(), detail.getSkuNo());
+                stockSku.merge(shortageKey, quantity.get(), Integer::sum);
+                result = result.stream()
+                        .filter(v -> !(Objects.equals(v.getWarehouseId(), detail.getWarehouseId())
+                                && Objects.equals(v.getSkuNo(), detail.getSkuNo())))
+                        .collect(Collectors.toList());
             }
         }
         log.warn("单据【{}】完成执行拣货策略，完成时间为{}", executionData.getSourceCode(), System.currentTimeMillis());
         return Pair.create(result, stockSku);
+    }
+
+    /**
+     * 缺货 Map 键：仓库 + SKU。
+     */
+    public static String buildShortageKey(String warehouseId, String skuNo) {
+        return CharSequenceUtil.nullToEmpty(warehouseId) + "#" + CharSequenceUtil.nullToEmpty(skuNo);
+    }
+
+    /**
+     * 从缺货 Map 键解析 SKU 编码。
+     */
+    public static String parseShortageSkuNo(String shortageKey) {
+        if (CharSequenceUtil.isBlank(shortageKey)) {
+            return "";
+        }
+        int idx = shortageKey.indexOf('#');
+        return idx >= 0 ? shortageKey.substring(idx + 1) : shortageKey;
     }
 
     /**
@@ -476,14 +514,23 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         if (CollectionUtils.isEmpty(replenishRules)) {
             throw new ServiceException(ApiError.WH_LOCATION_SUGGEST_NOT_FOUND);
         }
-        CfgRulePickingEntity hitRule = replenishRules.get(0);
-        List<CfgRulePackingActionEntity> replenishActions = cfgRulePackingActionService.listByRuleIds(
-                Collections.singletonList(hitRule.getId()), RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
-        replenishActions = replenishActions.stream()
-                .filter(action -> warehouseId.equals(action.getWarehouseId()))
-                .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex, Comparator.nullsLast(Integer::compareTo)))
+        List<String> matchedRuleIds = replenishRules.stream()
+                .map(CfgRulePickingEntity::getId)
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(replenishActions)) {
+        List<CfgRulePackingActionEntity> matchedActions = cfgRulePackingActionService.listByRuleIds(
+                matchedRuleIds, RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+        Map<String, List<CfgRulePackingActionEntity>> actionsByRuleId = matchedActions.stream()
+                .filter(action -> warehouseId.equals(action.getWarehouseId()))
+                .collect(Collectors.groupingBy(CfgRulePackingActionEntity::getRuleId));
+        CfgRulePickingEntity hitRule = null;
+        for (CfgRulePickingEntity rule : replenishRules) {
+            List<CfgRulePackingActionEntity> currentActions = actionsByRuleId.get(rule.getId());
+            if (!CollectionUtils.isEmpty(currentActions)) {
+                hitRule = rule;
+                break;
+            }
+        }
+        if (hitRule == null) {
             throw new ServiceException(ApiError.WH_LOCATION_SUGGEST_NOT_FOUND);
         }
 
@@ -529,6 +576,11 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 .collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(), (a, b) -> a));
 
         List<String> pickLocationCodes = listPickingAreaLocationCodes(warehouseId, warehouseLocations);
+        // recent 上架：循环前批量查拣货区最新出入库流水，避免 N+1
+        Map<String, String> recentLocationBySkuId = Collections.emptyMap();
+        if (InWarehouseLocationEnum.RECENT.equals(InWarehouseLocationEnum.getEnum(hitRule.getInWarehouseLocation()))) {
+            recentLocationBySkuId = loadRecentPickingLocations(warehouseId, skuIds, pickLocationCodes);
+        }
         List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> result = new ArrayList<>();
         for (CfgRulePickingDTO.ReplenishShortageItemDTO item : shortageItems) {
             if (CharSequenceUtil.isBlank(item.getSkuId()) && CharSequenceUtil.isBlank(item.getSkuNo())) {
@@ -565,7 +617,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
             }
 
             String toLocation = resolveToWarehouseLocation(hitRule.getInWarehouseLocation(), productMap.get(item.getSkuId()),
-                    warehouseId, item.getSkuId(), item.getSkuNo(), pickLocationCodes, locationByCode);
+                    warehouseId, item.getSkuId(), item.getSkuNo(), pickLocationCodes, locationByCode, recentLocationBySkuId);
             WarehouseLocationEntity toLocEntity = locationByCode.get(toLocation);
             if (toLocEntity == null) {
                 // 可能 listByWarehouseIds 未覆盖（如禁用过滤），再查一次
@@ -624,7 +676,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                                               String skuId,
                                               String skuNo,
                                               List<String> pickLocationCodes,
-                                              Map<String, WarehouseLocationEntity> locationByCode) {
+                                              Map<String, WarehouseLocationEntity> locationByCode,
+                                              Map<String, String> recentLocationBySkuId) {
         if (CharSequenceUtil.isBlank(inWarehouseLocationConfig)) {
             throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
         }
@@ -646,7 +699,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
             }
             return loc;
         }
-        // recent：优先产品小货区，否则拣货区最新出入库流水
+        // recent：优先产品小货区，否则使用批量预加载的拣货区最新出入库流水
         String smallLoc = firstLocationCode(product == null ? null : product.getWarehouseLocation());
         if (CharSequenceUtil.isNotBlank(smallLoc) && isValidSystemLocation(smallLoc, locationByCode, warehouseId)) {
             return smallLoc;
@@ -654,17 +707,64 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         if (CollectionUtils.isEmpty(pickLocationCodes) || CharSequenceUtil.isBlank(skuId)) {
             throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
         }
-        TransactionFlowEntity transactionFlow = transactionFlowService.lambdaQuery()
-                .eq(TransactionFlowEntity::getWarehouseId, warehouseId)
-                .eq(TransactionFlowEntity::getSkuId, skuId)
-                .in(TransactionFlowEntity::getWarehouseLocation, pickLocationCodes)
-                .orderByDesc(TransactionFlowEntity::getBillDate, TransactionFlowEntity::getId)
-                .last("limit 1")
-                .one();
-        if (transactionFlow == null || CharSequenceUtil.isBlank(transactionFlow.getWarehouseLocation())) {
+        String recentLoc = recentLocationBySkuId == null ? null : recentLocationBySkuId.get(skuId);
+        if (CharSequenceUtil.isBlank(recentLoc)) {
             throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
         }
-        return transactionFlow.getWarehouseLocation();
+        return recentLoc;
+    }
+
+    /**
+     * 批量加载各 SKU 在拣货区的最新出入库仓位（按单据日期、ID 取最新）。
+     */
+    private Map<String, String> loadRecentPickingLocations(String warehouseId,
+                                                           List<String> skuIds,
+                                                           List<String> pickLocationCodes) {
+        if (CharSequenceUtil.isBlank(warehouseId)
+                || CollectionUtils.isEmpty(skuIds)
+                || CollectionUtils.isEmpty(pickLocationCodes)) {
+            return Collections.emptyMap();
+        }
+        List<TransactionFlowEntity> flows = transactionFlowService.lambdaQuery()
+                .eq(TransactionFlowEntity::getWarehouseId, warehouseId)
+                .in(TransactionFlowEntity::getSkuId, skuIds)
+                .in(TransactionFlowEntity::getWarehouseLocation, pickLocationCodes)
+                .list();
+        if (CollectionUtils.isEmpty(flows)) {
+            return Collections.emptyMap();
+        }
+        Map<String, TransactionFlowEntity> latestBySkuId = new HashMap<>();
+        for (TransactionFlowEntity flow : flows) {
+            if (flow == null || CharSequenceUtil.isBlank(flow.getSkuId())
+                    || CharSequenceUtil.isBlank(flow.getWarehouseLocation())) {
+                continue;
+            }
+            TransactionFlowEntity existing = latestBySkuId.get(flow.getSkuId());
+            if (existing == null || isNewerTransactionFlow(flow, existing)) {
+                latestBySkuId.put(flow.getSkuId(), flow);
+            }
+        }
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, TransactionFlowEntity> entry : latestBySkuId.entrySet()) {
+            result.put(entry.getKey(), entry.getValue().getWarehouseLocation());
+        }
+        return result;
+    }
+
+    private boolean isNewerTransactionFlow(TransactionFlowEntity candidate, TransactionFlowEntity baseline) {
+        if (candidate.getBillDate() != null && baseline.getBillDate() != null) {
+            int dateCompare = candidate.getBillDate().compareTo(baseline.getBillDate());
+            if (dateCompare != 0) {
+                return dateCompare > 0;
+            }
+        } else if (candidate.getBillDate() != null) {
+            return true;
+        } else if (baseline.getBillDate() != null) {
+            return false;
+        }
+        String candidateId = CharSequenceUtil.nullToEmpty(candidate.getId());
+        String baselineId = CharSequenceUtil.nullToEmpty(baseline.getId());
+        return candidateId.compareTo(baselineId) > 0;
     }
 
     /**

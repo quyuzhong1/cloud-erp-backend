@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -13,9 +14,12 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.CfgRulePickingService;
+import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WdtSoOutstockAutoMoveService;
@@ -26,6 +30,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +54,8 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
     private WarehouseService warehouseService;
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
+    @Resource
+    private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
 
     @Override
     public void preCheckAndAutoMove(SoOutstockEntity soOutstock,
@@ -62,7 +69,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
 
         // inOutStockList 只包含需要直接扣减可用库存的 SKU，无需管理库存的 SKU 不参与推荐。
         Set<String> deductionDetailIds = inOutStockList.stream()
-                .map(item -> item.getSourceDetailId())
+                .map(InOutStockDTO::getSourceDetailId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .collect(Collectors.toSet());
         List<SoOutstockDetailEntity> deductionDetails = detailList.stream()
@@ -103,7 +110,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
 
         Map<String, WarehouseEntity> warehouseMap = warehouseService.listByIds(detailsByWarehouse.keySet()).stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(warehouse -> warehouse.getId(), Function.identity(), (left, right) -> left));
+                .collect(Collectors.toMap(WarehouseEntity::getId, Function.identity(), (left, right) -> left));
 
         for (Map.Entry<String, List<SoOutstockDetailEntity>> entry : detailsByWarehouse.entrySet()) {
             String warehouseId = entry.getKey();
@@ -113,14 +120,90 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 continue;
             }
 
-            List<CfgRulePickingDTO.OutStockItemDTO> items = entry.getValue().stream()
+            // 重试恢复：若已有有效移仓单，先按移仓明细回写目标仓位，再仅对剩余明细做推荐
+            List<SoOutstockDetailEntity> needResolveDetails = restoreMovedLocationsIfPresent(
+                    sourceId, warehouseId, entry.getValue(), inOutStockList);
+            if (CollUtil.isEmpty(needResolveDetails)) {
+                continue;
+            }
+
+            List<CfgRulePickingDTO.OutStockItemDTO> items = needResolveDetails.stream()
                     .map(detail -> new CfgRulePickingDTO.OutStockItemDTO(
                             detail.getId(), detail.getSkuId(), detail.getSkuNo(), detail.getActualQty()))
                     .collect(Collectors.toList());
             List<CfgRulePickingDTO.OutStockLocationSuggestDTO> suggests =
                     cfgRulePickingService.resolveOutStockLocations(executionData, warehouseId, items);
-            applySuggests(warehouseId, entry.getValue(), inOutStockList, suggests, sourceId, sourceCode);
+            applySuggests(warehouseId, needResolveDetails, inOutStockList, suggests, sourceId, sourceCode);
         }
+    }
+
+    /**
+     * 若 sourceId + 仓库已存在有效移仓单，按移仓明细回写出库仓位（通常为空仓位），返回仍需重新推荐的明细。
+     * <p>旺店通重试时明细 ID 会重建，因此优先 sourceDetailId，其次 skuId+qty，再次 skuId。</p>
+     */
+    private List<SoOutstockDetailEntity> restoreMovedLocationsIfPresent(String sourceId,
+                                                                        String warehouseId,
+                                                                        List<SoOutstockDetailEntity> warehouseDetails,
+                                                                        List<InOutStockDTO> inOutStockList) {
+        WarehouseLocationMoveEntity moved = findValidMovedBySource(sourceId, warehouseId);
+        if (moved == null) {
+            return warehouseDetails;
+        }
+        List<WarehouseLocationMoveDetailEntity> moveDetails =
+                warehouseLocationMoveDetailService.listByMainIds(Collections.singletonList(moved.getId()));
+        if (CollUtil.isEmpty(moveDetails)) {
+            log.warn("旺店通出库预检已存在移仓主单但无明细，跳过恢复 sourceId={} warehouseId={} moveId={}",
+                    sourceId, warehouseId, moved.getId());
+            return warehouseDetails;
+        }
+        List<WarehouseLocationMoveDetailEntity> unmatched = new ArrayList<>(moveDetails);
+        List<SoOutstockDetailEntity> needResolve = new ArrayList<>();
+        for (SoOutstockDetailEntity detail : warehouseDetails) {
+            WarehouseLocationMoveDetailEntity matched = pollMatchedMoveDetail(unmatched, detail);
+            if (matched == null) {
+                needResolve.add(detail);
+                continue;
+            }
+            String target = matched.getInWarehouseLocation() == null ? EMPTY_LOCATION : matched.getInWarehouseLocation();
+            rewriteLocation(Collections.singletonList(detail), inOutStockList, target);
+        }
+        log.warn("旺店通出库预检按已有移仓单恢复仓位 sourceId={} warehouseId={} restored={} remain={}",
+                sourceId, warehouseId, warehouseDetails.size() - needResolve.size(), needResolve.size());
+        return needResolve;
+    }
+
+    private WarehouseLocationMoveDetailEntity pollMatchedMoveDetail(List<WarehouseLocationMoveDetailEntity> candidates,
+                                                                    SoOutstockDetailEntity detail) {
+        if (CollUtil.isEmpty(candidates) || detail == null) {
+            return null;
+        }
+        // 1) 来源明细 ID（同进程二次调用时可能命中）
+        for (Iterator<WarehouseLocationMoveDetailEntity> it = candidates.iterator(); it.hasNext(); ) {
+            WarehouseLocationMoveDetailEntity candidate = it.next();
+            if (CharSequenceUtil.isNotBlank(detail.getId())
+                    && Objects.equals(detail.getId(), candidate.getSourceDetailId())) {
+                it.remove();
+                return candidate;
+            }
+        }
+        // 2) SKU + 数量
+        for (Iterator<WarehouseLocationMoveDetailEntity> it = candidates.iterator(); it.hasNext(); ) {
+            WarehouseLocationMoveDetailEntity candidate = it.next();
+            if (Objects.equals(detail.getSkuId(), candidate.getSkuId())
+                    && Objects.equals(detail.getActualQty(), candidate.getQty())) {
+                it.remove();
+                return candidate;
+            }
+        }
+        // 3) 仅 SKU（同 SKU 多行时按顺序消费）
+        for (Iterator<WarehouseLocationMoveDetailEntity> it = candidates.iterator(); it.hasNext(); ) {
+            WarehouseLocationMoveDetailEntity candidate = it.next();
+            if (Objects.equals(detail.getSkuId(), candidate.getSkuId())) {
+                it.remove();
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private void applySuggests(String warehouseId,
@@ -160,6 +243,11 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         if (CollUtil.isEmpty(moveDetails)) {
             return;
         }
+        // 防御：同 sourceId + 仓库已有有效移仓单时不再重复建单
+        if (findValidMovedBySource(sourceId, warehouseId) != null) {
+            log.warn("旺店通出库预检已存在移仓单，跳过移仓 sourceId={} warehouseId={}", sourceId, warehouseId);
+            return;
+        }
         WarehouseLocationMoveDTO.PcAddDTO addDTO = new WarehouseLocationMoveDTO.PcAddDTO();
         addDTO.setBillDate(LocalDate.now());
         addDTO.setWarehouseId(warehouseId);
@@ -168,6 +256,23 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         addDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
         addDTO.setDetailList(moveDetails);
         warehouseLocationMoveService.wdtAutoAddNewTx(addDTO);
+    }
+
+    private WarehouseLocationMoveEntity findValidMovedBySource(String sourceId, String warehouseId) {
+        if (CharSequenceUtil.isBlank(sourceId) || CharSequenceUtil.isBlank(warehouseId)) {
+            return null;
+        }
+        return warehouseLocationMoveService.lambdaQuery()
+                .eq(WarehouseLocationMoveEntity::getSourceType, SourceTypeEnum.SO_OUTSTOCK.getCode())
+                .eq(WarehouseLocationMoveEntity::getSourceId, sourceId)
+                .eq(WarehouseLocationMoveEntity::getWarehouseId, warehouseId)
+                .eq(WarehouseLocationMoveEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                .and(w -> w.isNull(WarehouseLocationMoveEntity::getInvalidStatus)
+                        .or()
+                        .eq(WarehouseLocationMoveEntity::getInvalidStatus, false))
+                .orderByDesc(WarehouseLocationMoveEntity::getCreateTime)
+                .last("limit 1")
+                .one();
     }
 
     private CfgRulePickingDTO.CfgExecutionDataDTO buildExecutionData(
@@ -193,7 +298,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                                  List<InOutStockDTO> inOutStockList,
                                  String warehouseLocation) {
         Set<String> detailIds = details.stream()
-                .map(detail -> detail.getId())
+                .map(SoOutstockDetailEntity::getId)
                 .collect(Collectors.toSet());
         details.forEach(detail -> detail.setWarehouseLocation(warehouseLocation));
         inOutStockList.stream()

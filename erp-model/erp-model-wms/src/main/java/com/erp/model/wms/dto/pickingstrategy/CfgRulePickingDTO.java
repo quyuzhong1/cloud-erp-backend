@@ -1,9 +1,11 @@
 package com.erp.model.wms.dto.pickingstrategy;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.enums.InWarehouseLocationEnum;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -129,6 +131,14 @@ public class CfgRulePickingDTO {
             }
             return CollUtil.isNotEmpty(replenishActions);
         }
+        @AssertTrue(message = "补货启用时上架仓位不能为空")
+        public boolean isInWarehouseLocationValid() {
+            if (Boolean.TRUE.equals(replenishDisabled)) {
+                return true;
+            }
+            return CharSequenceUtil.isNotBlank(inWarehouseLocation)
+                    && InWarehouseLocationEnum.getEnum(inWarehouseLocation) != null;
+        }
         @AssertTrue(message = "出库仓位推荐不能为空")
         public boolean isOutStockActionsValid() {
             if (Boolean.TRUE.equals(outStockDisabled)) {
@@ -215,6 +225,14 @@ public class CfgRulePickingDTO {
                 return true;
             }
             return CollUtil.isNotEmpty(replenishActions);
+        }
+        @AssertTrue(message = "补货启用时上架仓位不能为空")
+        public boolean isInWarehouseLocationValid() {
+            if (Boolean.TRUE.equals(replenishDisabled)) {
+                return true;
+            }
+            return CharSequenceUtil.isNotBlank(inWarehouseLocation)
+                    && InWarehouseLocationEnum.getEnum(inWarehouseLocation) != null;
         }
         @AssertTrue(message = "出库仓位推荐不能为空")
         public boolean isOutStockActionsValid() {

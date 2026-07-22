@@ -2355,7 +2355,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = buildPickingExecutionData(deliveryEntity, detailList, waveType);
         Map<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseDetailMap = executionData.getDetails().stream()
-                .filter(d -> shortageMap.containsKey(d.getSkuNo()))
+                .filter(d -> shortageMap.containsKey(
+                        CfgRulePickingServiceImpl.buildShortageKey(d.getWarehouseId(), d.getSkuNo())))
                 .collect(Collectors.groupingBy(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getWarehouseId));
         List<WarehouseLocationReplenishDTO.AddDTO> addList = new ArrayList<>();
         for (Map.Entry<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseEntry : warehouseDetailMap.entrySet()) {
@@ -2365,7 +2366,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 if (shortageItemMap.containsKey(detail.getSkuId())) {
                     continue;
                 }
-                Integer shortageQty = shortageMap.get(detail.getSkuNo());
+                Integer shortageQty = shortageMap.get(
+                        CfgRulePickingServiceImpl.buildShortageKey(warehouseId, detail.getSkuNo()));
                 shortageItemMap.put(detail.getSkuId(), new CfgRulePickingDTO.ReplenishShortageItemDTO(
                         detail.getSkuId(), detail.getSkuNo(), shortageQty == null ? detail.getQty() : shortageQty));
             }

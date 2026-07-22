@@ -2508,15 +2508,24 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             return moveEntityList;
         }
 
-        // ② 缺货：按补货仓位推荐解析取货/上架仓位
-        List<String> shortageSkuNos = new ArrayList<>(errorList.keySet());
+        // ② 缺货：按补货仓位推荐解析取货/上架仓位（key = warehouseId#skuNo）
+        List<String> shortageSkuNos = errorList.keySet().stream()
+                .map(CfgRulePickingServiceImpl::parseShortageSkuNo)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(shortageSkuNos);
         Map<String, SkuVO> skuVoByNo = skuVOS.stream()
                 .filter(v -> CharSequenceUtil.isNotBlank(v.getSkuNo()))
                 .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (a, b) -> a));
         List<CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItems = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : errorList.entrySet()) {
-            String skuNo = entry.getKey();
+            String shortageKey = entry.getKey();
+            String expectedKeyPrefix = CfgRulePickingServiceImpl.buildShortageKey(warehouseId, "");
+            if (CharSequenceUtil.isNotBlank(warehouseId) && !shortageKey.startsWith(expectedKeyPrefix)) {
+                continue;
+            }
+            String skuNo = CfgRulePickingServiceImpl.parseShortageSkuNo(shortageKey);
             SkuVO skuVO = skuVoByNo.get(skuNo);
             String skuId = skuVO != null ? skuVO.getSkuId() : null;
             if (CharSequenceUtil.isBlank(skuId)) {

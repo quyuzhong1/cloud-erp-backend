@@ -61,8 +61,14 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      *
      * @param dto 参数
      */
+    /**
+     * @return first=拣货占用结果；second=缺货 Map，key=warehouseId#skuNo
+     */
     Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto);
 
+    /**
+     * @return first=拣货占用结果；second=缺货 Map，key=warehouseId#skuNo
+     */
     Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto,Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair);
     /**
      * 拣货明细转换为规则执行数据明细

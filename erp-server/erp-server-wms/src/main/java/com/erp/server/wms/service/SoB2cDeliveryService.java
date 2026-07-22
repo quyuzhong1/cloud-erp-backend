@@ -367,7 +367,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      *
      * @param detailList      发货明细
      * @param deliveryEntity  发货单
-     * @param shortageMap     缺货 skuNo → 缺货数量（可为组合拆分后的子件）
+     * @param shortageMap     缺货 warehouseId#skuNo → 缺货数量（可为组合拆分后的子件）
      * @param waveType        波次类型（参与规则命中）
      */
     void generateStockOutReplenish(List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity,
