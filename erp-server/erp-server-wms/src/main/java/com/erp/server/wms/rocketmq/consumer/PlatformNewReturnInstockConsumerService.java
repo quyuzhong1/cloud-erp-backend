@@ -108,6 +108,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	private SoReturnPrestockService soReturnPrestockService;
 
 	@Resource
+	private SoReturnPrestockDetailService soReturnPrestockDetailService;
+
+	@Resource
 	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
 	@Resource
@@ -163,16 +166,24 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				return;
 			}
 		} else {
-			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
-			if(Objects.nonNull(existEntity)){
-				// 已知遗留限制：这里只判断"是否存在任意一条退货入库单"，不核对是否已覆盖全部平台推送明细；
-				// 若此前处理是部分成功（例如物流单号匹配已生成一部分，参考单号匹配那一步还没跑完），本次会被直接跳过。
-				// 打日志留痕，方便按 thirdCode 排查该单是否遗漏了未匹配SKU对应的预入库单
-				log.warn("[海外仓退货入库] thirdCode={} 已存在退货入库单(id={}, code={})，本次消息跳过处理；若怀疑此前处理未覆盖全部平台推送明细，请人工核对该thirdCode下退货入库单+预入库单明细合计是否等于平台推送明细",
-						dto.getPlatformReturnOrderNo(), existEntity.getId(), existEntity.getCode());
-				// 入库已存在但售后可能仍为待退货（落库成功、Feign 失败后重试），补偿同步状态
-				compensateReturnStatusIfNeeded(existEntity);
+			// 默认平台：按明细缺口对账，禁止「存在任意一条退货入库单就整单跳过」
+			List<PlatformReturnInstockDTO.Detail> unprocessed = resolveUnprocessedDetails(dto);
+			if (CollectionUtils.isEmpty(unprocessed)) {
+				log.warn("[海外仓退货入库] thirdCode={} 推送明细已全部被退货入库单/预入库单覆盖，本次消息跳过",
+						dto.getPlatformReturnOrderNo());
+				// 入库/预入库已齐但售后可能仍为待退货（落库成功、Feign 失败后重试），补偿同步状态
+				compensateReturnStatusByThirdCode(dto.getPlatformReturnOrderNo());
 				return;
+			}
+			if (unprocessed.size() != dto.getProductDetailList().size()
+					|| !sameDetailQtyFingerprint(unprocessed, dto.getProductDetailList())) {
+				int pushQty = sumPushQty(dto.getProductDetailList());
+				int gapQty = sumPushQty(unprocessed);
+				log.warn("[海外仓退货入库] thirdCode={} 存在已处理明细，本次仅处理缺口：推送明细行数={}、推送数量={}，缺口行数={}、缺口数量={}",
+						dto.getPlatformReturnOrderNo(),
+						dto.getProductDetailList().size(), pushQty,
+						unprocessed.size(), gapQty);
+				dto.setProductDetailList(unprocessed);
 			}
 		}
 
@@ -395,6 +406,276 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soB2cReturnFeign.updateBatch(Collections.singletonList(matchedReturn));
 		}
 		return true;
+	}
+
+	/**
+	 * 按 thirdCode 汇总已落库的退货入库单 + 预入库单数量，从平台推送明细中扣减，得到尚未处理的缺口明细。
+	 * <p>
+	 * 退货入库明细优先按 {@code platformSkuNo} 对齐；预入库明细无平台SKU字段，经本次消息的 SKU 映射
+	 * （productSku → skuId/skuNo）或未映射时的原始 platformSku=skuNo 对齐。映射对不齐的预入库行
+	 * 不会误扣推送量（宁可不扣减也不误吞），并打 warn。
+	 * </p>
+	 *
+	 * @param dto 平台退货入库消息
+	 * @return 缺口明细（数量已扣减）；全部已覆盖时返回空列表
+	 */
+	private List<PlatformReturnInstockDTO.Detail> resolveUnprocessedDetails(PlatformReturnInstockDTO dto) {
+		List<PlatformReturnInstockDTO.Detail> pushDetails = dto.getProductDetailList();
+		if (CollectionUtils.isEmpty(pushDetails)) {
+			return Collections.emptyList();
+		}
+		String thirdCode = dto.getPlatformReturnOrderNo();
+		if (CharSequenceUtil.isBlank(thirdCode)) {
+			return copyDetails(pushDetails);
+		}
+
+		Map<String, Integer> consumedByPlatformSku = new HashMap<>();
+		accumulateInstockConsumedByPlatformSku(thirdCode, consumedByPlatformSku);
+		Map<String, Integer> prestockBySkuId = new HashMap<>();
+		Map<String, Integer> prestockBySkuNo = new HashMap<>();
+		accumulatePrestockConsumed(thirdCode, prestockBySkuId, prestockBySkuNo);
+
+		boolean hasAnyConsumed = !consumedByPlatformSku.isEmpty() || !prestockBySkuId.isEmpty() || !prestockBySkuNo.isEmpty();
+		if (!hasAnyConsumed) {
+			return copyDetails(pushDetails);
+		}
+
+		Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap = resolveSkuMappingByPlatformSkuNo(dto);
+		List<PlatformReturnInstockDTO.Detail> remaining = new ArrayList<>();
+		for (PlatformReturnInstockDTO.Detail detail : pushDetails) {
+			int pushQty = resolveDetailQty(detail);
+			if (pushQty <= 0) {
+				continue;
+			}
+			String platformSkuKey = CharSequenceUtil.blankToDefault(detail.getProductSku(), "").toUpperCase();
+			int left = pushQty;
+			left -= takeConsumed(consumedByPlatformSku, platformSkuKey, left);
+
+			SkuMappingDTO.MappingSkuViewDTO mapping = skuMappingMap.get(platformSkuKey);
+			if (left > 0 && Objects.nonNull(mapping) && CharSequenceUtil.isNotBlank(mapping.getProductSkuId())) {
+				left -= takeConsumed(prestockBySkuId, mapping.getProductSkuId(), left);
+			}
+			if (left > 0 && Objects.nonNull(mapping) && CharSequenceUtil.isNotBlank(mapping.getProductSkuNo())) {
+				left -= takeConsumed(prestockBySkuNo, mapping.getProductSkuNo().toUpperCase(), left);
+			}
+			if (left > 0 && CharSequenceUtil.isNotBlank(detail.getProductSku())) {
+				left -= takeConsumed(prestockBySkuNo, detail.getProductSku().toUpperCase(), left);
+			}
+			if (left > 0) {
+				remaining.add(copyDetailWithQty(detail, left, pushQty));
+			}
+		}
+
+		int leftoverPrestockQty = prestockBySkuId.values().stream().mapToInt(Integer::intValue).sum()
+				+ prestockBySkuNo.values().stream().mapToInt(Integer::intValue).sum();
+		if (leftoverPrestockQty > 0) {
+			log.warn("[海外仓退货入库] thirdCode={} 有预入库数量={} 未能对齐到本次推送平台SKU（映射缺失或编码不一致），未计入扣减，请人工核对",
+					thirdCode, leftoverPrestockQty);
+		}
+		return remaining;
+	}
+
+	/**
+	 * 汇总同 thirdCode 退货入库单明细已处理数量（按 platformSkuNo，数量口径同 {@link #resolveInstockDetailQty}）。
+	 */
+	private void accumulateInstockConsumedByPlatformSku(String thirdCode, Map<String, Integer> consumedByPlatformSku) {
+		List<SoReturnInstockEntity> instockList = soReturnInstockService.listByThirdCode(thirdCode);
+		if (CollectionUtils.isEmpty(instockList)) {
+			return;
+		}
+		List<String> mainIds = instockList.stream().map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+		List<SoReturnInstockDetailEntity> details = soReturnInstockDetailService.listDetailByMainIds(mainIds);
+		if (CollectionUtils.isEmpty(details)) {
+			return;
+		}
+		for (SoReturnInstockDetailEntity detail : details) {
+			if (CharSequenceUtil.isBlank(detail.getPlatformSkuNo())) {
+				continue;
+			}
+			int qty = resolveInstockDetailQty(detail);
+			if (qty <= 0) {
+				continue;
+			}
+			String key = detail.getPlatformSkuNo().toUpperCase();
+			consumedByPlatformSku.merge(key, qty, Integer::sum);
+		}
+	}
+
+	/**
+	 * 汇总同 thirdCode 预入库单明细数量：按 skuId、skuNo（大写）分别入池，供后续与推送平台SKU对齐扣减。
+	 */
+	private void accumulatePrestockConsumed(String thirdCode, Map<String, Integer> bySkuId, Map<String, Integer> bySkuNo) {
+		List<SoReturnPrestockEntity> prestockList = soReturnPrestockService.listByThirdCode(thirdCode);
+		if (CollectionUtils.isEmpty(prestockList)) {
+			return;
+		}
+		List<String> mainIds = prestockList.stream().map(SoReturnPrestockEntity::getId).collect(Collectors.toList());
+		List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainIds(mainIds);
+		if (CollectionUtils.isEmpty(details)) {
+			return;
+		}
+		for (SoReturnPrestockDetailEntity detail : details) {
+			int qty = Objects.nonNull(detail.getReceivedQty()) ? detail.getReceivedQty() : 0;
+			if (qty <= 0) {
+				continue;
+			}
+			if (CharSequenceUtil.isNotBlank(detail.getSkuId())) {
+				bySkuId.merge(detail.getSkuId(), qty, Integer::sum);
+			} else if (CharSequenceUtil.isNotBlank(detail.getSkuNo())) {
+				bySkuNo.merge(detail.getSkuNo().toUpperCase(), qty, Integer::sum);
+			}
+		}
+	}
+
+	/**
+	 * 从可消耗池中扣除最多 maxTake，返回实际扣除量并回写剩余池。
+	 */
+	private int takeConsumed(Map<String, Integer> pool, String key, int maxTake) {
+		if (maxTake <= 0 || CharSequenceUtil.isBlank(key) || !pool.containsKey(key)) {
+			return 0;
+		}
+		int available = pool.get(key);
+		int take = Math.min(available, maxTake);
+		if (take <= 0) {
+			return 0;
+		}
+		int left = available - take;
+		if (left <= 0) {
+			pool.remove(key);
+		} else {
+			pool.put(key, left);
+		}
+		return take;
+	}
+
+	/**
+	 * 平台推送明细数量：与 {@link #buildPrestockDetailList} 落库口径一致，
+	 * 优先 receiveQty，空或&lt;=0 时兜底 realQty、mustQty。
+	 */
+	private int resolveDetailQty(PlatformReturnInstockDTO.Detail detail) {
+		if (Objects.isNull(detail)) {
+			return 0;
+		}
+		if (Objects.nonNull(detail.getReceiveQty()) && detail.getReceiveQty() > 0) {
+			return detail.getReceiveQty();
+		}
+		if (Objects.nonNull(detail.getRealQty()) && detail.getRealQty() > 0) {
+			return detail.getRealQty();
+		}
+		if (Objects.nonNull(detail.getMustQty()) && detail.getMustQty() > 0) {
+			return detail.getMustQty();
+		}
+		return 0;
+	}
+
+	/**
+	 * 退货入库明细已处理数量：与推送/预入库对账口径一致，
+	 * 优先 receiveQty，空或&lt;=0 时兜底 realQty、mustQty。
+	 */
+	private int resolveInstockDetailQty(SoReturnInstockDetailEntity detail) {
+		if (Objects.isNull(detail)) {
+			return 0;
+		}
+		if (Objects.nonNull(detail.getReceiveQty()) && detail.getReceiveQty() > 0) {
+			return detail.getReceiveQty();
+		}
+		if (Objects.nonNull(detail.getRealQty()) && detail.getRealQty() > 0) {
+			return detail.getRealQty();
+		}
+		if (Objects.nonNull(detail.getMustQty()) && detail.getMustQty() > 0) {
+			return detail.getMustQty();
+		}
+		return 0;
+	}
+
+	private int sumPushQty(List<PlatformReturnInstockDTO.Detail> details) {
+		if (CollectionUtils.isEmpty(details)) {
+			return 0;
+		}
+		return details.stream().mapToInt(this::resolveDetailQty).sum();
+	}
+
+	/**
+	 * 判断两批明细的「平台SKU + 数量」指纹是否一致（忽略顺序），用于判断是否需要改写 dto.productDetailList。
+	 */
+	private boolean sameDetailQtyFingerprint(List<PlatformReturnInstockDTO.Detail> a, List<PlatformReturnInstockDTO.Detail> b) {
+		if (CollectionUtils.isEmpty(a) && CollectionUtils.isEmpty(b)) {
+			return true;
+		}
+		if (CollectionUtils.isEmpty(a) || CollectionUtils.isEmpty(b) || a.size() != b.size()) {
+			return false;
+		}
+		Map<String, Integer> mapA = new HashMap<>();
+		Map<String, Integer> mapB = new HashMap<>();
+		for (PlatformReturnInstockDTO.Detail detail : a) {
+			String key = CharSequenceUtil.blankToDefault(detail.getProductSku(), "").toUpperCase();
+			mapA.merge(key, resolveDetailQty(detail), Integer::sum);
+		}
+		for (PlatformReturnInstockDTO.Detail detail : b) {
+			String key = CharSequenceUtil.blankToDefault(detail.getProductSku(), "").toUpperCase();
+			mapB.merge(key, resolveDetailQty(detail), Integer::sum);
+		}
+		return mapA.equals(mapB);
+	}
+
+	private List<PlatformReturnInstockDTO.Detail> copyDetails(List<PlatformReturnInstockDTO.Detail> source) {
+		if (CollectionUtils.isEmpty(source)) {
+			return Collections.emptyList();
+		}
+		List<PlatformReturnInstockDTO.Detail> copy = new ArrayList<>(source.size());
+		for (PlatformReturnInstockDTO.Detail detail : source) {
+			copy.add(copyDetailWithQty(detail, resolveDetailQty(detail), resolveDetailQty(detail)));
+		}
+		return copy;
+	}
+
+	/**
+	 * 复制推送明细行并按缺口比例重写 must/receive/real 数量。
+	 * <p>缺口基准与 {@link #resolveDetailQty} 一致（实收优先）；
+	 * 分摊后保证 {@code resolveDetailQty(copy) == leftQty}，与预入库落库口径对齐。</p>
+	 *
+	 * @param source      原明细
+	 * @param leftQty     缺口数量（实收口径）
+	 * @param originalQty 原推送用于分摊的基准数量（实收口径）
+	 */
+	private PlatformReturnInstockDTO.Detail copyDetailWithQty(PlatformReturnInstockDTO.Detail source, int leftQty, int originalQty) {
+		PlatformReturnInstockDTO.Detail copy = new PlatformReturnInstockDTO.Detail();
+		copy.setThirdBarcode(source.getThirdBarcode());
+		copy.setProductSku(source.getProductSku());
+		copy.setThirdId(source.getThirdId());
+		copy.setDefectiveProductFlag(source.getDefectiveProductFlag());
+		int mustQty = Objects.nonNull(source.getMustQty()) ? source.getMustQty() : 0;
+		int receiveQty = Objects.nonNull(source.getReceiveQty()) ? source.getReceiveQty() : 0;
+		int realQty = Objects.nonNull(source.getRealQty()) ? source.getRealQty() : 0;
+		if (originalQty > 0 && leftQty < originalQty) {
+			copy.setReceiveQty(leftQty);
+			copy.setMustQty((int) Math.floor(mustQty * (double) leftQty / originalQty));
+			copy.setRealQty((int) Math.floor(realQty * (double) leftQty / originalQty));
+		} else {
+			copy.setMustQty(mustQty);
+			copy.setReceiveQty(receiveQty);
+			copy.setRealQty(realQty);
+		}
+		return copy;
+	}
+
+	/**
+	 * 按 thirdCode 查找已落库退货入库单，补偿同步关联售后状态。
+	 * 用于「推送明细已全部覆盖」幂等跳过路径。
+	 *
+	 * @param thirdCode 平台退货单号
+	 */
+	private void compensateReturnStatusByThirdCode(String thirdCode) {
+		if (CharSequenceUtil.isBlank(thirdCode)) {
+			return;
+		}
+		List<SoReturnInstockEntity> existList = soReturnInstockService.listByThirdCode(thirdCode);
+		if (CollectionUtils.isEmpty(existList)) {
+			return;
+		}
+		for (SoReturnInstockEntity exist : existList) {
+			compensateReturnStatusIfNeeded(exist);
+		}
 	}
 
 	/**

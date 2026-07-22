@@ -319,7 +319,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 
 	/**
-	 * 汇总同 thirdCode 退货入库单明细已处理数量（按 platformSkuNo，数量取 mustQty，空则兜底 receive/real）。
+	 * 汇总同 thirdCode 退货入库单明细已处理数量（按 platformSkuNo，数量口径同 {@link #resolveInstockDetailQty}）。
 	 */
 	private void accumulateInstockConsumedByPlatformSku(String thirdCode, Map<String, Integer> consumedByPlatformSku) {
 		List<SoReturnInstockEntity> instockList = soReturnInstockService.listByThirdCode(thirdCode);
@@ -392,39 +392,41 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 
 	/**
-	 * 平台推送明细数量：优先 mustQty，空或<=0 时兜底 receiveQty、realQty。
+	 * 平台推送明细数量：与 {@link #buildPrestockDetailList} 落库口径一致，
+	 * 优先 receiveQty，空或&lt;=0 时兜底 realQty、mustQty。
 	 */
 	private int resolveDetailQty(PlatformReturnInstockDTO.Detail detail) {
 		if (Objects.isNull(detail)) {
 			return 0;
 		}
-		if (Objects.nonNull(detail.getMustQty()) && detail.getMustQty() > 0) {
-			return detail.getMustQty();
-		}
 		if (Objects.nonNull(detail.getReceiveQty()) && detail.getReceiveQty() > 0) {
 			return detail.getReceiveQty();
 		}
 		if (Objects.nonNull(detail.getRealQty()) && detail.getRealQty() > 0) {
 			return detail.getRealQty();
+		}
+		if (Objects.nonNull(detail.getMustQty()) && detail.getMustQty() > 0) {
+			return detail.getMustQty();
 		}
 		return 0;
 	}
 
 	/**
-	 * 退货入库明细已处理数量：优先 mustQty，空或<=0 时兜底 receiveQty、realQty。
+	 * 退货入库明细已处理数量：与推送/预入库对账口径一致，
+	 * 优先 receiveQty，空或&lt;=0 时兜底 realQty、mustQty。
 	 */
 	private int resolveInstockDetailQty(SoReturnInstockDetailEntity detail) {
 		if (Objects.isNull(detail)) {
 			return 0;
-		}
-		if (Objects.nonNull(detail.getMustQty()) && detail.getMustQty() > 0) {
-			return detail.getMustQty();
 		}
 		if (Objects.nonNull(detail.getReceiveQty()) && detail.getReceiveQty() > 0) {
 			return detail.getReceiveQty();
 		}
 		if (Objects.nonNull(detail.getRealQty()) && detail.getRealQty() > 0) {
 			return detail.getRealQty();
+		}
+		if (Objects.nonNull(detail.getMustQty()) && detail.getMustQty() > 0) {
+			return detail.getMustQty();
 		}
 		return 0;
 	}
@@ -472,10 +474,12 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	/**
 	 * 复制推送明细行并按缺口比例重写 must/receive/real 数量。
+	 * <p>缺口基准 {@code leftQty}/{@code originalQty} 与 {@link #resolveDetailQty} 一致（实收优先）；
+	 * 分摊后保证 {@code resolveDetailQty(copy) == leftQty}，与预入库落库口径对齐。</p>
 	 *
 	 * @param source      原明细
-	 * @param leftQty     缺口应退数量
-	 * @param originalQty 原推送用于分摊的基准数量（通常为原 mustQty 口径）
+	 * @param leftQty     缺口数量（实收口径）
+	 * @param originalQty 原推送用于分摊的基准数量（实收口径）
 	 */
 	private PlatformReturnInstockDTO.Detail copyDetailWithQty(PlatformReturnInstockDTO.Detail source, int leftQty, int originalQty) {
 		PlatformReturnInstockDTO.Detail copy = new PlatformReturnInstockDTO.Detail();
@@ -483,14 +487,17 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		copy.setProductSku(source.getProductSku());
 		copy.setThirdId(source.getThirdId());
 		copy.setDefectiveProductFlag(source.getDefectiveProductFlag());
-		copy.setMustQty(leftQty);
+		int mustQty = Objects.nonNull(source.getMustQty()) ? source.getMustQty() : 0;
 		int receiveQty = Objects.nonNull(source.getReceiveQty()) ? source.getReceiveQty() : 0;
 		int realQty = Objects.nonNull(source.getRealQty()) ? source.getRealQty() : 0;
 		if (originalQty > 0 && leftQty < originalQty) {
-			// 与物流匹配拆分口径一致：按应退比例向下取整分摊签收/实退
-			copy.setReceiveQty((int) Math.floor(receiveQty * (double) leftQty / originalQty));
+			// 缺口行：实收落为 leftQty；must/real 按同一比例向下取整，供后续匹配沿用原字段语义
+			copy.setReceiveQty(leftQty);
+			copy.setMustQty((int) Math.floor(mustQty * (double) leftQty / originalQty));
 			copy.setRealQty((int) Math.floor(realQty * (double) leftQty / originalQty));
 		} else {
+			// 全量复制：保留原字段，避免首次消费无已处理量时改写 mustQty 影响匹配
+			copy.setMustQty(mustQty);
 			copy.setReceiveQty(receiveQty);
 			copy.setRealQty(realQty);
 		}
