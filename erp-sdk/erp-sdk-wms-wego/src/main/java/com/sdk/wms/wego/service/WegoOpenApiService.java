@@ -176,6 +176,9 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "referenceNumber", dto.getReferenceNumber());
         putIfNotNull(bizParams, "notes", dto.getNotes());
         if (dto.getDetails() != null) {
+            // 将 POJO 列表转换为 JSONArray (List<JSONObject>)，让内层 Map 统一为 LinkedHashMap：
+            // 这样后续两次 fastjson 序列化（实际发送 + 签名计算）输出的字段顺序完全一致，
+            // 与服务端 Jackson writeValueAsString(JsonNode) 保留原始顺序的行为对齐。
             bizParams.put("details", JSON.parse(JSON.toJSONString(dto.getDetails())));
         }
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.INORDER_SAVE, bizParams, "保存入库单");
