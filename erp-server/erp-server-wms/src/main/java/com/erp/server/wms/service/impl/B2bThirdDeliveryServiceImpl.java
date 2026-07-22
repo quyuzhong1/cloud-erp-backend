@@ -1986,7 +1986,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         TongYouB2bOperationResolver.validateRequiredOperations(warehouseOperationTypeDTOList);
         assertOptionalPdfAttachment(attachList, "订单附件");
-        assertRequiredPdfAttachment(outerBoxLabelAttachList, "外箱面单");
+        assertOptionalPdfAttachment(outerBoxLabelAttachList, "外箱面单");
         if (Boolean.TRUE.equals(TongYouB2bOperationResolver.resolveRelabel(warehouseOperationTypeDTOList))) {
             assertRequiredPdfAttachment(productLabelAttachList, "产品标签");
             if (CollUtil.isEmpty(detailList)) {
