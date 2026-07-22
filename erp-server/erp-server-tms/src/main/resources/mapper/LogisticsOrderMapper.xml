@@ -30,6 +30,7 @@
         <result column="country" property="country"/>
         <result column="province" property="province"/>
         <result column="city" property="city"/>
+        <result column="district" property="district"/>
         <result column="detailed_address" property="detailedAddress"/>
         <result column="order_id" property="orderId"/>
     </resultMap>
@@ -63,6 +64,7 @@
         t.country,
         t.province,
         t.city,
+        t.district,
         t.detailed_address
     </sql>
 

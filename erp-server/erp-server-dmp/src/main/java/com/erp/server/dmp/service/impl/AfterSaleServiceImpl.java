@@ -1250,6 +1250,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 data.setCountryName(countryMap.get(data.getCountry()).getNameCn());
                 data.setProvince(listDTOMap.get(data.getOutboundTrackNo()).getProvince());
                 data.setCity(listDTOMap.get(data.getOutboundTrackNo()).getCity());
+                data.setDistrict(listDTOMap.get(data.getOutboundTrackNo()).getDistrict());
                 data.setDetailedAddress(listDTOMap.get(data.getOutboundTrackNo()).getDetailedAddress());
                 data.setLabelStatus(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatus());
                 data.setLabelStatusName(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatusName());
@@ -1987,6 +1988,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         LogisticsOrderEntity logisticsOrderEntity = new LogisticsOrderEntity();
         BeanMapperUtils.copy(orderInfoDTO, logisticsOrderEntity);
         logisticsOrderEntity.setId(null);
+        logisticsOrderEntity.setTrackNo(null);
         logisticsOrderEntity.setAfterSaleId(orderInfoDTO.getId());
         logisticsOrderEntity.setLogisticsPlatform(dto.getLogisticsPlatform());
         logisticsOrderEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
@@ -2072,7 +2074,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Objects.isNull(completedNodeDTO)) {
             throw new ServiceException("目标节点配置不存在，请检查售后维修节点配置");
         }
-        String trackNo = dto.getTrackNo().trim();
         List<BatchResultDTO> resultList = new ArrayList<>();
         AfterSaleServiceImpl afterSaleService = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
         for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : dto.getOrderInfoDTOList()) {
@@ -2089,8 +2090,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 resultList.add(BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), EXISTING_OUTBOUND_TRACK_MSG));
                 continue;
             }
+            String trackNo = StringUtils.trimToEmpty(orderInfoDTO.getTrackNo());
             try {
-                resultList.add(afterSaleService.manualLogisticsOrderSingle(orderInfoDTO.getId(), dto.getLogisticsChannelId(), trackNo, nodeMap, completedNodeDTO));
+                resultList.add(afterSaleService.manualLogisticsOrderSingle(
+                        orderInfoDTO.getId(), trackNo, nodeMap, completedNodeDTO));
             } catch (Exception e) {
                 resultList.add(BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), e));
             }
@@ -2099,7 +2102,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    public BatchResultDTO manualLogisticsOrderSingle(String afterSaleId, String logisticsChannelId, String trackNo,
+    public BatchResultDTO manualLogisticsOrderSingle(String afterSaleId, String trackNo,
                                                      Map<String, AfterSaleDTO.NodeDTO> nodeMap,
                                                      AfterSaleDTO.NodeDTO completedNodeDTO) {
         AfterSaleEntity afterSaleEntity = super.getById(afterSaleId);
@@ -2128,7 +2131,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             return BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), EXISTING_OUTBOUND_TRACK_MSG);
         }
         afterSaleEntity.setType(OutboundTrackNoTypeEnum.MANUAL.getCode());
-        afterSaleEntity.setLogisticsChannelId(logisticsChannelId);
         afterSaleEntity.setStatus(AfterSaleStatusEnum.COMPLETED.getCode());
         super.updateById(afterSaleEntity);
         if (shippedProgressEntity == null) {

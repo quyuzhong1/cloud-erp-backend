@@ -325,6 +325,11 @@ public class AfterSaleDTO implements Serializable {
         private String city;
 
         /**
+         * 区/县
+         */
+        private String district;
+
+        /**
          * 详细地址
          */
         private String detailedAddress;
@@ -950,24 +955,17 @@ public class AfterSaleDTO implements Serializable {
         private String orderMode;
 
         /**
-         * 自行寄出时的物流单号（orderMode=manual 时必填）
-         */
-        @NotBlank(message = "物流单号不能为空", groups = AfterSaleLogisticsManualOrderGroup.class)
-        @Size(max = 64, message = "物流单号最大长度不能超过64位", groups = AfterSaleLogisticsManualOrderGroup.class)
-        private String trackNo;
-
-        /**
-         * 物流平台
+         * 物流平台（orderMode=platform 时必填）
          */
         @NotBlank(message = "物流平台不能为空", groups = AfterSaleLogisticsPlatformOrderGroup.class)
         @Size(max = 30, message = "物流平台最大长度不能超过30位", groups = AfterSaleLogisticsPlatformOrderGroup.class)
         private String logisticsPlatform;
 
         /**
-         * 物流渠道id
+         * 物流渠道id（orderMode=platform 时在顶层选择，明细不传）
          */
-        @NotBlank(message = "物流渠道不能为空", groups = {AfterSaleLogisticsPlatformOrderGroup.class, AfterSaleLogisticsManualOrderGroup.class})
-        @Size(max = 19, message = "物流渠道id最大长度不能超过19位", groups = {AfterSaleLogisticsPlatformOrderGroup.class, AfterSaleLogisticsManualOrderGroup.class})
+        @NotBlank(message = "物流渠道不能为空", groups = AfterSaleLogisticsPlatformOrderGroup.class)
+        @Size(max = 19, message = "物流渠道id最大长度不能超过19位", groups = AfterSaleLogisticsPlatformOrderGroup.class)
         private String logisticsChannelId;
 
         /**
@@ -1050,13 +1048,30 @@ public class AfterSaleDTO implements Serializable {
         private String city;
 
         /**
+         * 区/县
+         */
+        @NotBlank(message = "区不能为空", groups = AfterSaleLogisticsPlatformOrderGroup.class)
+        @Size(max = 100, message = "区最大长度不能超过100位", groups = AfterSaleLogisticsPlatformOrderGroup.class)
+        private String district;
+
+        /**
          * 详细地址
          */
         @NotBlank(message = "详细地址不能为空", groups = AfterSaleLogisticsPlatformOrderGroup.class)
         @Size(max = 200, message = "详细地址最大长度不能超过200位", groups = AfterSaleLogisticsPlatformOrderGroup.class)
         private String detailedAddress;
 
+        /**
+         * 物流渠道id（预览/打印只读，下单入参不在明细传递）
+         */
         private String logisticsChannelId;
+
+        /**
+         * 物流单号（自行寄出时每行独立填写）
+         */
+        @NotBlank(message = "物流单号不能为空", groups = AfterSaleLogisticsManualOrderGroup.class)
+        @Size(max = 64, message = "物流单号最大长度不能超过64位", groups = AfterSaleLogisticsManualOrderGroup.class)
+        private String trackNo;
 
     }
 
