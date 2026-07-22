@@ -256,6 +256,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             || CharSequenceUtil.isBlank(mainEntity.getTransactionSubType())
                             || OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(mainEntity.getTransactionSubType())) {
                         updateStatus.setTrackNo(dto.getTrackNo());
+                        // WFHD 已建单回传：渠道未推送海外仓面单且跟踪号不一致时强制覆盖（与 checkAndBuildMap 一致）
+                        updateStatus.setForceUpdateLogisticsTrack(
+                                shouldForceUpdateLogisticsTrackForOrder(mainEntity.getId(), dto.getTrackNo()));
                     }
                     soB2cFeign.updateSoB2cStatusByParams(updateStatus);
                     //更新物流单跟踪号
@@ -303,6 +306,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     }
                 }
                 updateStatus.setTrackNo(dto.getTrackNo());
+                // 销售订单号回传：渠道未推送海外仓面单且跟踪号不一致时强制覆盖
+                updateStatus.setForceUpdateLogisticsTrack(
+                        shouldForceUpdateLogisticsTrackForOrder(mainEntity.getId(), dto.getTrackNo()));
                 soB2cFeign.updateSoB2cStatusByParams(updateStatus);
 
                 map.put(mainEntity, thirdWarehouseDeliveryEntity);
@@ -786,6 +792,25 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }
         String orderTrack = CharSequenceUtil.blankToDefault(logisticsEntity.getTrackNo(), logisticsEntity.getCode());
         return !StrUtil.equals(warehouseTrackNo, orderTrack);
+    }
+
+    /**
+     * WFHD / 销售订单号回传路径：按订单已绑定物流渠道判断是否强制覆盖跟踪号。
+     */
+    private boolean shouldForceUpdateLogisticsTrackForOrder(String soB2cId, String warehouseTrackNo) {
+        if (CharSequenceUtil.isBlank(soB2cId) || CharSequenceUtil.isBlank(warehouseTrackNo)) {
+            return false;
+        }
+        List<SoB2cLogisticsEntity> logisticsList = FeignQuery.create(SoB2cLogisticsEntity.class)
+                .eq(SoB2cLogisticsEntity::getMainId, soB2cId)
+                .list();
+        if (CollUtil.isEmpty(logisticsList)) {
+            return false;
+        }
+        SoB2cLogisticsEntity logisticsEntity = logisticsList.get(0);
+        Map<String, SoB2cLogisticsEntity> logisticsByMainId = Collections.singletonMap(soB2cId, logisticsEntity);
+        Map<String, LogisticsChannelEntity> channelById = loadOrderLogisticsChannelById(logisticsByMainId);
+        return shouldForceUpdateLogisticsTrack(logisticsEntity, channelById, null, warehouseTrackNo);
     }
 
     private ThirdWarehouseSkuValidationContext loadThirdWarehouseSkuValidationContext(PlatformOutboundDTO dto,
