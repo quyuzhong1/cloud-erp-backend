@@ -86,6 +86,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(CfgRulePickingDTO.Add dto) {
+        validateEnabledActionUnique(dto.getDisabled(), dto.getPickDisabled(), dto.getPickActions(),
+                action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "拣货仓位推荐");
+        validateEnabledActionUnique(dto.getDisabled(), dto.getReplenishDisabled(), dto.getReplenishActions(),
+                action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "补货仓位推荐");
+        validateEnabledActionUnique(dto.getDisabled(), dto.getOutStockDisabled(), dto.getOutStockActions(),
+                action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "出库仓位推荐");
         CfgRulePickingEntity entity = BeanMapperUtils.map(CfgRulePickingEntity.class, dto);
         save(entity);
         // 操作日志
@@ -104,6 +110,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     @SuppressWarnings("all")
     public void update(CfgRulePickingDTO.Update dto) {
         CfgRulePickingEntity old = getById(dto.getId());
+        validateEnabledActionUnique(dto.getDisabled(), dto.getPickDisabled(), dto.getPickActions(),
+                action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "拣货仓位推荐");
+        validateEnabledActionUnique(dto.getDisabled(), dto.getReplenishDisabled(), dto.getReplenishActions(),
+                action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "补货仓位推荐");
+        validateEnabledActionUnique(dto.getDisabled(), dto.getOutStockDisabled(), dto.getOutStockActions(),
+                action -> action.getWarehouseId(), action -> action.getWarehouseAreaId(), "出库仓位推荐");
         CfgRulePickingEntity entity = BeanMapperUtils.map(CfgRulePickingEntity.class, dto);
         updateById(entity);
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
@@ -173,6 +185,9 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
         List<CfgRulePickingEntity> list = listByIds(dto.getIds());
+        if (Boolean.FALSE.equals(dto.getDisabled())) {
+            validatePersistedEnabledActionUnique(list);
+        }
         List<Pair<String, String>> pairs = list.stream().map(e -> Pair.create(e.getId(), Boolean.TRUE.equals(e.getDisabled()) ? "停用" : "启用")).collect(Collectors.toList());
         LoginUser user = UserContext.getDefaultLoginUser();
         update(Wrappers.<CfgRulePickingEntity>lambdaUpdate()
@@ -183,6 +198,71 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 .in(CfgRulePickingEntity::getId, dto.getIds()));
         String content = "启用状态由[%s]变更为" + (Boolean.TRUE.equals(dto.getDisabled()) ? "停用" : "启用");
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.PICKING_STRATEGY.getCode(), pairs, "状态变更");
+    }
+
+    /**
+     * 启用规则时，校验数据库中各启用动作类型不存在重复仓库/库区配置。
+     */
+    private void validatePersistedEnabledActionUnique(List<CfgRulePickingEntity> rules) {
+        if (CollectionUtils.isEmpty(rules)) {
+            return;
+        }
+        List<String> ruleIds = rules.stream()
+                .map(rule -> rule.getId())
+                .collect(Collectors.toList());
+        List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.list(
+                Wrappers.<CfgRulePackingActionEntity>lambdaQuery()
+                        .in(CfgRulePackingActionEntity::getRuleId, ruleIds));
+        Map<String, List<CfgRulePackingActionEntity>> actionsByRuleId = actions.stream()
+                .collect(Collectors.groupingBy(action -> action.getRuleId()));
+        for (CfgRulePickingEntity rule : rules) {
+            List<CfgRulePackingActionEntity> ruleActions =
+                    actionsByRuleId.getOrDefault(rule.getId(), Collections.emptyList());
+            validateEnabledActionUnique(Boolean.FALSE, rule.getPickDisabled(),
+                    filterActionByType(ruleActions, RuleTypeEnum.PICKING_STRATEGY.getCode()),
+                    action -> action.getWarehouseId(),
+                    action -> action.getWarehouseAreaId(), "拣货仓位推荐");
+            validateEnabledActionUnique(Boolean.FALSE, rule.getReplenishDisabled(),
+                    filterActionByType(ruleActions, RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode()),
+                    action -> action.getWarehouseId(),
+                    action -> action.getWarehouseAreaId(), "补货仓位推荐");
+            validateEnabledActionUnique(Boolean.FALSE, rule.getOutStockDisabled(),
+                    filterActionByType(ruleActions, RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode()),
+                    action -> action.getWarehouseId(),
+                    action -> action.getWarehouseAreaId(), "出库仓位推荐");
+        }
+    }
+
+    private List<CfgRulePackingActionEntity> filterActionByType(
+            List<CfgRulePackingActionEntity> actions, String ruleType) {
+        return actions.stream()
+                .filter(action -> ruleType.equals(action.getRuleType()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 规则和当前动作类型均启用时，同一仓库/库区只允许配置一次。
+     */
+    private <T> void validateEnabledActionUnique(Boolean ruleDisabled,
+                                                 Boolean actionDisabled,
+                                                 List<T> actions,
+                                                 Function<T, String> warehouseGetter,
+                                                 Function<T, String> warehouseAreaGetter,
+                                                 String actionName) {
+        if (Boolean.TRUE.equals(ruleDisabled)
+                || Boolean.TRUE.equals(actionDisabled)
+                || CollectionUtils.isEmpty(actions)) {
+            return;
+        }
+        Set<String> uniqueKeys = new HashSet<>();
+        for (T action : actions) {
+            String uniqueKey = CharSequenceUtil.nullToEmpty(warehouseGetter.apply(action))
+                    + "#" + CharSequenceUtil.nullToEmpty(warehouseAreaGetter.apply(action));
+            if (!uniqueKeys.add(uniqueKey)) {
+                throw new ServiceException(CharSequenceUtil.format(
+                        "已启用的{}存在重复仓库/库区配置，请检查", actionName));
+            }
+        }
     }
 
     @Override
@@ -430,7 +510,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 continue;
             }
             String key = inv.getSkuId() + "#" + inv.getWarehouseLocation();
-            remainingQtyMap.merge(key, inv.getQty(), Integer::sum);
+            // 重复动作可能返回同一库存记录，取最大值避免重复累加实际库存
+            remainingQtyMap.merge(key, inv.getQty(), Math::max);
         }
 
         List<WarehouseLocationEntity> warehouseLocations = warehouseLocationService.listByWarehouseIds(Collections.singletonList(warehouseId));
@@ -679,7 +760,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 continue;
             }
             String key = inv.getSkuId() + "#" + inv.getWarehouseLocation();
-            remainingQtyMap.merge(key, inv.getQty(), Integer::sum);
+            // 重复动作可能返回同一库存记录，取最大值避免重复累加实际库存
+            remainingQtyMap.merge(key, inv.getQty(), Math::max);
         }
 
         List<CfgRulePickingDTO.OutStockLocationSuggestDTO> result = new ArrayList<>();

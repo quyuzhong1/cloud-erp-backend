@@ -44,6 +44,9 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions, String ruleType) {
+        if(CollectionUtils.isEmpty(actions)){
+            return;
+        }
         AtomicInteger index = new AtomicInteger(0);
         List<CfgRulePackingActionEntity> actionEntities = actions.stream()
                 .map(action -> {
@@ -59,7 +62,11 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actionList, String ruleType) {
-
+        //为空时删除对应的动作明细
+        if(CollectionUtils.isEmpty(actionList)){
+            remove(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().eq(CfgRulePackingActionEntity::getRuleId, ruleId).eq(CfgRulePackingActionEntity::getRuleType, ruleType));
+            return;
+        }
         AtomicInteger index = new AtomicInteger(0);
         // 查询规则动作
         List<CfgRulePackingActionEntity> oldActions = list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery()

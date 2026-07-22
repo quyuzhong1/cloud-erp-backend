@@ -87,6 +87,14 @@ public class CfgRulePickingDTO {
 
         private String description;
         /**
+         * 上架仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 上架仓位名称
+         */
+        private String inWarehouseLocationName;
+        /**
          * 拣货仓位推荐
          */
         @Valid
@@ -164,6 +172,14 @@ public class CfgRulePickingDTO {
         private Boolean outStockDisabled;
 
         private String description;
+        /**
+         * 上架仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 上架仓位名称
+         */
+        private String inWarehouseLocationName;
         /**
          * 拣货仓位推荐
          */
@@ -260,7 +276,7 @@ public class CfgRulePickingDTO {
          */
         private String inWarehouseLocation;
         /**
-         * 名称
+         * 上架仓位名称
          */
         private String inWarehouseLocationName;
     }
