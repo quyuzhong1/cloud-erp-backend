@@ -373,7 +373,6 @@ public final class ApiErrorWms {
     public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE = new ApiError("WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE", 11135, "下推生成的盘盈盘亏单不允许修改");
     public static final ApiError WH_STOCKTAKING_NOT_NEED_PUSH = new ApiError("WH_STOCKTAKING_NOT_NEED_PUSH", 11136, "【{0}】无需下推盘盈/亏单{1}");
     public static final ApiError WH_STOCKTAKING_NOT_ALLOW_APPROVE = new ApiError("WH_STOCKTAKING_NOT_ALLOW_APPROVE", 11137, "【{0}】盘点日期不能小于当前日期,请修改后重新审核");
-    public static final ApiError WH_STOCKTAKING_INVENTORY_INVALID = new ApiError("WH_STOCKTAKING_INVENTORY_INVALID", 11219, "盘点计划【{0}】下推库存数据不完整，仓库【{1}】SKU【{2}】");
     public static final ApiError WH_ONWAY_WAREHOUSE_NOT_EXIST = new ApiError("WH_ONWAY_WAREHOUSE_NOT_EXIST", 11138, "目的仓【{}】未配置在途仓");
     public static final ApiError WH_WEGO_INBOUND_CODE_REQUIRED = new ApiError("WH_WEGO_INBOUND_CODE_REQUIRED", 11139, "WEGO入库单号不能为空");
     public static final ApiError WH_WEGO_AUTH_INFO_EMPTY = new ApiError("WH_WEGO_AUTH_INFO_EMPTY", 11140, "WEGO授权信息不能为空");
@@ -489,4 +488,5 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED", 11249, "AIYA解析入库签收明细JSON失败，签收数据不完整，inboundId={0}");
     public static final ApiError WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT = new ApiError("WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT", 11250, "库存不足：sku=[{0}],推荐拣货仓位缺少数:{1},可从非拣货区仓位移仓数:{2},总仓依旧缺货：{3}");
     public static final ApiError WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND = new ApiError("WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND", 11251, "SKU【{0}】未找到推荐拣货上架仓位，无法生成移仓建议");
+    public static final ApiError WH_STOCKTAKING_INVENTORY_INVALID = new ApiError("WH_STOCKTAKING_INVENTORY_INVALID", 11252, "盘点计划【{0}】下推库存数据不完整，仓库【{1}】SKU【{2}】");
 }
