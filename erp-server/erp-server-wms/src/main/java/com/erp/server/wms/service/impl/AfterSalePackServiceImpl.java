@@ -1125,6 +1125,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     @Override
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "id")
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String remark) {
         remark = CharSequenceUtil.trim(remark);
@@ -1149,12 +1150,20 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                     CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_VOID_NOT_EMPTY.getMsg(), afterSalePackEntity.getCode()));
         }
         AfterSalePackEntity updateEntity = new AfterSalePackEntity();
-        updateEntity.setId(afterSalePackEntity.getId());
         updateEntity.setInvalidStatus(Boolean.TRUE);
         updateEntity.setInvalidRemark(CharSequenceUtil.blankToDefault(remark, ""));
         updateEntity.setInvalidTime(LocalDateTime.now());
-        if (!super.updateById(updateEntity)) {
-            throw new ServiceException("箱唛作废失败");
+        boolean updated = lambdaUpdate()
+                .eq(AfterSalePackEntity::getId, afterSalePackEntity.getId())
+                .and(w -> w.isNull(AfterSalePackEntity::getInvalidStatus).or().eq(AfterSalePackEntity::getInvalidStatus, false))
+                .and(w -> w.isNull(AfterSalePackEntity::getIsUse).or().eq(AfterSalePackEntity::getIsUse, false))
+                .eq(AfterSalePackEntity::getPackStatus, AfterSalePackStatusEnum.WAIT_PACKING.getCode())
+                .and(w -> w.isNull(AfterSalePackEntity::getTotalQty).or().eq(AfterSalePackEntity::getTotalQty, 0))
+                .and(w -> w.isNull(AfterSalePackEntity::getSkuSpeciesQty).or().eq(AfterSalePackEntity::getSkuSpeciesQty, 0))
+                .update(updateEntity);
+        if (!updated) {
+            return BatchResultDTO.fail(id, afterSalePackEntity.getCode(),
+                    CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_STATE_CHANGED.getMsg(), afterSalePackEntity.getCode()));
         }
         String msg = StrUtil.format("用户【{}】作废箱唛【{}】，作废原因：{}", UserContext.getDefaultLoginUser().getUserName(),
                 afterSalePackEntity.getCode(), CharSequenceUtil.blankToDefault(remark, ""));

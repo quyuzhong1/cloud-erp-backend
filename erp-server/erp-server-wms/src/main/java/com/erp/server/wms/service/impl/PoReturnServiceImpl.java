@@ -4735,9 +4735,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private void applyReturnReasonType(PoReturnEntity poReturnEntity, String returnReasonType, String returnRemark) {
         if (CharSequenceUtil.isBlank(returnReasonType)) {
             returnReasonType = PoReturnReasonTypeEnum.DEFECT.getCode();
+        } else if (!PoReturnReasonTypeEnum.DEFECT.getCode().equals(returnReasonType)
+                && !PoReturnReasonTypeEnum.OTHER.getCode().equals(returnReasonType)) {
+            throw new ServiceException(ApiError.WH_PO_RETURN_REASON_TYPE_INVALID);
         }
         poReturnEntity.setReturnReasonType(returnReasonType);
         if (PoReturnReasonTypeEnum.OTHER.getCode().equals(returnReasonType)) {
+            if (CharSequenceUtil.isBlank(returnRemark)) {
+                throw new ServiceException(ApiError.WH_PO_RETURN_REMARK_REQUIRED);
+            }
             poReturnEntity.setReturnRemark(returnRemark);
         } else if (PoReturnReasonTypeEnum.DEFECT.getCode().equals(returnReasonType)) {
             poReturnEntity.setReturnRemark("");

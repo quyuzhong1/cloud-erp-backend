@@ -1116,6 +1116,9 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AFTER_SALE_PACK_VOID_NOT_EMPTY = ApiErrorWms.WH_AFTER_SALE_PACK_VOID_NOT_EMPTY;
     public static final ApiError WH_AFTER_SALE_PACK_VOID_IN_USE = ApiErrorWms.WH_AFTER_SALE_PACK_VOID_IN_USE;
     public static final ApiError WH_AFTER_SALE_PACK_SCAN_VOIDED = ApiErrorWms.WH_AFTER_SALE_PACK_SCAN_VOIDED;
+    public static final ApiError WH_AFTER_SALE_PACK_STATE_CHANGED = ApiErrorWms.WH_AFTER_SALE_PACK_STATE_CHANGED;
+    public static final ApiError WH_PO_RETURN_REASON_TYPE_INVALID = ApiErrorWms.WH_PO_RETURN_REASON_TYPE_INVALID;
+    public static final ApiError WH_PO_RETURN_REMARK_REQUIRED = ApiErrorWms.WH_PO_RETURN_REMARK_REQUIRED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;
@@ -1977,6 +1980,7 @@ public final class ApiError implements Serializable {
     public static final ApiError MAPPING_START_DATE_INVALID = ApiErrorDmp.MAPPING_START_DATE_INVALID;
     public static final ApiError MAPPING_MSKU_NOT_MAPPING = ApiErrorDmp.MAPPING_MSKU_NOT_MAPPING;
     public static final ApiError MAPPING_MSKU_NOT_EXIST = ApiErrorDmp.MAPPING_MSKU_NOT_EXIST;
+    public static final ApiError DMP_AFTER_SALE_TRACK_SYNC_FAILED = ApiErrorDmp.DMP_AFTER_SALE_TRACK_SYNC_FAILED;
 
     /** Fms service error constants. */
     public static final ApiError FIN_INVOICE_NOT_FOUND = ApiErrorFms.FIN_INVOICE_NOT_FOUND;
