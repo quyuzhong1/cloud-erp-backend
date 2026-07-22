@@ -821,6 +821,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (ObjectUtil.isEmpty(afterSalePackEntity)) {
             throw new ServiceException("识别箱唛失败，请核实箱唛准确性");
         }
+        assertPackEntityNotInvalid(afterSalePackEntity);
         return this.view(afterSalePackEntity.getId());
     }
 
@@ -846,6 +847,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notExistCodes)) {
             throw new ServiceException("未找到箱唛数据：" + String.join(",", notExistCodes));
+        }
+        for (String code : distinctCodes) {
+            assertPackEntityNotInvalid(entityMap.get(code));
         }
         List<AfterSalePackEntity> orderedEntityList = distinctCodes.stream()
                 .map(entityMap::get)
@@ -942,6 +946,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .filter(entityMap::containsKey)
                 .map(entityMap::get)
                 .collect(Collectors.toList());
+        for (AfterSalePackEntity entity : orderedEntityList) {
+            assertPackEntityNotInvalid(entity);
+        }
 
         // 2. 一次性批量查所有明细，避免 N+1
         List<String> mainIds = orderedEntityList.stream()
@@ -1097,6 +1104,15 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         AfterSalePackEntity afterSalePackEntity = this.lambdaQuery()
                 .eq(AfterSalePackEntity::getCode, CharSequenceUtil.trim(code))
                 .one();
+        assertPackEntityNotInvalid(afterSalePackEntity);
+    }
+
+    /**
+     * 扫描/加载箱唛时校验是否已作废。
+     *
+     * @param afterSalePackEntity 箱唛主表实体，可为 null（不校验）
+     */
+    private void assertPackEntityNotInvalid(AfterSalePackEntity afterSalePackEntity) {
         if (afterSalePackEntity != null && Boolean.TRUE.equals(afterSalePackEntity.getInvalidStatus())) {
             throw new ServiceException(ApiError.WH_AFTER_SALE_PACK_SCAN_VOIDED);
         }
