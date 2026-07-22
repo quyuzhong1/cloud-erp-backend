@@ -65,6 +65,11 @@ public class SoReturnPrestockDetailDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否不良品（true=不良品，false=可用），默认可用
+         */
+        private Boolean defectiveProductFlag;
     }
 
     // ===================== 由退货入库单表单创建 =====================
@@ -112,38 +117,11 @@ public class SoReturnPrestockDetailDTO {
          * 备注
          */
         private String remark;
-    }
-
-    // ===================== 修改 =====================
-
-    /**
-     * 修改详情行入参
-     */
-    @Data
-    @NoArgsConstructor
-    public static class Update {
 
         /**
-         * 详情行 ID
+         * 是否不良品（true=不良品，false=可用），默认可用
          */
-        @NotBlank(message = "详情行ID不能为空")
-        private String id;
-
-        /**
-         * 版本号（乐观锁，必传，用于校验数据是否已被他人修改）
-         */
-        @NotNull(message = "版本号不能为空")
-        private Integer version;
-
-        /**
-         * 实际收货数量
-         */
-        private Integer receivedQty;
-
-        /**
-         * 备注
-         */
-        private String remark;
+        private Boolean defectiveProductFlag;
     }
 
     // ===================== 关联售后单 =====================
@@ -711,6 +689,11 @@ public class SoReturnPrestockDetailDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否不良品（true=不良品，false=可用），默认可用
+         */
+        private Boolean defectiveProductFlag;
 
         /**
          * 认领后生成的退货入库单 ID；由 so_return_instock_detail.prestock_detail_id 反查得到，只读展示，不参与写入

@@ -802,6 +802,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			detailDTO.setReceivedQty(receiveQty);
 			// 平台订单号、平台字典值均为【关联】相关字段，不代表本行数据来源渠道，此处无头件尚未关联，不写入
 			detailDTO.setRemark(dto.getReason());
+			detailDTO.setDefectiveProductFlag(Boolean.TRUE.equals(detail.getDefectiveProductFlag()));
 			return detailDTO;
 		}).collect(Collectors.toList());
 	}

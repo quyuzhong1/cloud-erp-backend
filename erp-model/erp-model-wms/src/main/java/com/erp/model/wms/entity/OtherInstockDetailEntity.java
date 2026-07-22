@@ -78,6 +78,12 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     @TableField("prestock_detail_id")
     private String prestockDetailId;
 
+    /**
+     * 是否不良品（true=不良品，false=可用），默认可用
+     */
+    @TableField("defective_product_flag")
+    private Boolean defectiveProductFlag;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -90,6 +96,8 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
     public static final String PRESTOCK_DETAIL_ID = "prestock_detail_id";
+
+    public static final String DEFECTIVE_PRODUCT_FLAG = "defective_product_flag";
 
     @Override
     public Serializable pkVal() {

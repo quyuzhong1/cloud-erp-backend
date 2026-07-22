@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -168,39 +167,6 @@ public class SoReturnPrestockServiceImpl
         operateLogService.addModuleOperateLog(String.format("新增了一个预入库单【%s】", entity.getCode()),
                 ModuleTypeEnum.SO_RETURN_PRESTOCK.getCode(), entity.getId(), "新增操作");
         return entity.getId();
-    }
-
-    // ===================== 修改 =====================
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean update(SoReturnPrestockDTO.Update dto) {
-        SoReturnPrestockEntity entity = getByIdOrThrow(dto.getId());
-        // 变更前快照，避免 MyBatis 一级缓存导致对比对象为同一引用
-        SoReturnPrestockEntity oldEntity = BeanUtil.copyProperties(entity, SoReturnPrestockEntity.class);
-        entity.setInventoryOrgId(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgId(), entity.getInventoryOrgId()))
-                .setInventoryOrgName(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgName(), entity.getInventoryOrgName()))
-                .setWarehouseId(CharSequenceUtil.emptyToDefault(dto.getWarehouseId(), entity.getWarehouseId()))
-                .setWarehouseName(CharSequenceUtil.emptyToDefault(dto.getWarehouseName(), entity.getWarehouseName()))
-                .setDictReturnType(CharSequenceUtil.emptyToDefault(dto.getDictReturnType(), entity.getDictReturnType()))
-                .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), entity.getRemark()))
-                .setOperateTime(LocalDateTime.now());
-        // 使用客户端提交时看到的 version 做乐观锁校验，而非重新查询出的服务端当前版本，
-        // 否则并发场景下后到的过期编辑会静默覆盖他人已提交的修改；version 已在 DTO 层强制必传
-        entity.setVersion(dto.getVersion());
-        boolean updated = updateById(entity);
-        if (!updated) {
-            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_MODIFIED);
-        }
-
-        // 操作日志（字段级差异依赖 cfg_operate_log_field 配置；同时落一条编辑摘要）
-        operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SO_RETURN_PRESTOCK.getCode(), entity.getId(), "", "");
-        operateLogService.addModuleOperateLog(String.format("修改了一个预入库单【%s】", entity.getCode()),
-                ModuleTypeEnum.SO_RETURN_PRESTOCK.getCode(), entity.getId(), "编辑操作");
-
-        // 更新详情行（仅支持修改实际收货数量与备注）
-        updateDetailList(dto.getId(), dto.getDetailList());
-        return Boolean.TRUE;
     }
 
     // ===================== 详情 =====================
@@ -465,6 +431,8 @@ public class SoReturnPrestockServiceImpl
         // 使用专用字段 prestockDetailId，不复用 sourceDetailId（后者已被 SoReturnReceiveServiceImpl 按
         // "签收单明细id"语义读取，复用会导致同一字段承载两种互不相关的语义）
         da.setPrestockDetailId(detail.getId());
+        // 透传海外仓/预入库明细的不良品标识，避免经预入库关联后再生成退货入库时丢失
+        da.setDefectiveProductFlag(Boolean.TRUE.equals(detail.getDefectiveProductFlag()));
         // 预入库单不存在退货签收单，签收数量兜底为 0 会误触发"实退总数量不能大于签收数量"校验；
         // 预入库单明细的 receivedQty 即已确认的到货数量，此处关闭签收数量校验
         da.setIsCheckReceiveQty(false);
@@ -762,6 +730,7 @@ public class SoReturnPrestockServiceImpl
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setRemark(d.getRemark());
             detailEntity.setPrestockDetailId(d.getId());
+            detailEntity.setDefectiveProductFlag(Boolean.TRUE.equals(d.getDefectiveProductFlag()));
             detailEntityList.add(detailEntity);
         }
         entity.setDetailEntityList(detailEntityList);
@@ -1334,46 +1303,13 @@ public class SoReturnPrestockServiceImpl
                 .setSalesOrgId("").setSalesOrgName("")
                 .setSalesDeptId("").setSalesDeptName("")
                 .setSellerId("").setSellerName("")
-                .setRemark(original.getRemark());
+                .setRemark(original.getRemark())
+                // 拆行保留原行不良品标识，避免剩余行丢失良/不良状态
+                .setDefectiveProductFlag(Boolean.TRUE.equals(original.getDefectiveProductFlag()));
         // 预分配 ID：拆行剩余行可能在落库前被再次拆分，需以其 ID 作为下一行的 parentDetailId 溯源；
         // 与 @TableId(ASSIGN_ID) 使用同一雪花算法生成器，插入时沿用该 ID
         newDetail.setId(IdWorker.getIdStr());
         return newDetail;
-    }
-
-    /**
-     * 批量更新详情行（修改场景，仅支持修改实际收货数量与备注）
-     *
-     * @param mainId 当前正在修改的预入库单主表 ID，用于校验详情行归属，防止跨单篡改
-     */
-    private void updateDetailList(String mainId, List<SoReturnPrestockDetailDTO.Update> updateList) {
-        if (CollUtil.isEmpty(updateList)) {
-            return;
-        }
-        for (SoReturnPrestockDetailDTO.Update detailDto : updateList) {
-            if (CharSequenceUtil.isBlank(detailDto.getId())) {
-                continue;
-            }
-            SoReturnPrestockDetailEntity detail = soReturnPrestockDetailService.getById(detailDto.getId());
-            if (Objects.isNull(detail) || Boolean.TRUE.equals(detail.getIsDeleted())) {
-                throw new ServiceException(ApiError.COMMON_NOT_FOUND, "预入库单详情行");
-            }
-            if (!mainId.equals(detail.getMainId())) {
-                throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_DETAIL_NOT_BELONG);
-            }
-            if (Objects.nonNull(detailDto.getReceivedQty())) {
-                detail.setReceivedQty(detailDto.getReceivedQty());
-            }
-            if (Objects.nonNull(detailDto.getRemark())) {
-                detail.setRemark(detailDto.getRemark());
-            }
-            // version 已在 DTO 层强制必传，使用客户端提交时看到的版本做乐观锁校验
-            detail.setVersion(detailDto.getVersion());
-            boolean updated = soReturnPrestockDetailService.updateById(detail);
-            if (!updated) {
-                throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_DETAIL_MODIFIED);
-            }
-        }
     }
 
     /**
@@ -1435,7 +1371,8 @@ public class SoReturnPrestockServiceImpl
                     // 新增时尚未关联售后单/店铺，平台订单号、平台字典值均未知，留空；由后续关联操作写入
                     .setPlatformOrderCode("")
                     .setDictPlatform("")
-                    .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
+                    .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""))
+                    .setDefectiveProductFlag(Boolean.TRUE.equals(dto.getDefectiveProductFlag()));
             return d;
         }).collect(Collectors.toList());
         soReturnPrestockDetailService.saveBatch(entities, 500);
@@ -1507,6 +1444,7 @@ public class SoReturnPrestockServiceImpl
         v.setSellerId(e.getSellerId());
         v.setSellerName(e.getSellerName());
         v.setRemark(e.getRemark());
+        v.setDefectiveProductFlag(Boolean.TRUE.equals(e.getDefectiveProductFlag()));
         SoReturnInstockEntity returnInstock = returnInstockByPrestockDetailId.get(e.getId());
         if (Objects.nonNull(returnInstock)) {
             v.setReturnInstockId(returnInstock.getId());
@@ -1552,6 +1490,7 @@ public class SoReturnPrestockServiceImpl
             // 手动创建场景：实际收货数量取自表单实退数量
             detail.setReceivedQty(d.getRealQty());
             detail.setRemark(d.getRemark());
+            detail.setDefectiveProductFlag(Boolean.TRUE.equals(d.getDefectiveProductFlag()));
             return detail;
         }).collect(Collectors.toList());
     }
@@ -1710,6 +1649,7 @@ public class SoReturnPrestockServiceImpl
             detailEntity.setActualQty(Objects.nonNull(detail.getReceivedQty()) ? detail.getReceivedQty() : 0);
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setRemark(detail.getRemark());
+            detailEntity.setDefectiveProductFlag(Boolean.TRUE.equals(detail.getDefectiveProductFlag()));
             Deque<SoReturnPrestockDetailEntity> persistedQueue = persistedDetailQueueBySkuId.get(detail.getSkuId());
             if (Objects.nonNull(persistedQueue) && !persistedQueue.isEmpty()) {
                 detailEntity.setPrestockDetailId(persistedQueue.pollFirst().getId());

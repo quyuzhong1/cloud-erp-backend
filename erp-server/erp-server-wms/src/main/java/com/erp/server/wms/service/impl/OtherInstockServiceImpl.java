@@ -69,6 +69,7 @@ import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
@@ -795,6 +796,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             inOutStockDTO.setQty(detailEntity.getActualQty());
             inOutStockDTO.setWarehouseId(entity.getWarehouseId());
             inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            if (Boolean.TRUE.equals(detailEntity.getDefectiveProductFlag())) {
+                inOutStockDTO.setInventoryStatus(InventoryStatusEnum.DEFECTIVE_PRODUCT);
+            }
             inOutStockList.add(inOutStockDTO);
         }
         //其他入库增加库存
