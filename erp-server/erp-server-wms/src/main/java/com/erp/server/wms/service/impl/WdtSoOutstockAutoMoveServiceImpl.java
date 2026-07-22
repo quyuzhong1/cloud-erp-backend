@@ -11,7 +11,6 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
@@ -33,7 +32,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * 旺店通销售出库同步前预检：当前库位不足则改空仓位并全量移入；sourceId 幂等防重试重复移仓。
+ * 旺店通销售出库同步前预检：当前库位不足则改空仓位并按缺口移入。
  */
 @Slf4j
 @Service
@@ -80,22 +79,17 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 continue;
             }
 
-            boolean alreadyMoved = CharSequenceUtil.isNotBlank(sourceId) && existsMovedBySource(sourceId, warehouseId);
-
             List<NeedStock> needList = entry.getValue();
             // 按仓批量加载本单涉及 SKU 的可用库存：同时用于当前库位预检 + 候选源仓分配
             WarehouseInventoryCache inventoryCache = loadWarehouseInventoryCache(warehouse, needList);
 
             List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = new ArrayList<>();
             for (NeedStock need : needList) {
-                planMoveForNeed(need, detailList, inOutStockList, moveDetailList, alreadyMoved, inventoryCache);
+                planMoveForNeed(need, detailList, inOutStockList, moveDetailList, inventoryCache);
             }
             moveDetailList.removeIf(d -> Objects.equals(d.getInWarehouseLocation(), d.getOutWarehouseLocation())
                     || d.getQty() == null || d.getQty() <= 0);
-            if (CollUtil.isEmpty(moveDetailList) || alreadyMoved) {
-                if (alreadyMoved) {
-                    log.warn("旺店通出库预检已存在移仓单，跳过移仓 sourceId={} warehouseId={}", sourceId, warehouseId);
-                }
+            if (CollUtil.isEmpty(moveDetailList)) {
                 continue;
             }
 
@@ -118,18 +112,6 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 throw new ServiceException("旺店通出库库存不足自动移仓失败：" + e.getMessage());
             }
         }
-    }
-
-    private boolean existsMovedBySource(String sourceId, String warehouseId) {
-        return warehouseLocationMoveService.lambdaQuery()
-                .eq(WarehouseLocationMoveEntity::getSourceType, SourceTypeEnum.SO_OUTSTOCK.getCode())
-                .eq(WarehouseLocationMoveEntity::getSourceId, sourceId)
-                .eq(WarehouseLocationMoveEntity::getWarehouseId, warehouseId)
-                .and(w -> w.isNull(WarehouseLocationMoveEntity::getInvalidStatus)
-                        .or()
-                        .eq(WarehouseLocationMoveEntity::getInvalidStatus, false))
-                .last("limit 1")
-                .one() != null;
     }
 
     /**
@@ -177,18 +159,11 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                                  List<SoOutstockDetailEntity> detailList,
                                  List<InOutStockDTO> inOutStockList,
                                  List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList,
-                                 boolean alreadyMoved,
                                  WarehouseInventoryCache inventoryCache) {
         String currentLocation = CharSequenceUtil.nullToEmpty(need.getWarehouseLocation());
         int haveQty = inventoryCache.qtyBySkuLocation.getOrDefault(
                 buildSkuLocationKey(need.getSkuId(), currentLocation), 0);
         if (haveQty >= need.getQty()) {
-            return;
-        }
-
-        // 重试场景：移仓已完成，仅改写出库库位为空仓位，不再移仓
-        if (alreadyMoved) {
-            rewriteToEmptyLocation(detailList, inOutStockList, need.getWarehouseId(), need.getSkuId(), currentLocation);
             return;
         }
 
@@ -294,7 +269,7 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
     }
 
     /**
-     * 源仓位选取优先级：code 以 3 开头 → 以 4 开头 → 任意 → code 等于 2
+     * 源仓位选取优先级：code 以 3 开头 → 以 4 开头 → 任意
      */
     private static List<Predicate<? super LocationListDTO>> buildPriorityPredicates() {
         List<Predicate<? super LocationListDTO>> predicateList = new ArrayList<>();

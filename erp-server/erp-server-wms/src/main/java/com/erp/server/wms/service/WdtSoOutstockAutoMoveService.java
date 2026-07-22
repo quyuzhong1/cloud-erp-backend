@@ -12,13 +12,12 @@ import java.util.List;
 public interface WdtSoOutstockAutoMoveService {
 
     /**
-     * 按出库明细预检当前库位可用量；不足则改写明细为空仓位并全量移入空仓位。
+     * 按出库明细预检当前库位可用量；不足则改写明细为空仓位并按缺口移入空仓位。
      * <p>凑不满时不移仓、不抛错，交由后续 {@code approveByRule} 按原逻辑报库存不足。</p>
-     * <p>已存在同 sourceId 的移仓单时跳过移仓，避免异常重试重复移仓；库位改写仍会执行。</p>
      *
      * @param detailList     本单出库明细（不足时会改写 warehouseLocation 为空仓位）
      * @param inOutStockList 本单待扣减的实体仓出入库明细（与 detail 同步改写）
-     * @param sourceId       幂等键：旺店通出库单号
+     * @param sourceId       旺店通出库单号，写入自动移仓来源
      * @param sourceCode     来源单号（通常同 sourceId）
      */
     void preCheckAndAutoMove(List<SoOutstockDetailEntity> detailList,
