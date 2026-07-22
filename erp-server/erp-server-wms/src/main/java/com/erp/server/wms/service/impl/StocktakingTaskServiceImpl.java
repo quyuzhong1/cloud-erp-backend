@@ -56,6 +56,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -87,11 +88,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * <p>
      * 盘点库存 Redis lock / 索引生命周期（与 UAT/历史 {@code lockInventoryForStocktaking} 一致）：
      * 加锁 {@code SET NX} 不设 TTL，释锁靠业务显式 {@code DEL}；索引随释锁/回滚清理，异常残留走 plan 级 SCAN 兜底。
-     * 同 plan 的下推（加锁+落库+索引）与释锁共用 planCode {@code @DistributeLocker}，在方法执行期互斥。
-     * <p>
-     * 事务边界：plan 锁随 {@link #createStocktakingTasksUnderPlanLock} 方法返回释放，外层 {@code createTaskList} DB 事务可能尚未 commit；
-     * 有意不使用 {@code unlockAfterTx}，避免大计划下推长临界区阻塞同 plan 任务释锁。
-     * 残余窗口靠 {@link #loadLockKeysReferencedByOtherIncompleteTasks} 与业务侧「已下推则拒绝」兜底，正常单次下推与任务完成链路不应重叠。
+     * 同 plan 的下推（加锁+落库+索引）与释锁共用 planCode 分布式锁（与 {@code @DistributeLocker} 相同 Redis key）。
+     * 下推在 {@link #createStocktakingTasksUnderPlanLock} 上同时使用 {@code @DistributeLocker} 与
+     * {@code @Transactional(REQUIRES_NEW)}，使 plan 锁随本方法独立事务提交后释放（不用 {@code unlockAfterTx}，也不手动注入 Redisson）；
+     * 时序依赖 {@code DistributeLockerAspect} {@code @Order(1)} 包裹事务切面。
      */
     private static final int STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE = 200;
 
@@ -1261,6 +1261,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         return false;
     }
 
+    /**
+     * 下推失败清理可能残留的 DB 任务与 Redis 锁/索引。
+     */
     private void rollbackStocktakingTaskCreation(String planId, String planCode) {
         List<StocktakingTaskEntity> taskEntityList = listBySourceId(planId);
         List<String> taskIds = CollUtil.isEmpty(taskEntityList)
@@ -1282,6 +1285,21 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             log.error("盘点任务回滚清理锁索引失败，planId={}, planCode={}", planId, planCode, indexException);
         }
         releaseInventoryLockByPlanCodeWithRetry(planCode, "taskCreationRollback:" + planId);
+    }
+
+    /**
+     * 在 plan 锁与独立 DB 事务临界区内执行下推：Redis 库存加锁、任务/明细落库、task-keys 索引注册。
+     * <p>
+     * 仅由 {@link #createStocktakingTasksUnderPlanLock} 在已获取 plan 分布式锁且 Spring 事务内调用，勿在外层直接调用。
+     *
+     * @param planCode      计划单号
+     * @param entity        盘点计划
+     * @param inventoryList 待盘点库存行（已通过 {@code createTaskList} 查询与校验）
+     */
+    private void executeStocktakingTaskPushUnderHeldPlanLock(String planCode, StocktakingPlanEntity entity,
+                                                           List<InventoryEntity> inventoryList) {
+        lockInventoryForStocktakingInPlanLockScope(planCode, inventoryList);
+        persistStocktakingTasksFromInventory(entity, inventoryList, planCode);
     }
 
     /**
@@ -1324,12 +1342,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 在 planCode 分布式锁内完成盘点库存加锁、任务落库与 task-keys 索引注册（下推统一入口）。
+     * 在 planCode 分布式锁与独立 DB 事务内完成盘点库存加锁、任务落库与 task-keys 索引注册（下推统一入口）。
      * <p>
-     * 事务边界：本方法返回时 plan 锁即释放，外层 {@code createTaskList} 的 DB 事务可能尚未 commit（见类常量注释）。
-     * 须经 Spring 代理调用以触发 {@code @DistributeLocker}。
+     * {@code REQUIRES_NEW} 使本方法事务先于 plan 锁释放完成 commit，避免外层 {@code createTaskList} / 审核事务未提交时的释锁竞态；
+     * 不使用 {@code unlockAfterTx}，plan 锁由 {@code @DistributeLocker} 在本方法 {@code proceed()} 返回后的 {@code finally} 释放。
+     * 「锁晚于 commit」依赖 {@code DistributeLockerAspect}（{@code @Order(1)}）包裹 {@code @Transactional} 切面的嵌套顺序，调整 Aspect 顺序时需重新验证。
+     * 须经 Spring 代理调用。
      */
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     @DistributeLocker(
             businessType = DistributeKeyConstant.WMS_STOCKTAKING_INVENTORY_DIM_KEY,
             keyName = "planCode",
@@ -1337,8 +1358,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             maxRetries = 5
     )
     public void createStocktakingTasksUnderPlanLock(String planCode, StocktakingPlanEntity entity, List<InventoryEntity> inventoryList) {
-        lockInventoryForStocktakingInPlanLockScope(planCode, inventoryList);
-        persistStocktakingTasksFromInventory(entity, inventoryList, planCode);
+        executeStocktakingTaskPushUnderHeldPlanLock(planCode, entity, inventoryList);
     }
 
     /**
@@ -2066,7 +2086,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean createTaskList(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList,Boolean isNowExecute) {
         // 1. 查询所有需要盘点的库存记录
         List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
@@ -2096,7 +2115,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean createTaskListByJob(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList) {
         // 1. 查询所有需要盘点的库存记录
         List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);

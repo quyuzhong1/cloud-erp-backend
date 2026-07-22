@@ -186,11 +186,11 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     void releaseInventoryLockByPlanCodeUnderPlanLock(String planCode);
 
     /**
-     * 在 planCode 分布式锁内完成盘点库存加锁、任务落库与 task-keys 索引注册（下推统一入口）。
+     * 在 planCode 分布式锁与独立 DB 事务内完成盘点库存加锁、任务落库与 task-keys 索引注册（下推统一入口）。
      * <p>
-     * 事务边界：plan 锁随本方法返回释放，外层 {@code createTaskList} DB 事务可能尚未 commit；不使用 {@code unlockAfterTx}，
-     * 避免大计划下推长临界区阻塞同 plan 释锁。下推主路径必须使用本方法，勿直接调用 {@link #acquireStocktakingInventoryLocks}。
-     * 须经 Spring 代理调用以触发 {@code @DistributeLocker}。
+     * 实现上使用 {@code @DistributeLocker} + {@code @Transactional(REQUIRES_NEW)}，使 plan 锁在本方法独立事务 commit 后释放；
+     * 不使用 {@code unlockAfterTx}。plan 锁晚于 commit 释放依赖 {@code DistributeLockerAspect} {@code @Order(1)} 包裹事务切面，调整 Aspect 顺序时需重新验证。
+     * 下推主路径请使用 {@link #createTaskList} / {@link #createTaskListByJob}，须经 Spring 代理调用。
      *
      * @param planCode      计划单号
      * @param entity        盘点计划
