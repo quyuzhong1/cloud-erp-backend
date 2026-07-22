@@ -818,8 +818,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                     }
                     if (stocktakingTaskService.isInventoryLockedForStocktaking(item.getOrgId(), item.getWarehouseId(),
                             item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus())) {
-                        WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
-                        String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+                        String warehouseName = resolveWarehouseNameById(item.getWarehouseId());
                         log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存已存在盘点任务，跳过该计划",
                                 warehouseName,
                                 item.getWarehouseLocation(),
@@ -850,6 +849,35 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         );
 
         return removedIds;
+    }
+
+    /**
+     * 按仓库 ID 解析展示用仓库名：名称优先，空则回退金蝶仓库编码。
+     *
+     * @param warehouseId 仓库 ID
+     * @return 仓库名称或金蝶编码；ID 为空或仓库不存在时返回空串
+     */
+    private String resolveWarehouseNameById(String warehouseId) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            return "";
+        }
+        return resolveWarehouseName(warehouseService.detailWithCache(warehouseId));
+    }
+
+    /**
+     * 从仓库详情解析展示名：{@code name} 优先，否则 {@code kingdeeWarehouseCode}。
+     *
+     * @param updateDTO 仓库详情
+     * @return 展示用仓库名；DTO 为空时返回空串
+     */
+    private String resolveWarehouseName(WarehouseDTO.UpdateDTO updateDTO) {
+        if (ObjectUtil.isEmpty(updateDTO)) {
+            return "";
+        }
+        if (CharSequenceUtil.isNotBlank(updateDTO.getName())) {
+            return updateDTO.getName();
+        }
+        return CharSequenceUtil.blankToDefault(updateDTO.getKingdeeWarehouseCode(), "");
     }
 
 }
