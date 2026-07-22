@@ -3,6 +3,7 @@ package com.common.business.config;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.support.spring.FastJsonRedisSerializer;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.MD5Util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -160,6 +161,9 @@ public class RedisConfig {
         cacheConfigurations.put("cache:sys:", redisCacheConfiguration.entryTtl(Duration.ofHours(8)));
         cacheConfigurations.put("cache:oms:", redisCacheConfiguration.entryTtl(Duration.ofMillis(30)));
         cacheConfigurations.put("cache:workflow:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        // 高级查询配置允许运行时调整。业务写入会主动失效，短 TTL 兜底直接改库等旁路变更。
+        cacheConfigurations.put(RedisCacheConstants.SYS_CFG_QUERY_CONDITION_BY_CODE,
+                redisCacheConfiguration.entryTtl(Duration.ofSeconds(60)));
 
 
         return RedisCacheManager
