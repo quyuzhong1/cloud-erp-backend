@@ -162,7 +162,14 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
 
     AfterSaleProgressDTO.RepairRecordDTO getRepairProgress(AfterSaleDTO.ProgressDTO dto);
 
-    List<AfterSaleDTO.NodeDTO>  getNodeList();
+    /**
+     * 获取可手动变更的售后维修节点（供 PC 编辑状态下拉、OpenAPI/Feign 等对外接口使用）。
+     * 不含「已完成」「已终止」：均为终态，不支持 PC 编辑状态手动变更；须分别走物流下单、作废/取消/审核等专用入口。
+     * 进度条、物流下单等需完整节点时由 Service 内部另行加载 cfg 全量节点，勿将本接口当作完整节点列表。
+     *
+     * @return 可选手动变更的节点列表
+     */
+    List<AfterSaleDTO.NodeDTO> getNodeList();
 
     List<BatchResultDTO> changeStatus(AfterSaleDTO.IdsDTO dto);
 
@@ -173,6 +180,16 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
 
     void syncWdtToAfterSale();
+
+    /**
+     * 同步寄修单商家寄出物流轨迹状态（Track123，供 XXL-JOB 调用）
+     */
+    void syncAfterSaleTrackStatus();
+
+    /**
+     * 批量更新寄修单商家寄出物流状态
+     */
+    void batchUpdateOutboundTrackStatus(List<AfterSaleEntity> updateList);
 
     List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode);
 
@@ -187,7 +204,7 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
      *
      * @param dto AfterSaleDTO.LogisticsOrderDTO
      */
-    List<BatchResultDTO> logisticsOrder(List<String> ids, AfterSaleDTO.LogisticsOrderDTO dto);
+    List<BatchResultDTO> logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto);
 
     /**
      * 取消物流下单

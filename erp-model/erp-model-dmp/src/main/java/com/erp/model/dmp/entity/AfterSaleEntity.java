@@ -186,6 +186,12 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     @TableField("logistics_channel_id")
     private String logisticsChannelId;
 
+    /**
+     * 商家寄出物流轨迹状态（Track123，列表「商家寄件物流状态」）
+     */
+    @TableField("outbound_track_status")
+    private String outboundTrackStatus;
+
 
     public static final String CODE = "code";
 
@@ -232,6 +238,8 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     public static final String TYPE = "type";
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
+
+    public static final String OUTBOUND_TRACK_STATUS = "outbound_track_status";
 
     @Override
     public Serializable pkVal() {

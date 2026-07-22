@@ -326,4 +326,12 @@ public class PdaPoReturnController extends BaseController {
     public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
         return success(poReturnService.batchGetPurchasePrice(list));
     }
+
+    /**
+     * 获取默认组织
+     */
+    @GetMapping("/getDefaultOrg")
+    public ApiResult<PurchaseReturnOrderDTO.DefaultOrgDTO> getDefaultOrg(@RequestParam("returnWarehouseId") String returnWarehouseId) {
+        return success(poReturnService.getDefaultOrgByWarehouse(returnWarehouseId));
+    }
 }

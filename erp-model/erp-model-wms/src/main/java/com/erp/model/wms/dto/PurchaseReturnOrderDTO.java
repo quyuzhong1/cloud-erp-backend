@@ -106,6 +106,16 @@ public class PurchaseReturnOrderDTO {
         private String returnRemark;
 
         /**
+         * 退货原因类型 /wms/dict/drop/down?type=poReturnReasonType
+         */
+        private String returnReasonType;
+
+        /**
+         * 其它退货原因说明（type=other 时与 returnRemark 一致）
+         */
+        private String returnReasonOther;
+
+        /**
          * 供应商id
          */
         @NotBlank(message = "供应商不能为空")
@@ -200,6 +210,16 @@ public class PurchaseReturnOrderDTO {
          * 退货原因
          */
         private String returnRemark;
+
+        /**
+         * 退货原因类型 /wms/dict/drop/down?type=poReturnReasonType
+         */
+        private String returnReasonType;
+
+        /**
+         * 其它退货原因说明
+         */
+        private String returnReasonOther;
 
         /**
          * 退货仓库id
@@ -358,6 +378,21 @@ public class PurchaseReturnOrderDTO {
          * 退货原因
          */
         private String returnRemark;
+
+        /**
+         * 退货原因类型 /wms/dict/drop/down?type=poReturnReasonType
+         */
+        private String returnReasonType;
+
+        /**
+         * 退货原因类型名称
+         */
+        private String returnReasonTypeName;
+
+        /**
+         * 其它退货原因说明
+         */
+        private String returnReasonOther;
 
         /**
          * 退货日期
@@ -2166,5 +2201,18 @@ public class PurchaseReturnOrderDTO {
          */
         private List<String> detailIds;
 
+    }
+
+    /**
+     * PDA采购退货默认组织
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DefaultOrgDTO {
+
+        private String returnOrgId;
+        private String returnOrgName;
+        private String purchaseOrgId;
+        private String purchaseOrgName;
     }
 }

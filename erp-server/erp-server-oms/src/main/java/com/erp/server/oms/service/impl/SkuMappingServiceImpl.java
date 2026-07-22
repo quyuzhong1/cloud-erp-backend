@@ -1069,6 +1069,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
+    public List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(String scanCode) {
+        if (CharSequenceUtil.isBlank(scanCode)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByScanCode(CharSequenceUtil.trim(scanCode));
+    }
+
+    @Override
     public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(List<String> productSkuIdList) {
         if (CollectionUtils.isEmpty(productSkuIdList)) {
             return Collections.emptyList();

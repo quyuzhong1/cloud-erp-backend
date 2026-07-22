@@ -460,4 +460,7 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/exportAfterSalesWarehouseLocationSuggest")
     public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAfterSalePack")
+    PagingVO<AfterSalePackDTO.ExportViewDTO> exportAfterSalePack(@RequestBody @Validated PagingDTO<AfterSalePackDTO.ExportDTO> dto);
 }

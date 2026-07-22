@@ -1221,6 +1221,39 @@
         </if>
     </select>
 
+    <select id="pdaSearchSkuBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property,
+        pp.box_qty as unitQty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        ppu.main_supplier,
+        ppu.second_supplier,
+        pd.unit_name
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="status != null and status != ''">
+            AND pd.status = #{status}
+        </if>
+        <if test="skuIds != null and skuIds.size() > 0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+
     <select id="pdaProductView" resultType="com.erp.model.plm.dto.PdaProductDetailDTO$View">
         SELECT
         pd.sku_no,

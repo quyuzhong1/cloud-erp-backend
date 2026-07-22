@@ -92,7 +92,9 @@ public class AfterSaleFeignController extends BaseController {
     }
 
     /**
-     * 获取节点配置信息
+     * 获取可手动变更的售后维修节点（不含已完成、已终止），供 PC 编辑状态下拉使用。
+     * OpenAPI 等同路径接口语义一致；完整进度节点请调 getRepairRecord 等接口。
+     *
      * @Author jack
      * @since 2025-04-07
      */

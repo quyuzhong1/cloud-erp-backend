@@ -42,7 +42,6 @@ public class AfterSaleController extends BaseController {
     @Resource
     private AfterSaleService afterSaleService;
 
-
     /**
     * 新增
     * @author jack
@@ -397,7 +396,9 @@ public class AfterSaleController extends BaseController {
     }
 
     /**
-     * 获取节点配置信息
+     * 获取可手动变更的售后维修节点（不含已完成、已终止），供 PC 编辑状态下拉使用。
+     * OpenAPI/Feign 同路径接口语义一致；完整进度节点请调 getRepairRecord 等接口。
+     *
      * @Author jack
      * @since 2025-04-07
      */
@@ -433,9 +434,9 @@ public class AfterSaleController extends BaseController {
      * @return Object
      */
     @PostMapping("/logisticsOrder")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "寄修物流下单")
     public ApiResult<List<BatchResultDTO>> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
-        List<String> ids = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).collect(Collectors.toList());
-        List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(ids, dto);
+        List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

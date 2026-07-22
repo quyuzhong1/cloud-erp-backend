@@ -111,6 +111,13 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     private String returnRemark;
 
     /**
+     * 退货原因类型：defect 瑕疵品，other 其它
+     * /wms/dict/drop/down?type=poReturnReasonType
+     */
+    @TableField("return_reason_type")
+    private String returnReasonType;
+
+    /**
      * 退货日期
      */
     @TableField("bill_date")

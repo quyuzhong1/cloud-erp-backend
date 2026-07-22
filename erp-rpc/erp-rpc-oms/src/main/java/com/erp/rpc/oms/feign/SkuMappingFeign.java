@@ -104,4 +104,10 @@ public interface SkuMappingFeign {
      */
     @PostMapping("feign/skuMapping/countUnmatchedGroupByWarehouse")
     List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(@RequestBody SkuMappingDTO.UnmatchQueryDTO dto);
+
+    /**
+     * 按扫描码查询SKU映射
+     */
+    @PostMapping("feign/skuMapping/listByScanCode")
+    List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(@RequestParam("scanCode") String scanCode);
 }

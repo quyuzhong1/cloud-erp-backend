@@ -15,6 +15,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -26,6 +28,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.AfterSalePackMapper;
@@ -39,9 +43,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AFTER_SALE_PACK;
 
 /**
  * <p>
@@ -79,6 +86,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<String> boxCodeApplication(AfterSalePackDTO.BoxCodeApplicationDTO dto) {
@@ -101,6 +111,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
             afterSalePackEntity.setSkuSpeciesQty(0);
             afterSalePackEntity.setTotalQty(0);
+            afterSalePackEntity.setInvalidStatus(Boolean.FALSE);
             afterSalePackEntityList.add(afterSalePackEntity);
         }
         boolean save = super.saveBatch(afterSalePackEntityList);
@@ -128,6 +139,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         afterSalePackEntity.setIsUse(Boolean.FALSE);
         afterSalePackEntity.setIsDifference(Boolean.FALSE);
         afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
+        afterSalePackEntity.setInvalidStatus(Boolean.FALSE);
         // 处理装箱明细数据
         if (CollectionUtils.isNotEmpty(addDTO.getDetailList())) {
             afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.PENDING.getCode());
@@ -529,6 +541,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     public Boolean update(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
         AfterSalePackEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        assertPackModifiable(old);
         // 箱唛状态等于复审中或者已封箱状态，不可修改
         if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(old.getPackStatus()) || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(old.getPackStatus())) {
             throw new ServiceException("箱唛状态等于复审中或者已封箱状态，不可修改");
@@ -572,6 +585,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         AfterSalePackEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        assertPackModifiable(old);
         // 箱唛状态等于复审中或者已封箱状态，不可提交审核
         if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(old.getPackStatus()) || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(old.getPackStatus())) {
             throw new ServiceException("箱唛状态等于复审中或者已封箱状态，不可提交审核");
@@ -587,6 +601,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
         }
         afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+        fillOperateUser(afterSalePackEntity);
         boolean save = super.updateById(afterSalePackEntity);
         if (!save) {
             throw new ServiceException("箱唛确定提审失败");
@@ -605,6 +620,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     public Boolean reject(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
         AfterSalePackEntity afterSalePackEntity = super.getById(addOrUpdateDTO.getId());
         afterSalePackEntity = Optional.ofNullable(afterSalePackEntity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        assertPackModifiable(afterSalePackEntity);
         // 箱唛状态不等于复审中，不可驳回复审
         if (!AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())) {
             throw new ServiceException("箱唛状态等于【{}】状态，不可复核驳回", AfterSalePackStatusEnum.getByCode(afterSalePackEntity.getPackStatus()));
@@ -638,6 +654,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         AfterSalePackEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        assertPackModifiable(old);
         // 箱唛状态不等于复审中，不可确定并封箱
         if (!AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(old.getPackStatus())) {
             throw new ServiceException("箱唛状态不等于复审中，不可确定并封箱");
@@ -653,6 +670,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
         }
         afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.SEALED_BOX.getCode());
+        fillCheckUser(afterSalePackEntity);
         boolean save = super.updateById(afterSalePackEntity);
         if (!save) {
             throw new ServiceException("箱唛确定并封箱失败");
@@ -682,11 +700,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     public AfterSalePackDTO.ViewDTO view(String id) {
         AfterSalePackEntity afterSalePackEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
         AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
-        data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
-        data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
-        data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
-        data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
-        data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
+        fillViewNames(data);
         // 查询采购退货信息
         PoReturnEntity poReturnEntity = poReturnService.getById(data.getSourceId());
         if (ObjectUtil.isNotEmpty(poReturnEntity)) {
@@ -749,7 +763,20 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
             data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
             data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         }
+    }
+
+    private void fillViewNames(AfterSalePackDTO.ViewDTO data) {
+        if (data == null) {
+            return;
+        }
+        data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
+        data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
+        data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
+        data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
+        data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
     }
 
     @Override
@@ -764,6 +791,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             BatchResultDTO deleteResult;
             if (ObjectUtil.isEmpty(afterSalePackEntity)) {
                 deleteResult = BatchResultDTO.fail(id, id, "该箱唛不存在或已被删除, 删除失败");
+            } else if (Boolean.TRUE.equals(afterSalePackEntity.getInvalidStatus())) {
+                deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(),
+                        CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_INVALID_STATUS.getMsg(), afterSalePackEntity.getCode()));
             } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
                 deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 删除失败");
             } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
@@ -791,6 +821,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (ObjectUtil.isEmpty(afterSalePackEntity)) {
             throw new ServiceException("识别箱唛失败，请核实箱唛准确性");
         }
+        assertPackEntityNotInvalid(afterSalePackEntity);
         return this.view(afterSalePackEntity.getId());
     }
 
@@ -816,6 +847,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notExistCodes)) {
             throw new ServiceException("未找到箱唛数据：" + String.join(",", notExistCodes));
+        }
+        for (String code : distinctCodes) {
+            assertPackEntityNotInvalid(entityMap.get(code));
         }
         List<AfterSalePackEntity> orderedEntityList = distinctCodes.stream()
                 .map(entityMap::get)
@@ -912,6 +946,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .filter(entityMap::containsKey)
                 .map(entityMap::get)
                 .collect(Collectors.toList());
+        for (AfterSalePackEntity entity : orderedEntityList) {
+            assertPackEntityNotInvalid(entity);
+        }
 
         // 2. 一次性批量查所有明细，避免 N+1
         List<String> mainIds = orderedEntityList.stream()
@@ -998,6 +1035,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (StringUtils.isBlank(targetWarehouseLocationId)) {
             throw new ServiceException("移入仓位不能为空");
         }
+        List<AfterSalePackEntity> afterSalePackEntityList = super.listByIds(ids);
+        for (AfterSalePackEntity afterSalePackEntity : afterSalePackEntityList) {
+            assertPackModifiable(afterSalePackEntity);
+        }
         this.lambdaUpdate()
                 .in(AfterSalePackEntity::getId, ids)
                 .set(AfterSalePackEntity::getIsMoveWarehouse, true)
@@ -1026,6 +1067,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             BatchResultDTO submitResult;
             if (ObjectUtil.isEmpty(afterSalePackEntity)) {
                 submitResult = BatchResultDTO.fail(id, id, "该箱唛不存在或已被删除, 提交失败");
+            } else if (Boolean.TRUE.equals(afterSalePackEntity.getInvalidStatus())) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(),
+                        CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_INVALID_STATUS.getMsg(), afterSalePackEntity.getCode()));
             } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
                 submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 不可提交审核");
             } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
@@ -1036,6 +1080,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             } else {
                 log.info("确定提审 开始修改箱唛数据，单号：【{}】", afterSalePackEntity.getCode());
                 afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+                fillOperateUser(afterSalePackEntity);
                 boolean save = super.updateById(afterSalePackEntity);
                 if (!save) {
                     throw new ServiceException("箱唛确定提审失败");
@@ -1049,6 +1094,116 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             resultDTOS.add(submitResult);
         }
         return resultDTOS;
+    }
+
+    @Override
+    public void assertPackNotInvalid(String code) {
+        if (CharSequenceUtil.isBlank(code)) {
+            return;
+        }
+        AfterSalePackEntity afterSalePackEntity = this.lambdaQuery()
+                .eq(AfterSalePackEntity::getCode, CharSequenceUtil.trim(code))
+                .one();
+        assertPackEntityNotInvalid(afterSalePackEntity);
+    }
+
+    /**
+     * 扫描/加载箱唛时校验是否已作废。
+     *
+     * @param afterSalePackEntity 箱唛主表实体，可为 null（不校验）
+     */
+    private void assertPackEntityNotInvalid(AfterSalePackEntity afterSalePackEntity) {
+        if (afterSalePackEntity != null && Boolean.TRUE.equals(afterSalePackEntity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.WH_AFTER_SALE_PACK_SCAN_VOIDED);
+        }
+    }
+
+    private void assertPackModifiable(AfterSalePackEntity afterSalePackEntity) {
+        if (afterSalePackEntity != null && Boolean.TRUE.equals(afterSalePackEntity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.WH_AFTER_SALE_PACK_INVALID_STATUS, afterSalePackEntity.getCode());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalid(String id, String remark) {
+        remark = CharSequenceUtil.trim(remark);
+        AfterSalePackEntity afterSalePackEntity = super.getById(id);
+        if (ObjectUtil.isEmpty(afterSalePackEntity)) {
+            return BatchResultDTO.fail(id, id, "该箱唛不存在或已被删除, 作废失败");
+        }
+        if (Boolean.TRUE.equals(afterSalePackEntity.getInvalidStatus())) {
+            return BatchResultDTO.fail(id, afterSalePackEntity.getCode(),
+                    CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_INVALID_STATUS.getMsg(), afterSalePackEntity.getCode()));
+        }
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
+            return BatchResultDTO.fail(id, afterSalePackEntity.getCode(),
+                    CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_VOID_IN_USE.getMsg(), afterSalePackEntity.getCode()));
+        }
+        if (!AfterSalePackStatusEnum.WAIT_PACKING.getCode().equals(afterSalePackEntity.getPackStatus())) {
+            return BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "箱唛状态不等于待装箱，不能作废");
+        }
+        if (Optional.ofNullable(afterSalePackEntity.getTotalQty()).orElse(0) > 0
+                || Optional.ofNullable(afterSalePackEntity.getSkuSpeciesQty()).orElse(0) > 0) {
+            return BatchResultDTO.fail(id, afterSalePackEntity.getCode(),
+                    CharSequenceUtil.format(ApiError.WH_AFTER_SALE_PACK_VOID_NOT_EMPTY.getMsg(), afterSalePackEntity.getCode()));
+        }
+        AfterSalePackEntity updateEntity = new AfterSalePackEntity();
+        updateEntity.setId(afterSalePackEntity.getId());
+        updateEntity.setInvalidStatus(Boolean.TRUE);
+        updateEntity.setInvalidRemark(CharSequenceUtil.blankToDefault(remark, ""));
+        updateEntity.setInvalidTime(LocalDateTime.now());
+        if (!super.updateById(updateEntity)) {
+            throw new ServiceException("箱唛作废失败");
+        }
+        String msg = StrUtil.format("用户【{}】作废箱唛【{}】，作废原因：{}", UserContext.getDefaultLoginUser().getUserName(),
+                afterSalePackEntity.getCode(), CharSequenceUtil.blankToDefault(remark, ""));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "作废");
+        return BatchResultDTO.success(id, afterSalePackEntity.getCode(), "作废成功");
+    }
+
+    @Override
+    public Boolean exportExcel(AfterSalePackDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("售后装箱", EXPORT_WMS_AFTER_SALE_PACK.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<AfterSalePackDTO.ExportViewDTO> exportAfterSalePack(PagingDTO<AfterSalePackDTO.ExportDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<AfterSalePackDTO.ExportViewDTO> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<AfterSalePackDTO.ExportViewDTO> pageData = this.baseMapper.listExport(query, pagingParamDTO.getParams());
+        if (CollUtil.isNotEmpty(pageData.getRecords())) {
+            fillExportList(pageData.getRecords());
+        }
+        return new PagingVO<>(pageData.getRecords(), (int) pageData.getTotal(), (int) pageData.getPages(), (int) pageData.getCurrent());
+    }
+
+    private void fillExportList(List<AfterSalePackDTO.ExportViewDTO> list) {
+        for (AfterSalePackDTO.ExportViewDTO data : list) {
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
+            data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
+            data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        }
+    }
+
+    /**
+     * 记录装箱人（最新提交复审人）
+     */
+    private void fillOperateUser(AfterSalePackEntity afterSalePackEntity) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        afterSalePackEntity.setOperateUserId(CharSequenceUtil.blankToDefault(loginUser.getUid(), ""));
+        afterSalePackEntity.setOperateUserName(CharSequenceUtil.blankToDefault(loginUser.getUserName(), ""));
+    }
+
+    /**
+     * 记录复审人（最新完成复审人）
+     */
+    private void fillCheckUser(AfterSalePackEntity afterSalePackEntity) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        afterSalePackEntity.setCheckUserId(CharSequenceUtil.blankToDefault(loginUser.getUid(), ""));
+        afterSalePackEntity.setCheckUserName(CharSequenceUtil.blankToDefault(loginUser.getUserName(), ""));
     }
 
 }

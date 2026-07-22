@@ -47,6 +47,7 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.wms.dto.*;
@@ -345,6 +346,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
+        applyReturnReasonType(poReturnEntity, dto.getReturnReasonType(), dto.getReturnRemark());
         poReturnEntity.setReturnDetailType(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)));
         if (CharSequenceUtil.isBlank(poReturnEntity.getReturnType())){
             poReturnEntity.setReturnType(SourceTypeEnum.SELF_ADD.getCode());
@@ -512,6 +514,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
+        applyReturnReasonType(poReturnEntity, dto.getReturnReasonType(), dto.getReturnRemark());
         poReturnEntity.setReturnDetailType(newReturnDetailType);
         poReturnEntity.setCode(oldEntity.getCode());
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
@@ -586,6 +589,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PoReturnEntity poReturnEntity = this.getById(id);
         BeanMapperUtils.copy(poReturnEntity, viewDTO);
+
+        viewDTO.setReturnReasonTypeName(PoReturnReasonTypeEnum.getName(viewDTO.getReturnReasonType()));
+        if (PoReturnReasonTypeEnum.OTHER.getCode().equals(viewDTO.getReturnReasonType())) {
+            viewDTO.setReturnReasonOther(viewDTO.getReturnRemark());
+        }
 
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         if (CharSequenceUtil.isNotBlank(poReturnEntity.getPurchaseOrderId())) {
@@ -2156,6 +2164,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             if (Boolean.FALSE.equals(pack.getIsMoveWarehouse())) {
                 throw new ServiceException("箱唛【" + pack.getCode() + "】未进行移仓，请完成移仓动作");
+            }
+            if (Boolean.TRUE.equals(pack.getInvalidStatus())) {
+                throw new ServiceException(ApiError.WH_AFTER_SALE_PACK_SCAN_VOIDED);
             }
         }
     }
@@ -4679,6 +4690,60 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(errorSkuNoList)) {
             String errorMessage = String.join("】、【", errorSkuNoList);
             throw new ServiceException(CharSequenceUtil.format("SKU【{}】补货数量不能大于退货数量", errorMessage));
+        }
+    }
+
+    @Override
+    public PurchaseReturnOrderDTO.DefaultOrgDTO getDefaultOrgByWarehouse(String warehouseId) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED);
+        }
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        if (warehouseEntity == null) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "仓库");
+        }
+        PurchaseReturnOrderDTO.DefaultOrgDTO defaultOrgDTO = new PurchaseReturnOrderDTO.DefaultOrgDTO();
+        defaultOrgDTO.setReturnOrgId(warehouseEntity.getOrgId());
+        CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO poReturnDefaultOrgSetting = cfgSettingService.getPoReturnDefaultOrgSetting();
+        String defaultPurchaseOrgId = poReturnDefaultOrgSetting == null ? null : poReturnDefaultOrgSetting.getPurchaseOrgId();
+        List<String> orgIds = new ArrayList<>(2);
+        if (CharSequenceUtil.isNotBlank(warehouseEntity.getOrgId())) {
+            orgIds.add(warehouseEntity.getOrgId());
+        }
+        if (CharSequenceUtil.isNotBlank(defaultPurchaseOrgId) && !orgIds.contains(defaultPurchaseOrgId)) {
+            orgIds.add(defaultPurchaseOrgId);
+        }
+        if (CollectionUtils.isNotEmpty(orgIds)) {
+            Map<String, String> orgNameMap = sysUserFeign.listCompanyById(orgIds).stream()
+                    .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                    .collect(Collectors.toMap(SysAccountingCompanyEntity::getId,
+                            item -> CharSequenceUtil.blankToDefault(item.getCompanyName(), ""),
+                            (v1, v2) -> v1));
+            defaultOrgDTO.setReturnOrgName(orgNameMap.get(warehouseEntity.getOrgId()));
+            if (CharSequenceUtil.isNotBlank(defaultPurchaseOrgId)) {
+                defaultOrgDTO.setPurchaseOrgId(defaultPurchaseOrgId);
+                defaultOrgDTO.setPurchaseOrgName(orgNameMap.get(defaultPurchaseOrgId));
+                if (CharSequenceUtil.isBlank(defaultOrgDTO.getPurchaseOrgName())) {
+                    log.warn("采购退货默认采购组织未找到，仓库id={}，采购组织id={}",
+                            warehouseId, defaultPurchaseOrgId);
+                }
+            }
+        } else if (CharSequenceUtil.isNotBlank(defaultPurchaseOrgId)) {
+            log.warn("采购退货默认组织已配置但未查询到组织名称，仓库id={}，采购组织id={}",
+                    warehouseId, defaultPurchaseOrgId);
+        }
+        return defaultOrgDTO;
+    }
+
+    private void applyReturnReasonType(PoReturnEntity poReturnEntity, String returnReasonType, String returnRemark) {
+        if (CharSequenceUtil.isBlank(returnReasonType)) {
+            returnReasonType = PoReturnReasonTypeEnum.DEFECT.getCode();
+        }
+        poReturnEntity.setReturnReasonType(returnReasonType);
+        if (PoReturnReasonTypeEnum.OTHER.getCode().equals(returnReasonType)) {
+            poReturnEntity.setReturnRemark(returnRemark);
+        } else if (PoReturnReasonTypeEnum.DEFECT.getCode().equals(returnReasonType)) {
+            poReturnEntity.setReturnRemark("");
         }
     }
 }

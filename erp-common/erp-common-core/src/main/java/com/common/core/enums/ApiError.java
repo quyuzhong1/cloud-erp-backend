@@ -1187,6 +1187,10 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED;
     public static final ApiError WH_AIYA_OUTBOUND_CODE_REQUIRED = ApiErrorWms.WH_AIYA_OUTBOUND_CODE_REQUIRED;
     public static final ApiError WH_AIYA_OUTBOUND_DETAIL_EMPTY = ApiErrorWms.WH_AIYA_OUTBOUND_DETAIL_EMPTY;
+    public static final ApiError WH_AFTER_SALE_PACK_INVALID_STATUS = ApiErrorWms.WH_AFTER_SALE_PACK_INVALID_STATUS;
+    public static final ApiError WH_AFTER_SALE_PACK_VOID_NOT_EMPTY = ApiErrorWms.WH_AFTER_SALE_PACK_VOID_NOT_EMPTY;
+    public static final ApiError WH_AFTER_SALE_PACK_VOID_IN_USE = ApiErrorWms.WH_AFTER_SALE_PACK_VOID_IN_USE;
+    public static final ApiError WH_AFTER_SALE_PACK_SCAN_VOIDED = ApiErrorWms.WH_AFTER_SALE_PACK_SCAN_VOIDED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

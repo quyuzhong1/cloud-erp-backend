@@ -159,6 +159,11 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO);
 
     /**
+     * 按扫描码查询SKU映射
+     */
+    List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(String scanCode);
+
+    /**
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:20

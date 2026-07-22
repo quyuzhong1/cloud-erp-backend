@@ -153,7 +153,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 收寄双方信息
         List<ContactInfo> contactInfoList = new ArrayList<>();
         contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
-        contactInfoList.add(buildReceiverContactInfo(dto.getReceiver(), dto.getContactNumber(), dto.getProvince(), dto.getCity(), dto.getDetailedAddress()));
+        contactInfoList.add(buildReceiverContactInfo(dto.getReceiver(), dto.getContactNumber(), dto.getProvince(), dto.getCity(), dto.getDistrict(), dto.getDetailedAddress()));
         // 组装请求顺丰下单接口参数
         OrderRequest orderRequest = getOrderRequest(logisticsOrderEntity, contactInfoList, channelAuth);
         BaseResult baseResult;
@@ -215,7 +215,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 收寄双方信息
         List<ContactInfo> contactInfoList = new ArrayList<>();
         contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
-        contactInfoList.add(buildReceiverContactInfo(updateDTO.getReceiver(), updateDTO.getContactNumber(), updateDTO.getProvince(), updateDTO.getCity(), updateDTO.getDetailedAddress()));
+        contactInfoList.add(buildReceiverContactInfo(updateDTO.getReceiver(), updateDTO.getContactNumber(), updateDTO.getProvince(), updateDTO.getCity(), updateDTO.getDistrict(), updateDTO.getDetailedAddress()));
         // 组装请求顺丰下单接口参数
         OrderRequest orderRequest = getOrderRequest(logisticsOrderEntity, contactInfoList, channelAuth);
         BaseResult baseResult;
@@ -370,7 +370,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             // 收寄双方信息
             List<ContactInfo> contactInfoList = new ArrayList<>();
             contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
-            contactInfoList.add(buildReceiverContactInfo(viewDTO.getThridUserName(), viewDTO.getPhoneNumber(), logisticsOrderEntity.getProvince(), logisticsOrderEntity.getCity(), logisticsOrderEntity.getDetailedAddress()));
+            contactInfoList.add(buildReceiverContactInfo(viewDTO.getThridUserName(), viewDTO.getPhoneNumber(), logisticsOrderEntity.getProvince(), logisticsOrderEntity.getCity(), logisticsOrderEntity.getDistrict(), logisticsOrderEntity.getDetailedAddress()));
             OrderRequest orderRequest = OrderRequest.builder()
                     .language("zh-CN")
                     .orderId(logisticsOrderEntity.getOrderId())
@@ -973,7 +973,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     /**
      * 构建收件方ContactInfo（add/update/addBatch 共用）
      */
-    private ContactInfo buildReceiverContactInfo(String contact, String mobile, String province, String city, String address) {
+    private ContactInfo buildReceiverContactInfo(String contact, String mobile, String province, String city, String district, String address) {
         ContactInfo receiver = new ContactInfo();
         receiver.setContactType(2);
         receiver.setContact(contact);
@@ -981,6 +981,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         receiver.setCountry(CountrySiteEnum.CHINA.getSite());
         receiver.setProvince(province);
         receiver.setCity(city);
+        receiver.setCounty(district);
         receiver.setAddress(address);
         return receiver;
     }

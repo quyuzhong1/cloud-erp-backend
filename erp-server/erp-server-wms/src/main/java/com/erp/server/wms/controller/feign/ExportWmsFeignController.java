@@ -238,6 +238,9 @@ public class ExportWmsFeignController {
     @Resource
     private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
 
+    @Resource
+    private AfterSalePackService afterSalePackService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -1411,4 +1414,17 @@ public class ExportWmsFeignController {
         return afterSalesWarehouseLocationSuggestService.paging(wrap);
     }
 
+    /**
+     * 导出售后装箱
+     */
+    @PostMapping("/exportAfterSalePack")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:exportExcel",
+            tableAlias = "t"
+    )
+    @WebAdvanceQuery(handler = AfterSalePackQueryHandler.class)
+    public PagingVO<AfterSalePackDTO.ExportViewDTO> exportAfterSalePack(@RequestBody @Validated PagingDTO<AfterSalePackDTO.ExportDTO> dto) {
+        return afterSalePackService.exportAfterSalePack(dto);
+    }
 }

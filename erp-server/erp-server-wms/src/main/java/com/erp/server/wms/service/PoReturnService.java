@@ -409,6 +409,11 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     Boolean pushDownPurchase(List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews);
 
     /**
+     * PDA采购退货默认组织
+     */
+    PurchaseReturnOrderDTO.DefaultOrgDTO getDefaultOrgByWarehouse(String warehouseId);
+
+    /**
      * 单提交
      */
     BatchResultDTO submitEntity(PoReturnEntity entity);

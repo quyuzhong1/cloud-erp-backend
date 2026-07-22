@@ -94,6 +94,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
         }
+        afterSalePackService.assertPackNotInvalid(afterSalePackEntity.getCode());
         // 已经发生了移仓，拆箱时移入仓位不能为空：空仓位 code 为 "" 属于合法选择，仅当字段缺失（null）时拦截。
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse()) && addOrUpdateDTO.getInWarehouseLocationCode() == null) {
             throw new ServiceException("移入仓位不能为空");
@@ -130,6 +131,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (StrUtil.isBlank(code)) {
             throw new ServiceException("箱唛不能为空");
         }
+        afterSalePackService.assertPackNotInvalid(code);
         AfterSalePackEntity afterSalePackEntity = afterSalePackService.lambdaQuery()
                 .eq(AfterSalePackEntity::getCode, code)
                 .one();

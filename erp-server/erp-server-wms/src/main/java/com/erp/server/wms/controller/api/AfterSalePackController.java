@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -15,6 +16,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.AfterSalePackDTO;
+import com.erp.model.wms.entity.AfterSalePackEntity;
 import com.erp.server.wms.query.AfterSalePackQueryHandler;
 import com.erp.server.wms.service.AfterSalePackService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +24,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 售后装箱表
@@ -203,6 +208,54 @@ public class AfterSalePackController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = afterSalePackService.delete(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 箱唛作废
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:invalid",
+            serviceClass = AfterSalePackService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "售后装箱箱唛作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<AfterSalePackEntity> list = afterSalePackService.lambdaQuery().in(AfterSalePackEntity::getId, ids).list();
+        Map<String, AfterSalePackEntity> idEntityMap = list.stream().collect(Collectors.toMap(AfterSalePackEntity::getId, item -> item));
+        String remark = dto.getRemark();
+        for (String id : ids) {
+            BatchResultDTO invalidResult;
+            try {
+                invalidResult = afterSalePackService.invalid(id, remark);
+            } catch (Exception e) {
+                log.warn("售后装箱箱唛作废失败，id={}", id, e);
+                AfterSalePackEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    invalidResult = BatchResultDTO.fail(id, id, BatchResultDTO.resolveFailMsg(e));
+                } else {
+                    invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), BatchResultDTO.resolveFailMsg(e));
+                }
+            }
+            resultDTOS.add(invalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出
+     */
+    @PostMapping("/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:exportExcel",
+            tableAlias = "t")
+    @WebAdvanceQuery(handler = AfterSalePackQueryHandler.class)
+    @LogAction(value = LogActionEnum.EXPORT, desc = "售后装箱导出")
+    public ApiResult<Boolean> exportExcel(@RequestBody @Validated AfterSalePackDTO.ExportDTO dto) {
+        return success(afterSalePackService.exportExcel(dto));
     }
 
     /**

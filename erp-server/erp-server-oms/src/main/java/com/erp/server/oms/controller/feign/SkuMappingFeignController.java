@@ -132,4 +132,9 @@ public class SkuMappingFeignController extends BaseController {
     public List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(@RequestBody SkuMappingDTO.UnmatchQueryDTO dto) {
         return skuMappingService.countUnmatchedGroupByWarehouse(dto);
     }
+
+    @PostMapping("/listByScanCode")
+    public List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(@RequestParam("scanCode") String scanCode) {
+        return skuMappingService.listByScanCode(scanCode);
+    }
 }

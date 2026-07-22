@@ -973,49 +973,27 @@
         ORDER BY unmatchCount DESC
     </select>
 
-    <!-- 统计未匹配SKU数量，按不同维度分组：
-         warehouse → 按 overseas_provider（li.auth_id）分组，短名称取 op.short_name；
-         platform/b2bPlatform/customer → 按 sm.platform_name + sm.dict_platform 分组；
-         使用 li.match_result = 'false' 判断未匹配，与前端 Tab 计数保持一致；
-         groupName 为空（JOIN 未命中或字段为空）时由调用方归入"未知"分组 -->
-    <select id="countUnmatchedGroupByWarehouse" resultType="com.erp.model.oms.dto.SkuMappingDTO$UnmatchCountDTO">
-        SELECT
-            <choose>
-                <when test="'warehouse'.equals(params.type)">
-                    COALESCE(NULLIF(MAX(op.short_name), ''), NULL) AS groupName,
-                </when>
-                <otherwise>
-                    COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''), NULL) AS groupName,
-                </otherwise>
-            </choose>
-            COUNT(*) AS unmatchCount
+    <select id="listByScanCode" resultType="com.erp.model.oms.dto.SkuMappingDTO$MappingSkuViewDTO">
+        SELECT li.id AS listingId,
+               sm.id,
+               sm.warehouse_id AS warehouseId,
+               li.auth_id AS authId,
+               sm.product_sku_id,
+               sm.product_sku_no,
+               sm.product_name AS productName,
+               li.platform_sku_no AS platformSkuNo,
+               li.platform_sku_id AS platformSkuId,
+               li.platform_sku_name AS platformProductName,
+               li.platform_spu_no AS platformSpuNo,
+               li.platform_spu_name AS platformSpuName,
+               li.platform_fn_sku AS platformFnSku
         FROM sku_mapping sm
-        INNER JOIN listing_info li ON li.id = sm.listing_id AND li.is_deleted = false AND li.match_result = 'false'
-        LEFT JOIN overseas_provider op ON op.id = li.auth_id AND op.is_deleted = false
-        WHERE sm.is_deleted = false
-          AND sm.is_expire   = false
-          <if test="params.warehouseId != null and params.warehouseId != ''">
-              AND sm.warehouse_id = #{params.warehouseId}
-          </if>
-          <if test="params.shopId != null and params.shopId != ''">
-              AND sm.shop_id = #{params.shopId}
-          </if>
-          <if test="params.dictPlatform != null and params.dictPlatform != ''">
-              AND sm.dict_platform = #{params.dictPlatform}
-          </if>
-          <if test="params.type != null and params.type != ''">
-              AND sm.type = #{params.type}
-          </if>
-        <choose>
-            <when test="'warehouse'.equals(params.type)">
-                GROUP BY li.auth_id
-            </when>
-            <otherwise>
-                GROUP BY sm.platform_name, sm.dict_platform
-            </otherwise>
-        </choose>
-        HAVING COUNT(*) > 0
-        ORDER BY unmatchCount DESC
+                 INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
+        WHERE sm.is_deleted = FALSE
+          AND sm.is_expire = FALSE
+          AND (li.platform_sku_no = #{scanCode}
+            OR li.third_barcode = #{scanCode}
+            OR sm.product_sku_no = #{scanCode})
     </select>
 
 </mapper>

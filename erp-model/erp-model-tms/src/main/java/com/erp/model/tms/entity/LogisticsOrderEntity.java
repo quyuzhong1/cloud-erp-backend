@@ -117,6 +117,11 @@ public class LogisticsOrderEntity extends BaseEntity<LogisticsOrderEntity> {
     @TableField("city")
     private String city;
     /**
+    * 区/县
+    */
+    @TableField("district")
+    private String district;
+    /**
     * 详细地址
     */
     @TableField("detailed_address")

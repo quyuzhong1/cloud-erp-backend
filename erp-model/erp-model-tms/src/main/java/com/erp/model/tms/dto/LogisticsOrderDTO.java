@@ -193,6 +193,11 @@ public class LogisticsOrderDTO implements Serializable {
         private String city;
 
         /**
+         * 区/县
+         */
+        private String district;
+
+        /**
          * 详细地址
          */
         private String detailedAddress;
@@ -350,6 +355,11 @@ public class LogisticsOrderDTO implements Serializable {
         private String city;
 
         /**
+         * 区/县
+         */
+        private String district;
+
+        /**
          * 详细地址
          */
         private String detailedAddress;
@@ -490,6 +500,12 @@ public class LogisticsOrderDTO implements Serializable {
         @NotBlank(message = "城市不能为空")
         @Size(max = 100, message = "城市最大长度不能超过100位")
         private String city;
+
+        /**
+         * 区/县
+         */
+        @Size(max = 100, message = "区/县最大长度不能超过100位")
+        private String district;
 
         /**
          * 详细地址
