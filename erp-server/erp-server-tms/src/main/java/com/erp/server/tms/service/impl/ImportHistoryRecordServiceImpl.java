@@ -117,6 +117,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private static final int RECON_MATCH_GROUP_PARALLEL_BATCH = 50;
 
+    private static final long RECON_MATCH_TIMING_SLOW_THRESHOLD_MS = 1000L;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -1286,6 +1288,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (ctx == null || CollUtil.isEmpty(ctx.getRows())) {
             return results;
         }
+        Stopwatch reconMatchStopwatch = Stopwatch.createStarted();
+        long queryMs;
+        long computeMs;
+        long persistMs = 0L;
+        int persistBatchCount = 0;
+        boolean partialPersist = false;
         CfgLogisticsCostImportEntity costImportEntity = ctx.getCostImportEntity();
         List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = ctx.getCfgImportDetailList();
         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = cfgImportDetailList.stream()
@@ -1352,17 +1360,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         if (rowMatchedMap.values().stream().allMatch(CollUtil::isEmpty)
                 && allRowsHaveIdentifyValues(ctx.getRows(), identifyFields)) {
-            return ctx.getRows().stream().map(row -> {
+            List<LogisticsReconMatchDTO.MatchResultDTO> noMatchResults = ctx.getRows().stream().map(row -> {
                 LogisticsReconMatchDTO.MatchResultDTO result = new LogisticsReconMatchDTO.MatchResultDTO();
                 result.setRowKey(row.getRowKey());
                 result.setSuccess(false);
                 result.setFailReason("未找到对应物流单");
                 return result;
             }).collect(Collectors.toList());
+            long totalMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
+                log.debug("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount=0 persistGroupCount=0 persistBatchCount=0 outcome=no-match queryMs={} computeMs=0 persistMs=0 resultBuildMs=0 totalMs={}",
+                        ctx.getRows().size(), identifyFields.size(), totalMs, totalMs);
+            }
+            return noMatchResults;
         }
         if (CollUtil.isNotEmpty(multiBillVoList)) {
             fillOrderWeightPreQuery(distinctLogisticsBillVoList(multiBillVoList), preQueryResult);
         }
+        queryMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
 
         // 与费用项导入一致：按识别号（platformCode 按命中物流单集合）分组合并费用后再匹配分摊
         Map<String, List<LogisticsReconMatchDTO.MatchRowDTO>> groupRowsMap = new LinkedHashMap<>();
@@ -1400,6 +1415,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 groupImportDataMap.put(computeResult.groupKey, computeResult.importData);
             }
         }
+        computeMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS) - queryMs;
 
         // 复用导入落库：短事务分片；中途失败则中断后续分片，未落库组标记失败（已落库组保持成功，可错误重试）
         if (CollUtil.isNotEmpty(importDataList)) {
@@ -1408,14 +1424,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 ctx.getBeforePersistHook().run();
             }
             int nextPersistIndex = 0;
+            long persistStartMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             try {
                 for (int i = 0; i < importDataList.size(); i += RECON_MATCH_PERSIST_BATCH_SIZE) {
                     int end = Math.min(importDataList.size(), i + RECON_MATCH_PERSIST_BATCH_SIZE);
                     List<LogisticsBillCostDTO.ImportDataDTO> batch = importDataList.subList(i, end);
                     importHistoryRecordService.persistReconMatchImportData(batch, importDTO.getProcessingType());
+                    persistBatchCount++;
                     nextPersistIndex = end;
                 }
             } catch (Exception e) {
+                partialPersist = true;
                 log.error("[reconMatch] 费用落库分片失败，已成功落库组数={} total={}", nextPersistIndex,
                         importDataList.size(), e);
                 String failReason = "费用落库部分成功，请错误重试: "
@@ -1430,7 +1449,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     groupImportDataMap.remove(groupKey);
                 }
             }
+            persistMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS) - persistStartMs;
         }
+        long resultBuildStartMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
         Map<String, List<TmsCostDetailEntity>> reconBillRefCostDetailMap =
                 buildReconBillRefCostDetailMap(groupImportDataMap);
         for (LogisticsReconMatchDTO.MatchResultDTO groupResult : groupResults) {
@@ -1442,7 +1463,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             groupResult.setBillRefs(buildReconBillRefs(mergedRow, importDataDTO, preQueryResult.getCfgCostList(),
                     costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap, importDTO.getProcessingType()));
         }
-        return fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
+        List<LogisticsReconMatchDTO.MatchResultDTO> fanOutResults = fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
+        long resultBuildMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS) - resultBuildStartMs;
+        long totalMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
+            long failedGroupCount = groupResults.stream().filter(result -> !result.isSuccess()).count();
+            log.debug("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount={} persistGroupCount={} persistBatchCount={} resultCount={} outcome={} queryMs={} computeMs={} persistMs={} resultBuildMs={} totalMs={}",
+                    ctx.getRows().size(), identifyFields.size(), groupRowsMap.size(), importDataList.size(), persistBatchCount,
+                    fanOutResults.size(), partialPersist ? "partial-persist" : failedGroupCount > 0 ? "partial" : "success",
+                    queryMs, computeMs, persistMs, resultBuildMs, totalMs);
+        }
+        return fanOutResults;
     }
 
     /**
@@ -1821,13 +1852,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isEmpty(importDataList)) {
             return;
         }
+        Stopwatch persistStopwatch = Stopwatch.createStarted();
         List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList =
                 importBatchAddOrUpdate(importDataList, processingType);
+        long importWriteMs = persistStopwatch.elapsed(TimeUnit.MILLISECONDS);
         if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(), processingType)
                 && CollUtil.isNotEmpty(confirmList)) {
             // 对账匹配确认路径：跳过费用侧内部反向同步，detail_sub 由 doMatchSubsChunk 按分片 scope 刷新，
             // ref 快照已在 buildReconBillRefs 直接写 confirmed，避免每分片触发全单刷新（O(n^2) + 并发全表更新竞争）。
             logisticsBillCostService.batchConfirmImport(confirmList, ReconciliationStatusEnum.CONFIRMED.getCode(), true);
+        }
+        long totalMs = persistStopwatch.elapsed(TimeUnit.MILLISECONDS);
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
+            log.debug("[reconMatchTiming] source=persist inputCount={} processingType={} importWriteMs={} confirmWriteMs={} totalMs={}",
+                    importDataList.size(), processingType, importWriteMs, totalMs - importWriteMs, totalMs);
         }
     }
 

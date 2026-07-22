@@ -3,6 +3,8 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -11,22 +13,13 @@ import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWra
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
-import com.common.message.constant.DistributeKeyConstant;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import com.common.business.dto.base.BaseDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import org.springframework.beans.factory.annotation.Qualifier;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -36,70 +29,32 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.tms.dto.ImportHistoryRecordDTO;
-import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
-import com.erp.model.tms.dto.LogisticsReconDTO;
-import com.erp.model.tms.dto.LogisticsReconMatchDTO;
-import com.erp.model.tms.dto.LogisticsReconMatchExecutionResultDTO;
-import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
-import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
-import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
-import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
-import com.erp.model.tms.enums.TmsAsyncTaskRecordBusinessTypeEnum;
-import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
-import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
-import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsReconDetailEntity;
-import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
-import com.erp.model.tms.entity.LogisticsReconEntity;
-import com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity;
-import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
-import com.erp.model.tms.enums.CfgLogisticsCostImportIdentifyTypeEnum;
-import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
-import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
-import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
-import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
-import com.erp.model.tms.enums.LogisticsReconRefMatchTypeEnum;
-import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
-import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
-import com.erp.model.tms.enums.ImportHistoryRecordTypeEnum;
-import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
-import com.erp.model.tms.enums.LogisticsBillCostPayStateEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
-import com.erp.server.tms.mapper.LogisticsReconMapper;
-import com.erp.server.tms.listener.LogisticsReconExcelListener;
-import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
-import com.erp.server.tms.service.CfgLogisticsCostImportService;
-import com.erp.server.tms.service.DictBasicService;
-import com.erp.server.tms.service.ImportHistoryRecordService;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.erp.server.tms.service.LogisticsReconDetailService;
-import com.erp.server.tms.service.LogisticsReconDetailSubService;
-import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
-import com.erp.server.tms.service.LogisticsReconService;
-import com.erp.server.tms.service.TmsAsyncTaskDetailService;
-import com.erp.server.tms.service.TmsAsyncTaskRecordService;
-import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
+import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
 import com.erp.server.tms.handler.asynctask.LogisticsReconConfirmBillBatchPushHandler;
 import com.erp.server.tms.handler.asynctask.LogisticsReconMatchBatchPushHandler;
-import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
+import com.erp.server.tms.listener.LogisticsReconExcelListener;
+import com.erp.server.tms.mapper.LogisticsReconMapper;
+import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
+import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
 import com.erp.server.tms.util.LogisticsReconMatchGroupHelper;
 import com.erp.server.tms.util.LogisticsReconOpenImportConverter;
-import com.erp.model.tms.enums.logisticsPayTypeEnum;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
+import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -111,20 +66,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -157,6 +99,8 @@ public class LogisticsReconServiceImpl
      * <p>后台任务可长于同步接口默认 30s，降低与同步确认/解绑短时重叠时误将明细打成 FAILED 的概率。
      */
     private static final long RECON_MAIN_LOCK_WAIT_SECONDS = 120L;
+
+    private static final long RECON_MATCH_TIMING_SLOW_THRESHOLD_MS = 1000L;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -1995,6 +1939,17 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(seedSubIds)) {
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
+        Stopwatch batchStopwatch = Stopwatch.createStarted();
+        long preloadStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+        long preloadMs = 0L;
+        long lockWaitMs = 0L;
+        long prepareMs = 0L;
+        long chunkMatchMs = 0L;
+        long statsRefreshMs = 0L;
+        int expandedSubCount = seedSubIds.size();
+        int chunkCount = 0;
+        boolean lockTimeout = false;
+        boolean batchFailed = false;
         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = loadUniqueKeyListByMainId(mainId);
         if (CollUtil.isEmpty(uniqueKeyList)) {
             log.warn("[processMatchBatch] 对账单未配置识别唯一键，无法按识别组扩组合并 mainId={}", mainId);
@@ -2003,6 +1958,7 @@ public class LogisticsReconServiceImpl
         LogisticsReconEntity entity = super.getByIdOpt(mainId)
                 .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
         LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
+        preloadMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - preloadStartMs;
         String businessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
         Map<String, TmsAsyncTaskDetailEntity> detailMap = new LinkedHashMap<>();
         int success = 0;
@@ -2015,8 +1971,11 @@ public class LogisticsReconServiceImpl
         boolean locked = false;
         LoginUser prev = UserContext.getLoginUser();
         try {
+            long lockWaitStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             locked = tryLockReconMain(lock, mainId, "processMatchBatch");
+            lockWaitMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - lockWaitStartMs;
             if (!locked) {
+                lockTimeout = true;
                 // 锁外仅处理本批种子明细，避免未持锁扩组误伤同组其它 PENDING
                 detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, mainId, seedSubIds));
                 for (String subId : seedSubIds) {
@@ -2035,7 +1994,8 @@ public class LogisticsReconServiceImpl
             if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(currentEntity.getCheckStatus())) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
             }
-            // 锁内先清理超时 MATCHING（宕机残留），再扩组认领，避免费用项永久卡在匹配中
+            long prepareStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            // 锁内先清理超时 MATCHING（宕机残留），再扩组认领，避免费用项永久卡在 matching
             self.failStaleMatchingSubsAndApplyMainStats(mainId);
             // ① 锁内扩组：保证与同步匹配互斥后再凑齐同识别组 PENDING
             List<String> expandedSubIds = expandTaskPendingSubIdsByIdentifyGroup(
@@ -2045,14 +2005,20 @@ public class LogisticsReconServiceImpl
             // ② 扩组后按识别组打包，避免单次匹配体量过大
             List<List<String>> chunks = packSubIdsByIdentifyGroup(
                     mainId, expandedSubIds, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
+            expandedSubCount = expandedSubIds.size();
+            chunkCount = chunks.size();
+            prepareMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - prepareStartMs;
             for (List<String> chunkSubIds : chunks) {
+                long chunkStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
                 int[] chunkResult = processMatchBatchChunk(taskId, mainId, chunkSubIds, isConfirm, preload,
                         uniqueKeyList, groupKeyMap, detailMap, feeItemsClaimedMatching,
                         taskDetailsClaimedByCurrentWorker);
+                chunkMatchMs += batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - chunkStartMs;
                 success += chunkResult[0];
                 failed += chunkResult[1];
             }
         } catch (Exception e) {
+            batchFailed = true;
             log.error("[processMatchBatch] 批次异常 taskId={} mainId={}", taskId, mainId, e);
             String reason = resolveMatchChunkFailureReason(feeItemsClaimedMatching, e);
             int[] settled = settleMatchTaskDetailsAfterException(mainId, detailMap, feeItemsClaimedMatching,
@@ -2063,8 +2029,10 @@ public class LogisticsReconServiceImpl
             RuntimeException refreshError = null;
             if (locked && isConfirm) {
                 try {
+                    long statsRefreshStartMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
                     // 确认匹配会改 detail_sub.reconciliation_status，持锁全量回刷；失败上抛避免静默不准
                     refreshMainPagingStatsWithLock(mainId);
+                    statsRefreshMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS) - statsRefreshStartMs;
                 } catch (RuntimeException ex) {
                     log.error("[processMatchBatch] 回刷主表统计失败 mainId={}", mainId, ex);
                     refreshError = ex;
@@ -2081,6 +2049,18 @@ public class LogisticsReconServiceImpl
                 } catch (Exception ex) {
                     log.error("[processMatchBatch] 释放锁失败 mainId={}", mainId, ex);
                 }
+            }
+            long totalMs = batchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            String outcome = lockTimeout ? "lock-timeout" : batchFailed || refreshError != null
+                    ? "failed" : failed > 0 ? "partial" : "success";
+            if (batchFailed || refreshError != null || totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+                log.info("[reconMatchTiming] source=batch taskId={} mainId={} confirm={} seedCount={} expandedCount={} chunkCount={} successCount={} failedCount={} outcome={} preloadMs={} lockWaitMs={} prepareMs={} chunkMatchMs={} statsRefreshMs={} totalMs={}",
+                        taskId, mainId, isConfirm, seedSubIds.size(), expandedSubCount, chunkCount, success, failed,
+                        outcome, preloadMs, lockWaitMs, prepareMs, chunkMatchMs, statsRefreshMs, totalMs);
+            } else if (log.isDebugEnabled()) {
+                log.debug("[reconMatchTiming] source=batch taskId={} mainId={} confirm={} seedCount={} expandedCount={} chunkCount={} successCount={} failedCount={} outcome={} preloadMs={} lockWaitMs={} prepareMs={} chunkMatchMs={} statsRefreshMs={} totalMs={}",
+                        taskId, mainId, isConfirm, seedSubIds.size(), expandedSubCount, chunkCount, success, failed,
+                        outcome, preloadMs, lockWaitMs, prepareMs, chunkMatchMs, statsRefreshMs, totalMs);
             }
             if (refreshError != null) {
                 throw refreshError;
@@ -2881,6 +2861,11 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(detailSubIds)) {
             return;
         }
+        Stopwatch chunkStopwatch = Stopwatch.createStarted();
+        long loadMs;
+        long executeMs;
+        long commitMs;
+        long detailStatsMs = 0L;
         // 先收敛确认结果已落库但仍残留 MATCHING 的费用项，避免本分片将其静默跳过。
         self.settleConfirmedMatchingSubsAndApplyMainStats(mainId);
         // 分片可能包含较长的计算/远程调用，入口和实际写入前都刷新心跳，避免被 stale cleanup 误判。
@@ -2929,19 +2914,32 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(units)) {
             return;
         }
+        loadMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
         List<String> executableSubIds = units.stream()
                 .map(unit -> unit.sub.getId())
                 .collect(Collectors.toList());
         // executeReconMatch 的前半段仍包含模板/字段/币别等只读校验，执行标记在首个费用写入口前持久化。
+        long executeStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
         LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(
                 entity, units, false, isConfirm, preload, executableSubIds);
+        executeMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - executeStartMs;
+        long commitStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
         self.commitReconMatchResult(mainId, LogisticsReconRefMatchTypeEnum.AUTO.getCode(),
                 executionResult.getRowKeyToDetailId(), executionResult.getRowKeyToSubs(),
                 executionResult.getMatchResults(), null);
+        commitMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - commitStartMs;
         if (isConfirm) {
+            long detailStatsStartMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
             // 确认匹配：ref 快照已在 writeReconMatchResult 写入 confirmed，仅按本分片范围重算
             // detail_sub 聚合状态，避免逐分片全单扫描导致的 O(n^2) 刷新。
             self.refreshDetailSubReconciliationStatusInTx(mainId, detailSubIds);
+            detailStatsMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - detailStatsStartMs;
+        }
+        long totalMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
+            log.debug("[reconMatchTiming] source=chunk mainId={} confirm={} requestedSubCount={} executableSubCount={} resultCount={} loadMs={} executeMs={} commitMs={} detailStatsMs={} totalMs={}",
+                    mainId, isConfirm, detailSubIds.size(), executableSubIds.size(), executionResult.getMatchResults().size(),
+                    loadMs, executeMs, commitMs, detailStatsMs, totalMs);
         }
     }
 
@@ -3085,11 +3083,19 @@ public class LogisticsReconServiceImpl
                                        Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
                                        List<LogisticsReconMatchDTO.MatchResultDTO> matchResults,
                                        List<LogisticsReconMatchDTO.SubErpInputDTO> erpInputs) {
+        Stopwatch commitStopwatch = Stopwatch.createStarted();
         writeReconMatchResult(mainId, matchType, rowKeyToDetailId, rowKeyToSubs, matchResults);
+        long writeResultMs = commitStopwatch.elapsed(TimeUnit.MILLISECONDS);
         try {
             writeErpSnapshot(erpInputs, matchResults);
         } catch (Exception e) {
             log.warn("[commitReconMatchResult] ERP 单号快照回写失败 mainId={}", mainId, e);
+        }
+        long totalMs = commitStopwatch.elapsed(TimeUnit.MILLISECONDS);
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
+            log.debug("[reconMatchTiming] source=commit mainId={} matchType={} resultCount={} writeResultMs={} erpSnapshotMs={} totalMs={}",
+                    mainId, matchType, matchResults == null ? 0 : matchResults.size(), writeResultMs,
+                    totalMs - writeResultMs, totalMs);
         }
     }
 
@@ -5215,6 +5221,9 @@ public class LogisticsReconServiceImpl
      */
     private static final int MATCH_CHUNK_SIZE = 1000;
 
+    /** 主表统计版本冲突重试次数，超过后让事务失败，避免静默丢失统计更新。 */
+    private static final int MAIN_STATS_VERSION_RETRY_COUNT = 3;
+
     // ============================== private ==============================
 
 
@@ -5291,11 +5300,14 @@ public class LogisticsReconServiceImpl
         }
         BigDecimal successDelta = stats.getMatchedAmount() == null ? BigDecimal.ZERO : stats.getMatchedAmount();
         LoginUser updateUser = UserContext.getDefaultLoginUser();
-        int updated = baseMapper.applyMatchStatsDelta(mainId, stats.getMatchedCount(), successDelta,
-                updateUser.getUid(), updateUser.getUserName());
-        if (updated <= 0) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
+        for (int attempt = 0; attempt < MAIN_STATS_VERSION_RETRY_COUNT; attempt++) {
+            int updated = baseMapper.applyMatchStatsDelta(mainId, stats.getMatchedCount(), successDelta,
+                    updateUser.getUid(), updateUser.getUserName());
+            if (updated > 0) {
+                return;
+            }
         }
+        throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
     }
 
     /**
@@ -5335,11 +5347,14 @@ public class LogisticsReconServiceImpl
         }
         try {
             LoginUser updateUser = UserContext.getDefaultLoginUser();
-            int updated = baseMapper.refreshPagingStats(mainId,
-                    updateUser.getUid(), updateUser.getUserName());
-            if (updated <= 0) {
-                throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
+            for (int attempt = 0; attempt < MAIN_STATS_VERSION_RETRY_COUNT; attempt++) {
+                int updated = baseMapper.refreshPagingStats(mainId,
+                        updateUser.getUid(), updateUser.getUserName());
+                if (updated > 0) {
+                    return;
+                }
             }
+            throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
