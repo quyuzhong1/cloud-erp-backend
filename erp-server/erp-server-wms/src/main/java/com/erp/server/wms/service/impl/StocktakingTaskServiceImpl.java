@@ -87,6 +87,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * <p>
      * 盘点库存 Redis lock / 索引生命周期（与 UAT/历史 {@code lockInventoryForStocktaking} 一致）：
      * 加锁 {@code SET NX} 不设 TTL，释锁靠业务显式 {@code DEL}；索引随释锁/回滚清理，异常残留走 plan 级 SCAN 兜底。
+     * 同 plan 的下推（加锁+落库+索引）与释锁共用 planCode {@code @DistributeLocker}，在方法执行期互斥。
+     * <p>
+     * 事务边界：plan 锁随 {@link #createStocktakingTasksUnderPlanLock} 方法返回释放，外层 {@code createTaskList} DB 事务可能尚未 commit；
+     * 有意不使用 {@code unlockAfterTx}，避免大计划下推长临界区阻塞同 plan 任务释锁。
+     * 残余窗口靠 {@link #loadLockKeysReferencedByOtherIncompleteTasks} 与业务侧「已下推则拒绝」兜底，正常单次下推与任务完成链路不应重叠。
      */
     private static final int STOCKTAKING_INVENTORY_LOCK_WRITE_BATCH_SIZE = 200;
 
@@ -635,6 +640,39 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (CharSequenceUtil.isBlank(planCode)) {
             return;
         }
+        self.releaseInventoryLockByPlanCodeUnderPlanLock(planCode);
+    }
+
+    @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.WMS_STOCKTAKING_INVENTORY_DIM_KEY,
+            keyName = "planCode",
+            waiteTime = 180,
+            maxRetries = 5
+    )
+    public void releaseInventoryLockByTaskUnderPlanLock(String planCode, String taskId) {
+        StocktakingTaskEntity task = getById(taskId);
+        releaseInventoryLockByTask(task);
+    }
+
+    @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.WMS_STOCKTAKING_INVENTORY_DIM_KEY,
+            keyName = "planCode",
+            waiteTime = 180,
+            maxRetries = 5
+    )
+    public void releaseInventoryLockByPlanCodeUnderPlanLock(String planCode) {
+        doReleaseInventoryLockByPlanCode(planCode);
+    }
+
+    /**
+     * 释放计划下全部 Redis 盘点库存锁（无分布式锁；调用方已在 plan 临界区内时使用）。
+     */
+    private void doReleaseInventoryLockByPlanCode(String planCode) {
+        if (CharSequenceUtil.isBlank(planCode)) {
+            return;
+        }
         int releasedFromIndex = releaseInventoryLockByPlanCodeFromIndex(planCode);
         int releasedFromLegacy = 0;
         if (!isPlanInventoryLockFullyReleased(planCode)) {
@@ -701,13 +739,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /** 任务释锁重试封装，见 {@link #releaseInventoryLockByTask(StocktakingTaskEntity)} 设计说明 */
     private void releaseInventoryLockByTaskWithRetry(String taskId, String planCode, String context) {
         try {
-            StocktakingTaskEntity task = getById(taskId);
-            releaseInventoryLockByTask(task);
+            self.releaseInventoryLockByTaskUnderPlanLock(planCode, taskId);
         } catch (Exception e) {
             log.error("盘点任务释锁失败，重试一次：taskId={}, planCode={}, context={}", taskId, planCode, context, e);
             try {
-                StocktakingTaskEntity task = getById(taskId);
-                releaseInventoryLockByTask(task);
+                self.releaseInventoryLockByTaskUnderPlanLock(planCode, taskId);
             } catch (Exception retryEx) {
                 log.error("盘点任务释锁重试仍失败，需人工处理 Redis 锁：taskId={}, planCode={}, context={}",
                         taskId, planCode, context, retryEx);
@@ -718,11 +754,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /** 计划下全部任务已删时使用；失败重试一次，仍失败仅记录错误日志 */
     private void releaseInventoryLockByPlanCodeWithRetry(String planCode, String context) {
         try {
-            releaseInventoryLockByPlanCode(planCode);
+            self.releaseInventoryLockByPlanCodeUnderPlanLock(planCode);
         } catch (Exception e) {
             log.error("盘点计划释锁失败，重试一次：context={}, planCode={}", context, planCode, e);
             try {
-                releaseInventoryLockByPlanCode(planCode);
+                self.releaseInventoryLockByPlanCodeUnderPlanLock(planCode);
             } catch (Exception retryEx) {
                 log.error("盘点计划释锁重试仍失败，需人工处理 Redis 锁：context={}, planCode={}", context, planCode, retryEx);
             }
@@ -735,6 +771,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * 按 task-keys 索引成员精确释锁；无索引时按任务明细推导 lockKey 兜底。
      * 同一 lockKey 若仍被本计划下其它未完成任务引用，则保留该锁。
      * 计划下全部任务完成后，再触发 plan 级兜底释锁。
+     * 调用方须已持有 planCode 分布式锁（见 {@link #releaseInventoryLockByTaskUnderPlanLock}）。
      */
     private void releaseInventoryLockByTask(StocktakingTaskEntity task) {
         if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceCode())) {
@@ -1020,6 +1057,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     /**
      * 计划下全部在途任务已完成时，释放 plan 级 Redis 库存锁。
+     * 须由已持有 planCode 分布式锁的调用方触发（避免与下推加锁竞态）。
+     * 失败由外层 {@link #releaseInventoryLockByTaskWithRetry} 整段重试；本处 {@code log.warn} 保留 {@code allTasksCompleted} 排查上下文。
      */
     private void tryReleasePlanInventoryLockWhenAllTasksCompleted(StocktakingTaskEntity task) {
         if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceId())
@@ -1028,15 +1067,17 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
         List<StocktakingTaskEntity> planTasks = listBySourceId(task.getSourceId());
         if (CollUtil.isEmpty(planTasks)) {
-            releaseInventoryLockByPlanCodeWithRetry(task.getSourceCode(),
-                    "allTasksCompleted:" + task.getSourceId());
+            log.warn("plan 级兜底释锁：context=allTasksCompleted, reason=noPlanTasks, planCode={}, sourceId={}",
+                    task.getSourceCode(), task.getSourceId());
+            doReleaseInventoryLockByPlanCode(task.getSourceCode());
             return;
         }
         boolean allCompleted = planTasks.stream()
                 .allMatch(planTask -> Objects.equals(planTask.getStatus(), StocktakingStatusEnum.COMPLETED));
         if (allCompleted) {
-            releaseInventoryLockByPlanCodeWithRetry(task.getSourceCode(),
-                    "allTasksCompleted:" + task.getSourceId());
+            log.warn("plan 级兜底释锁：context=allTasksCompleted, reason=allTasksCompleted, planCode={}, sourceId={}",
+                    task.getSourceCode(), task.getSourceId());
+            doReleaseInventoryLockByPlanCode(task.getSourceCode());
         }
     }
 
@@ -1260,19 +1301,81 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 盘点库存加锁：校验并规范化库位后，经 Spring 代理获取维度分布式锁；超阈值时分批加锁。
+     * 在已持有 planCode 分布式锁的临界区内加 Redis 盘点库存锁（维度 MultiLock 仍按批获取）。
      */
-    private void lockInventoryForStocktaking(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList) {
-        String planCode = entity.getCode();
+    private void lockInventoryForStocktakingInPlanLockScope(String planCode, List<InventoryEntity> inventoryList) {
         normalizeInventoryListLocationsForLock(inventoryList);
+        validateInventoryListForStocktaking(planCode, inventoryList);
         int uniqueDimensions = countUniqueStocktakingDimensions(inventoryList);
         if (uniqueDimensions > STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD) {
-            log.warn("盘点计划【{}】库存维度 {} 超过阈值 {}，改 plan 锁包裹的分批维度分布式锁",
+            log.warn("盘点计划【{}】库存维度 {} 超过阈值 {}，plan 锁内分批维度分布式锁",
                     planCode, uniqueDimensions, STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD);
-            self.acquireStocktakingInventoryLocksByPlan(planCode, inventoryList);
+            List<InventoryEntity> dedupedList = dedupeInventoryByDimension(inventoryList);
+            List<List<InventoryEntity>> batches = Lists.partition(dedupedList, STOCKTAKING_DIM_LOCK_LARGE_PLAN_THRESHOLD);
+            int totalBatches = batches.size();
+            for (int i = 0; i < totalBatches; i++) {
+                List<InventoryEntity> batch = batches.get(i);
+                log.warn("盘点计划【{}】分批加锁：batch={}/{}, dimensionCount={}", planCode, i + 1, totalBatches, batch.size());
+                self.acquireStocktakingInventoryLocksAfterValidated(planCode, batch);
+            }
         } else {
-            self.acquireStocktakingInventoryLocks(planCode, inventoryList);
+            self.acquireStocktakingInventoryLocksAfterValidated(planCode, inventoryList);
         }
+    }
+
+    /**
+     * 在 planCode 分布式锁内完成盘点库存加锁、任务落库与 task-keys 索引注册（下推统一入口）。
+     * <p>
+     * 事务边界：本方法返回时 plan 锁即释放，外层 {@code createTaskList} 的 DB 事务可能尚未 commit（见类常量注释）。
+     * 须经 Spring 代理调用以触发 {@code @DistributeLocker}。
+     */
+    @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.WMS_STOCKTAKING_INVENTORY_DIM_KEY,
+            keyName = "planCode",
+            waiteTime = 180,
+            maxRetries = 5
+    )
+    public void createStocktakingTasksUnderPlanLock(String planCode, StocktakingPlanEntity entity, List<InventoryEntity> inventoryList) {
+        lockInventoryForStocktakingInPlanLockScope(planCode, inventoryList);
+        persistStocktakingTasksFromInventory(entity, inventoryList, planCode);
+    }
+
+    /**
+     * 按分单规则落库盘点任务/明细并注册 task-keys 索引（须在 planCode 分布式锁与 DB 事务内调用）。
+     */
+    private void persistStocktakingTasksFromInventory(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList, String planCode) {
+        SeparateRuleEnum separateRule = entity.getSeparateRule();
+        Map<String, String> locationAreaMap = new HashMap<>();
+        if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
+            locationAreaMap = warehouseLocationService.locationAreaMap();
+        }
+        String format = SeparateRuleEnum.getFormatStr(separateRule);
+        Map<String, String> finalLocationAreaMap = locationAreaMap;
+        Map<String, List<InventoryEntity>> inventoryMap = inventoryList
+                .stream()
+                .collect(Collectors.groupingBy(item -> getGroupKey(separateRule, format, finalLocationAreaMap, item)));
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        String uid = userInfo.getUid();
+        String username = userInfo.getUserName();
+        inventoryMap.keySet().forEach(key -> {
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
+            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
+            insertTask.setBillDate(entity.getStocktakingDate());
+            this.save(insertTask);
+            List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
+            Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
+                    .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
+            List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
+                List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
+                String warehouseName = resolveWarehouseNameById(inventoryEntities.get(0).getWarehouseId());
+                return new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
+            }).collect(Collectors.toList());
+            stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+            registerTaskInventoryLockKeys(insertTask.getId(), planCode, inventoryEntityList);
+            String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
+        });
     }
 
     /**
@@ -1311,6 +1414,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     /**
      * 校验库存行后，在维度分布式锁内执行 Redis 盘点库存锁预检与写入。
+     * <p>
+     * 非下推主路径，下推请使用 {@link #createStocktakingTasksUnderPlanLock}。
      */
     @Override
     public void acquireStocktakingInventoryLocks(String planCode, List<InventoryEntity> inventoryList) {
@@ -1337,8 +1442,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 大计划分批加锁：planCode 分布式锁覆盖全部分批过程，各批内再经 {@link #acquireStocktakingInventoryLocksAfterValidated} 获取维度 MultiLock，
-     * 缩小批次间 MultiLock 释放窗口，并避免同计划并发重复下推。
+     * 大计划分批加锁：planCode 分布式锁覆盖全部分批过程，各批内再经 {@link #acquireStocktakingInventoryLocksAfterValidated} 获取维度 MultiLock。
+     * <p>
+     * 非下推主路径；下推请使用 {@link #createStocktakingTasksUnderPlanLock}（含落库与 task-keys）。
+     * 本方法保留供 legacy/单独加锁场景，勿接入 {@code createTaskList}。
      */
     @Override
     @DistributeLocker(
@@ -1980,45 +2087,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         String planCode = entity.getCode();
         try {
-            // 2. 维度联锁下预检并加 Redis 盘点库存锁
-            lockInventoryForStocktaking(entity, inventoryList);
-            // 3. 对库存记录进行分组，按照分单规则进行分组
-            SeparateRuleEnum separateRule = entity.getSeparateRule();
-            Map<String, String> locationAreaMap = new HashMap<>();
-            if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
-                // 查询仓位对应的库区
-                locationAreaMap = warehouseLocationService.locationAreaMap();
-            }
-            String format = SeparateRuleEnum.getFormatStr(separateRule);
-            Map<String, String> finalLocationAreaMap = locationAreaMap;
-            Map<String, List<InventoryEntity>> inventoryMap = inventoryList
-                    .stream()
-                    .collect(Collectors.groupingBy(item -> getGroupKey(separateRule, format, finalLocationAreaMap, item)));
-            // 4. 根据分组结果构建数据并保存盘点任务（串行写库，保证与 @Transactional 同一事务）
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            String uid = userInfo.getUid();
-            String username = userInfo.getUserName();
-            inventoryMap.keySet().forEach(key -> {
-                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-                StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
-                //盘点日期
-                insertTask.setBillDate(entity.getStocktakingDate());
-                this.save(insertTask);
-                List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
-                // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
-                Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
-                        .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
-                List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
-                    List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
-                    String warehouseName = resolveWarehouseNameById(inventoryEntities.get(0).getWarehouseId());
-                    StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
-                    return detailEntity;
-                }).collect(Collectors.toList());
-                stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
-                registerTaskInventoryLockKeys(insertTask.getId(), planCode, inventoryEntityList);
-                String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
-            });
+            self.createStocktakingTasksUnderPlanLock(planCode, entity, inventoryList);
         } catch (Exception e) {
             rollbackStocktakingTaskCreation(entity.getId(), planCode);
             throw e;
@@ -2038,44 +2107,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         String planCode = entity.getCode();
         try {
-            // 2. 维度联锁下预检并加锁（Job filter 仅作提前过滤，临界区在此串行）
-            lockInventoryForStocktaking(entity, inventoryList);
-            // 3. 对库存记录进行分组，按照分单规则进行分组
-            SeparateRuleEnum separateRule = entity.getSeparateRule();
-            Map<String, String> locationAreaMap = new HashMap<>();
-            if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
-                // 查询仓位对应的库区
-                locationAreaMap = warehouseLocationService.locationAreaMap();
-            }
-            String format = SeparateRuleEnum.getFormatStr(separateRule);
-            Map<String, String> finalLocationAreaMap = locationAreaMap;
-            Map<String, List<InventoryEntity>> inventoryMap = inventoryList
-                    .stream()
-                    .collect(Collectors.groupingBy(item -> getGroupKey(separateRule, format, finalLocationAreaMap, item)));
-            // 4. 根据分组结果构建数据并保存盘点任务（串行写库，保证与 @Transactional 同一事务）
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            String uid = userInfo.getUid();
-            String username = userInfo.getUserName();
-            inventoryMap.keySet().forEach(key -> {
-                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-                StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
-                //盘点日期
-                insertTask.setBillDate(entity.getStocktakingDate());
-                this.save(insertTask);
-                List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
-                // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
-                Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
-                        .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
-                List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
-                    List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
-                    String warehouseName = resolveWarehouseNameById(inventoryEntities.get(0).getWarehouseId());
-                    return new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
-                }).collect(Collectors.toList());
-                stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
-                registerTaskInventoryLockKeys(insertTask.getId(), planCode, inventoryEntityList);
-                String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
-            });
+            self.createStocktakingTasksUnderPlanLock(planCode, entity, inventoryList);
         } catch (Exception e) {
             rollbackStocktakingTaskCreation(entity.getId(), planCode);
             throw e;
