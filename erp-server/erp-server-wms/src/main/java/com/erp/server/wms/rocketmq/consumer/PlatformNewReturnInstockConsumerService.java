@@ -585,6 +585,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 			soReturnInstockDetailEntity.setRemark(dto.getReason());
 			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+			soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 			result.matchedList.add(soReturnInstockDetailEntity);
 		}
 		return result;
@@ -1136,6 +1137,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 		soReturnInstockDetailEntity.setRemark(dto.getReason());
 		soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+		soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 		return soReturnInstockDetailEntity;
 	}
 
