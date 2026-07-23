@@ -58,6 +58,11 @@ public class CreateOtherStockinRequest
 	private String sysWarehouseId;
 
 	/**
+	 * ERP仓库名称（仅用于告警展示，不推送旺店通）
+	 */
+	private String sysWarehouseName;
+
+	/**
 	 * 来源单据号（ERP其他出入库单号）
 	 */
 	private String sourceCode;
