@@ -66,6 +66,11 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     private static final int DEFAULT_PAGE_SIZE = AiyaInboundQueryDTO.DEFAULT_PAGE_SIZE;
 
     /**
+     * 入库单类型（SUPPLIER_RECEIPT）。
+     */
+    private static final String ASN_TYPE = "SUPPLIER_RECEIPT";
+
+    /**
      * 爱亚时间参数格式（yyyy-MM-dd HH:mm:ss）。
      */
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -156,6 +161,7 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
         req.setPageSize(DEFAULT_PAGE_SIZE);
         req.setReceiveTimeFrom(beginTime);
         req.setReceiveTimeTo(endTime);
+        req.setAsnType(ASN_TYPE);
         return req;
     }
 
