@@ -104,6 +104,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
+    private WdtSoOutstockAutoMoveService wdtSoOutstockAutoMoveService;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
@@ -238,10 +241,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     /**
      * 旺店通销售出库单同步入口：仅持有分布式锁，不开事务。
      * <p>
-     * 将原方法拆分为三步，降低事务持有时间：
+     * 将原方法拆分为四步，降低事务持有时间：
      * 1. 幂等检查（纯读，无事务）
      * 2. 前置查询：所有 Feign / DB 只读操作（无事务，{@link #preQueryForWdtSync}）
-     * 3. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
+     * 3. 扣库存前结构化预检：当前库位不足则改空仓位，按「出库数量-空仓位已有」从其他仓位移入
+     *    （{@link WdtSoOutstockAutoMoveService#preCheckAndAutoMove}；源仓排除空仓位与当前库位）
+     * 4. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
      * </p>
      */
     @Override
@@ -271,7 +276,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 2. 前置查询：所有 Feign / 只读 DB 操作在事务外完成，避免长事务持有连接
         WdtSyncQueryContext ctx = preQueryForWdtSync(entity);
 
-        // 3. 写操作：短事务内完成保存 + 扣库存 + 推送
+        // 3. 扣库存事务外预检：当前库位不足则改空仓位，移仓数量=出库数量-空仓位已有（移仓独立事务提交）
+        wdtSoOutstockAutoMoveService.preCheckAndAutoMove(
+                ctx.detailList, ctx.inOutStockList, ctx.soOutstock.getCode(), ctx.soOutstock.getCode());
+
+        // 4. 写操作：短事务内完成保存 + 扣库存 + 推送
         service.doSyncWdtSoOutStock(ctx);
     }
 
@@ -389,13 +398,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS = buildOutStockDetail(soOutstock, entity.getDetailList());
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         ArrayList<SoOutstockDetailEntity> detailList = new ArrayList<>();
+        Map<String, SkuVO> skuNoMap = skuList.stream()
+                .filter(s -> CharSequenceUtil.isNotBlank(s.getSkuNo()))
+                .collect(Collectors.toMap(SkuVO::getSkuNo, s -> s, (a, b) -> a));
         for (WdtSoOutStockDetailDTO detailDTO : wdtSoOutStockDetailDTOS) {
             List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();
             if (CollectionUtils.isEmpty(positionDetailsList)) {
-                //暂时使用空仓位
                 SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
-                String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo()))
-                        .findFirst().map(SkuVO::getSkuId).orElse("");
+                SkuVO skuVO = skuNoMap.get(detailEntity.getSkuNo());
+                String skuId = skuVO == null ? "" : CharSequenceUtil.nullToEmpty(skuVO.getSkuId());
                 if (CharSequenceUtil.isBlank(skuId)) {
                     throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                 }
@@ -405,7 +416,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 //仓库
                 detailEntity.setWarehouseId(warehouse.getId());
                 detailEntity.setWarehouseName(warehouse.getName());
-                detailEntity.setWarehouseLocation("");
+                // 默认库位取 PLM 推荐仓位（ProductDetail.warehouseLocation），不再用 WDT positionNo
+                detailEntity.setWarehouseLocation(resolveWdtSkuWarehouseLocation(warehouse, skuVO));
                 detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                 detailEntity.setPlanQty(detailDTO.getPlanQty());
                 detailEntity.setActualQty(detailDTO.getActualQty());
@@ -420,9 +432,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             } else {
                 Map<String, Pair<BigDecimal, BigDecimal>> recIdAmountMap = this.splitAmountAndLocalCurrency(detailDTO);
                 for (WdtSoOutStockDetailDTO.PositionDetailsList detail : positionDetailsList) {
-                    if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
-                        detail.setPositionNo("");
-                    }
                     SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
                     Pair<BigDecimal, BigDecimal> amountPair = recIdAmountMap.get(detail.getRecId());
                     if (amountPair != null) {
@@ -430,8 +439,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         detailEntity.setAllAmountLocalCurrency(amountPair.getValue());
                         detailEntity.setTaxAmount(amountPair.getValue());
                     }
-                    String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo()))
-                            .findFirst().map(SkuVO::getSkuId).orElse("");
+                    SkuVO skuVO = skuNoMap.get(detailEntity.getSkuNo());
+                    String skuId = skuVO == null ? "" : CharSequenceUtil.nullToEmpty(skuVO.getSkuId());
                     if (CharSequenceUtil.isBlank(skuId)) {
                         throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                     }
@@ -441,7 +450,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     //仓库
                     detailEntity.setWarehouseId(warehouse.getId());
                     detailEntity.setWarehouseName(warehouse.getName());
-                    detailEntity.setWarehouseLocation(WDT_NULL_LOCATION.contains(detail.getPositionNo()) ? "" : detail.getPositionNo());
+                    // 仓位按 PLM 推荐位；positionDetailsList 仅用于拆数量/金额
+                    detailEntity.setWarehouseLocation(resolveWdtSkuWarehouseLocation(warehouse, skuVO));
                     detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                     detailEntity.setPlanQty(detail.getPositionGoodsCount());
                     detailEntity.setActualQty(detail.getPositionGoodsCount());
@@ -456,6 +466,20 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
         return new WdtSyncQueryContext(soOutstock, detailList, inOutStockList);
+    }
+
+    /**
+     * 旺店通出库明细默认库位：取 PLM 推荐仓位，空/暂存类归一为空仓位。
+     */
+    private String resolveWdtSkuWarehouseLocation(WarehouseEntity warehouse, SkuVO skuVO) {
+        if (warehouse == null || Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
+            return "";
+        }
+        String raw = skuVO == null ? "" : CharSequenceUtil.nullToEmpty(skuVO.getWarehouseLocation());
+        if (CharSequenceUtil.isBlank(raw) || WDT_NULL_LOCATION.contains(raw)) {
+            return "";
+        }
+        return raw;
     }
 
     /**

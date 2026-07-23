@@ -39,6 +39,16 @@ public class SoReturnFeignController {
     }
 
     /**
+     * 根据退货物流单号查询B2B销售退货单（可能多条，按创建时间倒序）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.oms.entity.SoReturnEntity>
+     **/
+    @PostMapping("/listByReturnLogisticCode")
+    public List<SoReturnEntity> listByReturnLogisticCode(@RequestBody String returnLogisticCode) {
+        return soReturnService.listByReturnLogisticCode(returnLogisticCode);
+    }
+
+    /**
      * 根据主键ids查询销售退货单主表信息
      * @Author Luo_WG
      * @Date 2023/5/15 18:17
