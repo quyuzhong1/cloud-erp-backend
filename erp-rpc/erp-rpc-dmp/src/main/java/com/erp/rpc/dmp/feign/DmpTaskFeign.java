@@ -78,6 +78,15 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getRate")
     BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
+
+    /**
+     * 批量查询源币别在指定日期的人民币汇率。
+     *
+     * @param params 汇率查询条件，按日期和源币别去重
+     * @return 汇率查询结果，保持首次请求顺序
+     */
+    @PostMapping("feign/getRates")
+    List<BiSettlementExchangeRateDTO.BatchRateResultDTO> getRates(@RequestBody List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
     
     /**
      * 获取月份汇率

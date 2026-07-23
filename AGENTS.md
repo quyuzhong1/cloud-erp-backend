@@ -133,6 +133,7 @@ Client -> erp-gateway -> erp-server-* Controller -> Service -> Mapper -> Databas
 - 不在业务代码硬编码环境地址、密钥、token、密码或第三方凭证。
 - Mapper XML 中谨慎使用 `${...}`，只沿用已有安全封装和查询辅助模式。
 - 修改已有接口时保持路径、返回结构、字段语义和错误码兼容。
+- 补充中文 Javadoc，逻辑里补短注释，放在关键分支和批处理前面，保持方法可读性。
 - **新增方法必须写 JavaDoc**：接口与实现类的新增方法（含 private）默认都要注释用途、关键业务规则、参数与返回值；行为有实质变更时同步更新注释；无逻辑的 getter/setter 可免。
 
 ## 黄金实践

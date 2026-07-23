@@ -1,69 +1,80 @@
-# 小包费用分摊分页优化实施计划
+# Small Bag Cost Allocation Paging Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. 步骤使用 checkbox（`- [ ]`）语法跟踪。
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**目标：** 降低 `SmallBagCostAllocationController#queryByPage` 的响应耗时，同时严格保持 `small_bag_cost_allocation_detail.id` 粒度的实时精确总数、结果集合、排序、数据权限和高级查询语义。
+**Goal:** Reduce `SmallBagCostAllocationController#queryByPage` latency while preserving the exact, real-time `small_bag_cost_allocation_detail.id` result set, order, total, permissions, and advanced-query semantics.
 
-**架构：** 用显式 `COUNT(DISTINCT h.id)` 替换 MyBatis-Plus 对宽查询自动生成的 count；列表查询拆分为“共享筛选条件的明细 ID 分页”和“按当前页 ID 回查展示字段”两阶段，Service 按第一阶段 ID 顺序恢复结果。将 TMS 中逐个“期间 + 币种”调用的 Feign 汇率查询替换为一次批量 DMP RPC，并复用 DMP 当前的汇率选取规则。
+**Architecture:** Replace the MyBatis-Plus generated wide-query count with an explicit `COUNT(DISTINCT h.id)`. Split list retrieval into a shared-filter ID query followed by a page-ID-bounded detail query; the service restores the first-stage ID order before enriching results. Replace TMS's per-period/currency Feign loop with one batch DMP RPC that preserves DMP's existing rate-selection rules.
 
-**技术栈：** Java 8、Spring Boot 2.3、MyBatis/MyBatis-Plus、PostgreSQL、Spring Cloud OpenFeign、Lombok、JUnit 4、Mockito、Maven。
+**Tech Stack:** Java 8, Spring Boot 2.3, MyBatis/MyBatis-Plus, PostgreSQL, Spring Cloud OpenFeign, Lombok, JUnit 4, Mockito, Maven.
 
-## 全局约束
+## Global Constraints
 
-- 保持 `POST /smallBagCostAllocation/paging`、请求 DTO、`PagingVO` 结构、响应字段和异常行为兼容。
-- `small_bag_cost_allocation_detail h.id` 是唯一的分页和总数统计粒度。
-- 总数必须同步、实时、精确，并使用 `COUNT(DISTINCT h.id)`；不得估算、延迟、缓存或省略。
-- count 与 ID 分页必须使用相同的关联、高级查询 SQL（`params.sqlMap.default`）、软删条件、数据权限 SQL 和用户可见的排序语义。
-- ID 分页仅额外追加 `h.id` 作为稳定的最终 tie-breaker。详情查询不得独立筛选、排序、分页或重新计算权限。
-- 保持已确认的 `t ↔ g` 和 `k ↔ l` 一对一关系；不得将这两条关系描述为结果行膨胀原因。
-- 本次不修改 `@DataPermission`、`@WebAdvanceQuery`、`SmallBagCostAllocationQueryHandler`、既有查询条件配置或动态排序协议。
-- TMS 对每页所有非 CNY 的 `(reportDate, unitCurrency)` 组合只发起一次批量汇率 RPC。若响应缺少汇率，仍抛出 `ServiceException("汇率为空，请维护汇率后再查询")`。
-- 不允许应用代码、测试、迁移脚本或 Agent 执行数据库 DDL/DML。所有数据库 SQL 和 `EXPLAIN` 由用户执行。
-- 使用模块级 Maven 测试。仓库没有本地 PostgreSQL Mapper integration-test 基座，SQL 等价性和执行计划须由用户在目标环境验证。
-
----
-
-## 文件结构与职责
-
-- 修改 `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/mapper/SmallBagCostAllocationMapper.java`：将自动分页宽查询替换为显式 count、ID 分页和按 ID 查询详情的方法。
-- 修改 `erp-server/erp-server-tms/src/main/resources/mapper/SmallBagCostAllocationMapper.xml`：定义公共 join/where/order 片段和三条显式 SQL。
-- 修改 `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java`：编排精确 count → ID 分页 → 详情回查，恢复 ID 顺序并调用批量汇率接口。
-- 新增 `erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java`：使用 Mockito 验证分页编排、顺序恢复和汇率缺失行为。
-- 修改 `erp-model/erp-model-dmp/src/main/java/com/erp/model/dmp/dto/BiSettlementExchangeRateDTO.java`：增加批量汇率 RPC 的请求/响应 DTO。
-- 修改 `erp-rpc/erp-rpc-dmp/src/main/java/com/erp/rpc/dmp/feign/DmpTaskFeign.java`：增加批量汇率 Feign 契约。
-- 修改 `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/controller/feign/DmpFeignController.java`：提供批量 Feign endpoint。
-- 修改 `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/BiSettlementExchangeRateService.java` 和 `.../impl/BiSettlementExchangeRateServiceImpl.java`：按当前单条查询规则批量解析汇率。
-- 新增 `erp-server/erp-server-dmp/src/test/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImplTest.java`：验证批量结果与现有单条汇率选择规则一致。
-- 新增 `docs/sql/2026-07-22-small-bag-cost-allocation-paging-index-review.sql`：仅供用户执行的索引盘点、候选 DDL、回滚和 `EXPLAIN` 模板。
-- 新增 `docs/superpowers/plans/2026-07-22-small-bag-cost-allocation-paging-verification.md`：目标环境的一致性与性能记录清单。
+- Keep `POST /smallBagCostAllocation/paging`, its DTOs, `PagingVO` structure, response fields, and exception behavior compatible.
+- `small_bag_cost_allocation_detail h.id` is the sole pagination and total-count grain.
+- Total count is synchronous, real-time, exact, and computed as `COUNT(DISTINCT h.id)`; never estimate, defer, cache, or omit it.
+- Both count and ID paging must use the same joins, advanced-query SQL (`params.sqlMap.default`), soft-delete predicates, data-permission SQL, and user-visible sorting semantics.
+- The page-ID query appends `h.id` only as a deterministic final tie-breaker. The detail query must not independently filter, sort, paginate, or recalculate permissions.
+- Preserve the confirmed one-to-one relationships `t ↔ g` and `k ↔ l`; do not claim an artificial multiplication from those relations.
+- Do not change `@DataPermission`, `@WebAdvanceQuery`, `SmallBagCostAllocationQueryHandler`, the existing query-condition configuration, or the current dynamic sort contract in this work.
+- TMS performs one batch rate RPC per non-CNY `(reportDate, unitCurrency)` set. A missing returned rate must still throw `ServiceException("汇率为空，请维护汇率后再查询")`.
+- No application code, test, migration, or agent executes database DDL/DML. The user runs all supplied SQL and `EXPLAIN` commands.
+- Use module-level Maven tests. There is no local PostgreSQL mapper-test harness; SQL equivalence and plans require user-run target-environment verification.
 
 ---
 
-### 任务 1：建立显式分页 Mapper 契约和公共 SQL 片段
+## File Structure
 
-**文件：**
-- 修改：`erp-server/erp-server-tms/src/main/java/com/erp/server/tms/mapper/SmallBagCostAllocationMapper.java:3-40`
-- 修改：`erp-server/erp-server-tms/src/main/resources/mapper/SmallBagCostAllocationMapper.xml:38-106`
+- Modify `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/mapper/SmallBagCostAllocationMapper.java` — replace the auto-paginated wide mapper contract with explicit count, ID-page, and detail-by-ID methods.
+- Modify `erp-server/erp-server-tms/src/main/resources/mapper/SmallBagCostAllocationMapper.xml` — define shared joins/conditions/order fragments and the three explicit statements.
+- Modify `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java` — orchestrate exact count → IDs → details, restore order, and invoke batch rate enrichment.
+- Create `erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java` — isolated Mockito tests for pagination orchestration, order recovery, and rate-missing behavior.
+- Modify `erp-model/erp-model-dmp/src/main/java/com/erp/model/dmp/dto/BiSettlementExchangeRateDTO.java` — add request/result DTOs for one DMP batch-rate RPC.
+- Modify `erp-rpc/erp-rpc-dmp/src/main/java/com/erp/rpc/dmp/feign/DmpTaskFeign.java` — publish the batch-rate Feign contract.
+- Modify `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/controller/feign/DmpFeignController.java` — expose the Feign endpoint.
+- Modify `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/BiSettlementExchangeRateService.java` and `.../impl/BiSettlementExchangeRateServiceImpl.java` — resolve a batch by reusing the existing valid-period/latest-update rate rule.
+- Create `erp-server/erp-server-dmp/src/test/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImplTest.java` — verify batch result selection preserves existing single-rate behavior.
+- Create `docs/sql/2026-07-22-small-bag-cost-allocation-paging-index-review.sql` — commented candidate index DDL, rollbacks, index inventory, and `EXPLAIN` templates for the user to execute.
+- Create `docs/superpowers/plans/2026-07-22-small-bag-cost-allocation-paging-verification.md` — target-environment equivalence and performance-recording checklist.
 
-**接口：**
+---
 
-```java
-Long pagingCount(@Param("params") PagingParamDTO params);
+### Task 1: Lock down explicit pagination mapper contracts
 
-List<String> pagingDetailIds(@Param("params") PagingParamDTO params,
-                              @Param("offset") long offset,
-                              @Param("pageSize") long pageSize);
+**Files:**
+- Modify: `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/mapper/SmallBagCostAllocationMapper.java:3-40`
+- Modify: `erp-server/erp-server-tms/src/main/resources/mapper/SmallBagCostAllocationMapper.xml:38-106`
 
-List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
-```
+**Interfaces:**
+- Consumes: `SmallBagCostAllocationDTO.PagingParamDTO`, current generated `params.sqlMap.default`, and `params.permissionSql`.
+- Produces:
+  ```java
+  Long pagingCount(@Param("params") PagingParamDTO params);
+  List<String> pagingDetailIds(@Param("params") PagingParamDTO params,
+                                @Param("offset") long offset,
+                                @Param("pageSize") long pageSize);
+  List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
+  ```
 
-- [ ] **步骤 1：替换旧 Mapper 分页方法声明**
+- [ ] **Step 1: Remove the old mapper pagination declaration and add the explicit contracts**
 
-  删除 `IPage<ListDTO> paging(Page query, ...)`，新增上述三个方法。删除不再使用的 `IPage` 和 `Page` import；保留 `tabList`、`listByReportPeriodStr`、`listSmallBagCost` 不变。
+  Replace the current `IPage<ListDTO> paging(Page query, ...)` declaration with:
 
-- [ ] **步骤 2：抽取公共的 `FROM` 与 `WHERE` SQL 片段**
+  ```java
+  Long pagingCount(@Param("params") PagingParamDTO params);
 
-  在 XML 中增加以下片段。关联范围与当前实现保持一致，只将 `h` 调整为驱动表：
+  List<String> pagingDetailIds(@Param("params") PagingParamDTO params,
+                                @Param("offset") long offset,
+                                @Param("pageSize") long pageSize);
+
+  List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
+  ```
+
+  Remove now-unused `IPage` and `Page` imports. Keep `tabList`, `listByReportPeriodStr`, and `listSmallBagCost` unchanged.
+
+- [ ] **Step 2: Replace the old `<select id="paging">` with common SQL fragments**
+
+  Add a `smallBagPagingFrom` fragment with the *same* current join graph, only changing the join direction to start at `h`:
 
   ```xml
   <sql id="smallBagPagingFrom">
@@ -81,7 +92,11 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
       LEFT JOIN dict_basic n
         ON h.fee_type = n.code AND n.type = 'dictCostCategory'
   </sql>
+  ```
 
+  Add a `smallBagPagingWhere` fragment:
+
+  ```xml
   <sql id="smallBagPagingWhere">
       <where>
           h.is_deleted = false
@@ -93,9 +108,9 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   </sql>
   ```
 
-  不新增任何用户可控的 `${...}`。保留当前由高级查询和数据权限切面生成的 SQL 注入点。
+  Keep the current raw SQL injection points unchanged: they are generated by the existing validated advanced-query and data-permission aspects. Do not introduce any new user-controlled `${...}` value.
 
-- [ ] **步骤 3：抽取稳定排序片段**
+- [ ] **Step 3: Add the shared sort fragment with a stable detail tie-breaker**
 
   ```xml
   <sql id="smallBagPagingOrder">
@@ -109,9 +124,9 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   </sql>
   ```
 
-  该片段保留当前传入排序字段与默认排序，仅增加最终稳定排序键 `h.id ASC`。
+  This preserves every supplied sort item and existing default order, adding only a deterministic `h.id ASC` final order.
 
-- [ ] **步骤 4：增加精确 count 与第一阶段 ID SQL**
+- [ ] **Step 4: Add explicit count and first-stage ID statements**
 
   ```xml
   <select id="pagingCount" resultType="java.lang.Long">
@@ -129,11 +144,11 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   </select>
   ```
 
-  不使用 MyBatis-Plus `Page` 参数，防止分页拦截器再次生成自动 count。
+  Do not pass a MyBatis-Plus `Page` argument to these methods; it prevents the pagination interceptor from generating a second automatic count.
 
-- [ ] **步骤 5：增加按当前页 ID 回查详情的 SQL**
+- [ ] **Step 5: Add the detail query bounded only by the page IDs**
 
-  将原 `<select id="paging">` 中的展示字段 projection 完整复制到 `<select id="selectByDetailIds">`，保留原有 `CAST`、字段别名和展示 join，但不使用 `smallBagPagingWhere`、动态 `ORDER BY`、`LIMIT` 或 `OFFSET`：
+  Copy the existing display projection exactly into `<select id="selectByDetailIds">`, retaining its casts and aliases. Use the same display joins but no `smallBagPagingWhere`, no dynamic `ORDER BY`, and no `LIMIT/OFFSET`:
 
   ```xml
   <select id="selectByDetailIds" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
@@ -165,15 +180,17 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   </select>
   ```
 
-- [ ] **步骤 6：编译 TMS 模块**
+- [ ] **Step 6: Compile the TMS module**
+
+  Run:
 
   ```bash
   mvn -pl erp-server/erp-server-tms -am -DskipTests compile
   ```
 
-  预期：`BUILD SUCCESS`，不存在 Mapper 方法或 XML statement 解析错误。
+  Expected: `BUILD SUCCESS` and no unresolved mapper method or XML statement errors.
 
-- [ ] **步骤 7：提交 Mapper 改动**
+- [ ] **Step 7: Commit the mapper contract change**
 
   ```bash
   git add erp-server/erp-server-tms/src/main/java/com/erp/server/tms/mapper/SmallBagCostAllocationMapper.java \
@@ -181,17 +198,19 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   git commit -m "perf: split small bag paging mapper queries"
   ```
 
-### 任务 2：在 TMS Service 编排精确 count、ID 分页和顺序恢复
+### Task 2: Orchestrate exact count, ID paging, and order recovery in TMS
 
-**文件：**
-- 修改：`erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java:203-216,218-299`
-- 新增：`erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java`
+**Files:**
+- Modify: `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java:203-216,218-299`
+- Create: `erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java`
 
-**接口：** 输入任务 1 的三个 Mapper 方法，输出包含精确 `totalCount`、请求页码信息并与 `pagingDetailIds` 顺序一致的 `PagingVO<ListDTO>`。
+**Interfaces:**
+- Consumes: Task 1's mapper methods.
+- Produces: `PagingVO<ListDTO>` with exact `totalCount`, requested page metadata, and records in `pagingDetailIds` order.
 
-- [ ] **步骤 1：先编写失败的 Service 编排测试**
+- [ ] **Step 1: Write the failing service orchestration tests**
 
-  使用 JUnit 4、Mockito 和 `ReflectionTestUtils.setField`，与现有 `TmsAsyncTaskRecordServiceImplPageBatchBusinessIdsTest` 风格保持一致。将 `handleDataPaging` 从 `private` 改为 `protected`，使测试可通过 spy 屏蔽无关 Feign 补全逻辑。
+  Use JUnit 4/Mockito and `ReflectionTestUtils.setField`, matching `TmsAsyncTaskRecordServiceImplPageBatchBusinessIdsTest`. Create a spy and change `handleDataPaging` from `private` to `protected` so tests can suppress unrelated Feign enrichment:
 
   ```java
   @Test
@@ -223,17 +242,19 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   }
   ```
 
-- [ ] **步骤 2：运行测试确认失败**
+  In `setUp`, inject `SmallBagCostAllocationMapper` into the inherited `baseMapper` field and stub `doNothing().when(service).handleDataPaging(anyList())`.
+
+- [ ] **Step 2: Run the tests to verify they fail**
 
   ```bash
   mvn -pl erp-server/erp-server-tms -am -Dtest=SmallBagCostAllocationServiceImplTest -DfailIfNoTests=false test
   ```
 
-  预期：由于 Service 仍调用旧 `paging` 方法或没有两阶段编排而失败。
+  Expected: failure because the service still calls the removed `paging` method or does not expose the required orchestration.
 
-- [ ] **步骤 3：实现两阶段分页流程**
+- [ ] **Step 3: Implement the two-stage service flow**
 
-  将 `paging` 替换为：
+  Replace `paging` with:
 
   ```java
   @Override
@@ -262,19 +283,21 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   }
   ```
 
-  当前页没有 ID 时，不执行详情 SQL，仍返回精确总数。详情回查因并发删除而缺少 ID 时，不插入空 DTO，总数保持 count 的真实结果。
+  Keep `handleDataPaging` behavior unchanged in this task except for its visibility (`protected`) needed by the unit test. Do not invoke detail SQL if no page IDs are returned; retain the exact count in that out-of-range-page response.
 
-- [ ] **步骤 4：补充边界测试并运行**
+- [ ] **Step 4: Add boundary tests and run them**
 
-  增加 `page=3`、`pageSize=50` 时传入 `offset=100L` 的断言；验证 `total > 0` 但 ID 页为空时返回空列表和正确总数；验证详情查询缺失一个 ID 时结果不含空对象。
+  Add cases for offset calculation (`page=3`, `pageSize=50` must pass `100L`), `total > 0` with an empty ID page, and a detail query that omits a deleted ID. The omitted record is not replaced with a placeholder; count remains unchanged.
+
+  Run:
 
   ```bash
   mvn -pl erp-server/erp-server-tms -am -Dtest=SmallBagCostAllocationServiceImplTest -DfailIfNoTests=false test
   ```
 
-  预期：所有 Service 编排测试通过。
+  Expected: all service orchestration tests pass.
 
-- [ ] **步骤 5：提交 TMS 分页流程**
+- [ ] **Step 5: Commit the TMS pagination flow**
 
   ```bash
   git add erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java \
@@ -282,24 +305,24 @@ List<ListDTO> selectByDetailIds(@Param("detailIds") List<String> detailIds);
   git commit -m "perf: page small bag allocation details by id"
   ```
 
-### 任务 3：定义批量汇率 RPC 契约
+### Task 3: Define the batch exchange-rate RPC contract
 
-**文件：**
-- 修改：`erp-model/erp-model-dmp/src/main/java/com/erp/model/dmp/dto/BiSettlementExchangeRateDTO.java`
-- 修改：`erp-rpc/erp-rpc-dmp/src/main/java/com/erp/rpc/dmp/feign/DmpTaskFeign.java:72-90`
+**Files:**
+- Modify: `erp-model/erp-model-dmp/src/main/java/com/erp/model/dmp/dto/BiSettlementExchangeRateDTO.java`
+- Modify: `erp-rpc/erp-rpc-dmp/src/main/java/com/erp/rpc/dmp/feign/DmpTaskFeign.java:72-90`
 
-**接口：**
+**Interfaces:**
+- Produces:
+  ```java
+  List<BiSettlementExchangeRateDTO.BatchRateResultDTO> getRates(
+      @RequestBody List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
+  ```
+- Request pair: `date` is the same `reportDate + "-01"` passed to the existing single-rate endpoint; `sourceCurrencyCode` is the existing source currency.
+- Result pair: echoes `date` and `sourceCurrencyCode`, and carries nullable `BigDecimal exchangeRate`.
 
-```java
-List<BiSettlementExchangeRateDTO.BatchRateResultDTO> getRates(
-    @RequestBody List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
-```
+- [ ] **Step 1: Add transport DTOs in the DMP model**
 
-请求中的 `date` 与当前单条接口一致，即 `reportDate + "-01"`；`sourceCurrencyCode` 为现有源币种。结果返回相同的 `date`、`sourceCurrencyCode` 和可为空的 `BigDecimal exchangeRate`。
-
-- [ ] **步骤 1：增加 DMP Model 传输 DTO**
-
-  在 `BiSettlementExchangeRateDTO` 中增加：
+  Add nested classes:
 
   ```java
   @Data
@@ -322,9 +345,9 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> getRates(
   }
   ```
 
-- [ ] **步骤 2：增加 Feign endpoint**
+- [ ] **Step 2: Add the Feign endpoint**
 
-  在 `DmpTaskFeign` 的 `getRate` 相邻位置增加：
+  In `DmpTaskFeign`, next to `getRate`, add:
 
   ```java
   @PostMapping("feign/getRates")
@@ -332,40 +355,41 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> getRates(
       @RequestBody List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
   ```
 
-  保留当前 `getRate`，避免影响其他调用方。
+  Import `BiSettlementExchangeRateDTO` and `java.util.List` if absent. Keep `getRate` for existing callers.
 
-- [ ] **步骤 3：编译契约模块并提交**
+- [ ] **Step 3: Compile the contract modules**
 
   ```bash
   mvn -pl erp-rpc/erp-rpc-dmp -am -DskipTests compile
+  ```
 
+  Expected: `BUILD SUCCESS`.
+
+- [ ] **Step 4: Commit the RPC contract**
+
+  ```bash
   git add erp-model/erp-model-dmp/src/main/java/com/erp/model/dmp/dto/BiSettlementExchangeRateDTO.java \
           erp-rpc/erp-rpc-dmp/src/main/java/com/erp/rpc/dmp/feign/DmpTaskFeign.java
   git commit -m "feat: add batch settlement exchange rate rpc"
   ```
 
-  预期：`BUILD SUCCESS`。
+### Task 4: Implement DMP batch-rate resolution with the current selection rule
 
-### 任务 4：以现有选择规则实现 DMP 批量汇率查询
+**Files:**
+- Modify: `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/BiSettlementExchangeRateService.java:19-43`
+- Modify: `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImpl.java:71-120`
+- Modify: `erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/controller/feign/DmpFeignController.java:149-171`
+- Create: `erp-server/erp-server-dmp/src/test/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImplTest.java`
 
-**文件：**
-- 修改：`erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/BiSettlementExchangeRateService.java:19-43`
-- 修改：`erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImpl.java:71-120`
-- 修改：`erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/controller/feign/DmpFeignController.java:149-171`
-- 新增：`erp-server/erp-server-dmp/src/test/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImplTest.java`
+**Interfaces:**
+- Consumes: Task 3's `BatchRateParamDTO`.
+- Produces: one `BatchRateResultDTO` per distinct input `(date, sourceCurrencyCode)`; no result-rate means the existing service has no active approved rate for that pair.
 
-**接口：**
+- [ ] **Step 1: Write failing unit tests for existing-rate equivalence**
 
-```java
-List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
-    List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
-```
+  Use JUnit 4/Mockito to mock `BiSettlementExchangeRateMapper`. Build two `BiSettlementExchangeRateEntity` entries for the same currency whose date ranges both cover `2026-07-01`, with distinct `updateTime`; assert the newer rate is selected. Also test that a request outside all ranges yields a result DTO with `exchangeRate == null`.
 
-针对每个去重后的 `(date, sourceCurrencyCode)` 返回一个结果。没有有效汇率时，结果对象存在但 `exchangeRate` 为 `null`。
-
-- [ ] **步骤 1：先编写与单条查询一致性的失败测试**
-
-  使用 JUnit 4/Mockito mock `BiSettlementExchangeRateMapper`。构造同币种的两条有效汇率，其区间均覆盖 `2026-07-01`，但 `updateTime` 不同；断言选择更新时间更晚的汇率。再验证日期不在任一区间时返回 `exchangeRate == null`。
+  Core assertion:
 
   ```java
   List<BatchRateResultDTO> result = service.findRates(Arrays.asList(
@@ -377,19 +401,26 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
   verify(mapper, times(1)).listByCurrencyCode("CNY", "USD");
   ```
 
-- [ ] **步骤 2：运行测试确认失败**
+- [ ] **Step 2: Run tests to verify failure**
 
   ```bash
   mvn -pl erp-server/erp-server-dmp -am -Dtest=BiSettlementExchangeRateServiceImplTest -DfailIfNoTests=false test
   ```
 
-  预期：`findRates` 尚不存在，测试失败。
+  Expected: failure because `findRates` does not exist.
 
-- [ ] **步骤 3：增加 Service 契约并复用已有汇率选择规则**
+- [ ] **Step 3: Add the service contract and implementation**
 
-  在 `BiSettlementExchangeRateService` 增加 `findRates` 方法。将 `listRedisByCurrencyCodeType` 中的日期区间匹配与按 `updateTime DESC` 取最新的逻辑抽取为私有 helper，使单条查询与批量查询共同调用它。
+  Add to `BiSettlementExchangeRateService`:
 
-  `findRates` 的实现要求：
+  ```java
+  List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
+      List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
+  ```
+
+  Refactor the current date-range selection in `listRedisByCurrencyCodeType` into a private helper accepting the already-loaded `List<BiSettlementExchangeRateEntity>`. Both existing single methods and new `findRates` must call that helper, so they share the exact inclusive-date and descending-`updateTime` behavior.
+
+  Implement `findRates` as follows:
 
   ```java
   public List<BatchRateResultDTO> findRates(List<BatchRateParamDTO> params) {
@@ -397,16 +428,25 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
           return Collections.emptyList();
       }
       Map<String, List<BiSettlementExchangeRateEntity>> ratesByCurrency = new HashMap<>();
-      // 按 date + sourceCurrencyCode 去重；每种币别最多读取一次 mapper；
-      // 使用与单条方法完全相同的日期区间和最新 updateTime 选择逻辑。
+      return params.stream()
+          .filter(Objects::nonNull)
+          .collect(Collectors.collectingAndThen(
+              Collectors.toMap(item -> item.getDate() + "|" + item.getSourceCurrencyCode(),
+                  Function.identity(), (first, ignored) -> first, LinkedHashMap::new),
+              map -> map.values().stream().map(item -> {
+                  List<BiSettlementExchangeRateEntity> rates = ratesByCurrency.computeIfAbsent(
+                      item.getSourceCurrencyCode(), currency -> baseMapper.listByCurrencyCode("CNY", currency));
+                  return new BatchRateResultDTO(item.getDate(), item.getSourceCurrencyCode(),
+                      resolveRate(item.getDate(), "CNY", item.getSourceCurrencyCode(), rates, false));
+              }).collect(Collectors.toList())));
   }
   ```
 
-  `CNY -> CNY` 继续返回 `BigDecimal.ONE`。保持原有参数校验、有效汇率集合、区间边界和最新更新时间优先规则。
+  The helper must return `BigDecimal.ONE` for CNY-to-CNY and otherwise retain the current validation, active-rate filtering result, inclusive period match, and latest `updateTime` precedence.
 
-- [ ] **步骤 4：提供 Feign Controller endpoint**
+- [ ] **Step 4: Expose the controller endpoint**
 
-  在 `DmpFeignController` 的 `/getRate` 后增加：
+  In `DmpFeignController`:
 
   ```java
   @PostMapping("/getRates")
@@ -416,14 +456,20 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
   }
   ```
 
-  不修改现有 `/getRate`、`/getMonthRate`。
+  Place it immediately after `getRate`; do not alter `/getRate` and `/getMonthRate`.
 
-- [ ] **步骤 5：运行 DMP 验证并提交**
+- [ ] **Step 5: Run DMP tests and compile TMS against the new contract**
 
   ```bash
   mvn -pl erp-server/erp-server-dmp -am -Dtest=BiSettlementExchangeRateServiceImplTest -DfailIfNoTests=false test
   mvn -pl erp-server/erp-server-tms -am -DskipTests compile
+  ```
 
+  Expected: both commands succeed.
+
+- [ ] **Step 6: Commit the DMP provider**
+
+  ```bash
   git add erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/BiSettlementExchangeRateService.java \
           erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/service/impl/BiSettlementExchangeRateServiceImpl.java \
           erp-server/erp-server-dmp/src/main/java/com/erp/server/dmp/controller/feign/DmpFeignController.java \
@@ -431,17 +477,19 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
   git commit -m "feat: batch resolve settlement exchange rates"
   ```
 
-### 任务 5：将 TMS 逐条汇率 Feign 调用替换为批量 RPC
+### Task 5: Replace per-rate TMS Feign calls with the batch RPC
 
-**文件：**
-- 修改：`erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java:218-299`
-- 修改：`erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java`
+**Files:**
+- Modify: `erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java:218-299`
+- Modify: `erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java`
 
-**接口：** 消费 `DmpTaskFeign.getRates(List<BatchRateParamDTO>)`，每个非空页最多调用一次 DMP 汇率 RPC，并保留当前 `unitCost`、`totalCost` 格式化行为。
+**Interfaces:**
+- Consumes: `DmpTaskFeign.getRates(List<BatchRateParamDTO>)`.
+- Produces: the same unit-cost and total-cost formatting as before, with a maximum of one DMP rate RPC per nonempty page.
 
-- [ ] **步骤 1：编写批量汇率补全失败测试**
+- [ ] **Step 1: Add the failing batch-enrichment test**
 
-  准备两条相同 `(reportDate="2026-07", unitCurrency="USD")` 记录和一条 CNY 记录。mock SKU、渠道、供应商批量服务返回空列表，并 stub：
+  Make `handleDataPaging` callable through the service spy. Supply records with duplicate `("2026-07", "USD")` and one CNY row. Stub supporting SKU/channel/supplier batches with empty lists and stub:
 
   ```java
   when(dmpTaskFeign.getRates(Arrays.asList(
@@ -449,39 +497,57 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
       .thenReturn(Arrays.asList(new BatchRateResultDTO("2026-07-01", "USD", new BigDecimal("7.2"))));
   ```
 
-  断言 `getRates` 只调用一次，`getRate` 从不调用。再增加返回 `exchangeRate = null` 时抛出 `ServiceException("汇率为空，请维护汇率后再查询")` 的测试。
+  Verify `getRates` is called once and `getRate` is never called. Add a missing-rate test that returns `exchangeRate = null` and expects `ServiceException` with `汇率为空，请维护汇率后再查询`.
 
-- [ ] **步骤 2：在格式化循环前构造一次性 rate map**
+- [ ] **Step 2: Build the one-call rate map before formatting rows**
 
-  从当前页记录中筛选非 CNY 且币种非空的 `(reportDate + "-01", unitCurrency)`，以 `date + "_" + sourceCurrencyCode` 去重。若集合非空，只调用一次 `dmpTaskFeign.getRates(rateParams)`；若集合为空，使用 `Collections.emptyMap()`，不调用 Feign。
+  Replace the current `rateMap` lazy per-row block with:
 
-  在原循环中通过 `reportDate + "-01_" + unitCurrency` 获取汇率；返回结果不存在或 `exchangeRate == null` 时，保留当前日志和 `ServiceException`。随后继续执行原有六位小数 `unitCost` 与 `totalCost` 格式化。
+  ```java
+  List<BatchRateParamDTO> rateParams = records.stream()
+      .filter(item -> StringUtils.isNotBlank(item.getUnitCurrency()))
+      .filter(item -> !"CNY".equals(item.getUnitCurrency()))
+      .map(item -> new BatchRateParamDTO(item.getReportDate() + "-01", item.getUnitCurrency()))
+      .collect(Collectors.collectingAndThen(
+          Collectors.toMap(item -> item.getDate() + "_" + item.getSourceCurrencyCode(),
+              Function.identity(), (first, ignored) -> first, LinkedHashMap::new),
+          map -> new ArrayList<>(map.values())));
+  Map<String, BigDecimal> rateMap = dmpTaskFeign.getRates(rateParams).stream()
+      .collect(Collectors.toMap(item -> item.getDate() + "_" + item.getSourceCurrencyCode(),
+          BiSettlementExchangeRateDTO.BatchRateResultDTO::getExchangeRate));
+  ```
 
-- [ ] **步骤 3：运行 TMS 测试并提交**
+  If `rateParams` is empty, use `Collections.emptyMap()` and do not call Feign. In the existing row loop, key with `reportDate + "-01_" + unitCurrency`, retrieve the batch result, and retain the existing log message and `ServiceException` if the rate is absent or null.
+
+- [ ] **Step 3: Run TMS tests**
 
   ```bash
   mvn -pl erp-server/erp-server-tms -am -Dtest=SmallBagCostAllocationServiceImplTest -DfailIfNoTests=false test
+  ```
 
+  Expected: the test proves exactly one batch RPC is made and no `getRate` invocation remains in this flow.
+
+- [ ] **Step 4: Commit the TMS batch-rate consumer**
+
+  ```bash
   git add erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImpl.java \
           erp-server/erp-server-tms/src/test/java/com/erp/server/tms/service/impl/SmallBagCostAllocationServiceImplTest.java
   git commit -m "perf: batch small bag exchange rate lookups"
   ```
 
-  预期：该流程不再调用 `DmpTaskFeign.getRate`。
+### Task 6: Supply user-executed index and query-plan validation material
 
-### 任务 6：提供由用户执行的索引与执行计划材料
+**Files:**
+- Create: `docs/sql/2026-07-22-small-bag-cost-allocation-paging-index-review.sql`
+- Create: `docs/superpowers/plans/2026-07-22-small-bag-cost-allocation-paging-verification.md`
 
-**文件：**
-- 新增：`docs/sql/2026-07-22-small-bag-cost-allocation-paging-index-review.sql`
-- 新增：`docs/superpowers/plans/2026-07-22-small-bag-cost-allocation-paging-verification.md`
+**Interfaces:**
+- Consumes: production-equivalent bind values supplied by the user.
+- Produces: no database action; only scripts and a result-recording checklist for the user/DBA.
 
-**接口：** 输入用户提供的生产等价参数；输出只读盘点、候选 DDL、回滚 SQL 和验证记录清单。该任务不执行任何数据库操作。
+- [ ] **Step 1: Create the index inventory and candidate DDL file**
 
-- [ ] **步骤 1：写入索引盘点 SQL 和注释状态的候选 DDL**
-
-  文件头必须说明：用户/DBA 先执行索引盘点，再选择性执行候选命令；计划、应用和 Agent 均不会执行 DDL。
-
-  索引盘点 SQL：
+  Include this read-only inventory query:
 
   ```sql
   SELECT tbl.relname AS table_name, idx.relname AS index_name,
@@ -498,7 +564,7 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
   ORDER BY tbl.relname, idx.relname;
   ```
 
-  以下 DDL 与回滚命令全部保持注释：
+  Add the following DDL and matching rollback commands as comments only:
 
   ```sql
   -- CREATE INDEX CONCURRENTLY idx_sba_active_main_id
@@ -520,26 +586,28 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
   -- DROP INDEX CONCURRENTLY IF EXISTS public.idx_sbad_active_main_create_time;
   ```
 
-- [ ] **步骤 2：写入参数化执行计划模板**
+  State in a file header that the user/DBA must first inspect existing indexes and then selectively run commands; this plan does not execute them.
 
-  为精确 count、ID 分页和详情 ID 回查各写一条 `EXPLAIN (VERBOSE, BUFFERS)` 模板，使用 `:report_date`、`:report_status`、`:permission_sql`、`:advanced_sql`、`:offset`、`:page_size`、`:detail_id_array` 等占位符。明确要求用户以同一请求的实际参数替换后执行。
+- [ ] **Step 2: Add parameterized plan templates**
 
-  写明 `EXPLAIN (ANALYZE, BUFFERS)` 会实际执行查询，只能在 DBA 批准的低峰窗口由用户执行。
+  Include three `EXPLAIN (VERBOSE, BUFFERS)` templates for the exact count, ID page, and detail-ID query. Use named placeholders such as `:report_date`, `:report_status`, `:permission_sql`, `:advanced_sql`, `:offset`, `:page_size`, and `:detail_id_array`; require the user to replace them with the same approved request values before execution.
 
-- [ ] **步骤 3：写入结果等价性检查清单**
+  Include a warning that `EXPLAIN (ANALYZE, BUFFERS)` is only for a DBA-approved low-traffic window because it runs the query.
 
-  验证文档至少包含：
+- [ ] **Step 3: Create the equivalence checklist**
+
+  Record the before/after comparisons the user must execute:
 
   ```text
-  场景：无筛选；每一种已配置高级查询字段；组合高级查询；
-        仅 t 权限；含 k.shop_id 的店铺权限；默认排序；每一种配置的自定义排序；
-        首页、中间页、深页和越界页。
-  对比项：totalCount；有序 detailId 列表；全部响应字段；
-          count SQL 耗时；ID SQL 耗时；详情 SQL 耗时；汇率 RPC 次数；端到端耗时。
-  通过条件：改造前后所有功能结果完全一致。
+  Cases: no filter; each supported advanced field; combined advanced fields;
+         t-only permission; k.shop_id permission; default sort; each configured custom sort;
+         first, middle, deep, and out-of-range pages.
+  For each case compare: totalCount; ordered detailId list; all response fields;
+         count SQL time; ID SQL time; detail SQL time; rate-RPC count; end-to-end time.
+  Pass condition: every functional value matches before/after exactly.
   ```
 
-- [ ] **步骤 4：只提交文档**
+- [ ] **Step 4: Commit documentation only**
 
   ```bash
   git add docs/sql/2026-07-22-small-bag-cost-allocation-paging-index-review.sql \
@@ -547,56 +615,57 @@ List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(
   git commit -m "docs: add small bag paging validation scripts"
   ```
 
-### 任务 7：最终集成验证与审查
+### Task 7: Final integration verification and review
 
-**文件：** 验证任务 1 至任务 6 的所有改动。
+**Files:**
+- Verify: all files from Tasks 1–6.
 
-- [ ] **步骤 1：运行聚焦测试**
+- [ ] **Step 1: Run focused tests**
 
   ```bash
   mvn -pl erp-server/erp-server-tms -am -Dtest=SmallBagCostAllocationServiceImplTest -DfailIfNoTests=false test
   mvn -pl erp-server/erp-server-dmp -am -Dtest=BiSettlementExchangeRateServiceImplTest -DfailIfNoTests=false test
   ```
 
-  预期：两组测试均通过。
+  Expected: both focused suites pass.
 
-- [ ] **步骤 2：编译两个受影响服务**
+- [ ] **Step 2: Compile both affected services**
 
   ```bash
   mvn -pl erp-server/erp-server-tms,erp-server/erp-server-dmp -am -DskipTests compile
   ```
 
-  预期：`BUILD SUCCESS`。
+  Expected: `BUILD SUCCESS`.
 
-- [ ] **步骤 3：静态审查 SQL 形态**
+- [ ] **Step 3: Perform static SQL review**
 
-  确认：
+  Check that:
 
   ```text
-  pagingCount 与 pagingDetailIds 都包含 smallBagPagingFrom + smallBagPagingWhere；
-  仅 pagingDetailIds 包含 smallBagPagingOrder + LIMIT/OFFSET；
-  selectByDetailIds 只包含当前页 h.id 限制，不含高级查询、权限、排序或分页条件；
-  pagingCount 使用 COUNT(DISTINCT h.id)；
-  本接口 Mapper 流程不再存在自动 Page/IPage count；
-  handleDataPaging 中不再调用 DmpTaskFeign.getRate。
+  pagingCount and pagingDetailIds both include smallBagPagingFrom + smallBagPagingWhere;
+  pagingDetailIds alone includes smallBagPagingOrder + LIMIT/OFFSET;
+  selectByDetailIds has only h.id page restriction and no advanced/permission/sort/paging clauses;
+  pagingCount uses COUNT(DISTINCT h.id);
+  no automatic Page/IPage remains in this endpoint's mapper flow;
+  no call to DmpTaskFeign.getRate remains in handleDataPaging.
   ```
 
-- [ ] **步骤 4：仅由用户执行目标环境验证**
+- [ ] **Step 4: Run target-environment verification only through the user**
 
-  将任务 6 的文件交给用户，由用户执行索引盘点、代表性结果对比和 DBA 批准的执行计划。不得代替用户运行数据库命令。将用户提供的结果记录到验证文档。
+  Give the user the Task 6 files. Ask them to execute index inventory, representative result comparisons, and DBA-approved plans. Do not run database commands. Record any supplied results in the verification document.
 
-- [ ] **步骤 5：执行代码审查门禁并确认工作区状态**
+- [ ] **Step 5: Run the repository review gate and commit any final correction**
 
-  运行项目要求的 code review，修复经确认的问题后执行：
+  Run the project-required code review and then:
 
   ```bash
   git status --short
   ```
 
-  预期：所有已验证修正均已提交，工作区无未提交文件。
+  Expected: no uncommitted files remain after any verified corrections are committed.
 
-## 计划自检
+## Plan Self-Review
 
-- 规格覆盖：任务 1 和任务 2 实现共享筛选条件下的精确 count 与两阶段分页；任务 3 至任务 5 实现批量 DMP 汇率 RPC；任务 6 提供用户执行的索引与计划材料；任务 7 覆盖编译、行为、SQL 形态与目标环境交接。
-- 可执行性：每个任务都明确列出文件、接口、代码形态、验证命令和提交节点。
-- 类型一致性：TMS 调用 `DmpTaskFeign.getRates(List<BatchRateParamDTO>)`；DMP Controller 调用 `BiSettlementExchangeRateService.findRates(...)`；请求/响应 DTO 定义在 `BiSettlementExchangeRateDTO`；TMS Mapper 方法由任务 1 定义并由任务 2 使用。
+- Spec coverage: Tasks 1–2 implement the shared exact-count/two-stage query semantics; Tasks 3–5 implement the batch DMP rate RPC; Task 6 supplies user-executed index and plan material; Task 7 verifies compile, behavior, SQL shape, and target-environment handoff.
+- No placeholder scan: every implementation step specifies its files, interfaces, code shape, command, and expected result.
+- Type consistency: TMS consumes `DmpTaskFeign.getRates(List<BatchRateParamDTO>)`; DMP controller delegates to `BiSettlementExchangeRateService.findRates(...)`; the DTO pair is defined in `BiSettlementExchangeRateDTO`; TMS Mapper method names and argument types are defined in Task 1 and consumed in Task 2.

@@ -30,6 +30,14 @@ public interface BiSettlementExchangeRateService extends IService<BiSettlementEx
     BigDecimal findByCurrencyAndMonth(String date, String sourceCurrencyCode);
 
     /**
+     * 批量查询源币别在指定日期的人民币汇率。
+     *
+     * @param params 汇率查询条件，按日期和源币别去重
+     * @return 汇率查询结果，保持首次请求顺序
+     */
+    List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params);
+
+    /**
      * 根据日期、目标币别、来源币别查询汇率信息
      *
      * @param date
