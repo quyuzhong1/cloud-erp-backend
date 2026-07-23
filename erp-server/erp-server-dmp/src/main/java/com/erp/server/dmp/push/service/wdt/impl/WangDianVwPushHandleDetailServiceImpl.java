@@ -26,6 +26,7 @@ import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WangDianVwPushHandleDetailService;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
+import com.sdk.wangdian.sdk.api.wms.WdtOtherStockRemarkConstants;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.VwPushHandleDetailAPI;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailPushDTO;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailResponse;
@@ -136,7 +137,7 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
         }
         log.warn("虚拟仓订单创建->获取分货单推送编号，查询响应数据：{}", resultList);
 
-        List<String> sourceCodeList = Arrays.stream(pushDTOS.getRemark().split("原始单据号：")).collect(Collectors.toList());
+        List<String> sourceCodeList = Arrays.stream(pushDTOS.getRemark().split(WdtOtherStockRemarkConstants.SOURCE_CODE_PREFIX)).collect(Collectors.toList());
         String sourceCode;
         if (CollUtil.isNotEmpty(sourceCodeList) && sourceCodeList.size() > 1) {
             sourceCode = sourceCodeList.get(1).trim();

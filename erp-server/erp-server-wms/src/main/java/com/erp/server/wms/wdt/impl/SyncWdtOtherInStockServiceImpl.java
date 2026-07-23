@@ -20,6 +20,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMappingMapper;
 import com.erp.server.wms.service.impl.AbstractWdtService;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.sdk.wangdian.sdk.api.wms.WdtOtherStockRemarkConstants;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -80,6 +81,7 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         }
 
         request.setWarehouseNo(thirdWarehouseCode);
+        request.setSysWarehouseId(sysWarehouseId);
         request.setIsCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(outerCode);
@@ -87,7 +89,8 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         request.setCreateTime(LocalDateTime.now());
-        request.setRemark("原始单据号：" + sourceCode);
+        request.setRemark(WdtOtherStockRemarkConstants.buildSourceCodeRemark(sourceCode));
+        request.setSourceCode(sourceCode);
 
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
