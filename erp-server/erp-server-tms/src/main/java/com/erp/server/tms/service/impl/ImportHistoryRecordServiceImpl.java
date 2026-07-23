@@ -587,7 +587,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     /**
      * 按识别字段分批预查物流单，合并去重，避免单字段 IN 值达数十万导致 SQL 超长。
-     * <p>识别字段必须在白名单内，否则直接失败，避免静默跳过导致整批「未找到物流单」。</p>
+     * <p>多识别字段归一后放入同一次 {@code listLogisticsBillByUniqueKey}（SQL 内 UNION ALL），
+     * 预查为 OR 候选集；多唯一键 AND 匹配仍由上层 resolve 完成。</p>
      */
     private List<LogisticsBillDTO.LogisticsBillVo> batchListLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap) {
         if (CollUtil.isEmpty(paramMap)) {
@@ -602,30 +603,70 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             throw new ServiceException("物流单预查不支持的识别字段: " + String.join(",", unsupportedFields)
                     + "，请使用: " + String.join(",", SUPPORTED_LOGISTICS_BILL_IDENTIFY_FIELDS));
         }
+        Map<String, List<Object>> normalizedParamMap = normalizeLogisticsBillIdentifyParamMap(paramMap);
+        if (CollUtil.isEmpty(normalizedParamMap)) {
+            return Collections.emptyList();
+        }
+        int maxValueCount = normalizedParamMap.values().stream().mapToInt(List::size).max().orElse(0);
         Map<String, LogisticsBillDTO.LogisticsBillVo> dedupeMap = new LinkedHashMap<>();
+        for (int offset = 0; offset < maxValueCount; offset += PRE_QUERY_BATCH_SIZE) {
+            Map<String, List<Object>> batchParam = new HashMap<>();
+            for (Map.Entry<String, List<Object>> entry : normalizedParamMap.entrySet()) {
+                List<Object> values = entry.getValue();
+                if (CollUtil.isEmpty(values) || offset >= values.size()) {
+                    continue;
+                }
+                batchParam.put(entry.getKey(),
+                        values.subList(offset, Math.min(values.size(), offset + PRE_QUERY_BATCH_SIZE)));
+            }
+            if (CollUtil.isEmpty(batchParam)) {
+                continue;
+            }
+            List<LogisticsBillDTO.LogisticsBillVo> batchResult =
+                    logisticsBillService.listLogisticsBillByUniqueKey(batchParam);
+            if (CollUtil.isEmpty(batchResult)) {
+                continue;
+            }
+            for (LogisticsBillDTO.LogisticsBillVo vo : batchResult) {
+                String key = CharSequenceUtil.blankToDefault(vo.getId(), "")
+                        + "_" + CharSequenceUtil.blankToDefault(vo.getDetailId(), "");
+                dedupeMap.putIfAbsent(key, vo);
+            }
+        }
+        return new ArrayList<>(dedupeMap.values());
+    }
+
+    /**
+     * 将识别字段别名归一到 SQL 分支使用的 key，并合并同物理列的值列表。
+     */
+    private Map<String, List<Object>> normalizeLogisticsBillIdentifyParamMap(Map<String, List<Object>> paramMap) {
+        Map<String, LinkedHashSet<Object>> merged = new LinkedHashMap<>();
         for (Map.Entry<String, List<Object>> entry : paramMap.entrySet()) {
             String field = entry.getKey();
             List<Object> values = entry.getValue();
             if (CharSequenceUtil.isBlank(field) || CollUtil.isEmpty(values)) {
                 continue;
             }
-            for (int i = 0; i < values.size(); i += PRE_QUERY_BATCH_SIZE) {
-                List<Object> batch = values.subList(i, Math.min(values.size(), i + PRE_QUERY_BATCH_SIZE));
-                Map<String, List<Object>> batchParam = new HashMap<>();
-                batchParam.put(field, batch);
-                List<LogisticsBillDTO.LogisticsBillVo> batchResult =
-                        logisticsBillService.listLogisticsBillByUniqueKey(batchParam);
-                if (CollUtil.isEmpty(batchResult)) {
-                    continue;
-                }
-                for (LogisticsBillDTO.LogisticsBillVo vo : batchResult) {
-                    String key = CharSequenceUtil.blankToDefault(vo.getId(), "")
-                            + "_" + CharSequenceUtil.blankToDefault(vo.getDetailId(), "");
-                    dedupeMap.putIfAbsent(key, vo);
+            String normalizedField = field;
+            if (LogisticsCostImportTargetFieldConstant.SO_CODE.equals(field)) {
+                normalizedField = LogisticsCostImportTargetFieldConstant.SOURCE_CODE;
+            } else if (LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO.equals(field)) {
+                normalizedField = LogisticsCostImportTargetFieldConstant.PLATFORM_CODE;
+            }
+            LinkedHashSet<Object> bucket = merged.computeIfAbsent(normalizedField, key -> new LinkedHashSet<>());
+            for (Object value : values) {
+                if (value != null && CharSequenceUtil.isNotBlank(String.valueOf(value))) {
+                    bucket.add(value);
                 }
             }
         }
-        return new ArrayList<>(dedupeMap.values());
+        Map<String, List<Object>> normalized = new LinkedHashMap<>();
+        for (Map.Entry<String, LinkedHashSet<Object>> entry : merged.entrySet()) {
+            if (CollUtil.isNotEmpty(entry.getValue())) {
+                normalized.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+        }
+        return normalized;
     }
 
     /**
