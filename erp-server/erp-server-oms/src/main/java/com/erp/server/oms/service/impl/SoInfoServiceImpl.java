@@ -2659,6 +2659,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
                 effectiveNoticeQty = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             }
+            // view不会为空，perBoxQty也不会为空，不存在空指针问题
             effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
             view.setEffectiveNoticeQty(effectiveNoticeQty);
             // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
