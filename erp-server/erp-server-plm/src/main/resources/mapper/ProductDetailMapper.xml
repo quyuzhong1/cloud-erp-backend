@@ -1173,7 +1173,7 @@
     </update>
 
     <!--PDA:条件查询sku-->
-    <select id="pdaSearchSku" resultType="com.erp.model.plm.vo.SkuVO">
+    <select id="pdaSearchSku" resultType="com.erp.model.plm.vo.PdaSearchSkuVO">
         SELECT
         pd.id AS skuId,
         pi.id AS productId,
@@ -1188,6 +1188,7 @@
         pl.declare_model as declareModel,
         ppu.main_supplier,
         ppu.second_supplier,
+        ppu.ean,
         pd.unit_name
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1222,7 +1223,7 @@
     </select>
 
     <!-- PDA扫码：sku_no / ean 分路 UNION，各自可走索引 -->
-    <select id="pdaSearchSkuByScanCode" resultType="com.erp.model.plm.vo.SkuVO">
+    <select id="pdaSearchSkuByScanCode" resultType="com.erp.model.plm.vo.PdaSearchSkuVO">
         SELECT
         pd.id AS skuId,
         pi.id AS productId,
@@ -1237,6 +1238,7 @@
         pl.declare_model as declareModel,
         ppu.main_supplier,
         ppu.second_supplier,
+        ppu.ean,
         pd.unit_name
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1263,6 +1265,7 @@
         pl.declare_model as declareModel,
         ppu.main_supplier,
         ppu.second_supplier,
+        ppu.ean,
         pd.unit_name
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1275,7 +1278,7 @@
         </if>
     </select>
 
-    <select id="pdaSearchSkuBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
+    <select id="pdaSearchSkuBySkuIds" resultType="com.erp.model.plm.vo.PdaSearchSkuVO">
         SELECT
         pd.id AS skuId,
         pi.id AS productId,
@@ -1290,6 +1293,7 @@
         pl.declare_model as declareModel,
         ppu.main_supplier,
         ppu.second_supplier,
+        ppu.ean,
         pd.unit_name
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE

@@ -28,6 +28,7 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.plm.service.ProductBrandService;
 import com.erp.server.plm.service.ProductRDTTeamService;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.vo.PdaSearchSkuVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
@@ -1367,11 +1368,11 @@ public class ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/8/21 12:11
      * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.vo.SkuVO>>
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.vo.PdaSearchSkuVO>>
      **/
     @PostMapping("/search/pdaSearchSku")
-    public ApiResult<List<SkuVO>> pdaSearchSku(@RequestBody ProductDetailDTO.PdaSearchDTO dto) {
-        List<SkuVO> skuList = productDetailService.pdaSearchSku(dto);
+    public ApiResult<List<PdaSearchSkuVO>> pdaSearchSku(@RequestBody ProductDetailDTO.PdaSearchDTO dto) {
+        List<PdaSearchSkuVO> skuList = productDetailService.pdaSearchSku(dto);
         return success(skuList);
     }
 

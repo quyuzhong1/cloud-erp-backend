@@ -16,6 +16,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.model.plm.vo.PdaSearchSkuVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -552,9 +553,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2023/8/21 12:11
      * @param dto
-     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @return java.util.List<com.erp.model.plm.vo.PdaSearchSkuVO>
      **/
-    List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
+    List<PdaSearchSkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
 
     /**
      * 根据创建时间获取到对应实体

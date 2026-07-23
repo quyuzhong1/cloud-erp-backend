@@ -54,6 +54,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.enums.ImportTypeEnum;
 import com.erp.model.plm.enums.ProductTypeEnum;
+import com.erp.model.plm.vo.PdaSearchSkuVO;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -5049,35 +5050,38 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
     @Override
-    public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
+    public List<PdaSearchSkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
         Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         dto.setStatus(state);
-        LinkedHashMap<String, SkuVO> skuMap = new LinkedHashMap<>();
+        LinkedHashMap<String, PdaSearchSkuVO> skuMap = new LinkedHashMap<>();
+        String scanCode = null;
+        List<SkuMappingDTO.MappingSkuViewDTO> scanMappings = Collections.emptyList();
         if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
-            List<SkuVO> keywordResults = baseMapper.pdaSearchSku(dto);
+            List<PdaSearchSkuVO> keywordResults = baseMapper.pdaSearchSku(dto);
             if (CollectionUtils.isNotEmpty(keywordResults)) {
                 keywordResults.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
             }
         } else if (StringUtils.isNotBlank(dto.getSkuNo())) {
-            String scanCode = CharSequenceUtil.trim(dto.getSkuNo());
+            scanCode = CharSequenceUtil.trim(dto.getSkuNo());
             dto.setSkuNo(scanCode);
             // SKU编码 + EAN码（UNION 分路查询，避免 OR 全表扫描）
-            List<SkuVO> plmResults = baseMapper.pdaSearchSkuByScanCode(scanCode, state);
+            List<PdaSearchSkuVO> plmResults = baseMapper.pdaSearchSkuByScanCode(scanCode, state);
             if (CollectionUtils.isNotEmpty(plmResults)) {
                 plmResults.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
             }
-            // 客户SKU / 三方条码（轻量 Feign，仅取未在 PLM 命中的 skuId）
-            List<String> mappingSkuIds = skuMappingFeign.listSkuIdsByScanCode(scanCode);
+            // 客户SKU / 三方条码 / 内部SKU对照（一次 Feign，补查 skuId 并供后续回填 platformSkuNo）
+            scanMappings = skuMappingFeign.listByScanCode(scanCode);
             int omsPendingSkuIdCount = 0;
-            if (CollectionUtils.isNotEmpty(mappingSkuIds)) {
-                List<String> pendingSkuIds = mappingSkuIds.stream()
+            if (CollectionUtils.isNotEmpty(scanMappings)) {
+                List<String> pendingSkuIds = scanMappings.stream()
+                        .map(SkuMappingDTO.MappingSkuViewDTO::getProductSkuId)
                         .filter(StringUtils::isNotBlank)
                         .filter(skuId -> !skuMap.containsKey(skuId))
                         .distinct()
                         .collect(Collectors.toList());
                 omsPendingSkuIdCount = pendingSkuIds.size();
                 if (CollectionUtils.isNotEmpty(pendingSkuIds)) {
-                    List<SkuVO> mappingSkus = baseMapper.pdaSearchSkuBySkuIds(pendingSkuIds, state);
+                    List<PdaSearchSkuVO> mappingSkus = baseMapper.pdaSearchSkuBySkuIds(pendingSkuIds, state);
                     if (CollectionUtils.isNotEmpty(mappingSkus)) {
                         mappingSkus.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
                     }
@@ -5086,20 +5090,47 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             log.warn("PDA扫码查询完成，扫描码={}，PLM匹配数={}，OMS待补查skuId数={}，总匹配数={}",
                     scanCode, plmResults == null ? 0 : plmResults.size(), omsPendingSkuIdCount, skuMap.size());
         } else {
-            List<SkuVO> skuResults = baseMapper.pdaSearchSku(dto);
+            List<PdaSearchSkuVO> skuResults = baseMapper.pdaSearchSku(dto);
             if (CollectionUtils.isNotEmpty(skuResults)) {
                 skuResults.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
             }
         }
-        List<SkuVO> skuVOS = new ArrayList<>(skuMap.values());
-        fillPdaSearchSkuSupplierName(skuVOS);
-        if (CollectionUtils.isEmpty(skuVOS)) {
+        List<PdaSearchSkuVO> skuList = new ArrayList<>(skuMap.values());
+        fillPdaSearchSkuSupplierName(skuList);
+        if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
-        return skuVOS;
+        if (StringUtils.isNotBlank(scanCode)) {
+            fillPdaSearchPlatformSkuNo(skuList, scanCode, scanMappings);
+        }
+        return skuList;
     }
 
-    private void fillPdaSearchSkuSupplierName(List<SkuVO> skuVOS) {
+    /**
+     * 扫码场景：按 sku 对照表回填客户 SKU，不展开多行（同一内部 SKU 仍只返回一行）。
+     */
+    private void fillPdaSearchPlatformSkuNo(List<PdaSearchSkuVO> skuList, String scanCode,
+                                            List<SkuMappingDTO.MappingSkuViewDTO> mappings) {
+        if (CollectionUtils.isEmpty(mappings)) {
+            return;
+        }
+        Map<String, List<SkuMappingDTO.MappingSkuViewDTO>> mappingGroup = mappings.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getProductSkuId()))
+                .collect(Collectors.groupingBy(SkuMappingDTO.MappingSkuViewDTO::getProductSkuId));
+        for (PdaSearchSkuVO sku : skuList) {
+            List<SkuMappingDTO.MappingSkuViewDTO> skuMappings = mappingGroup.get(sku.getSkuId());
+            if (CollectionUtils.isEmpty(skuMappings)) {
+                continue;
+            }
+            SkuMappingDTO.MappingSkuViewDTO matched = skuMappings.stream()
+                    .filter(item -> scanCode.equals(item.getPlatformSkuNo()))
+                    .findFirst()
+                    .orElse(skuMappings.get(0));
+            sku.setPlatformSkuNo(matched.getPlatformSkuNo());
+        }
+    }
+
+    private void fillPdaSearchSkuSupplierName(List<? extends SkuVO> skuVOS) {
         if (CollectionUtils.isEmpty(skuVOS)) {
             return;
         }
