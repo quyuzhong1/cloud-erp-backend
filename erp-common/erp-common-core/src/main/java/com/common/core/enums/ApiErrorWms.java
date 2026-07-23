@@ -428,7 +428,7 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_DETAIL_MODIFIED = new ApiError("SO_RETURN_PRESTOCK_DETAIL_MODIFIED", 10782, "预入库单详情行数据已被修改，请刷新后重试");
     public static final ApiError SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK = new ApiError("SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK", 10783, "预入库单未设置收货仓库，无法生成退货入库单");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS", 10784, "本次关联涉及售后单数量过多（{0}个），单次事务内生成退货入库单数量超限，请分批关联");
-    public static final ApiError SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED = new ApiError("SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED", 10785, "存在不存在或已删除的预入库单，请刷新后重试");
+    public static final ApiError SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED = new ApiError("SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED", 10785, "预入库单不存在或已删除，请刷新后重试");
     public static final ApiError SO_RETURN_PRESTOCK_BILL_TYPE_MIXED_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_BILL_TYPE_MIXED_FORBIDDEN", 10786, "所选预入库单不能同时包含B2B和B2C类型，请分别关联");
     public static final ApiError SO_RETURN_PRESTOCK_WAREHOUSING_DEPT_NOT_FOUND = new ApiError("SO_RETURN_PRESTOCK_WAREHOUSING_DEPT_NOT_FOUND", 10787, "获取不到仓储部门信息");
     public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED", 10788, "退货入库单生成失败，无法审核");
