@@ -89,12 +89,16 @@ public class WegoSkuSyncDTO implements Serializable {
     @NoArgsConstructor
     public static class ReconcileResultDTO {
         /**
-         * 本次新增到未匹配对照表的记录数
+         * 本次新增到未匹配对照表的记录数（仅源端启用态会新增；新增占位映射默认禁用）
          */
         private int addedCount;
         /**
          * 已映射但源端状态非启用（如爱亚 Inactive），被置为禁用的映射关系数
          */
         private int disabledCount;
+        /**
+         * 源端停用且未映射，被软删的 listing（及关联占位映射）数量
+         */
+        private int deletedCount;
     }
 }

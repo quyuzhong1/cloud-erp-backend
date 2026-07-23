@@ -78,13 +78,11 @@ public interface OmsListingInfoFeign {
     boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId);
 
     /**
-     * 同步三方仓SKU到未匹配对照表，并对本次传入 SKU 中源端状态非启用的已映射记录置为禁用。
-     * 判断仅依赖本次传入 SKU 各自的状态，不要求携带完整快照，可按任意批次调用；
-     * 未回传状态的调用方（如WEGO）不会触发禁用分支。
-     * 禁用后不会自动恢复启用，需人工在SKU对照表页面处理。
+     * 同步三方仓SKU到对照表：新增未匹配占位（默认禁用）、源端停用已映射置禁用、源端停用未映射软删。
+     * 判断仅依赖本次传入 SKU 各自的状态，可按任意批次调用；未回传状态的调用方（如WEGO）不会触发禁用/删除分支。
      *
      * @param dto 三方仓 SKU 同步参数（服务商、平台、本次批次的 SKU 及其可选的源端状态）
-     * @return 本次处理统计结果（新增/禁用数量）
+     * @return 本次处理统计结果（新增/禁用/删除数量）
      */
     @PostMapping("feign/listing/syncWarehouseNotMatchSku")
     WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto);
