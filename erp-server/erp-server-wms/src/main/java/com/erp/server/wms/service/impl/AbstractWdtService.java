@@ -29,6 +29,8 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.entity.WarehouseLocationMappingEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WdtWarehouseLocationMappingEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
@@ -36,6 +38,8 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.WarehouseLocationMappingService;
+import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.WdtWarehouseLocationMappingService;
 import com.erp.server.wms.service.WmsPushMsgService;
 import com.sdk.wangdian.sdk.api.wms.WdtOtherStockRemarkConstants;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
@@ -76,6 +80,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private WmsPushMsgService wmsPushMsgService;
+    @Resource
+    private WarehouseService warehouseService;
 
     protected List<T> handleGoodsList(List<T> goodsList) {
         if(CollectionUtils.isEmpty(goodsList)){
@@ -125,10 +131,12 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             return;
         }
         Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+        Map<String, String> warehouseNameMap = buildWarehouseNameMap(groupByWarehouse.keySet());
         //按仓库维度构建单据
         for (Map.Entry<String, List<T>> entry : groupByWarehouse.entrySet()) {
             String warehouseId = entry.getKey();
             List<T> goodsLists = entry.getValue();
+            String sysWarehouseName = warehouseNameMap.get(warehouseId);
             String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
             if(StringUtils.isEmpty(thirdWarehouseCode)){
                 log.error("没有找到第三方仓库映射, 取消推送: {}", warehouseId);
@@ -146,7 +154,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
                 List<T> combinationList = combinationSku(pair.getKey());
                 String codeWithPush = docNoGenHelper.generateCode(businessNoTypeEnum);
                 String idWithPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationList, codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
-                List<DmpPushTaskEntity> pushTaskList = generateTask(combinationList, operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum, warehouseId);
+                List<DmpPushTaskEntity> pushTaskList = generateTask(combinationList, operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum, warehouseId, sysWarehouseName);
                 if(CollectionUtils.isNotEmpty(pushTaskList)){
                     dmpMqFeign.delayLevel3SendTask(pushTaskList);
                 }
@@ -156,7 +164,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
                 List<T> combinationListWithNoPush = combinationSku(pair.getValue());
                 String codeWithNoPush = docNoGenHelper.generateCode(businessNoTypeEnum);
                 String idWithNoPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationListWithNoPush, codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
-                generateTask(combinationListWithNoPush, operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum, warehouseId);
+                generateTask(combinationListWithNoPush, operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum, warehouseId, sysWarehouseName);
             }
         }
     }
@@ -196,12 +204,14 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
 
         String warehouseId = viewDTO.getWarehouseId();
         String sourceCode = viewDTO.getSourceCode();
+        Map<String, String> warehouseNameMap = buildWarehouseNameMap(Collections.singleton(warehouseId));
+        String sysWarehouseName = warehouseNameMap.get(warehouseId);
         Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
         dmpTaskFeign.deletePushTaskBySourceId(midTableId);
         if(! pair.getKey().isEmpty()){
             String codeWithPush = viewDTO.getThirdCode();
             String idWithPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getKey(), codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
-            List<DmpPushTaskEntity> pushTaskList = generateTask(pair.getKey(), operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum, warehouseId);
+            List<DmpPushTaskEntity> pushTaskList = generateTask(pair.getKey(), operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum, warehouseId, sysWarehouseName);
             if(CollectionUtils.isNotEmpty(pushTaskList)){
                 dmpMqFeign.sendTask(pushTaskList);
             }
@@ -210,7 +220,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         if(! pair.getValue().isEmpty()){
             String codeWithNoPush = docNoGenHelper.generateCode(businessNoTypeEnum);
             String idWithNoPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getValue(), codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "0");
-            generateTask(pair.getValue(), operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum, warehouseId);
+            generateTask(pair.getValue(), operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum, warehouseId, sysWarehouseName);
         }
     }
 
@@ -297,24 +307,40 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         return combinationList;
     }
 
-    private List<DmpPushTaskEntity> generateTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum, SourceTypeEnum sourceTypeEnum, String sysWarehouseId) {
+    private Map<String, String> buildWarehouseNameMap(Collection<String> warehouseIds) {
+        if (CollectionUtils.isEmpty(warehouseIds)) {
+            return Collections.emptyMap();
+        }
+        try {
+            return warehouseService.listWarehouseByIds(new ArrayList<>(warehouseIds)).stream()
+                    .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                    .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId,
+                            item -> CharSequenceUtil.nullToEmpty(item.getName()), (left, right) -> left));
+        } catch (Exception e) {
+            log.warn("查询仓库名称失败，告警将使用仓库ID兜底: warehouseIds={}", warehouseIds, e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private List<DmpPushTaskEntity> generateTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum, SourceTypeEnum sourceTypeEnum, String sysWarehouseId, String sysWarehouseName) {
         List<DmpPushTaskEntity> list = new ArrayList<>();
         if(sourceTypeEnum.compareTo(SourceTypeEnum.OTHER_INSTOCK) == 0){
-            List<DmpPushTaskEntity> dmpPushTaskEntityList = generateStockInTask(combinationList, operateEnum, outerCode, thirdWarehouseCode, sourceCode, sourceId, syncStatusEnum, sysWarehouseId);
+            List<DmpPushTaskEntity> dmpPushTaskEntityList = generateStockInTask(combinationList, operateEnum, outerCode, thirdWarehouseCode, sourceCode, sourceId, syncStatusEnum, sysWarehouseId, sysWarehouseName);
             list.addAll(dmpPushTaskEntityList);
         }
         if(sourceTypeEnum.compareTo(SourceTypeEnum.OTHER_OUTSTOCK) == 0){
-            List<DmpPushTaskEntity> dmpPushTaskEntityList = generateStockOutTask(combinationList, operateEnum, outerCode, thirdWarehouseCode, sourceCode, sourceId, syncStatusEnum, sysWarehouseId);
+            List<DmpPushTaskEntity> dmpPushTaskEntityList = generateStockOutTask(combinationList, operateEnum, outerCode, thirdWarehouseCode, sourceCode, sourceId, syncStatusEnum, sysWarehouseId, sysWarehouseName);
             list.addAll(dmpPushTaskEntityList);
         }
         return list;
     }
 
-    private List<DmpPushTaskEntity> generateStockOutTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum, String sysWarehouseId) {
+    private List<DmpPushTaskEntity> generateStockOutTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum, String sysWarehouseId, String sysWarehouseName) {
         CreateOtherStockoutRequest request = new CreateOtherStockoutRequest();
         request.setOuterNo(outerCode);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setSysWarehouseId(sysWarehouseId);
+        request.setSysWarehouseName(sysWarehouseName);
         request.setIsCheck(Boolean.TRUE);
         if (combinationList.get(0) instanceof CreateOtherStockoutRequest.GoodsList){
             List<CreateOtherStockoutRequest.GoodsList> coodsList = (List<CreateOtherStockoutRequest.GoodsList>) combinationList;
@@ -378,11 +404,12 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
 
     }
 
-    private List<DmpPushTaskEntity> generateStockInTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum, String sysWarehouseId) {
+    private List<DmpPushTaskEntity> generateStockInTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum, String sysWarehouseId, String sysWarehouseName) {
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
         request.setOuterNo(outerCode);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setSysWarehouseId(sysWarehouseId);
+        request.setSysWarehouseName(sysWarehouseName);
         request.setIsCheck(Boolean.TRUE);
         if (combinationList.get(0) instanceof CreateOtherStockinRequest.GoodsList){
             List<CreateOtherStockinRequest.GoodsList> coodsList = (List<CreateOtherStockinRequest.GoodsList>) combinationList;

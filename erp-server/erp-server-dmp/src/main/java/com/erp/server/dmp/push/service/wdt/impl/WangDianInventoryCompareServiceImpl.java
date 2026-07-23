@@ -176,6 +176,7 @@ public class WangDianInventoryCompareServiceImpl implements WangDianInventoryCom
                         createOtherStockinRequest.setWarehouseNo(queryMapDTO.getThirdCode());
                         createOtherStockinRequest.setTargetPlatformName(PlatformEnum.WANGDIAN.getName());
                         createOtherStockinRequest.setSysWarehouseId(queryMapDTO.getSysId());
+                        createOtherStockinRequest.setSysWarehouseName(queryMapDTO.getSysName());
                         createOtherStockinRequest.setSourcePlatformName(PlatformEnum.ERP_DMP.getName());
                         createOtherStockinRequest.setSourceId(pushDTOS.getId());
                         createOtherStockinRequest.setOuterNo(pushDTOS.getCode());
@@ -206,6 +207,7 @@ public class WangDianInventoryCompareServiceImpl implements WangDianInventoryCom
                         createOtherStockoutRequest.setWarehouseNo(queryMapDTO.getThirdCode());
                         createOtherStockoutRequest.setTargetPlatformName(PlatformEnum.WANGDIAN.getName());
                         createOtherStockoutRequest.setSysWarehouseId(queryMapDTO.getSysId());
+                        createOtherStockoutRequest.setSysWarehouseName(queryMapDTO.getSysName());
                         createOtherStockoutRequest.setSourcePlatformName(PlatformEnum.ERP_DMP.getName());
                         createOtherStockoutRequest.setSourceId(pushDTOS.getId());
                         createOtherStockoutRequest.setOuterNo(pushDTOS.getCode());

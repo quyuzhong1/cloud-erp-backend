@@ -13,8 +13,6 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.dmp.push.service.wdt.dto.OtherStockWarnContext;
 import com.erp.server.dmp.push.service.wdt.dto.ResolvedWarnFields;
 import com.erp.server.dmp.service.DictBasicService;
@@ -60,8 +58,6 @@ public class WdtWarnMsgHelper {
     private DmpPushTaskService dmpPushTaskService;
     @Resource
     private DmpPushWdtService dmpPushWdtService;
-    @Resource
-    private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
     private WdtErrorMsgTranslator wdtErrorMsgTranslator;
 
@@ -164,64 +160,49 @@ public class WdtWarnMsgHelper {
         ResolvedWarnFields fields = new ResolvedWarnFields();
         fields.setTableId(resolveTableId(context.getDmpSyncTaskId(), context.getSourceId()));
         fields.setOuterNo(CharSequenceUtil.nullToEmpty(context.getOuterNo()));
-        PushTaskSnapshot pushTaskSnapshot = loadPushTaskSnapshot(context.getDmpSyncTaskId());
+        PushTaskSnapshot pushTaskSnapshot = needPushTaskSnapshot(context)
+                ? loadPushTaskSnapshot(context.getDmpSyncTaskId())
+                : null;
         fields.setErpSourceCode(resolveErpSourceCode(context, pushTaskSnapshot));
         ApiModuleTypeEnum apiModuleType = context.getApiModuleType();
         String docTypeName = apiModuleType != null ? apiModuleType.getDesc() : DEFAULT_DOC_TYPE_NAME;
         fields.setDocTypeName(docTypeName);
         fields.setBizName(CharSequenceUtil.format("{}同步通知", docTypeName));
-
-        String sysWarehouseId = resolveSysWarehouseId(context, pushTaskSnapshot);
-        if (CharSequenceUtil.isNotBlank(sysWarehouseId)) {
-            fields.setErpWarehouseName(resolveErpWarehouseName(sysWarehouseId));
-            fields.setWdtWarehouseNo(resolveWdtWarehouseCode(sysWarehouseId, context.getWdtWarehouseNo()));
-        } else {
-            fields.setWdtWarehouseNo(CharSequenceUtil.nullToEmpty(context.getWdtWarehouseNo()));
-        }
+        String sysWarehouseId = resolveSysWarehouseIdFromContextOrSnapshot(context, pushTaskSnapshot);
+        fields.setWdtWarehouseNo(resolveWdtWarehouseNoForWarn(context, sysWarehouseId));
+        fields.setErpWarehouseName(resolveErpWarehouseNameForWarn(context, sysWarehouseId));
         return fields;
     }
 
-    private String resolveErpWarehouseName(String sysWarehouseId) {
-        try {
-            List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(sysWarehouseId));
-            if (CollUtil.isNotEmpty(warehouseList) && CharSequenceUtil.isNotBlank(warehouseList.get(0).getName())) {
-                return warehouseList.get(0).getName();
-            }
-        } catch (Exception e) {
-            log.warn("查询ERP仓库名称失败，使用仓库ID兜底: sysWarehouseId={}", sysWarehouseId, e);
+    /**
+     * 推送请求已携带 sourceCode、sysWarehouseId 时无需再查推送任务表。
+     */
+    private boolean needPushTaskSnapshot(OtherStockWarnContext context) {
+        if (CharSequenceUtil.isBlank(context.getDmpSyncTaskId())) {
+            return false;
         }
-        return sysWarehouseId;
+        return CharSequenceUtil.isBlank(context.getSourceCode())
+                || CharSequenceUtil.isBlank(context.getSysWarehouseId());
     }
 
-    private String resolveWdtWarehouseCode(String sysWarehouseId, String fallbackWdtWarehouseNo) {
-        try {
-            List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = thirdMappingService.listMappingBySysIds(
-                    Collections.singletonList(sysWarehouseId), ThirdSysTypeEnum.WDT.getCode());
-            if (CollUtil.isNotEmpty(mappingList) && CharSequenceUtil.isNotBlank(mappingList.get(0).getThirdWarehouseCode())) {
-                return mappingList.get(0).getThirdWarehouseCode();
-            }
-        } catch (Exception e) {
-            log.warn("从中台配置查询旺店通仓库编码失败，使用请求值兜底: sysWarehouseId={}", sysWarehouseId, e);
+    private String resolveWdtWarehouseNoForWarn(OtherStockWarnContext context, String sysWarehouseId) {
+        if (CharSequenceUtil.isNotBlank(context.getWdtWarehouseNo())) {
+            return context.getWdtWarehouseNo();
         }
-        return CharSequenceUtil.nullToEmpty(fallbackWdtWarehouseNo);
+        if (CharSequenceUtil.isBlank(sysWarehouseId)) {
+            return "";
+        }
+        return resolveWdtWarehouseCodeFromMapping(sysWarehouseId);
     }
 
-    private String resolveErpSourceCode(OtherStockWarnContext context, PushTaskSnapshot pushTaskSnapshot) {
-        if (CharSequenceUtil.isNotBlank(context.getSourceCode())) {
-            return context.getSourceCode();
+    private String resolveErpWarehouseNameForWarn(OtherStockWarnContext context, String sysWarehouseId) {
+        if (CharSequenceUtil.isNotBlank(context.getErpWarehouseName())) {
+            return context.getErpWarehouseName();
         }
-        if (pushTaskSnapshot != null) {
-            if (pushTaskSnapshot.pushTask != null && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushTask.getSourceCode())) {
-                return pushTaskSnapshot.pushTask.getSourceCode();
-            }
-            if (pushTaskSnapshot.pushWdtEntity != null && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushWdtEntity.getSourceCode())) {
-                return pushTaskSnapshot.pushWdtEntity.getSourceCode();
-            }
-        }
-        return "";
+        return CharSequenceUtil.nullToEmpty(sysWarehouseId);
     }
 
-    private String resolveSysWarehouseId(OtherStockWarnContext context, PushTaskSnapshot pushTaskSnapshot) {
+    private String resolveSysWarehouseIdFromContextOrSnapshot(OtherStockWarnContext context, PushTaskSnapshot pushTaskSnapshot) {
         if (CharSequenceUtil.isNotBlank(context.getSysWarehouseId())) {
             return context.getSysWarehouseId();
         }
@@ -241,6 +222,34 @@ public class WdtWarnMsgHelper {
             }
         }
         return null;
+    }
+
+    private String resolveWdtWarehouseCodeFromMapping(String sysWarehouseId) {
+        try {
+            List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = thirdMappingService.listMappingBySysIds(
+                    Collections.singletonList(sysWarehouseId), ThirdSysTypeEnum.WDT.getCode());
+            if (CollUtil.isNotEmpty(mappingList) && CharSequenceUtil.isNotBlank(mappingList.get(0).getThirdWarehouseCode())) {
+                return mappingList.get(0).getThirdWarehouseCode();
+            }
+        } catch (Exception e) {
+            log.warn("从中台配置查询旺店通仓库编码失败: sysWarehouseId={}", sysWarehouseId, e);
+        }
+        return "";
+    }
+
+    private String resolveErpSourceCode(OtherStockWarnContext context, PushTaskSnapshot pushTaskSnapshot) {
+        if (CharSequenceUtil.isNotBlank(context.getSourceCode())) {
+            return context.getSourceCode();
+        }
+        if (pushTaskSnapshot != null) {
+            if (pushTaskSnapshot.pushTask != null && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushTask.getSourceCode())) {
+                return pushTaskSnapshot.pushTask.getSourceCode();
+            }
+            if (pushTaskSnapshot.pushWdtEntity != null && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushWdtEntity.getSourceCode())) {
+                return pushTaskSnapshot.pushWdtEntity.getSourceCode();
+            }
+        }
+        return "";
     }
 
     private PushTaskSnapshot loadPushTaskSnapshot(String dmpSyncTaskId) {
