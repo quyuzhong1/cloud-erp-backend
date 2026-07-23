@@ -50,6 +50,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -1726,11 +1728,9 @@ public class SoReturnPrestockServiceImpl
      * （见调用方 {@code buildPrestockDetailList}），若把空skuId传入其他入库单，会一路带到库存核心服务
      * （{@code OtherInstockServiceImpl#updateInventoryTransCore}）导致报错回滚整单，或落下无法追溯的空SKU库存记录。
      * 未解析行只落预入库单明细，等运营人工核实SKU后再走关联流程；全部行都未解析到SKU时整单不生成其它入库单。</p>
-     * <p>已知接受的遗留限制（Feign-in-transaction）：本方法在调用方本地事务持有期间仍含少量 Feign 调用——
-     * PLM 查询 SKU 信息、sys 查询仓储部门为只读调用，仅略拉长事务；{@code addAndApprove} 内部的
-     * {@code plmTaskFeign.updateOccupyStatus}（SKU 占用标记）是唯一的远程写，但其语义可重放
-     * （MQ 重试重复标记无新副作用），且挪到事务提交后执行会丢失「标记失败则整单回滚」的兜底，
-     * 故保留在事务内。金蝶推送为本地落推送任务表 + 异步任务推送，不属于事务内远程写。</p>
+     * <p>SKU 占用标记（{@code plmTaskFeign.updateOccupyStatus}）不在本地事务内执行，改为调用方事务
+     * {@code afterCommit} 后再标记：成功路径最终仍会对同一批 skuId 调用占用接口，业务结果与原先一致；
+     * 本地单据回滚时不会残留远程占用。占用接口本身幂等，提交后标记失败会打 error 日志便于补偿。</p>
      */
     private void generateOtherInstockForPrestock(String prestockId, SoReturnPrestockDTO.Add prestockAdd) {
         List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList().stream()
@@ -1789,8 +1789,15 @@ public class SoReturnPrestockServiceImpl
             detailEntityList.add(detailEntity);
         }
         otherInstockEntity.setDetailEntityList(detailEntityList);
+        List<String> occupySkuIds = detailEntityList.stream()
+                .map(OtherInstockDetailEntity::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         long start = System.currentTimeMillis();
-        otherInstockService.addAndApprove(otherInstockEntity, false);
+        // 事务内不标记占用；本地事务提交后再标记，成功终态与原先一致（预入库单 + 已审核其它入库单 + SKU 已占用）
+        otherInstockService.addAndApprove(otherInstockEntity, false, false);
+        scheduleOccupyStatusAfterCommit(occupySkuIds, prestockEntity.getCode());
         long cost = System.currentTimeMillis() - start;
         if (cost > LINK_LOOP_WARN_THRESHOLD_MS) {
             log.warn("[预入库单联动生成其它入库单]addAndApprove耗时过长：预入库单={}，明细行数={}，耗时={}ms",
@@ -1800,6 +1807,43 @@ public class SoReturnPrestockServiceImpl
             log.warn("[预入库单联动生成其它入库单]部分明细行未解析到内部SKU，未计入本次库存联动：预入库单={}，" +
                             "总行数={}，已联动行数={}",
                     prestockEntity.getCode(), prestockAdd.getDetailList().size(), addDetailList.size());
+        }
+    }
+
+    /**
+     * 在调用方本地事务提交成功后再标记 SKU 占用。
+     * <p>与原先在 {@code addAndApprove} 事务内调用 {@code updateOccupyStatus} 相比，成功路径最终仍标记同一批 SKU，
+     * 业务结果一致；本地事务回滚时不会执行占用，避免“单据未落库但 SKU 已占用”。占用接口幂等可重放。</p>
+     *
+     * @param skuIds       待占用的 SKU ID 列表
+     * @param prestockCode 预入库单号（仅用于日志）
+     */
+    private void scheduleOccupyStatusAfterCommit(List<String> skuIds, String prestockCode) {
+        if (CollUtil.isEmpty(skuIds)) {
+            return;
+        }
+        // 拷贝一份，避免 afterCommit 时调用方列表被后续逻辑改动
+        List<String> occupySkuIds = new ArrayList<>(skuIds);
+        Runnable occupyTask = () -> {
+            try {
+                plmTaskFeign.updateOccupyStatus(occupySkuIds);
+            } catch (Exception e) {
+                // 单据已提交，占用失败不影响已落库结果；占用幂等，可人工/重试补偿
+                log.error("[预入库单联动其它入库]事务提交后SKU占用标记失败：预入库单={}，skuIds={}",
+                        prestockCode, occupySkuIds, e);
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    occupyTask.run();
+                }
+            });
+        } else {
+            // 无活跃事务时直接执行，保证与原先“生成其它入库后立即占用”的最终效果一致
+            occupyTask.run();
         }
     }
 
