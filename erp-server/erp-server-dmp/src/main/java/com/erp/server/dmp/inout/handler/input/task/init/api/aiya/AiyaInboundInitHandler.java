@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.AsnTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -64,11 +65,6 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
      * 单页拉取条数（GLINK_BATCH_QUERY_ASN_NOTIFY 文档约束 pageSize 最大 200）。
      */
     private static final int DEFAULT_PAGE_SIZE = AiyaInboundQueryDTO.DEFAULT_PAGE_SIZE;
-
-    /**
-     * 入库单类型（SUPPLIER_RECEIPT）。
-     */
-    private static final String ASN_TYPE = "SUPPLIER_RECEIPT";
 
     /**
      * 爱亚时间参数格式（yyyy-MM-dd HH:mm:ss）。
@@ -161,7 +157,7 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
         req.setPageSize(DEFAULT_PAGE_SIZE);
         req.setReceiveTimeFrom(beginTime);
         req.setReceiveTimeTo(endTime);
-        req.setAsnType(ASN_TYPE);
+        req.setAsnType(AsnTypeEnum.SUPPLIER_RECEIPT.getCode());
         return req;
     }
 

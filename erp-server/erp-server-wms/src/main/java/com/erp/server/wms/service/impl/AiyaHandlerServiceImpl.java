@@ -8,15 +8,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.AsnTypeEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.AiyaInboundCancelDTO;
-import com.erp.model.wms.dto.AiyaInboundSaveDTO;
-import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
-import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
-import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -26,7 +23,6 @@ import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
 import com.sdk.wms.aiya.service.AiyaOpenApiService;
-import com.common.business.wrapper.FeignQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -69,11 +65,6 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      */
     private static final String AUTH_KEY_PARTNER_KEY = "partnerKey";
     private static final String AUTH_KEY_APP_SECRET = "appSecret";
-
-    /**
-     * 默认入库单类型：供应商入库。
-     */
-    private static final String DEFAULT_ASN_TYPE = "SUPPLIER_RECEIPT";
 
     /**
      * SKU 良品状态。
@@ -282,7 +273,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .warehouseNotes(createInboundReq.getRemark())
                 .trackingNumber(trackingNumber)
                 .containerNumber(createInboundReq.getContainerType())
-                .asnType(DEFAULT_ASN_TYPE)
+                .asnType(AsnTypeEnum.SUPPLIER_RECEIPT.getCode())
                 .expectedReceiptDate(createInboundReq.getEtaDate() == null ? null
                         : createInboundReq.getEtaDate().format(ETA_DATE_FORMATTER))
                 .itemLineQty(skuTypeCount)
