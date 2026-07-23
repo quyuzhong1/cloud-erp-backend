@@ -119,6 +119,19 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     private static final long RECON_MATCH_TIMING_SLOW_THRESHOLD_MS = 1000L;
 
+    /**
+     * 物流单预查支持的识别字段，与 {@code listLogisticsBillByUniqueKey} SQL 白名单及对账侧识别字段一致。
+     */
+    private static final Set<String> SUPPORTED_LOGISTICS_BILL_IDENTIFY_FIELDS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
+                    LogisticsCostImportTargetFieldConstant.PLATFORM_CODE,
+                    LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO,
+                    LogisticsCostImportTargetFieldConstant.TRACK_NO,
+                    LogisticsCostImportTargetFieldConstant.SOURCE_CODE,
+                    LogisticsCostImportTargetFieldConstant.SO_CODE,
+                    LogisticsCostImportTargetFieldConstant.TRANSPORT_NO,
+                    LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE)));
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -574,10 +587,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     /**
      * 按识别字段分批预查物流单，合并去重，避免单字段 IN 值达数十万导致 SQL 超长。
+     * <p>识别字段必须在白名单内，否则直接失败，避免静默跳过导致整批「未找到物流单」。</p>
      */
     private List<LogisticsBillDTO.LogisticsBillVo> batchListLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap) {
         if (CollUtil.isEmpty(paramMap)) {
             return Collections.emptyList();
+        }
+        List<String> unsupportedFields = paramMap.keySet().stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .filter(field -> !SUPPORTED_LOGISTICS_BILL_IDENTIFY_FIELDS.contains(field))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(unsupportedFields)) {
+            throw new ServiceException("物流单预查不支持的识别字段: " + String.join(",", unsupportedFields)
+                    + "，请使用: " + String.join(",", SUPPORTED_LOGISTICS_BILL_IDENTIFY_FIELDS));
         }
         Map<String, LogisticsBillDTO.LogisticsBillVo> dedupeMap = new LinkedHashMap<>();
         for (Map.Entry<String, List<Object>> entry : paramMap.entrySet()) {

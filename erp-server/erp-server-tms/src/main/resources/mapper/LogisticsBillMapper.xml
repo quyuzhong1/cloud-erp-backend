@@ -801,10 +801,9 @@
         </trim>
     </select>
 
-    <!-- 根据唯一键查询物流单详情 -->
+    <!-- 根据唯一键查询物流单详情：条件下推到 lb/lbd，字段白名单映射（禁止动态列名） -->
     <select id="listLogisticsBillByUniqueKey"
             resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
-        select * from (
         SELECT
         lb.id,
         lb.shop_id as shopId,
@@ -826,28 +825,57 @@
         lbd.track_status as trackStatus,
         lbd.track_no as trackNo
         FROM logistics_bill lb
-        left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-        WHERE lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale','other')
-        ) lb where 1 = 1
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = false
+        WHERE lb.is_deleted = false
+          AND lb.order_type IN ('B2B','B2C','AfterSale','other')
         <trim prefix="AND (" suffix=")" prefixOverrides="OR">
             <foreach collection="paramMap" item="valueList" index="field" separator=" ">
                 <if test="valueList != null and valueList.size() > 0">
                     <choose>
-                        <when test="'platformCode'.equals(field)">
-                            OR EXISTS (
-                                SELECT 1
-                                FROM unnest(regexp_split_to_array(COALESCE(${field}, ''), '[[:space:]]*,[[:space:]]*')) AS platform_code_item(code)
-                                WHERE trim(platform_code_item.code) IN
+                        <!-- 平台订单号：精确 IN（单值可走索引）+ 逗号拆分（与 Java split+trim 语义一致） -->
+                        <when test="'platformCode'.equals(field) or 'platformOrderNo'.equals(field)">
+                            OR (
+                                lb.platform_code IN
                                 <foreach collection="valueList" item="val" open="(" separator="," close=")">
                                     #{val}
                                 </foreach>
+                                OR EXISTS (
+                                    SELECT 1
+                                    FROM unnest(string_to_array(COALESCE(lb.platform_code, ''), ',')) AS platform_code_item(code)
+                                    WHERE btrim(platform_code_item.code) IN
+                                    <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                        #{val}
+                                    </foreach>
+                                )
                             )
                         </when>
-                        <otherwise>
-                            OR ${field} IN
+                        <when test="'trackNo'.equals(field)">
+                            OR lbd.track_no IN
                             <foreach collection="valueList" item="val" open="(" separator="," close=")">
                                 #{val}
                             </foreach>
+                        </when>
+                        <when test="'sourceCode'.equals(field) or 'soCode'.equals(field)">
+                            OR lb.source_code IN
+                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                #{val}
+                            </foreach>
+                        </when>
+                        <when test="'transportNo'.equals(field)">
+                            OR lb.transport_no IN
+                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                #{val}
+                            </foreach>
+                        </when>
+                        <when test="'soDeliveryCode'.equals(field)">
+                            OR lb.so_delivery_code IN
+                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                #{val}
+                            </foreach>
+                        </when>
+                        <!-- 未识别字段由调用方硬失败拦截；此处恒假避免误扫 -->
+                        <otherwise>
+                            OR 1 = 0
                         </otherwise>
                     </choose>
                 </if>
