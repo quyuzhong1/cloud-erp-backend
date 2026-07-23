@@ -1312,8 +1312,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
     @Override
     public List<AddressParseDTO.BatchParseResultDTO> batchAddressParse(List<AddressParseDTO.BatchParseRequestDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return Collections.emptyList();
+        }
         List<AddressParseDTO.BatchParseResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         List<String> specialCityList = Arrays.asList("北京", "上海", "重庆", "天津");
+        Set<String> noDistrictCityIdSet = getNoDistrictCityIdSet(sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode()));
         dtoList.forEach(dto -> {
             AddressParseDTO.ParseRequestDTO requestDTO = new AddressParseDTO.ParseRequestDTO();
             requestDTO.setFullAddress(dto.getFullAddress());
@@ -1327,7 +1331,16 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 batchParseResultDTO.setProvince(resultDTO.getProvince() + "省");
             }
             batchParseResultDTO.setCity(resultDTO.getCity() + "市");
-            batchParseResultDTO.setDetailAddress(resultDTO.getDistrict() + resultDTO.getDetailAddress());
+            // 区独立字段返回，详细地址不再拼接区名（与 addressParse 一致）
+            batchParseResultDTO.setDetailAddress(resultDTO.getDetailAddress());
+            // 无区/县城市：解析不出区时补占位，与地址保存逻辑一致
+            if (StringUtils.isBlank(batchParseResultDTO.getDistrictId())
+                    && StringUtils.isBlank(batchParseResultDTO.getDistrict())
+                    && StringUtils.isNotBlank(batchParseResultDTO.getCityId())
+                    && noDistrictCityIdSet.contains(batchParseResultDTO.getCityId())) {
+                batchParseResultDTO.setDistrictId(DictCityConstants.buildNoDistrictId(batchParseResultDTO.getCityId()));
+                batchParseResultDTO.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
+            }
             resultDTOS.add(batchParseResultDTO);
         });
         return resultDTOS;
