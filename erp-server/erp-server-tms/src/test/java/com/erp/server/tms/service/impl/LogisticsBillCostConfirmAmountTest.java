@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
@@ -22,6 +23,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,14 +114,14 @@ public class LogisticsBillCostConfirmAmountTest {
     }
 
     @Test
-    public void validateImportConfirmAmountMsg_confirmedStatus_noExistingCategory_returnsNull() {
+    public void validateImportConfirmAmountMsg_confirmedStatus_emptyCostDetails_returnsCostDetailEmptyMessage() {
         String logisticsCostId = "cost-1";
         Map<String, List<TmsCostDetailEntity>> existingDetailMap = Collections.singletonMap(logisticsCostId, Collections.emptyList());
 
         String actualMsg = service.validateImportConfirmAmountMsg(logisticsCostId, null,
                 ReconciliationStatusEnum.CONFIRMED.getCode(), existingDetailMap);
 
-        assertNull(actualMsg);
+        assertEquals("费用明细为空", actualMsg);
     }
 
     @Test
@@ -182,6 +184,19 @@ public class LogisticsBillCostConfirmAmountTest {
                 Arrays.asList("cost-1", "cost-2"), ReconciliationStatusEnum.CONFIRMED.getCode());
 
         verify(tmsCfgCostService, times(1)).listByIds(Arrays.asList("cfg-shipping", "cfg-declare"));
+    }
+
+    @Test
+    public void validateConfirmAmount_confirmedStatus_emptyCostDetails_throwsCostDetailEmptyException() {
+        mockCostDetailLambdaQuery(Collections.emptyList());
+
+        try {
+            ReflectionTestUtils.invokeMethod(service, "validateConfirmAmount",
+                    Collections.singletonList("cost-1"), ReconciliationStatusEnum.CONFIRMED.getCode());
+            fail("Expected ServiceException");
+        } catch (ServiceException expected) {
+            assertEquals("费用明细为空", expected.getMsg());
+        }
     }
 
     @Test
