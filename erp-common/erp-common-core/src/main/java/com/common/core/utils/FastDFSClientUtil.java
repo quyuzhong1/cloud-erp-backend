@@ -288,6 +288,47 @@ public class FastDFSClientUtil {
 	}
 
 	/**
+	 * 分块下载文件并直接写入目标流，避免将完整文件加载到堆内存。
+	 */
+	public static void downloadFile(String fileId, OutputStream outputStream) {
+		final IOException[] writeException = new IOException[1];
+		try {
+			/*
+			 * 仅在初始化全局 FastDFS 配置时使用类锁。流式传输期间使用请求级客户端，
+			 * 避免慢消费者长期占用全局锁并阻塞同 JVM 内的其他文件上传、下载。
+			 */
+			synchronized (FastDFSClientUtil.class) {
+				getStorageClient();
+			}
+			StorageClient1 downloadClient = new StorageClient1();
+			int result = downloadClient.download_file1(fileId, (fileSize, data, bytes) -> {
+				if (writeException[0] != null) {
+					/*
+					 * fastdfs-client 1.29.0 在回调返回非 0 时会把尚未读完的连接释放回连接池。
+					 * 写出失败后继续读取并丢弃剩余数据，保证连接协议完整，再由外层抛出原始异常。
+					 */
+					return 0;
+				}
+				try {
+					outputStream.write(data, 0, bytes);
+					return 0;
+				} catch (IOException e) {
+					writeException[0] = e;
+					return 0;
+				}
+			});
+			if (writeException[0] != null) {
+				throw writeException[0];
+			}
+			if (result != 0) {
+				throw new IOException("FastDFS download failed, code=" + result);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
 	 * 在线下载
 	 *
 	 * @param fileId      文件id

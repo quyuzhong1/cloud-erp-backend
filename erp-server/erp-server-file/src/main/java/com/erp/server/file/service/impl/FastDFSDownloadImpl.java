@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -96,6 +97,11 @@ public class FastDFSDownloadImpl implements FileService {
     @Override
     public byte[] downloadFile(String fileId) {
         return FastDFSClientUtil.getFileByte(fileId);
+    }
+
+    @Override
+    public void downloadFile(String fileId, OutputStream outputStream) {
+        FastDFSClientUtil.downloadFile(fileId, outputStream);
     }
 
     @Override

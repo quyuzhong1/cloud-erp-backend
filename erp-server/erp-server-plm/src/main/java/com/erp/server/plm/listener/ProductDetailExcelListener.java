@@ -4,7 +4,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
-import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.ProductDetailExcelDTO;
@@ -25,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
+    private static final int MAX_IMPORT_ROWS = 5000;
+    private boolean importSizeExceeded;
+
     /**
      * 错误信息
      */
@@ -46,6 +48,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
      **/
     @Override
     public void invoke(ProductDetailExcelDTO dto, AnalysisContext analysisContext) {
+        if (dataList.size() >= MAX_IMPORT_ROWS) {
+            importSizeExceeded = true;
+            return;
+        }
         List<String> errorMsgList = new ArrayList<>();
 
         //基础验证
@@ -85,6 +91,15 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     public List<ProductDetailExcelDTO> getExcelDateList() {
         return dataList;
+    }
+
+    public boolean isImportSizeExceeded() {
+        return importSizeExceeded;
+    }
+
+    @Override
+    public boolean hasNext(AnalysisContext analysisContext) {
+        return !importSizeExceeded;
     }
 
 }

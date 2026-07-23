@@ -106,9 +106,11 @@ import com.google.common.collect.Maps;
 import com.google.zxing.WriterException;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import feign.Response;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.python.google.common.util.concurrent.RateLimiter;
@@ -126,7 +128,6 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -163,6 +164,9 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_PRODUCT_DET
 @Slf4j
 @Service
 public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, ProductDetailEntity> implements ProductDetailService {
+
+    private static final int PRODUCT_IMPORT_MAX_FILE_MB = 10;
+    private static final long PRODUCT_IMPORT_MAX_FILE_BYTES = PRODUCT_IMPORT_MAX_FILE_MB * 1024L * 1024L;
 
     @Resource
     private ProductDetailMapper productDetailMapper;
@@ -5298,6 +5302,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public Boolean importProductFile(MultipartFile excelFile, Integer importType) {
+        if (excelFile == null || excelFile.isEmpty()) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        if (excelFile.getSize() > PRODUCT_IMPORT_MAX_FILE_BYTES) {
+            throw new ServiceException(ApiError.FILE_SIZE_EXCEEDS_LIMIT, PRODUCT_IMPORT_MAX_FILE_MB);
+        }
         ImportTypeEnum typeEnum = ImportTypeEnum.getEnum(importType);
         if (Objects.isNull(typeEnum)) {
             throw new ServiceException("导入类型有误");
@@ -5319,11 +5329,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(ImportTypeEnum.getEnum(importType))) {
             throw new ServiceException("导入类型有误");
         }
-        byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-        if (importType.equals(ImportTypeEnum.IMPORT_ADD.getCode())) {
-            importAdd(new ByteArrayInputStream(bytes), importType, dto.getTaskId());
-        } else {
-            importUpdate(new ByteArrayInputStream(bytes), importType, dto.getTaskId());
+        try (Response fileResponse = fileFeign.downloadFileStream(dto.getFileUrl())) {
+            if (fileResponse == null || fileResponse.status() < 200 || fileResponse.status() >= 300
+                    || fileResponse.body() == null) {
+                throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+            }
+            try (InputStream inputStream = fileResponse.body().asInputStream()) {
+                if (importType.equals(ImportTypeEnum.IMPORT_ADD.getCode())) {
+                    importAdd(inputStream, importType, dto.getTaskId());
+                } else {
+                    importUpdate(inputStream, importType, dto.getTaskId());
+                }
+            }
+        } catch (IOException e) {
+            log.error("产品信息导入文件读取失败，fileUrl={}", dto.getFileUrl(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
     }
 
@@ -5383,6 +5403,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductDetailUpdateNotApproveExcelListener excelListenerUtil = new ProductDetailUpdateNotApproveExcelListener();
         try {
             read(inputStream, ProductDetailImprotUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            if (excelListenerUtil.isImportSizeExceeded()) {
+                throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
+            }
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
@@ -5407,21 +5430,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
-            if (file != null && !file.isDirectory()) {
-                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
-            }
+            errorUrl = exportProductImportResultFile(taskId, "error", excelPath, fileName, errorList);
         }
         String successUrl = "";
         if (CollectionUtils.isNotEmpty(successList)) {
-            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
-            if (file != null && !file.isDirectory()) {
-                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                //成功添加日志文本
-                for (String productId : productIdList) {
-                    addProductImportLog(successUrl,productId);
-                }
-            }
+            successUrl = exportProductImportResultFile(taskId, "success", excelPath, fileName, successList);
+            addProductImportLogs(successUrl, productIdList, taskId);
         }
         completeProductImportTask(taskId, excelDateList.size(), errorList.size(), errorUrl);
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
@@ -5432,10 +5446,72 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         resultDTO.setTaskId(taskId);
         resultDTO.setCount(count);
         resultDTO.setErrorUrl(errorUrl);
-        resultDTO.setRemark("处理完成，失败" + errorCount + "条");
+        if (errorCount > 0 && CharSequenceUtil.isBlank(errorUrl)) {
+            resultDTO.setRemark(MessageUtils.getMessage(
+                    ApiError.FILE_IMPORT_TASK_FINISH_EXPORT_FAILED,
+                    errorCount, MessageUtils.getMessage(ApiError.FILE_EXPORT_ERROR_DATA_FAILED)));
+        } else if (errorCount > 0) {
+            resultDTO.setRemark(MessageUtils.getMessage(ApiError.FILE_IMPORT_TASK_FINISH, errorCount));
+        } else {
+            resultDTO.setRemark(MessageUtils.getMessage(ApiError.FILE_IMPORT_TASK_FINISH_ALL_SUCCESS));
+        }
         resultDTO.setFinishTime(LocalDateTime.now());
         resultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
-        downloadTaskFeign.updateTask(resultDTO);
+        updateProductImportTaskResult(taskId, resultDTO);
+    }
+
+    private void updateProductImportTaskResult(String taskId, BaseDTO.ImportResultDTO resultDTO) {
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                downloadTaskFeign.updateTask(resultDTO);
+                return;
+            } catch (Exception e) {
+                log.error("产品信息导入任务状态更新失败，taskId={}，attempt={}", taskId, attempt, e);
+            }
+        }
+        BaseDTO.ImportResultDTO fallback = new BaseDTO.ImportResultDTO();
+        fallback.setTaskId(taskId);
+        fallback.setCount(resultDTO.getCount());
+        fallback.setErrorUrl(resultDTO.getErrorUrl());
+        fallback.setFinishTime(LocalDateTime.now());
+        fallback.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        fallback.setRemark(resultDTO.getRemark() + "；"
+                + MessageUtils.getMessage(ApiError.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED));
+        try {
+            downloadTaskFeign.updateTask(fallback);
+        } catch (Exception e) {
+            // 业务数据已经逐行处理完成，状态同步失败不能再把整批判为失败并触发重复导入。
+            log.warn("产品信息导入业务已完成，但任务状态同步失败（含兜底），taskId={}，{}",
+                    taskId, MessageUtils.getMessage(ApiError.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED), e);
+        }
+    }
+
+    private String exportProductImportResultFile(String taskId, String resultType, String excelPath,
+                                                 String fileName, List<?> dataList) {
+        File file = null;
+        try {
+            String localFileName = taskId + "-" + resultType + "-" + fileName;
+            file = ExcelUtil.exportFile(excelPath, localFileName, dataList);
+            if (file != null && !file.isDirectory()) {
+                return FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        } catch (Exception e) {
+            log.error("产品信息导入结果文件生成或上传失败，taskId={}，resultType={}", taskId, resultType, e);
+        } finally {
+            FileUtils.deleteQuietly(file);
+        }
+        return "";
+    }
+
+    private void addProductImportLogs(String successUrl, List<String> productIdList, String taskId) {
+        for (String productId : productIdList) {
+            try {
+                addProductImportLog(successUrl, productId);
+            } catch (Exception e) {
+                // 导入数据已经成功，单条操作日志失败不应触发整批业务重试。
+                log.error("产品信息导入操作日志记录失败，taskId={}，productId={}", taskId, productId, e);
+            }
+        }
     }
 
     /**
@@ -5446,8 +5522,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @param productId
      */
     private void addProductImportLog (String successUrl,String productId) {
+        String content = "导入成功";
+        if (CharSequenceUtil.isNotBlank(successUrl)) {
+            content = format("<a href='{}' class='custom-link'>{}</a>",
+                    FastDFSClientUtil.publicUrl + successUrl, content);
+        }
         //新增操作日志
-        OperateLogEntity operateLogEntity = new OperateLogEntity().setContent(format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
+        OperateLogEntity operateLogEntity = new OperateLogEntity().setContent(content)
                 .setBusinessId(productId)
                 .setPid(productId)
                 .setOperation("导入")
@@ -6372,7 +6453,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productIdList.add(productInfoDTO.getId());
         }
         //发送消息
-        handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
+        try {
+            handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
+        } catch (Exception e) {
+            // 产品数据已经逐行更新成功，通知失败不应触发整批导入重试。
+            log.error("产品信息导入更新通知发送失败", e);
+        }
         return productIdList;
     }
 
@@ -6381,6 +6467,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener();
         try {
             read(inputStream, ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            if (excelListenerUtil.isImportSizeExceeded()) {
+                throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
+            }
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
@@ -6401,21 +6490,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String fileName = "productNoSpecDetail.xlsx";
         String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
-            if (file != null && !file.isDirectory()) {
-                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
-            }
+            errorUrl = exportProductImportResultFile(taskId, "error", excelPath, fileName, errorList);
         }
         String successUrl = "";
         if (CollectionUtils.isNotEmpty(successList)) {
-            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
-            if (file != null && !file.isDirectory()) {
-                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                //成功添加日志文本
-                for (String productId : productIdList) {
-                    addProductImportLog(successUrl,productId);
-                }
-            }
+            successUrl = exportProductImportResultFile(taskId, "success", excelPath, fileName, successList);
+            addProductImportLogs(successUrl, productIdList, taskId);
         }
         completeProductImportTask(taskId, excelDateList.size(), errorList.size(), errorUrl);
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
@@ -7142,7 +7222,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     private String getImportErrorMessage(Exception e) {
-        return StringUtils.defaultIfBlank(e.getMessage(), "导入处理失败");
+        return BatchResultDTO.resolveFailMsg(e);
     }
 
     /**
