@@ -18,6 +18,7 @@ import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.server.oms.service.KolSubB2cApplicationDetailService;
 import com.erp.server.oms.mapper.KolSubB2cApplicationMapper;
 import com.erp.server.oms.service.KolSubB2cApplicationService;
+import com.erp.server.oms.service.SoB2cLogisticsService;
 import com.erp.server.oms.service.SoB2cService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -45,6 +46,8 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
     @Lazy
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
     @Resource
     private KolSubB2cApplicationDetailService kolSubB2cApplicationDetailService;
     @Resource
@@ -300,14 +303,31 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
         } else {
             deliveryStatus = KolSubB2cApplicationDeliveryStatusEnum.PARTIAL_SHIPPED.getCode();
         }
-        String trackNo = soList.stream()
-                .map(SoB2cEntity::getShippingOrderNo)
-                .filter(StringUtils::isNotBlank)
-                .flatMap(s -> Arrays.stream(s.split(",")))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.joining(","));
+        // 跟踪号：三方仓场景在 shipping_order_no；自营/手动发货一般在 so_b2c_logistics.track_no
+        Set<String> trackNoSet = new LinkedHashSet<>();
+        for (SoB2cEntity so : soList) {
+            if (StringUtils.isNotBlank(so.getShippingOrderNo())) {
+                Arrays.stream(so.getShippingOrderNo().split(","))
+                        .map(String::trim)
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(trackNoSet::add);
+            }
+        }
+        List<String> soIds = soList.stream().map(SoB2cEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(soIds)) {
+            List<SoB2cLogisticsEntity> logisticsList = soB2cLogisticsService.listByMainIds(soIds);
+            if (CollUtil.isNotEmpty(logisticsList)) {
+                for (SoB2cLogisticsEntity logistics : logisticsList) {
+                    if (StringUtils.isNotBlank(logistics.getTrackNo())) {
+                        Arrays.stream(logistics.getTrackNo().split(","))
+                                .map(String::trim)
+                                .filter(StringUtils::isNotBlank)
+                                .forEach(trackNoSet::add);
+                    }
+                }
+            }
+        }
+        String trackNo = String.join(",", trackNoSet);
         // 订单关联状态：过滤已作废后，全部已审核则为已审核，否则未审核
         boolean allApproved = soList.stream().allMatch(e ->
                 e.getApproveStatus() != null
