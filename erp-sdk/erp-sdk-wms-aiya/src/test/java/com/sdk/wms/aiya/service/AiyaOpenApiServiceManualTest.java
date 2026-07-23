@@ -6,6 +6,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
+import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
@@ -196,7 +197,7 @@ public class AiyaOpenApiServiceManualTest {
 
         AiyaOutboundSaveDTO request = AiyaOutboundSaveDTO.builder()
                 // 必填：客户交易物流订单号=三方仓发货单号，客户侧保证唯一；修改时传同一号即可幂等 upsert
-                .orderNumber("WFHD-AIYA-TEST-" + System.currentTimeMillis())
+                .orderNumber("WFHD-AIYA-TEST-202607220002")
                 .warehouseCode(TEST_WAREHOUSE_CODE)
                 // 可选：客户销售平台编号（平台订单号等）
 //                .extOrderNumber("PLATFORM-ORDER-TEST-001")
@@ -257,17 +258,30 @@ public class AiyaOpenApiServiceManualTest {
     /**
      * 查询 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}）。
      * <p>
-     * 骨架时期曾拆成 {@code search2cOrderTest}（按单号）/{@code query2cOrderPageTest}（分页）两个测试，
-     * 因两个方法指向同一 serviceType 已合并为 {@code query2cOrder}，本测试演示按单号列表精确查；
-     * 传 {@code orderNumbers=null} 即可改为按 orderTimeFrom/orderTimeTo 时间窗口分页查询。
+     * 入参按方案文档 6.3.3：必填 {@code warehouseCode}，可选 {@code shippingTimeFrom}/
+     * {@code shippingTimeTo}/{@code page}/{@code pageSize}（DTO 字段名仍为 pageNum，
+     * 序列化到网关时写 page；不是建单的 orderTime，也不是入库单的 putawayCompletedTime）。
      * <p>
-     * 重点核对：{@code resultList} 字段名是否正确（推测值，未有真实样例验证）。
+     * 重点核对：成功时 {@code orderInfoList} 明细字段（{@code orderNumber}/{@code shippingTime}/
+     * {@code trackingNumber}/{@code actualLogistic}/{@code orderStatus} 等）。
      */
     @Test
     public void query2cOrderTest() {
-        List<String> orderNumbers = Arrays.asList("TODO-填真实出库单号(即建单时下发的orderNumber)");
-        List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(
-                ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumbers, null, null, null, null);
+        // 临时联调：方案文档未列出 orderNumbers，试传单号集合看网关是否支持按单号精确查
+        Map<String, Object> bizParams = new HashMap<>();
+//        bizParams.put("orderNumbers", Collections.singletonList("WFHD-AIYA-TEST-202607220001"));
+        AiyaOutboundQueryDTO.QueryReqDTO req = AiyaOutboundQueryDTO.QueryReqDTO.builder()
+                .accessToken(ACCESS_TOKEN)
+                .secret(SECRET)
+                .customerCode(CUSTOMER_CODE)
+                .warehouseCode(TEST_WAREHOUSE_CODE)
+                .shippingTimeFrom("2026-07-01 00:00:00")
+                .shippingTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .pageNum(1)
+                .pageSize(50)
+                .bizParams(bizParams)
+                .build();
+        List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(req);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -278,7 +292,7 @@ public class AiyaOpenApiServiceManualTest {
      */
     @Test
     public void intercept2cOrderTest() {
-        String orderNumber = "TODO-填真实出库单号(即建单时下发的orderNumber)";
+        String orderNumber = "WFHD-AIYA-TEST-202607220002";
         JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumber);
         System.out.println(JSONUtil.toJsonStr(response));
     }
