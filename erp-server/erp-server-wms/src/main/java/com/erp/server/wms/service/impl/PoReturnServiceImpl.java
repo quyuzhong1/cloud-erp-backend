@@ -4711,7 +4711,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             orgIds.add(defaultPurchaseOrgId);
         }
         if (CollectionUtils.isNotEmpty(orgIds)) {
-            Map<String, String> orgNameMap = sysUserFeign.listCompanyById(orgIds).stream()
+            List<SysAccountingCompanyEntity> companyList = sysUserFeign.listCompanyById(orgIds);
+            Map<String, String> orgNameMap = (companyList == null ? Collections.<SysAccountingCompanyEntity>emptyList() : companyList).stream()
                     .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
                     .collect(Collectors.toMap(SysAccountingCompanyEntity::getId,
                             item -> CharSequenceUtil.blankToDefault(item.getCompanyName(), ""),
