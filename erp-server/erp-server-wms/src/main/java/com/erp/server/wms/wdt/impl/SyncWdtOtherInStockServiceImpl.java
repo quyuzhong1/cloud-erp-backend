@@ -45,7 +45,7 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
     @Resource
     private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
 
-    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode, String sysWarehouseId){
+    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode, String sysWarehouseId, String sysWarehouseName){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
         request.setOuterNo(outerCode);
 
@@ -81,6 +81,7 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setSysWarehouseId(sysWarehouseId);
+        request.setSysWarehouseName(sysWarehouseName);
         request.setIsCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(outerCode);

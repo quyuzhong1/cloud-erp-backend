@@ -27,6 +27,8 @@ public class OtherStockWarnContext {
     private String sourceCode;
     /** ERP 仓库 ID，用于从中台配置查找绑定的旺店通仓库 */
     private String sysWarehouseId;
+    /** ERP 仓库名称，告警展示用，优先于远程查询 */
+    private String erpWarehouseName;
     /** 请求中的旺店通仓库编码 warehouseNo，仅作兜底 */
     private String wdtWarehouseNo;
 
@@ -36,6 +38,7 @@ public class OtherStockWarnContext {
                 .outerNo(request.getOuterNo())
                 .sourceCode(resolveSourceCode(request.getSourceCode(), request.getRemark()))
                 .sysWarehouseId(request.getSysWarehouseId())
+                .erpWarehouseName(request.getSysWarehouseName())
                 .wdtWarehouseNo(request.getWarehouseNo())
                 .dmpSyncTaskId(request.getDmpSyncTaskId())
                 .sourceId(request.getSourceId())
@@ -48,6 +51,7 @@ public class OtherStockWarnContext {
                 .outerNo(request.getOuterNo())
                 .sourceCode(resolveSourceCode(request.getSourceCode(), request.getRemark()))
                 .sysWarehouseId(request.getSysWarehouseId())
+                .erpWarehouseName(request.getSysWarehouseName())
                 .wdtWarehouseNo(request.getWarehouseNo())
                 .dmpSyncTaskId(request.getDmpSyncTaskId())
                 .sourceId(request.getSourceId())
