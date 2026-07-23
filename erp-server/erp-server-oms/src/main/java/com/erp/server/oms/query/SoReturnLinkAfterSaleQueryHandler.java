@@ -265,6 +265,9 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
 
     /**
      * 构建剩余应退货数量 SELECT 表达式。
+     * <p>GREATEST(..., 0) 是「关联售后候选」筛选口径（还能再关联的量，且配合 &gt;0 过滤）。
+     * 售后单明细编辑视图 {@code SoB2cReturnServiceImpl#listAddDetailView} 保留原始差值（可负）用于展示超额入库，
+     * 两处场景不同，勿要求改成与详情 Java 同一公式。</p>
      *
      * @param returnQtyColumn 原退货数量列（含表别名）
      * @return 剩余应退货数量表达式（不含 AS 别名）

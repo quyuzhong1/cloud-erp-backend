@@ -541,7 +541,11 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             addDetailView.setReceiveQty(receiveQty);
             addDetailView.setMustQty(returnQty);
-            //剩余应退货数量 = 应退数量(returnQty) - 历史已入库实退数量(realQty)累计
+            // 剩余应退货数量 = 应退数量(returnQty) - 历史已入库实退数量(realQty)累计。
+            // 口径说明（勿与关联售后列表 SQL 强行改成同一公式后要求「详情也必须 max(0,…)」）：
+            // - 本接口为售后单「新增/编辑明细视图」展示：保留原始差值，历史超入时可为负，便于运营识别超额入库；
+            // - 关联售后候选列表（SoReturnLinkAfterSaleQueryHandler）使用 GREATEST(return_qty-instock,0) 且过滤 >0，
+            //   那是「还能再关联/再入库」的筛选口径，与本展示字段场景不同，不是同一入口的计算 bug。
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             addDetailView.setRemainMustQty(returnQty - realQty);
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));

@@ -1077,6 +1077,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     // ===================== matchAndCreateByReturnLogisticCode：按退货物流单号匹配售后单并生成退货入库单 =====================
 
+    /**
+     * 按退货物流单号匹配 B2B/B2C 售后单并生成已审核退货入库单；未匹配完的明细原样返回交由调用方后续分支。
+     * <p>
+     * 事务边界说明（供审查对照，勿按「长事务/无批次上限」要求拆事务或强行加硬截断）：
+     * <ul>
+     *   <li>整方法使用 {@code @GlobalTransactional}：一次物流单号匹配下「多张售后对应入库单落库 + B2C 待退货→已退货」须原子成功/失败，
+     *       若按 mainId 拆本地/全局事务，会出现部分入库已成功、售后状态只改了一半的中间态，MQ 重试也难自洽。</li>
+     *   <li>方法前半以只读 Feign/缺口计算为主，后半循环 {@code addByThirdWarehouse} 并批量 {@code updateBatch}；
+     *       B2C 状态更新已改为循环外分批 Feign 写，避免逐单远程写进一步拉长全局事务。</li>
+     *   <li>同一物流单号实务上极少挂载大量售后单；120s 超时覆盖常规峰值。若业务上出现超大候选集，应先治理数据/拆单推送，
+     *       而非在此静默截断部分售后（截断会破坏「同物流单号一次匹配」的分配完整性）。</li>
+     * </ul>
+     */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<PlatformReturnInstockDTO.Detail> matchAndCreateByReturnLogisticCode(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
