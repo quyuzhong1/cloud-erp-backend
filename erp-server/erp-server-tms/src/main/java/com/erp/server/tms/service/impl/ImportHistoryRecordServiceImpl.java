@@ -1385,7 +1385,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 result.setFailReason("未找到对应物流单");
                 return result;
             }).collect(Collectors.toList());
-            long queryMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            queryMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
             long totalMs = queryMs;
             if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
                 log.info("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount=0 persistGroupCount=0 persistBatchCount=0 resultCount={} outcome=no-match queryMs={} computeMs=0 persistMs=0 resultBuildMs=0 totalMs={}",
