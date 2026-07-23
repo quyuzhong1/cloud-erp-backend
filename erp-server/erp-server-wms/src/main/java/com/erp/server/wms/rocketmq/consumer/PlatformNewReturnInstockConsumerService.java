@@ -628,6 +628,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 				soReturnInstockDetailEntity.setRemark(dto.getReason());
 				soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+				// 仅写平台SKU：缺口对账按 platformSkuNo 扣减；不写 sourceDetailId（该字段语义是签收单明细id，勿塞第三方流水号）
+				soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 				soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 				result.matchedList.add(soReturnInstockDetailEntity);
 				continue;
@@ -670,6 +672,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 			soReturnInstockDetailEntity.setRemark(dto.getReason());
 			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+			// 仅写平台SKU：缺口对账按 platformSkuNo 扣减；不写 sourceDetailId（该字段语义是签收单明细id，勿塞第三方流水号）
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 			soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 			result.matchedList.add(soReturnInstockDetailEntity);
 		}

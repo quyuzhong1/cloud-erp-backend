@@ -223,10 +223,12 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		// 属于已知限制，留给后续实现「留空」分支时一并重新设计）
 		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(), dto.getWarehouseCode());
 		if (Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())) {
+			// 故意 return 而非抛异常触发 MQ 重试：
+			// 1) 众包/极兔/艾姆勒/通邮等历史平台已在上方 isLegacySpecialWarehousePlatform 分流，不会走到这里；
+			// 2) 能落到此处多为仓库映射未配置的持久性配置问题，重试无法自愈，只会空转至死信；
+			// 3) 用 error 日志告警，待运营补齐映射或后续「留空仓库」分支落地后再改处理策略（补偿表/告警），勿改成 throw。
 			log.error("[海外仓退货入库-无头件] 仓库信息缺失，跳过生成预入库单：platform={}, warehouseCode={}, thirdCode={}",
 					dto.getPlatform(), dto.getWarehouseCode(), dto.getPlatformReturnOrderNo());
-			// TODO 已知限制：艾姆勒IML/统佑等平台的仓库解析依赖订单出库明细，当前未支持，消息将被跳过且不重试；
-			// 后续补充「留空仓库」分支后需要重新评估是否需要落地补偿表/告警，而不是仅记录日志
 			return;
 		}
 		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());

@@ -1716,6 +1716,11 @@ public class SoReturnPrestockServiceImpl
      * （见调用方 {@code buildPrestockDetailList}），若把空skuId传入其他入库单，会一路带到库存核心服务
      * （{@code OtherInstockServiceImpl#updateInventoryTransCore}）导致报错回滚整单，或落下无法追溯的空SKU库存记录。
      * 未解析行只落预入库单明细，等运营人工核实SKU后再走关联流程；全部行都未解析到SKU时整单不生成其它入库单。</p>
+     * <p>已知接受的遗留限制（Feign-in-transaction）：本方法在调用方本地事务持有期间仍含少量 Feign 调用——
+     * PLM 查询 SKU 信息、sys 查询仓储部门为只读调用，仅略拉长事务；{@code addAndApprove} 内部的
+     * {@code plmTaskFeign.updateOccupyStatus}（SKU 占用标记）是唯一的远程写，但其语义可重放
+     * （MQ 重试重复标记无新副作用），且挪到事务提交后执行会丢失「标记失败则整单回滚」的兜底，
+     * 故保留在事务内。金蝶推送为本地落推送任务表 + 异步任务推送，不属于事务内远程写。</p>
      */
     private void generateOtherInstockForPrestock(String prestockId, SoReturnPrestockDTO.Add prestockAdd) {
         List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList().stream()
