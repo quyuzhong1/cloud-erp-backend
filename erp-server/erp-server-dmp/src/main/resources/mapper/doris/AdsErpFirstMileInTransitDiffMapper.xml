@@ -137,7 +137,10 @@
             aefmid.adjust_time AS adjustTime,
             aefmid.adjust_user_name AS adjustUserName,
             aefmid.adjust_user_id AS adjustUserId,
-            aefmid.remark AS remark
+            aefmid.remark AS remark,
+            aefmid.exec_status AS execStatus,
+            aefmid.exec_status_name AS execStatusName,
+            aefmid.finish_time AS finishTime
         FROM ads_erp_first_mile_intransit_diff as aefmid
         where
         ${params.sqlMap.default}
