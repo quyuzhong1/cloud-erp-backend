@@ -51,6 +51,11 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return SoB2cLogisticsEntity
      */
     SoB2cLogisticsEntity getByMainId(String mainId);
+
+    /**
+     * 独立事务读取物流行，避免 REQUIRES_NEW 提交后外层 SqlSession 一级缓存仍是旧 version。
+     */
+    SoB2cLogisticsEntity getFreshByMainId(String mainId);
     /**
      * @description: 根据主表ids查询
      * @author Will

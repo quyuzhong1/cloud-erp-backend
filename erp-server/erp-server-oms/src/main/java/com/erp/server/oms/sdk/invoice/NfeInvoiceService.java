@@ -1095,6 +1095,7 @@ public class NfeInvoiceService {
             }
         }
         fillReceiverFallbackClientInfo(nfeClienteDTO, receiverEntity);
+        fillAliExpressLatinClientName(nfeClienteDTO, receiverEntity, soB2cEntity);
         nfeClienteDTO = enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO, shopeeBrazilOrderContext);
         nfeClienteDTO.setCpfCnpj(cleanTaxNo(nfeClienteDTO.getCpfCnpj()));
         fillProvinceInfo(nfeClienteDTO);
@@ -1112,6 +1113,28 @@ public class NfeInvoiceService {
             return cpfCnpj;
         }
         return cpfCnpj.replaceAll("[^0-9]", "");
+    }
+
+    private void fillAliExpressLatinClientName(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, SoB2cReceiverEntity receiverEntity, SoB2cEntity soB2cEntity) {
+        if (ObjUtil.isEmpty(nfeClienteDTO)
+                || ObjUtil.isEmpty(receiverEntity)
+                || ObjUtil.isEmpty(soB2cEntity)
+                || !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
+                || CharSequenceUtil.isBlank(receiverEntity.getReceiverName())) {
+            return;
+        }
+        if (hasNonLatinLetter(nfeClienteDTO.getName())) {
+            nfeClienteDTO.setName(receiverEntity.getReceiverName());
+        }
+    }
+
+    private boolean hasNonLatinLetter(String value) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return false;
+        }
+        return value.codePoints().anyMatch(codePoint ->
+                Character.isLetter(codePoint)
+                        && Character.UnicodeScript.of(codePoint) != Character.UnicodeScript.LATIN);
     }
 
     private String getRuaStr(String dictPlatform, String rua) {

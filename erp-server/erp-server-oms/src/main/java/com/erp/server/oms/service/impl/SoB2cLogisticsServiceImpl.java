@@ -190,6 +190,15 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).last(" limit 1 ").one();
     }
 
+    @Override
+    public SoB2cLogisticsEntity getFreshByMainId(String mainId) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        transactionTemplate.setReadOnly(true);
+        return transactionTemplate.execute(status ->
+                lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).last(" limit 1 ").one());
+    }
+
     private List<SoB2cLogisticsEntity> getListByMainId(String mainId) {
         return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).list();
     }
@@ -328,6 +337,13 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 }
                 if (StringUtils.isNotBlank(entity.getTrackNo())){
                     entity2.setTrackNo(entity.getTrackNo());
+                }
+                // 平台同步不覆盖 ERP 已指定的物流渠道（含手动配货）
+                if (StringUtils.isNotBlank(entity.getLogisticsChannelId())) {
+                    entity2.setLogisticsChannelId(entity.getLogisticsChannelId());
+                }
+                if (StringUtils.isNotBlank(entity.getLogisticsChannelName())) {
+                    entity2.setLogisticsChannelName(entity.getLogisticsChannelName());
                 }
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
                 if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())
@@ -586,15 +602,20 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     private BatchResultDTO clearCanceledThirdLogisticsRequiresNew(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
+        String transportNo = soB2cLogisticsEntity.getCode();
+        String trackNo = soB2cLogisticsEntity.getTrackNo();
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         return transactionTemplate.execute(status -> {
-            String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ",
-                    soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo());
+            SoB2cLogisticsEntity freshEntity = this.getByMainId(entity.getId());
+            if (Objects.isNull(freshEntity)) {
+                throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
+            }
+            String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ", transportNo, trackNo);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
-            soB2cLogisticsEntity.setCode("");
-            soB2cLogisticsEntity.setTrackNo("");
-            if (!this.updateById(soB2cLogisticsEntity)) {
+            freshEntity.setCode("");
+            freshEntity.setTrackNo("");
+            if (!this.updateById(freshEntity)) {
                 throw new ServiceException("物流单本地清理失败，请刷新后重试");
             }
             soB2cLabelService.deleteByMainIds(Collections.singletonList(entity.getId()));

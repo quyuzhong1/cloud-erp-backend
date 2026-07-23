@@ -650,7 +650,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+                    throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
                 }
             }
 
@@ -1016,7 +1016,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(ApiError.HTTP_UNKNOWN);
+                    throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
                 }
             }
             for (PurchasePriceDTO.PagingViewDTO item : page.getRecords()) {

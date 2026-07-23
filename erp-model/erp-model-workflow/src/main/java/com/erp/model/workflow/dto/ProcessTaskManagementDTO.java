@@ -74,4 +74,19 @@ public class ProcessTaskManagementDTO implements Serializable {
          */
         private String comment;
     }
+
+    /**
+     * 已完结任务备注DTO
+     */
+    @Data
+    public static class FinishedRemarkDTO implements Serializable{
+        /**
+         * 业务ID
+         */
+        private String businessId;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

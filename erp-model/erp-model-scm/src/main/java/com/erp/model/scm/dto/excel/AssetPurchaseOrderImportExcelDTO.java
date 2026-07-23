@@ -59,7 +59,7 @@ public class AssetPurchaseOrderImportExcelDTO implements Serializable {
      * 供应商
      */
     @ExcelProperty("*供应商")
-    @FieldValid(fieldName = "supplierName", isNotBlank = true )
+    @FieldValid(fieldName = "supplierName", isNotBlank = true, maxLength = 255)
     private String  supplierName;
 
 
