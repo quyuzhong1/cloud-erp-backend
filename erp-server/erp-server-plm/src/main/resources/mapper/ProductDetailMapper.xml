@@ -1221,6 +1221,60 @@
         </if>
     </select>
 
+    <!-- PDA扫码：sku_no / ean 分路 UNION，各自可走索引 -->
+    <select id="pdaSearchSkuByScanCode" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property,
+        pp.box_qty as unitQty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        ppu.main_supplier,
+        ppu.second_supplier,
+        pd.unit_name
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="status != null and status != ''">
+            AND pd.status = #{status}
+        </if>
+        AND pd.sku_no = #{skuNo}
+        UNION
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property,
+        pp.box_qty as unitQty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        ppu.main_supplier,
+        ppu.second_supplier,
+        pd.unit_name
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        inner join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE AND ppu.ean = #{skuNo}
+        WHERE pd.is_deleted = FALSE
+        <if test="status != null and status != ''">
+            AND pd.status = #{status}
+        </if>
+    </select>
+
     <select id="pdaSearchSkuBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
         pd.id AS skuId,

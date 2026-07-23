@@ -1987,12 +1987,35 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if (!Boolean.TRUE.equals(persistResult.getSuccess())) {
                 log.warn("平台物流下单远程成功但本地落库失败, afterSaleId={}, code={}, trackNo={}, msg={}",
                         afterSaleEntity.getId(), afterSaleEntity.getCode(), trackNo, persistResult.getMsg());
+                if (!EXISTING_OUTBOUND_TRACK_MSG.equals(persistResult.getMsg())) {
+                    compensatePlatformLogisticsOrder(afterSaleEntity.getCode(), afterSaleEntity.getId(), trackNo);
+                }
             }
             return persistResult;
         } catch (Exception e) {
             log.warn("平台物流下单远程成功但本地落库异常, afterSaleId={}, code={}, trackNo={}",
                     afterSaleEntity.getId(), afterSaleEntity.getCode(), trackNo, e);
+            compensatePlatformLogisticsOrder(afterSaleEntity.getCode(), afterSaleEntity.getId(), trackNo);
             return BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), e);
+        }
+    }
+
+    /**
+     * 平台下单远程成功但本地落库失败时，尝试取消 TMS 侧运单，避免孤儿订单。
+     */
+    private void compensatePlatformLogisticsOrder(String afterSaleCode, String afterSaleId, String trackNo) {
+        try {
+            List<AfterSaleDTO.LogisticsOrderResultDTO> cancelResults = logisticsOrderFeign.batchCancel(
+                    Collections.singletonList(afterSaleCode));
+            AfterSaleDTO.LogisticsOrderResultDTO cancelResult = CollectionUtils.isEmpty(cancelResults) ? null : cancelResults.get(0);
+            if (cancelResult == null || !Boolean.TRUE.equals(cancelResult.getStatus())) {
+                String errMsg = cancelResult == null ? "无响应" : cancelResult.getErrorMsg();
+                log.warn("平台物流下单补偿取消远程运单失败, afterSaleId={}, code={}, trackNo={}, err={}",
+                        afterSaleId, afterSaleCode, trackNo, errMsg);
+            }
+        } catch (Exception ex) {
+            log.warn("平台物流下单补偿取消远程运单异常, afterSaleId={}, code={}, trackNo={}",
+                    afterSaleId, afterSaleCode, trackNo, ex);
         }
     }
 
@@ -2191,6 +2214,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
                 .list();
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, Function.identity(), (v1, v2) -> v1));
+        List<AfterSaleProgressEntity> completedProgressList = afterSaleProgressService.lambdaQuery()
+                .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
+                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.COMPLETED.getCode())
+                .list();
+        Map<String, AfterSaleProgressEntity> completedProgressMap = completedProgressList.stream()
+                .collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, Function.identity(), (v1, v2) -> v1));
         List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL).list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, Function.identity(), (v1, v2) -> v1));
         // 筛选出单据类型不是API的
@@ -2198,6 +2227,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 筛选出单据类型是API的
         List<AfterSaleEntity> apiList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
+        List<AfterSaleEntity> updateEntityList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (AfterSaleEntity afterSaleEntity : manualList) {
             BatchResultDTO cancelResult;
@@ -2210,6 +2240,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if (afterSaleProgressEntity != null && StringUtils.isNotBlank(afterSaleProgressEntity.getTrackNo())) {
                     afterSaleProgressEntity.setTrackNo("");
                     progressList.add(afterSaleProgressEntity);
+                    revertAfterLogisticsOrderCancel(afterSaleEntity,
+                            completedProgressMap.get(afterSaleEntity.getId()), progressList);
+                    updateEntityList.add(afterSaleEntity);
                     DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(afterSaleEntity.getId());
                     if (dmpAttachmentEntity != null) {
                         attachmentService.removeById(dmpAttachmentEntity.getId());
@@ -2226,7 +2259,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (CollectionUtils.isNotEmpty(apiList)) {
             List<String> codeList = apiList.stream().map(AfterSaleEntity::getCode).collect(Collectors.toList());
             List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchCancel(codeList);
-            List<AfterSaleEntity> updateApiList = new ArrayList<>();
             for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
                 AfterSaleEntity afterSaleEntity = apiMap.get(resultDTO.getAfterSaleId());
                 if (afterSaleEntity == null) {
@@ -2235,9 +2267,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
                 BatchResultDTO cancelResult;
                 if (Boolean.TRUE.equals(resultDTO.getStatus())) {
-                    afterSaleEntity.setType("");
-                    afterSaleEntity.setLogisticsChannelId("");
-                    updateApiList.add(afterSaleEntity);
+                    revertAfterLogisticsOrderCancel(afterSaleEntity,
+                            completedProgressMap.get(resultDTO.getAfterSaleId()), progressList);
+                    updateEntityList.add(afterSaleEntity);
                     // 取消成功清空商家寄出快递单号和面单信息
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(resultDTO.getAfterSaleId());
                     if (afterSaleProgressEntity != null) {
@@ -2254,14 +2286,34 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
                 resultList.add(cancelResult);
             }
-            if (CollectionUtils.isNotEmpty(updateApiList)) {
-                this.updateBatchById(updateApiList);
-            }
+        }
+        if (CollectionUtils.isNotEmpty(updateEntityList)) {
+            this.updateBatchById(updateEntityList);
         }
         if (CollectionUtils.isNotEmpty(progressList)) {
             afterSaleProgressService.updateBatchById(progressList);
         }
         return resultList;
+    }
+
+    /**
+     * 取消物流下单成功后，回滚主表/进度至「待商家寄出」态。
+     */
+    private void revertAfterLogisticsOrderCancel(AfterSaleEntity afterSaleEntity,
+                                                 AfterSaleProgressEntity completedProgressEntity,
+                                                 List<AfterSaleProgressEntity> progressListToUpdate) {
+        afterSaleEntity.setType("");
+        afterSaleEntity.setLogisticsChannelId("");
+        if (AfterSaleStatusEnum.COMPLETED.getCode().equals(afterSaleEntity.getStatus())) {
+            afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+        }
+        afterSaleEntity.setOutboundTrackStatus("");
+        if (completedProgressEntity != null) {
+            completedProgressEntity.setNodeTime(null);
+            if (!progressListToUpdate.contains(completedProgressEntity)) {
+                progressListToUpdate.add(completedProgressEntity);
+            }
+        }
     }
 
     @Override

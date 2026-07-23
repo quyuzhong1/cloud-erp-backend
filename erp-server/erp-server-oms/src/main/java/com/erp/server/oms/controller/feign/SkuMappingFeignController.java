@@ -137,4 +137,12 @@ public class SkuMappingFeignController extends BaseController {
     public List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(@RequestParam("scanCode") String scanCode) {
         return skuMappingService.listByScanCode(scanCode);
     }
+
+    /**
+     * PDA扫码：按客户SKU/三方条码返回映射的内部 SKU id（轻量接口）
+     */
+    @PostMapping("/listSkuIdsByScanCode")
+    public List<String> listSkuIdsByScanCode(@RequestParam("scanCode") String scanCode) {
+        return skuMappingService.listSkuIdsByScanCode(scanCode);
+    }
 }

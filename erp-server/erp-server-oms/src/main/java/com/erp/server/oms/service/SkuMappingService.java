@@ -164,6 +164,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(String scanCode);
 
     /**
+     * PDA扫码：按客户SKU/三方条码查询映射的内部 SKU id 列表（已去重，不含 ERP sku_no 对照）
+     *
+     * @param scanCode 扫描码
+     * @return product_sku_id 列表，扫描码为空时返回空列表
+     */
+    List<String> listSkuIdsByScanCode(String scanCode);
+
+    /**
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:20
