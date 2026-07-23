@@ -439,24 +439,26 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         }
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, Function.identity(), (v1, v2) -> v1));
         List<LogisticsOrderDTO.LogisticsLabelDTO> successLabelList = new ArrayList<>();
+        List<LogisticsOrderEntity> persistEntityList = new ArrayList<>();
         entityList.forEach(e -> {
+            if (idempotentSkippedAfterSaleIds.contains(e.getAfterSaleId())) {
+                return;
+            }
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = resultDTOMap.get(e.getAfterSaleId());
             if (resultDTO != null) {
                 if (Boolean.TRUE.equals(resultDTO.getStatus())) {
                     e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
                     e.setTrackNo(resultDTO.getTrackNo());
                     e.setExceptionReason("");
-                    if (!idempotentSkippedAfterSaleIds.contains(e.getAfterSaleId())) {
-                        // 操作日志
-                        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
-                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
-                        // 下单成功发送异步请求保存面单
-                        // 设置redis
-                        String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
-                        redisUtil.set(labelRedisKey, true, 86400);
-                        LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
-                        successLabelList.add(labelDTO);
-                    }
+                    // 操作日志
+                    String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
+                    // 下单成功发送异步请求保存面单
+                    // 设置redis
+                    String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
+                    redisUtil.set(labelRedisKey, true, 86400);
+                    LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
+                    successLabelList.add(labelDTO);
                 } else {
                     e.setStatus(LogisticsStatusEnum.FAILED.getCode());
                     e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
@@ -467,12 +469,15 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
                 e.setExceptionReason("单据不存在");
             }
+            persistEntityList.add(e);
         });
         if (CollUtil.isNotEmpty(successLabelList)) {
             mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC,
                     RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), successLabelList, IdUtil.simpleUUID());
         }
-        super.saveOrUpdateBatch(entityList);
+        if (CollUtil.isNotEmpty(persistEntityList)) {
+            super.saveOrUpdateBatch(persistEntityList);
+        }
         return resultDTOList;
     }
 
