@@ -826,7 +826,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 ? LogisticsBillCostTypeEnum.ACTUAL.getCode()
                 : LogisticsBillCostTypeEnum.ESTIMATED.getCode();
         ApiError confirmAmountError = validateProjectedConfirmAmountByCategory(
-                logisticsCostId, importList, costType, existingDetailMap, reconciliationStatus);
+                logisticsCostId, importList, costType, existingDetailMap, null, reconciliationStatus);
         return buildConfirmAmountCategoryMsg(confirmAmountError);
     }
 
@@ -858,9 +858,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Map<String, List<TmsCostDetailEntity>> existingDetailMap = CollUtil.isEmpty(detailList)
                 ? Collections.emptyMap()
                 : detailList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
+        // 基于批量明细一次性预取费用配置分类，避免后续逐单据校验时重复查询配置表。
+        Map<String, String> cfgCategoryCache = buildCfgCostCategoryCache(detailList);
         for (String logisticsCostId : logisticsCostIdList) {
             ApiError confirmAmountError = validateProjectedConfirmAmountByCategory(
-                    logisticsCostId, null, costType, existingDetailMap, reconciliationStatus);
+                    logisticsCostId, null, costType, existingDetailMap, cfgCategoryCache, reconciliationStatus);
             if (confirmAmountError != null) {
                 // 同步分支返回批量失败原因；异步分支写入任务明细失败原因。
                 throw new ServiceException(confirmAmountError);
@@ -879,6 +881,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param importList           本次导入待合并的费用明细，可为空
      * @param costType             确认状态对应的费用类型
      * @param existingDetailMap    预查询的费用明细，key 为费用单 ID；可为空
+     * @param cfgCategoryCache     批量预取的费用配置分类缓存，key 为费用配置 ID；可为空
      * @param reconciliationStatus 目标对账状态
      * @return 全部存在分类金额均为 0 时返回标准错误信息，否则返回 null
      */
@@ -886,6 +889,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                                                               List<TmsCostDetailDTO.UpdateDTO> importList,
                                                               String costType,
                                                               Map<String, List<TmsCostDetailEntity>> existingDetailMap,
+                                                              Map<String, String> cfgCategoryCache,
                                                               String reconciliationStatus) {
         Map<String, BigDecimal> cfgAmountMap = buildProjectedConfirmCfgAmountMap(
                 logisticsCostId, importList, costType, existingDetailMap);
@@ -893,7 +897,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 当前单据没有目标类型明细时，不校验不存在的费用分类。
             return null;
         }
-        Map<String, String> cfgCategoryMap = resolveCfgCostCategoryMap(cfgAmountMap.keySet(), importList, costType);
+        Map<String, String> cfgCategoryMap = resolveCfgCostCategoryMap(
+                cfgAmountMap.keySet(), importList, costType, cfgCategoryCache);
         Map<String, BigDecimal> categoryAmountMap = new LinkedHashMap<>();
         for (Map.Entry<String, BigDecimal> entry : cfgAmountMap.entrySet()) {
             String dictCostCategory = cfgCategoryMap.get(entry.getKey());
@@ -964,18 +969,59 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     /**
+     * 批量构建费用配置分类缓存。
+     * <p>状态批量变更时，费用明细已按批次查出；这里复用明细中的费用配置 ID 一次性查询费用配置，
+     * 后续逐单据校验只读缓存，避免形成单据数量级的 N+1 配置查询。</p>
+     *
+     * @param detailList 批量预取的目标类型费用明细
+     * @return key 为费用配置 ID、value 为费用分类 code 的缓存映射
+     */
+    private Map<String, String> buildCfgCostCategoryCache(List<TmsCostDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptyMap();
+        }
+        List<String> cfgCostIds = detailList.stream()
+                .map(TmsCostDetailEntity::getCfgCostId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgCostIds)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> cfgCategoryCache = new HashMap<>();
+        for (String cfgCostId : cfgCostIds) {
+            // 先记录已查询的费用配置 ID；即使配置缺失，也避免单据循环内再次兜底查询。
+            cfgCategoryCache.put(cfgCostId, "");
+        }
+        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByIds(cfgCostIds);
+        if (CollUtil.isEmpty(cfgCostList)) {
+            return cfgCategoryCache;
+        }
+        for (TmsCfgCostEntity cfgCostEntity : cfgCostList) {
+            if (CharSequenceUtil.isNotBlank(cfgCostEntity.getId())
+                    && CharSequenceUtil.isNotBlank(cfgCostEntity.getDictCostCategory())) {
+                cfgCategoryCache.put(cfgCostEntity.getId(), cfgCostEntity.getDictCostCategory());
+            }
+        }
+        return cfgCategoryCache;
+    }
+
+    /**
      * 解析费用配置对应的费用分类。
-     * <p>导入明细自带费用分类时优先使用导入值；其余费用配置 ID 从费用配置表补齐。
+     * <p>导入明细自带费用分类时优先使用导入值；批量状态变更场景优先使用预取缓存；
+     * 仍未命中的费用配置 ID 再从费用配置表补齐。
      * 该优先级可以保证导入场景在落库前也能按本次导入识别出的费用分类校验。</p>
      *
-     * @param cfgCostIds 费用配置 ID 集合
-     * @param importList 本次导入待合并的费用明细，可为空
-     * @param costType   确认状态对应的费用类型
+     * @param cfgCostIds       费用配置 ID 集合
+     * @param importList       本次导入待合并的费用明细，可为空
+     * @param costType         确认状态对应的费用类型
+     * @param cfgCategoryCache 批量预取的费用配置分类缓存，可为空
      * @return key 为费用配置 ID、value 为费用分类 code 的映射
      */
     private Map<String, String> resolveCfgCostCategoryMap(Collection<String> cfgCostIds,
                                                           List<TmsCostDetailDTO.UpdateDTO> importList,
-                                                          String costType) {
+                                                          String costType,
+                                                          Map<String, String> cfgCategoryCache) {
         Map<String, String> cfgCategoryMap = new HashMap<>();
         if (CollUtil.isNotEmpty(importList)) {
             for (TmsCostDetailDTO.UpdateDTO updateDTO : importList) {
@@ -987,10 +1033,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
             }
         }
-        // 仅查询导入明细无法提供分类的费用配置，减少不必要的配置表访问。
+        if (CollUtil.isNotEmpty(cfgCategoryCache)) {
+            for (String cfgCostId : cfgCostIds) {
+                if (CharSequenceUtil.isBlank(cfgCategoryMap.get(cfgCostId))
+                        && CharSequenceUtil.isNotBlank(cfgCategoryCache.get(cfgCostId))) {
+                    // 批量状态变更场景优先复用预取缓存，避免单据循环内重复查询。
+                    cfgCategoryMap.put(cfgCostId, cfgCategoryCache.get(cfgCostId));
+                }
+            }
+        }
+        // 仅查询导入明细和批量缓存都无法提供分类的费用配置，减少不必要的配置表访问。
         List<String> missingCategoryCfgIds = cfgCostIds.stream()
                 .filter(CharSequenceUtil::isNotBlank)
                 .filter(cfgCostId -> CharSequenceUtil.isBlank(cfgCategoryMap.get(cfgCostId)))
+                .filter(cfgCostId -> cfgCategoryCache == null || !cfgCategoryCache.containsKey(cfgCostId))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(missingCategoryCfgIds)) {
             return cfgCategoryMap;

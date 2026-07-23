@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
@@ -7,6 +8,7 @@ import com.erp.model.tms.enums.DictCostCategoryEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.server.tms.service.TmsCfgCostService;
+import com.erp.server.tms.service.TmsCostDetailService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -20,18 +22,23 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class LogisticsBillCostConfirmAmountTest {
 
     private LogisticsBillCostServiceImpl service;
     private TmsCfgCostService tmsCfgCostService;
+    private TmsCostDetailService tmsCostDetailService;
 
     @Before
     public void setUp() {
         service = new LogisticsBillCostServiceImpl();
         tmsCfgCostService = Mockito.mock(TmsCfgCostService.class);
+        tmsCostDetailService = Mockito.mock(TmsCostDetailService.class);
         ReflectionTestUtils.setField(service, "tmsCfgCostService", tmsCfgCostService);
+        ReflectionTestUtils.setField(service, "tmsCostDetailService", tmsCostDetailService);
     }
 
     @Test
@@ -144,6 +151,56 @@ public class LogisticsBillCostConfirmAmountTest {
         assertNull(actualMsg);
     }
 
+    @Test
+    public void validateConfirmAmount_confirmedStatus_multipleBills_prefetchesCfgCategoryOnce() {
+        List<TmsCostDetailEntity> detailList = Arrays.asList(
+                costDetail("cost-1", "cfg-shipping", BigDecimal.ONE, LogisticsBillCostTypeEnum.ACTUAL.getCode()),
+                costDetail("cost-2", "cfg-declare", BigDecimal.TEN, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        );
+        mockCostDetailLambdaQuery(detailList);
+        when(tmsCfgCostService.listByIds(Arrays.asList("cfg-shipping", "cfg-declare"))).thenReturn(Arrays.asList(
+                cfgCost("cfg-shipping", DictCostCategoryEnum.SHIPPING_COST.getCode()),
+                cfgCost("cfg-declare", DictCostCategoryEnum.DECLARE_COST.getCode())
+        ));
+
+        ReflectionTestUtils.invokeMethod(service, "validateConfirmAmount",
+                Arrays.asList("cost-1", "cost-2"), ReconciliationStatusEnum.CONFIRMED.getCode());
+
+        verify(tmsCfgCostService, times(1)).listByIds(Arrays.asList("cfg-shipping", "cfg-declare"));
+    }
+
+    @Test
+    public void validateConfirmAmount_confirmedStatus_cfgCostMissingInBatchCache_doesNotFallbackQueryPerBill() {
+        List<TmsCostDetailEntity> detailList = Arrays.asList(
+                costDetail("cost-1", "cfg-shipping", BigDecimal.ONE, LogisticsBillCostTypeEnum.ACTUAL.getCode()),
+                costDetail("cost-2", "cfg-declare", BigDecimal.TEN, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        );
+        mockCostDetailLambdaQuery(detailList);
+        when(tmsCfgCostService.listByIds(Arrays.asList("cfg-shipping", "cfg-declare"))).thenReturn(Collections.emptyList());
+
+        ReflectionTestUtils.invokeMethod(service, "validateConfirmAmount",
+                Arrays.asList("cost-1", "cost-2"), ReconciliationStatusEnum.CONFIRMED.getCode());
+
+        verify(tmsCfgCostService, times(1)).listByIds(Arrays.asList("cfg-shipping", "cfg-declare"));
+    }
+
+    @Test
+    public void validateImportConfirmAmountMsg_confirmedStatus_noBatchCache_fallsBackToCfgCostQuery() {
+        String logisticsCostId = "cost-1";
+        Map<String, List<TmsCostDetailEntity>> existingDetailMap = Collections.singletonMap(logisticsCostId, Collections.singletonList(
+                costDetail(logisticsCostId, "cfg-shipping", BigDecimal.ONE, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        ));
+        when(tmsCfgCostService.listByIds(Collections.singletonList("cfg-shipping"))).thenReturn(Collections.singletonList(
+                cfgCost("cfg-shipping", DictCostCategoryEnum.SHIPPING_COST.getCode())
+        ));
+
+        String actualMsg = service.validateImportConfirmAmountMsg(logisticsCostId, null,
+                ReconciliationStatusEnum.CONFIRMED.getCode(), existingDetailMap);
+
+        assertNull(actualMsg);
+        verify(tmsCfgCostService, times(1)).listByIds(Collections.singletonList("cfg-shipping"));
+    }
+
     private TmsCostDetailEntity costDetail(String mainId, String cfgCostId, BigDecimal costValue, String type) {
         TmsCostDetailEntity entity = new TmsCostDetailEntity();
         entity.setMainId(mainId);
@@ -167,5 +224,14 @@ public class LogisticsBillCostConfirmAmountTest {
         entity.setId(id);
         entity.setDictCostCategory(dictCostCategory);
         return entity;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void mockCostDetailLambdaQuery(List<TmsCostDetailEntity> detailList) {
+        LambdaQueryChainWrapper<TmsCostDetailEntity> queryWrapper = Mockito.mock(LambdaQueryChainWrapper.class);
+        when(tmsCostDetailService.lambdaQuery()).thenReturn(queryWrapper);
+        when(queryWrapper.in(Mockito.any(), Mockito.anyCollection())).thenReturn(queryWrapper);
+        when(queryWrapper.eq(Mockito.any(), Mockito.any())).thenReturn(queryWrapper);
+        when(queryWrapper.list()).thenReturn(detailList);
     }
 }
