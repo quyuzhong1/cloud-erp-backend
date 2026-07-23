@@ -833,7 +833,7 @@
                 <if test="valueList != null and valueList.size() > 0">
                     <choose>
                         <!-- 平台订单号：精确 IN（单值可走索引）+ 逗号拆分（与 Java split+trim 语义一致） -->
-                        <when test="'platformCode'.equals(field) or 'platformOrderNo'.equals(field)">
+                        <when test="'platformCode'.equals(field)">
                             OR (
                                 lb.platform_code IN
                                 <foreach collection="valueList" item="val" open="(" separator="," close=")">
@@ -855,7 +855,7 @@
                                 #{val}
                             </foreach>
                         </when>
-                        <when test="'sourceCode'.equals(field) or 'soCode'.equals(field)">
+                        <when test="'sourceCode'.equals(field)">
                             OR lb.source_code IN
                             <foreach collection="valueList" item="val" open="(" separator="," close=")">
                                 #{val}
