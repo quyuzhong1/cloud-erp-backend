@@ -16,8 +16,10 @@ import java.util.List;
  * 各类 {@code udf1~udf12} 自定义扩展字段与 {@code fileBase64}（默认空）等无业务用途字段不纳入本 DTO。
  * <p>
  * {@code asnLineItems} 为入库单明细（申报/期望行，含 {@code quantity}），{@code asnItemReceiveDetails}
- * 为实际收货明细（含收货/上架数量），二者的 {@code skuStatus} 均区分良品（GOOD）/不良品（DAMAGE）；
- * 下游签收流水以入库单明细 {@code asnLineItems} 为准。
+ * 为实际收货/上架流水，二者的 {@code skuStatus} 均区分良品（GOOD）/不良品（DAMAGE）。
+ * <p>
+ * 下游签收流水以 {@code asnItemReceiveDetails} 为准：该数组同时包含收货流水（detailId 前缀 RV）与
+ * 上架流水（detailId 前缀 PV），二者数量重复；签收只取上架流水（PV），数量取 {@code putawayQty}。
  */
 @Data
 @AllArgsConstructor
@@ -692,13 +694,13 @@ public class AiyaInboundResp implements Serializable {
         private Integer receiveQty;
 
         /**
-         * 收货时间
+         * 收货时间（收货流水 RV 有值；上架流水 PV 无值，由 InitHandler 回填 ASN 级 receiveTime 用于生成签收流水时间）
          */
         @JSONField(name = "receiveTime")
         private String receiveTime;
 
         /**
-         * 上架数量
+         * 上架数量（上架流水 PV 有值，签收数量取此字段）
          */
         @JSONField(name = "putawayQty")
         private Integer putawayQty;
