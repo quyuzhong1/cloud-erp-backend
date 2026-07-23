@@ -8900,6 +8900,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateSoB2cStatus(List<String> ids, String status, Boolean isManualDelivery) {
         if (CollUtil.isEmpty(ids)) {
             return Boolean.FALSE;
@@ -8911,6 +8912,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StrUtil.isBlank(status)) {
             return updateResult;
         }
+        // 与 updateSoB2cStatusAndDeliveryTime 一致：同事务回写 KOL 拆分单发货状态（如手动标发回待发货）
+        listByIds(ids).stream()
+                .filter(e -> SourceTypeEnum.KOL_B2C_APPLICATION.getCode().equals(e.getSourceType()))
+                .map(SoB2cEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .forEach(kolSubB2cApplicationService::refreshDeliveryAndTrackBySoB2c);
         String statusName = SoB2cBillStatusEnum.getName(status);
         String msg = "销售订单状态变更为:" + statusName;
         for (String id : ids) {
@@ -8928,6 +8936,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @Date 2023/12/27 20:14
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateSoB2cStatusAndDeliveryTime(SoB2cDTO.UpdateDeliveryTimeDTO deliveryTimeDTO) {
         if (CollUtil.isEmpty(deliveryTimeDTO.getSoB2cIds())) {
             return Boolean.FALSE;
@@ -8945,7 +8954,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cLogisticsService.updateBatchById(deliveryTimeDTO.getSoB2cLogisticsList());
         }
 
-        //回写更新kol-b2c拆分单（支持拆单后部分发货、多跟踪号）
+        // 回写 KOL 拆分单须与上面更新同一事务/连接：WMS 发货在 GlobalTransactional 下调用本 Feign 时，
+        // 若此处无本地事务，refresh 会新开连接读不到未提交的 bill_status，导致发货状态仍停在待发货。
         List<SoB2cEntity> soB2cEntities = listByIds(deliveryTimeDTO.getSoB2cIds()).stream()
                 .filter(e -> SourceTypeEnum.KOL_B2C_APPLICATION.getCode().equals(e.getSourceType()))
                 .collect(Collectors.toList());
@@ -9050,9 +9060,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (dto.isAddOperationLog()) {
             operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoId(), "海外仓发货");
         }
-        return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
+        Boolean updated = this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
                 set(StringUtils.isNotBlank(billStatus), SoB2cEntity::getBillStatus, billStatus).
                 update(new SoB2cEntity());
+        if (StringUtils.isNotBlank(dto.getSoId())) {
+            SoB2cEntity soB2cEntity = getById(dto.getSoId());
+            if (soB2cEntity != null
+                    && SourceTypeEnum.KOL_B2C_APPLICATION.getCode().equals(soB2cEntity.getSourceType())
+                    && StringUtils.isNotBlank(soB2cEntity.getSourceId())) {
+                kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2c(soB2cEntity.getSourceId());
+            }
+        }
+        return updated;
     }
 
     @Override
