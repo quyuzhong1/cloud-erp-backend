@@ -801,10 +801,8 @@
         </trim>
     </select>
 
-    <!-- 根据唯一键查询物流单详情：条件下推到 lb/lbd，字段白名单映射（禁止动态列名） -->
-    <select id="listLogisticsBillByUniqueKey"
-            resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
-        SELECT
+    <!-- 唯一键预查 VO 列（UNION ALL 各分支必须一致） -->
+    <sql id="LogisticsBillVo_UniqueKey_Column_List">
         lb.id,
         lb.shop_id as shopId,
         lb.shop_name as shopName,
@@ -824,62 +822,96 @@
         lbd.id as detailId,
         lbd.track_status as trackStatus,
         lbd.track_no as trackNo
-        FROM logistics_bill lb
-        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = false
-        WHERE lb.is_deleted = false
-          AND lb.order_type IN ('B2B','B2C','AfterSale','other')
-        <trim prefix="AND (" suffix=")" prefixOverrides="OR">
-            <foreach collection="paramMap" item="valueList" index="field" separator=" ">
-                <if test="valueList != null and valueList.size() > 0">
-                    <choose>
-                        <!-- 平台订单号：精确 IN（单值可走索引）+ 逗号拆分（与 Java split+trim 语义一致） -->
-                        <when test="'platformCode'.equals(field)">
-                            OR (
-                                lb.platform_code IN
-                                <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                                    #{val}
-                                </foreach>
-                                OR EXISTS (
-                                    SELECT 1
-                                    FROM unnest(string_to_array(COALESCE(lb.platform_code, ''), ',')) AS platform_code_item(code)
-                                    WHERE btrim(platform_code_item.code) IN
-                                    <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                                        #{val}
-                                    </foreach>
-                                )
-                            )
-                        </when>
-                        <when test="'trackNo'.equals(field)">
-                            OR lbd.track_no IN
-                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                                #{val}
-                            </foreach>
-                        </when>
-                        <when test="'sourceCode'.equals(field)">
-                            OR lb.source_code IN
-                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                                #{val}
-                            </foreach>
-                        </when>
-                        <when test="'transportNo'.equals(field)">
-                            OR lb.transport_no IN
-                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                                #{val}
-                            </foreach>
-                        </when>
-                        <when test="'soDeliveryCode'.equals(field)">
-                            OR lb.so_delivery_code IN
-                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                                #{val}
-                            </foreach>
-                        </when>
-                        <!-- 未识别字段由调用方硬失败拦截；此处恒假避免误扫 -->
-                        <otherwise>
-                            OR 1 = 0
-                        </otherwise>
-                    </choose>
-                </if>
-            </foreach>
+    </sql>
+
+    <!--
+      根据唯一键查询物流单：单方法单 SQL，按字段 UNION ALL，各分支从索引列所在表驱动。
+      预查语义为 OR（任一识别字段命中即进入候选集）；多唯一键 AND 仍由上层 resolve 完成。
+      调用方需将 soCode→sourceCode、platformOrderNo→platformCode 归一后再传入。
+    -->
+    <select id="listLogisticsBillByUniqueKey"
+            resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        <trim prefixOverrides="UNION ALL">
+            <!-- trackNo：明细 track_no 索引驱动 -->
+            <if test="paramMap != null and paramMap.trackNo != null and paramMap.trackNo.size() &gt; 0">
+                UNION ALL
+                SELECT
+                <include refid="LogisticsBillVo_UniqueKey_Column_List"/>
+                FROM logistics_bill_detail lbd
+                INNER JOIN logistics_bill lb ON lb.id = lbd.main_id AND lb.is_deleted = false
+                WHERE lbd.is_deleted = false
+                  AND lb.order_type IN ('B2B','B2C','AfterSale','other')
+                  AND lbd.track_no IN
+                <foreach collection="paramMap.trackNo" item="val" open="(" separator="," close=")">
+                    #{val}
+                </foreach>
+            </if>
+            <!-- sourceCode：主表 source_code 索引驱动 -->
+            <if test="paramMap != null and paramMap.sourceCode != null and paramMap.sourceCode.size() &gt; 0">
+                UNION ALL
+                SELECT
+                <include refid="LogisticsBillVo_UniqueKey_Column_List"/>
+                FROM logistics_bill lb
+                LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = lb.id AND lbd.is_deleted = false
+                WHERE lb.is_deleted = false
+                  AND lb.order_type IN ('B2B','B2C','AfterSale','other')
+                  AND lb.source_code IN
+                <foreach collection="paramMap.sourceCode" item="val" open="(" separator="," close=")">
+                    #{val}
+                </foreach>
+            </if>
+            <!-- transportNo：主表 transport_no 索引驱动 -->
+            <if test="paramMap != null and paramMap.transportNo != null and paramMap.transportNo.size() &gt; 0">
+                UNION ALL
+                SELECT
+                <include refid="LogisticsBillVo_UniqueKey_Column_List"/>
+                FROM logistics_bill lb
+                LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = lb.id AND lbd.is_deleted = false
+                WHERE lb.is_deleted = false
+                  AND lb.order_type IN ('B2B','B2C','AfterSale','other')
+                  AND lb.transport_no IN
+                <foreach collection="paramMap.transportNo" item="val" open="(" separator="," close=")">
+                    #{val}
+                </foreach>
+            </if>
+            <!-- soDeliveryCode：主表 so_delivery_code 驱动 -->
+            <if test="paramMap != null and paramMap.soDeliveryCode != null and paramMap.soDeliveryCode.size() &gt; 0">
+                UNION ALL
+                SELECT
+                <include refid="LogisticsBillVo_UniqueKey_Column_List"/>
+                FROM logistics_bill lb
+                LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = lb.id AND lbd.is_deleted = false
+                WHERE lb.is_deleted = false
+                  AND lb.order_type IN ('B2B','B2C','AfterSale','other')
+                  AND lb.so_delivery_code IN
+                <foreach collection="paramMap.soDeliveryCode" item="val" open="(" separator="," close=")">
+                    #{val}
+                </foreach>
+            </if>
+            <!-- platformCode：精确 IN + 逗号拆分 -->
+            <if test="paramMap != null and paramMap.platformCode != null and paramMap.platformCode.size() &gt; 0">
+                UNION ALL
+                SELECT
+                <include refid="LogisticsBillVo_UniqueKey_Column_List"/>
+                FROM logistics_bill lb
+                LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = lb.id AND lbd.is_deleted = false
+                WHERE lb.is_deleted = false
+                  AND lb.order_type IN ('B2B','B2C','AfterSale','other')
+                  AND (
+                    lb.platform_code IN
+                    <foreach collection="paramMap.platformCode" item="val" open="(" separator="," close=")">
+                        #{val}
+                    </foreach>
+                    OR EXISTS (
+                        SELECT 1
+                        FROM unnest(string_to_array(COALESCE(lb.platform_code, ''), ',')) AS platform_code_item(code)
+                        WHERE btrim(platform_code_item.code) IN
+                        <foreach collection="paramMap.platformCode" item="val" open="(" separator="," close=")">
+                            #{val}
+                        </foreach>
+                    )
+                  )
+            </if>
         </trim>
     </select>
 </mapper>

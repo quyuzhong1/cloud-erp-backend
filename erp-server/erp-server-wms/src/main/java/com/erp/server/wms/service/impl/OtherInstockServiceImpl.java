@@ -247,6 +247,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String addAndApprove(OtherInstockEntity entity, Boolean isPushWdt) {
+        return addAndApprove(entity, isPushWdt, true);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public String addAndApprove(OtherInstockEntity entity, Boolean isPushWdt, boolean updateOccupyImmediately) {
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         entity.setCode(code);
@@ -259,9 +266,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //新增明细
             entity.getDetailEntityList().forEach(v->v.setMainId(id));
             otherInstockDetailService.saveBatch(entity.getDetailEntityList());
-            //标记SKU
-            List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
-            plmTaskFeign.updateOccupyStatus(skuIds);
+            //标记SKU：可延迟到调用方本地事务提交后执行，避免本地回滚后远程占用无法撤销；成功路径最终仍会标记同一批 SKU
+            if (updateOccupyImmediately) {
+                List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
+                plmTaskFeign.updateOccupyStatus(skuIds);
+            }
             // 提交但不启动审批流；addAndApprove 为系统自动闭环场景，需直接结束审核，不能走 workflowFeign.approve，
             // 否则创建人与当前操作人相同时会触发「创建人与审批人不能相同」并被包装为「审核失败」
             this.submit(id, Boolean.FALSE);

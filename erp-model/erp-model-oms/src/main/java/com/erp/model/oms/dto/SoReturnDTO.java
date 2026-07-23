@@ -1023,6 +1023,21 @@ public class SoReturnDTO {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * 剩余应退货数量：入库实退汇总 LEFT JOIN 片段（由 {@link com.erp.server.oms.query.SoReturnLinkAfterSaleQueryHandler} 生成）
+         */
+        private String instockJoinSql;
+
+        /**
+         * 剩余应退货数量 SELECT 表达式（returnQty 列）
+         */
+        private String remainReturnQtyExpr;
+
+        /**
+         * 剩余应退货数量 &gt; 0 的 WHERE 过滤条件
+         */
+        private String remainReturnQtyFilter;
     }
 
     /**

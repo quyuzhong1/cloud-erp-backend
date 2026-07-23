@@ -113,6 +113,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	private SoReturnPrestockService soReturnPrestockService;
 
 	@Resource
+	private ReturnInstockGapReconciler returnInstockGapReconciler;
+
+	@Resource
 	private SoB2cReturnFeign soB2cReturnFeign;
 
 	@Resource
@@ -170,28 +173,42 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			if (StringUtils.isBlank(thirdId)){
 				ServiceException.runError("谷仓退货入库明细流水thirdId不能为空");
 			}
-			// 谷仓按明细ID判断
-			Integer count = soReturnInstockDetailService.lambdaQuery()
+			// 谷仓按明细ID判断；命中时补偿售后状态（入库已成功但 Feign 改状态失败后的重试路径）
+			SoReturnInstockDetailEntity existDetail = soReturnInstockDetailService.lambdaQuery()
 					.eq(SoReturnInstockDetailEntity::getSourceDetailId, thirdId)
 					.eq(SoReturnInstockDetailEntity::getCreateUserId, dto.getAuthId())
-					.count();
-			if (count > 0) {
+					.last("limit 1")
+					.one();
+			if (Objects.nonNull(existDetail)) {
+				compensateReturnStatusIfNeeded(soReturnInstockService.getById(existDetail.getMainId()));
 				return;
 			}
 		}else if (PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
 			SoReturnInstockEntity exist = soReturnInstockService.getBySourceId(dto.getSourceId());
 			if(Objects.nonNull(exist)){
+				compensateReturnStatusIfNeeded(exist);
 				return;
 			}
 		} else {
-			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
-			if (Objects.nonNull(existEntity)) {
-				// 已知遗留限制：这里只判断"是否存在任意一条退货入库单"，不核对是否已覆盖全部平台推送明细；
-				// 若此前处理是部分成功（例如物流单号匹配已生成一部分，参考单号匹配那一步还没跑完），本次会被直接跳过。
-				// 打日志留痕，方便按 thirdCode 排查该单是否遗漏了未匹配SKU对应的预入库单
-				log.warn("[海外仓退货入库] thirdCode={} 已存在退货入库单(id={}, code={})，本次消息跳过处理；若怀疑此前处理未覆盖全部平台推送明细，请人工核对该thirdCode下退货入库单+预入库单明细合计是否等于平台推送明细",
-						dto.getPlatformReturnOrderNo(), existEntity.getId(), existEntity.getCode());
+			// 默认平台：按明细缺口对账，禁止「存在任意一条退货入库单就整单跳过」
+			List<PlatformReturnInstockDTO.Detail> unprocessed = returnInstockGapReconciler.resolveUnprocessedDetails(
+					dto, this::resolveSkuMappingByPlatformSkuNo);
+			if (CollectionUtils.isEmpty(unprocessed)) {
+				log.warn("[海外仓退货入库] thirdCode={} 推送明细已全部被退货入库单/预入库单覆盖，本次消息跳过",
+						dto.getPlatformReturnOrderNo());
+				// 入库/预入库已齐但售后可能仍为待退货（落库成功、Feign 失败后重试），补偿同步状态
+				compensateReturnStatusByThirdCode(dto.getPlatformReturnOrderNo());
 				return;
+			}
+			if (unprocessed.size() != dto.getProductDetailList().size()
+					|| !returnInstockGapReconciler.sameDetailQtyFingerprint(unprocessed, dto.getProductDetailList())) {
+				int pushQty = returnInstockGapReconciler.sumPushQty(dto.getProductDetailList());
+				int gapQty = returnInstockGapReconciler.sumPushQty(unprocessed);
+				log.warn("[海外仓退货入库] thirdCode={} 存在已处理明细，本次仅处理缺口：推送明细行数={}、推送数量={}，缺口行数={}、缺口数量={}",
+						dto.getPlatformReturnOrderNo(),
+						dto.getProductDetailList().size(), pushQty,
+						unprocessed.size(), gapQty);
+				dto.setProductDetailList(unprocessed);
 			}
 		}
 
@@ -206,10 +223,12 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		// 属于已知限制，留给后续实现「留空」分支时一并重新设计）
 		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(), dto.getWarehouseCode());
 		if (Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())) {
+			// 故意 return 而非抛异常触发 MQ 重试：
+			// 1) 众包/极兔/艾姆勒/通邮等历史平台已在上方 isLegacySpecialWarehousePlatform 分流，不会走到这里；
+			// 2) 能落到此处多为仓库映射未配置的持久性配置问题，重试无法自愈，只会空转至死信；
+			// 3) 用 error 日志告警，待运营补齐映射或后续「留空仓库」分支落地后再改处理策略（补偿表/告警），勿改成 throw。
 			log.error("[海外仓退货入库-无头件] 仓库信息缺失，跳过生成预入库单：platform={}, warehouseCode={}, thirdCode={}",
 					dto.getPlatform(), dto.getWarehouseCode(), dto.getPlatformReturnOrderNo());
-			// TODO 已知限制：艾姆勒IML/统佑等平台的仓库解析依赖订单出库明细，当前未支持，消息将被跳过且不重试；
-			// 后续补充「留空仓库」分支后需要重新评估是否需要落地补偿表/告警，而不是仅记录日志
 			return;
 		}
 		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
@@ -264,8 +283,14 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<SoB2cReturnEntity> candidates = matchB2cReturnCandidates(dto.getOrderReferenceNo());
 		SoB2cReturnEntity matchedReturn = CollectionUtils.isEmpty(candidates) ? null : pickReturnBySkuMatch(candidates, incomingSkuIds);
 		if (Objects.nonNull(matchedReturn)) {
-			if (generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn, skuMappingMap)) {
-				return true;
+			// null=无法按退货单落库（回退原明细继续匹配）；empty=本批已处理完；non-empty=退货缺口已扣，剩余继续销售订单匹配/预入库
+			List<PlatformReturnInstockDTO.Detail> remainingAfterReturn =
+					generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn, skuMappingMap);
+			if (Objects.nonNull(remainingAfterReturn)) {
+				if (CollectionUtils.isEmpty(remainingAfterReturn)) {
+					return true;
+				}
+				dto.setProductDetailList(remainingAfterReturn);
 			}
 		}
 		SoB2cEntity soB2cEntity = matchB2cSoByReferenceNo(dto.getOrderReferenceNo(), incomingSkuIds);
@@ -291,20 +316,23 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 
 	/**
-	 * 按SKU维度从候选退货单中挑选可匹配的一条：优先"待退货"状态，同状态内取第一个SKU命中的
+	 * 按SKU维度从候选退货单中挑选可匹配的一条：
+	 * 优先"待退货"，且要求推送 SKU 在该单上仍有未入库缺口；已全部入库的候选跳过，避免误关联已完结单据。
 	 */
 	private SoB2cReturnEntity pickReturnBySkuMatch(List<SoB2cReturnEntity> candidates, Set<String> incomingSkuIds) {
 		if (CollectionUtils.isEmpty(incomingSkuIds)) {
 			return null;
 		}
+		Map<String, List<ReturnInstockGapReconciler.B2cReturnGap>> gapsByMainId =
+				returnInstockGapReconciler.loadOpenB2cReturnGapsByMains(candidates);
 		List<SoB2cReturnEntity> sorted = candidates.stream()
 				.sorted(Comparator.comparing(v -> SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(v.getStatus()) ? 0 : 1))
 				.collect(Collectors.toList());
 		for (SoB2cReturnEntity candidate : sorted) {
-			List<SoB2cReturnDetailEntity> detailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
-					.eq(SoB2cReturnDetailEntity::getMainId, candidate.getId()).list();
-			boolean skuMatched = detailList.stream()
-					.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
+			List<ReturnInstockGapReconciler.B2cReturnGap> openGaps =
+					gapsByMainId.getOrDefault(candidate.getId(), Collections.emptyList());
+			boolean skuMatched = openGaps.stream()
+					.anyMatch(g -> StringUtils.isNotBlank(g.getSkuId()) && incomingSkuIds.contains(g.getSkuId()));
 			if (skuMatched) {
 				return candidate;
 			}
@@ -372,49 +400,118 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 
 	/**
-	 * 命中退货单后生成《已审核-退货入库单》，并将本次入库与该退货单及其SKU匹配明细关联
+	 * 命中退货单后，按退货单明细尚未入库缺口扣减推送量并生成《已审核-退货入库单》。
+	 * <p>
+	 * 仅缺口命中部分关联该退货单；超出数量与退货单不存在的 SKU 作为剩余明细返回，
+	 * 由调用方继续销售订单匹配或预入库。售后状态仅在该退货单全部应退完成入库后改为已退货。
+	 * </p>
 	 *
-	 * @return 是否生成成功；售后单/店铺数据不一致导致无法生成时返回 false，交由调用方回退到下一步匹配
+	 * @return {@code null} 无法按退货单落库（订单/店铺缺失或无缺口可分配），交由调用方用原明细继续匹配；
+	 *         空列表表示本批已处理完；非空列表为剩余推送明细
 	 */
-	private boolean generateInstockByMatchedReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cReturnEntity matchedReturn,
-													Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
+	private List<PlatformReturnInstockDTO.Detail> generateInstockByMatchedReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity,
+																				SoB2cReturnEntity matchedReturn,
+																				Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
 		SoB2cEntity soB2cEntity = soB2cFeign.getById(matchedReturn.getSoId());
 		if (Objects.isNull(soB2cEntity)) {
 			log.warn("[海外仓退货入库] 匹配到退货单{}但对应销售订单不存在，回退到销售订单匹配：soId={}", matchedReturn.getCode(), matchedReturn.getSoId());
-			return false;
+			return null;
 		}
 		ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
 		if (Objects.isNull(shopInfoEntity)) {
 			log.warn("[海外仓退货入库] 匹配到退货单{}但对应店铺不存在，回退到销售订单匹配：shopId={}", matchedReturn.getCode(), soB2cEntity.getShopId());
-			return false;
+			return null;
+		}
+		List<ReturnInstockGapReconciler.B2cReturnGap> openGaps = returnInstockGapReconciler.loadOpenB2cReturnGaps(matchedReturn);
+		if (CollectionUtils.isEmpty(openGaps)) {
+			log.warn("[海外仓退货入库] 退货单{}已无未入库缺口，回退到销售订单匹配", matchedReturn.getCode());
+			return null;
 		}
 		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity, skuMappingMap);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
-			// 整批SKU在销售订单里都对不上：不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
-			log.warn("[海外仓退货入库] 退货单{}对应销售订单明细中一个SKU都匹配不上，全部改为生成预入库单：soCode={}",
+			log.warn("[海外仓退货入库] 退货单{}对应销售订单明细中一个SKU都匹配不上，回退剩余明细继续匹配：soCode={}",
 					matchedReturn.getCode(), soB2cEntity.getCode());
+			return null;
 		}
-		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		ReturnInstockGapReconciler.ReturnGapAllocationResult allocation = returnInstockGapReconciler.allocateAgainstB2cReturnGaps(
+				splitResult.matchedList, splitResult.unmatchedList, openGaps, dto.getReturnType());
+		if (CollectionUtils.isEmpty(allocation.getReturnLinkedList())) {
+			log.warn("[海外仓退货入库] 退货单{}与本次推送SKU无数量可分配缺口，回退到销售订单匹配", matchedReturn.getCode());
+			return null;
+		}
 
-		// 关联已匹配到的退货单：按SKU回写明细的退货单明细ID，退货单状态由待退货流转为已退货
-		List<SoB2cReturnDetailEntity> matchedDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
-				.eq(SoB2cReturnDetailEntity::getMainId, matchedReturn.getId()).list();
-		for (SoReturnInstockDetailEntity soReturnInstockDetailEntity : splitResult.matchedList) {
-			matchedDetailList.stream()
-					.filter(v -> v.getSkuId().equals(soReturnInstockDetailEntity.getSkuId()))
-					.findFirst()
-					.ifPresent(v -> soReturnInstockDetailEntity.setSoReturnDetailId(v.getId()));
+		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		if (StringUtils.isNotBlank(matchedReturn.getSoCode())) {
+			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
 		}
 		soReturnInstockEntity.setSoReturnId(matchedReturn.getId());
 		soReturnInstockEntity.setSoReturnCode(matchedReturn.getCode());
-		if (SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(matchedReturn.getStatus())) {
+
+		// 仅落关联退货单的缺口命中部分；剩余明细交调用方继续销售订单匹配/预入库（不再在此处直接预入库）
+		this.persistMatchedInstockAndUnmatchedPrestock(soReturnInstockEntity, allocation.getReturnLinkedList(),
+				dto, warehouseEntity, Collections.emptyList());
+		if (allocation.isAllGapsClosed()
+				&& SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(matchedReturn.getStatus())) {
 			matchedReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
 			soB2cReturnFeign.updateBatch(Collections.singletonList(matchedReturn));
 		}
+		return allocation.getRemainingPushDetails();
+	}
 
-		// 已匹配到订单的SKU落退货入库单，订单里没有的SKU（unmatchedList）单独落预入库单，两者同一本地事务提交
-		this.persistMatchedInstockAndUnmatchedPrestock(soReturnInstockEntity, splitResult.matchedList, dto, warehouseEntity, splitResult.unmatchedList);
-		return true;
+	/**
+	 * 按 thirdCode 查找已落库退货入库单，补偿同步关联售后状态。
+	 * 用于「推送明细已全部覆盖」幂等跳过路径。
+	 *
+	 * @param thirdCode 平台退货单号
+	 */
+	private void compensateReturnStatusByThirdCode(String thirdCode) {
+		if (CharSequenceUtil.isBlank(thirdCode)) {
+			return;
+		}
+		List<SoReturnInstockEntity> existList = soReturnInstockService.listByThirdCode(thirdCode);
+		if (CollectionUtils.isEmpty(existList)) {
+			return;
+		}
+		for (SoReturnInstockEntity exist : existList) {
+			compensateReturnStatusIfNeeded(exist);
+		}
+	}
+
+	/**
+	 * 本地入库已落库但售后状态可能尚未同步（Feign 失败后 MQ 重试命中幂等跳过）时，
+	 * 在退货单全部应退数量已入库完成后，补偿将关联退货单从待退货改为已退货。
+	 * 补偿本身可幂等：已是已退货或仍有未入库缺口则 no-op。
+	 *
+	 * @param existEntity 已存在的退货入库单；无关联售后单时直接返回
+	 */
+	private void compensateReturnStatusIfNeeded(SoReturnInstockEntity existEntity) {
+		if (Objects.isNull(existEntity) || CharSequenceUtil.isBlank(existEntity.getSoReturnId())) {
+			return;
+		}
+		List<SoB2cReturnEntity> returns = soB2cReturnFeign.listByIds(Collections.singletonList(existEntity.getSoReturnId()));
+		if (CollectionUtils.isEmpty(returns)) {
+			log.warn("[海外仓退货入库] 补偿售后状态跳过：入库单{}关联的退货单{}不存在",
+					existEntity.getCode(), existEntity.getSoReturnId());
+			return;
+		}
+		SoB2cReturnEntity soReturn = returns.get(0);
+		if (!SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(soReturn.getStatus())) {
+			return;
+		}
+		if (!returnInstockGapReconciler.isB2cReturnFullyInstocked(soReturn.getId())) {
+			log.warn("[海外仓退货入库] 补偿售后状态跳过：退货单{}仍有未入库缺口（入库单：{}）",
+					soReturn.getCode(), existEntity.getCode());
+			return;
+		}
+		soReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
+		try {
+			soB2cReturnFeign.updateBatch(Collections.singletonList(soReturn));
+			log.warn("[海外仓退货入库] 补偿将退货单{}由待退货更新为已退货（入库单已存在：{}）",
+					soReturn.getCode(), existEntity.getCode());
+		} catch (RuntimeException e) {
+			log.warn("[海外仓退货入库] 补偿更新退货单{}状态失败，将触发MQ重试：{}", soReturn.getCode(), e.getMessage());
+			throw e;
+		}
 	}
 
 	/**
@@ -431,24 +528,34 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if (Objects.nonNull(bySoCode)) {
 			candidates.add(bySoCode);
 		}
-		return candidates.stream()
+		List<SoB2cEntity> validCandidates = candidates.stream()
 				.filter(v -> !Boolean.TRUE.equals(v.getInvalidStatus()))
 				.filter(v -> SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus()))
-				.filter(v -> soB2cHasMatchingSku(v.getId(), incomingSkuIds))
+				.collect(Collectors.toList());
+		Set<String> soIdsWithMatchingSku = soIdsWithMatchingB2cSku(validCandidates, incomingSkuIds);
+		return validCandidates.stream()
+				.filter(v -> soIdsWithMatchingSku.contains(v.getId()))
 				.findFirst()
 				.orElse(null);
 	}
 
 	/**
-	 * 校验B2C销售订单明细是否存在命中的ERP SKU
+	 * 批量一次性取全部候选B2C销售订单的明细，返回其中存在命中ERP SKU的订单ID集合，
+	 * 避免逐个候选订单发起Feign查询（此前 soB2cHasMatchingSku 在 Stream.filter 中被每个候选调用一次）
 	 */
-	private boolean soB2cHasMatchingSku(String soId, Set<String> incomingSkuIds) {
-		if (CollectionUtils.isEmpty(incomingSkuIds)) {
-			return false;
+	private Set<String> soIdsWithMatchingB2cSku(List<SoB2cEntity> candidates, Set<String> incomingSkuIds) {
+		if (CollectionUtils.isEmpty(candidates) || CollectionUtils.isEmpty(incomingSkuIds)) {
+			return Collections.emptySet();
 		}
-		List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
-		return CollectionUtils.isNotEmpty(detailList) && detailList.stream()
-				.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
+		List<String> candidateIds = candidates.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+		List<SoB2cDetailEntity> allDetails = soB2cFeign.listDetailByMainIds(candidateIds);
+		if (CollectionUtils.isEmpty(allDetails)) {
+			return Collections.emptySet();
+		}
+		return allDetails.stream()
+				.filter(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()))
+				.map(SoB2cDetailEntity::getMainId)
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -465,23 +572,33 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if (Objects.nonNull(byCode)) {
 			candidates.add(byCode);
 		}
-		return candidates.stream()
+		List<SoInfoEntity> validCandidates = candidates.stream()
 				.filter(v -> !Boolean.TRUE.equals(v.getInvalidStatus()))
-				.filter(v -> soInfoHasMatchingSku(v.getId(), incomingSkuIds))
+				.collect(Collectors.toList());
+		Set<String> soInfoIdsWithMatchingSku = soInfoIdsWithMatchingSku(validCandidates, incomingSkuIds);
+		return validCandidates.stream()
+				.filter(v -> soInfoIdsWithMatchingSku.contains(v.getId()))
 				.findFirst()
 				.orElse(null);
 	}
 
 	/**
-	 * 校验B2B销售订单明细是否存在命中的ERP SKU
+	 * 批量一次性取全部候选B2B销售订单的明细，返回其中存在命中ERP SKU的订单ID集合，
+	 * 避免逐个候选订单发起Feign查询（此前 soInfoHasMatchingSku 在 Stream.filter 中被每个候选调用一次）
 	 */
-	private boolean soInfoHasMatchingSku(String soInfoId, Set<String> incomingSkuIds) {
-		if (CollectionUtils.isEmpty(incomingSkuIds)) {
-			return false;
+	private Set<String> soInfoIdsWithMatchingSku(List<SoInfoEntity> candidates, Set<String> incomingSkuIds) {
+		if (CollectionUtils.isEmpty(candidates) || CollectionUtils.isEmpty(incomingSkuIds)) {
+			return Collections.emptySet();
 		}
-		List<SoDetailEntity> detailList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soInfoId));
-		return CollectionUtils.isNotEmpty(detailList) && detailList.stream()
-				.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
+		List<String> candidateIds = candidates.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+		List<SoDetailEntity> allDetails = soInfoFeign.listSoDetailByMainIds(candidateIds);
+		if (CollectionUtils.isEmpty(allDetails)) {
+			return Collections.emptySet();
+		}
+		return allDetails.stream()
+				.filter(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()))
+				.map(SoDetailEntity::getMainId)
+				.collect(Collectors.toSet());
 	}
 
 	/**
