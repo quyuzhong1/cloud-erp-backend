@@ -26,8 +26,8 @@ import java.util.TreeMap;
  * 等均为顶层标量字段），大部分字段可直接由 {@code dmp_cfg_input_convert} 数据库字段映射完成，
  * 无需本类介入；本类仅做以下无法由字段映射直接表达的后处理：
  * <ol>
- *   <li>{@code finishTime}（推测字段名，未有真实样例验证，格式参照建单 orderTime 或
- *       "yyyy-MM-dd HH:mm:ss"）→ {@code dateShipping}（{@link LocalDateTime}）；</li>
+ *   <li>{@code shippingTime}（文档发运时间，格式 {@code yyyy-MM-dd HH:mm:ss}）
+ *       → {@code dateShipping}（{@link LocalDateTime}）；</li>
  *   <li>{@code orderStatus} → 统一转 String，兼容 mongo 中可能非 String 存储；</li>
  *   <li>固定写入 {@code warehousePlatformType} = {@code overseasWarehouse}；</li>
  *   <li>固定写入 {@code orderType} = {@code B2C}。</li>
@@ -42,10 +42,9 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter ORDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
 
     private static final String MONGO_KEY_ORDER_NUMBER = "orderNumber";
-    private static final String MONGO_KEY_FINISH_TIME = "finishTime";
+    private static final String MONGO_KEY_SHIPPING_TIME = "shippingTime";
     private static final String MONGO_KEY_ORDER_STATUS = "orderStatus";
 
     private static final String DMP_KEY_DATE_SHIPPING = "dateShipping";
@@ -68,7 +67,7 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
             Map<String, Object> mongoData = mongoDataMaps.get(0);
 
             Object orderNumber = mongoData.get(MONGO_KEY_ORDER_NUMBER);
-            LocalDateTime dateShipping = resolveDateTime(mongoData.get(MONGO_KEY_FINISH_TIME), orderNumber);
+            LocalDateTime dateShipping = resolveDateTime(mongoData.get(MONGO_KEY_SHIPPING_TIME), orderNumber);
             String orderStatus = mongoData.get(MONGO_KEY_ORDER_STATUS) != null
                     ? String.valueOf(mongoData.get(MONGO_KEY_ORDER_STATUS)) : null;
 
@@ -86,11 +85,8 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     }
 
     /**
-     * 解析出库完成时间字符串为 {@link LocalDateTime}，依次尝试 {@code yyyy-MM-dd'T'HH:mm:ssZ}
-     * （建单 orderTime 格式）/ {@code yyyy-MM-dd HH:mm:ss} / {@code yyyy-MM-dd}（取当日 00:00:00）。
-     * <p>
-     * 三种格式均解析失败时返回 null 并打印 warn，记录 AIYA 单号与原始值，避免出库时间等字段静默丢失
-     * 且无法从日志定位。
+     * 解析发运时间字符串为 {@link LocalDateTime}，依次尝试 {@code yyyy-MM-dd HH:mm:ss}
+     * （文档 {@code shippingTime} 格式）/ {@code yyyy-MM-dd}（取当日 00:00:00）。
      */
     private LocalDateTime resolveDateTime(Object value, Object bizNo) {
         if (value == null) {
@@ -101,11 +97,6 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
             return null;
         }
         try {
-            return java.time.ZonedDateTime.parse(str, ORDER_TIME_FORMATTER).toLocalDateTime();
-        } catch (Exception ignore) {
-            // ignore and try next format
-        }
-        try {
             return LocalDateTime.parse(str, DATETIME_FORMATTER);
         } catch (Exception ignore) {
             // ignore and try date-only format
@@ -113,7 +104,7 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
         try {
             return LocalDate.parse(str, DATE_FORMATTER).atStartOfDay();
         } catch (Exception e) {
-            log.warn("[AIYA出库] finishTime 日期格式解析失败，该字段将不写入DMP。AIYA单号={}，finishTime原始值={}",
+            log.warn("[AIYA出库] shippingTime 日期格式解析失败，该字段将不写入DMP。AIYA单号={}，shippingTime原始值={}",
                     bizNo, str, e);
             return null;
         }

@@ -660,11 +660,23 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setDictPlatform(platform);
         skuMappingEntity.setPlatformName(OmsPlatformEnum.getName(platform));
         skuMappingEntity.setHasMappingAll(true);
+        // 手工新增即为已完成映射，显式启用
+        skuMappingEntity.setStatus(SkuMappingStatusEnum.ENABLE);
 //        LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(effectiveTime);
         skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
+            // 与 updateWarehouseSku / Excel 导入一致：完成映射后回写 listing 为已匹配，避免后续按未匹配误删
+            ListingInfoEntity listingInfoEntity = listingInfoService.getById(listingId);
+            if (Objects.nonNull(listingInfoEntity)
+                    && !ListingMatchResultEnum.TRUE.getCode().equals(listingInfoEntity.getMatchResult())) {
+                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                listingInfoEntity.setRemark("");
+                if (!listingInfoService.updateById(listingInfoEntity)) {
+                    throw new ServiceException("[listing] 更新匹配状态失败");
+                }
+            }
             // 操作日志
             String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getProductSkuNo());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingId, "新增操作");
@@ -799,6 +811,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setDictPlatform(skuMapping.getDictPlatform());
         addSkuMapping.setPlatformName(skuMapping.getPlatformName());
         addSkuMapping.setHasMappingAll(!StringUtils.isBlank(skuMapping.getDictPlatform()) && dto.checkAndGetHasMappingAll());
+        // 完成映射后新版本记录显式启用（覆盖同步占位记录的默认禁用）
+        addSkuMapping.setStatus(SkuMappingStatusEnum.ENABLE);
         //生效时间
         addSkuMapping.setEffectiveTime(dto.getEffectiveTime());
         addSkuMapping.setExpireTime(dto.getEffectiveTime().plusYears(MathUtil.NUMBER_100));

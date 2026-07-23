@@ -17,6 +17,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SkuMappingStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
@@ -264,6 +265,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMapping.setDictPlatform(dto.getDictPlatform());
                 addSkuMapping.setPlatformName(dto.getDictPlatformName());
                 addSkuMapping.setHasMappingAll(true);
+                // Excel 导入即为已完成映射，显式启用
+                addSkuMapping.setStatus(SkuMappingStatusEnum.ENABLE);
                 //生效时间
                 addSkuMapping.setEffectiveTime(LocalDateTime.now());
                 addSkuMapping.setExpireTime(LocalDateTime.now().plusYears(MathUtil.NUMBER_100));
@@ -297,6 +300,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMapping.setDictPlatform(dto.getDictPlatform());
                 addSkuMapping.setPlatformName(dto.getDictPlatformName());
                 addSkuMapping.setHasMappingAll(true);
+                // Excel 导入即为已完成映射，显式启用
+                addSkuMapping.setStatus(SkuMappingStatusEnum.ENABLE);
                 //生效时间
                 addSkuMapping.setEffectiveTime(LocalDateTime.now());
                 addSkuMapping.setExpireTime(LocalDateTime.now().plusYears(MathUtil.NUMBER_100));

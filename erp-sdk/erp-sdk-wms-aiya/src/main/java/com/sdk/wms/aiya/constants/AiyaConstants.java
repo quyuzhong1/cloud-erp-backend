@@ -67,7 +67,7 @@ public class AiyaConstants {
      * 2C订单查询（支持按单号列表/订单时间范围过滤，支持分页；{@code AiyaOpenApiService#query2cOrder}
      * 统一走该 serviceType，骨架时期曾拆成 search/queryPage 两个方法，因指向同一 serviceType 已合并）
      */
-    public static final String TWO_C_ORDER_SEARCH = "GLINK_QUERY_ORDER_NOTIFY";
+    public static final String TWO_C_ORDER_SEARCH = "GLINK_BATCH_QUERY_ORDER_NOTIFY";
 
     /**
      * 2C订单截单/取消

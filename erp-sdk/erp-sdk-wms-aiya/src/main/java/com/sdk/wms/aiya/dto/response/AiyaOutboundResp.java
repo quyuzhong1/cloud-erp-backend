@@ -12,13 +12,12 @@ import java.util.List;
 /**
  * AIYA 2C 出库单查询响应结构（{@code GLINK_QUERY_ORDER_NOTIFY}）。
  * <p>
- * 《爱亚海外仓对接方案文档》6.3.3「4、爱亚出库单查询」描述为扁平结构（不同于 WEGO 的
- * {@code result:{list,pages,emptyFlag}} 嵌套分页结构），本类去掉了骨架时期照抄 WEGO 的
- * {@code PageResultDTO}/{@code logisticsList} 嵌套设计。顶层列表字段名 {@code resultList}
- * 参照同族接口 {@code GLINK_QUERY_WAREHOUSE_NOTIFY}/{@code GLINK_QUERY_CARRIER_NOTIFY}
- * （均为 {@code GLINK_QUERY_XXX_NOTIFY} 命名、均用 {@code resultList}）类推得出，<b>未有真实
- * 出库单查询响应样例验证</b>，字段名/是否分页均为推测，待联调后按真实样例修正，详见
- * docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+ * 顶层结构（2026-07-22 联调确认）：
+ * {@code {success, code, message, total, orderInfoList:[]}}。
+ * 明细字段按《爱亚海外仓对接方案文档》6.3.3 响应映射表落地：
+ * {@code orderNumber}/{@code shippingTime}/{@code sku}+{@code qty}/{@code actualLogistic}/
+ * {@code trackingNumber}；单据状态字母码 A/B/C/D 的爱亚字段名文档未给出，暂用 {@code orderStatus}，
+ * 待成功样例再核对。
  */
 @Data
 @AllArgsConstructor
@@ -26,35 +25,34 @@ import java.util.List;
 @Builder
 public class AiyaOutboundResp implements Serializable {
 
-    /**
-     * 是否成功
-     */
     @JSONField(name = "success")
     private Boolean success;
 
     /**
-     * 状态码（成功时通常为 SUCCESS，与其它 AIYA 接口保持一致的小写 {@code code} 字段名）
+     * 状态码（成功时通常为 SUCCESS；失败样例见过数字字符串如 {@code "139"}）
      */
     @JSONField(name = "code")
     private String code;
 
-    /**
-     * 提示信息
-     */
     @JSONField(name = "message")
     private String message;
 
     /**
-     * 2C 出库单列表（推测字段名，未有真实样例验证）
+     * 总记录数；文档：当执行成功时有值（失败样例可为 null）
      */
-    @JSONField(name = "resultList")
-    private List<OutboundOrderDTO> resultList;
+    @JSONField(name = "total")
+    private Integer total;
 
     /**
-     * 2C 出库单（推测字段清单，未有真实样例验证）。
+     * 2C 出库单列表（2026-07-22 联调确认字段名）
+     */
+    @JSONField(name = "orderInfoList")
+    private List<OutboundOrderDTO> orderInfoList;
+
+    /**
+     * 2C 出库单明细。
      * <p>
-     * 与建单请求 {@link com.erp.model.wms.dto.AiyaOutboundSaveDTO} 对齐：AIYA 不回传独立出库单号，
-     * {@code orderNumber} 即建单时下发的幂等键，查询/取消均以此号为 key。
+     * {@code orderNumber} 即建单幂等键（AIYA 不回传独立出库单号）。
      */
     @Data
     @AllArgsConstructor
@@ -62,55 +60,40 @@ public class AiyaOutboundResp implements Serializable {
     public static class OutboundOrderDTO implements Serializable {
 
         /**
-         * 客户交易物流订单号（建单时下发的幂等键，AIYA 不回传独立出库单号）
+         * 订单编号（三方仓订单号 / 建单幂等键）
          */
         @JSONField(name = "orderNumber")
         private String orderNumber;
 
         /**
-         * 客户销售平台编号（建单时下发的 extOrderNumber，可选）
-         */
-        @JSONField(name = "extOrderNumber")
-        private String extOrderNumber;
-
-        /**
-         * 仓库编码
+         * 仓库编码（文档响应映射未单独列出，透传保留）
          */
         @JSONField(name = "warehouseCode")
         private String warehouseCode;
 
         /**
-         * 订单状态字母码：A-已出库/B-已取消/C-库存不足/D-锁住，见 {@link com.sdk.wms.aiya.enums.AiyaEnums.OrderStatusEnum}
+         * 单据状态字母码：A-已出库/B-已取消/C-库存不足/D-锁住。
+         * <p>
+         * TODO：方案文档响应映射表未给出爱亚侧字段名，暂用 {@code orderStatus}，待成功样例核对。
          */
         @JSONField(name = "orderStatus")
         private String orderStatus;
 
         /**
-         * 建单时下发的订单时间（{@code yyyy-MM-dd'T'HH:mm:ssZ}）
+         * 发运时间（文档字段 {@code shippingTime}，格式 {@code yyyy-MM-dd HH:mm:ss}），
+         * 对应 ERP {@code dateShipping}。
          */
-        @JSONField(name = "orderTime")
-        private String orderTime;
+        @JSONField(name = "shippingTime")
+        private String shippingTime;
 
         /**
-         * 出库完成时间（推测字段名，未有真实样例验证；用于下游 dateShipping 映射）
+         * 实际物流 / 物流渠道（文档字段 {@code actualLogistic}）
          */
-        @JSONField(name = "finishTime")
-        private String finishTime;
+        @JSONField(name = "actualLogistic")
+        private String actualLogistic;
 
         /**
-         * 承运商（建单时下发的 shippingInstructions.carrier）
-         */
-        @JSONField(name = "carrier")
-        private String carrier;
-
-        /**
-         * 承运商服务等级（建单时下发的 shippingInstructions.carrierService）
-         */
-        @JSONField(name = "carrierService")
-        private String carrierService;
-
-        /**
-         * 物流跟踪号（建单 ATTACHMENT 模式下发的 trackingNumber，或 API 模式由 AIYA 回填）
+         * 运单号 / 物流跟踪号
          */
         @JSONField(name = "trackingNumber")
         private String trackingNumber;
@@ -122,36 +105,27 @@ public class AiyaOutboundResp implements Serializable {
         private List<ItemDTO> items;
 
         /**
-         * 订单备注
-         */
-        @JSONField(name = "remark")
-        private String remark;
-
-        /**
-         * 错误信息（提交失败/库存不足/出库异常时回填）
+         * 错误信息（提交失败/库存不足/出库异常时可能回填，文档未列，透传保留）
          */
         @JSONField(name = "errorMessage")
         private String errorMessage;
     }
 
     /**
-     * 产品明细（单 SKU 行，字段与建单请求 {@code items[]} 对齐：{@code sku}/{@code quantity}）
+     * 产品明细（文档：{@code sku}/{@code qty}）
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ItemDTO implements Serializable {
 
-        /**
-         * 海外仓平台 SKU 编码
-         */
         @JSONField(name = "sku")
         private String sku;
 
         /**
-         * 发货数量
+         * 数量（文档字段名 {@code qty}，不是建单请求的 {@code quantity}）
          */
-        @JSONField(name = "quantity")
-        private Integer quantity;
+        @JSONField(name = "qty")
+        private Integer qty;
     }
 }

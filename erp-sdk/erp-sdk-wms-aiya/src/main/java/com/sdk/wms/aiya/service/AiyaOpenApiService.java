@@ -11,6 +11,7 @@ import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
+import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.constants.AiyaConstants;
@@ -94,6 +95,15 @@ public class AiyaOpenApiService {
      */
     private static final Set<String> INVENTORY_QUERY_RESERVED_PARAM_KEYS =
             new HashSet<>(Arrays.asList("page", "pageSize", "warehouseCode", "ignoreZero", "skus", "stockStatus", "domainCode"));
+
+    /**
+     * 出库单查询专用保留参数：按方案文档 6.3.3「4、爱亚出库单查询」字段清单。
+     * <p>
+     * 注意：方案文档写的 {@code pageNum} 有误，真实网关字段与 SKU/库存/入库查询一致，均为 {@code page}
+     * （2026-07-22 联调确认）；Java 侧仍用 {@code pageNum} 命名，SDK 序列化时转为 {@code page}。
+     */
+    private static final Set<String> OUTBOUND_QUERY_RESERVED_PARAM_KEYS =
+            new HashSet<>(Arrays.asList("warehouseCode", "shippingTimeFrom", "shippingTimeTo", "page", "pageSize"));
 
     /**
      * 入库单批量查询专用保留参数：文档字段名为 {@code page}（而非 {@code pageNum}），
@@ -376,41 +386,29 @@ public class AiyaOpenApiService {
     /**
      * 调用 AIYA {@code GLINK_QUERY_ORDER_NOTIFY} 查询 2C 出库单。
      * <p>
-     * 骨架时期曾拆成 {@code search2cOrder}（按单号列表精确查）与 {@code query2cOrderPage}（分页查）
-     * 两个方法，但两者指向同一个 {@code serviceType}（{@code TWO_C_ORDER_SEARCH}/{@code TWO_C_ORDER_QUERY_PAGE}
-     * 常量值相同），推测 AIYA 出库单查询实际只有一个接口，本次合并为一个方法，按单号列表和/或订单时间范围过滤，
-     * 支持分页。<b>未有真实响应样例验证</b>，参数名/是否支持时间范围过滤均为推测，详见
-     * docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+     * 请求字段：必填 {@code warehouseCode}，可选 {@code shippingTimeFrom}/{@code shippingTimeTo}/
+     * {@code page}/{@code pageSize}。方案文档写的 {@code pageNum} 有误，真实网关与其它爱亚查询接口一致用 {@code page}
+     * （Java 侧 {@link AiyaOutboundQueryDTO.QueryReqDTO#getPageNum()} 序列化为 {@code page}）。
+     * 响应顶层（2026-07-22 联调确认）为 {@code {success, code, message, total, orderInfoList:[]}}。
      * <p>
      * 接口返回 {@code success=false} 视为真实失败，抛出 {@link ServiceException}；
-     * 仅当调用成功但 {@code resultList} 为空数组时返回空列表。
+     * 仅当调用成功但 {@code orderInfoList} 为空数组时返回空列表。
      *
-     * @param accessToken    AIYA partnerId（客户ID）
-     * @param secret         AIYA partnerKey（仅用于本地签名）
-     * @param customerCode   AIYA 客户code（必填业务参数）
-     * @param orderNumbers   AIYA 出库单号（建单幂等键 orderNumber）列表，可为 null
-     * @param orderTimeFrom  订单时间范围起（格式待联调确认，推测同建单 orderTime），可为 null
-     * @param orderTimeTo    订单时间范围止，可为 null
-     * @param pageNum        页码（从 1 开始），可为 null（不分页）
-     * @param pageSize       每页数量，可为 null（不分页）
+     * @param dto 查询请求（含 accessToken / secret / customerCode / warehouseCode 等）
      * @return 出库单详情列表；调用成功但无匹配单据时返回空列表
      */
-    public List<AiyaOutboundResp.OutboundOrderDTO> query2cOrder(String accessToken, String secret, String customerCode,
-                                                                List<String> orderNumbers, String orderTimeFrom, String orderTimeTo,
-                                                                Integer pageNum, Integer pageSize) {
+    public List<AiyaOutboundResp.OutboundOrderDTO> query2cOrder(@Valid AiyaOutboundQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
-        if (orderNumbers != null && !orderNumbers.isEmpty()) {
-            params.put("orderNumbers", JSON.toJSON(orderNumbers));
-        }
-        putIfNotBlank(params, "orderTimeFrom", orderTimeFrom);
-        putIfNotBlank(params, "orderTimeTo", orderTimeTo);
-        if (pageNum != null) {
-            params.put("pageNum", pageNum);
-        }
-        if (pageSize != null) {
-            params.put("pageSize", pageSize);
-        }
-        JSONObject response = doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_ORDER_SEARCH, params, "查询2C出库单");
+        params.put("warehouseCode", dto.getWarehouseCode());
+        // 方案文档写 pageNum，真实网关字段为 page（与 SKU/库存/入库查询一致）
+        params.put("page", dto.getPageNum());
+        params.put("pageSize", dto.getPageSize());
+        putIfNotBlank(params, "shippingTimeFrom", dto.getShippingTimeFrom());
+        putIfNotBlank(params, "shippingTimeTo", dto.getShippingTimeTo());
+        mergeBizParams(params, dto.getBizParams(), "查询2C出库单", OUTBOUND_QUERY_RESERVED_PARAM_KEYS);
+
+        JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(), dto.getCustomerCode(),
+                AiyaConstants.TWO_C_ORDER_SEARCH, params, "查询2C出库单");
         if (response == null) {
             log.error("[AIYA查询2C出库单] 接口无响应");
             throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE);
@@ -419,14 +417,14 @@ public class AiyaOpenApiService {
             log.error("[AIYA查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
             throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_QUERY_FAILED, response.getString("message"));
         }
-        JSONArray resultArray = response.getJSONArray("resultList");
+        JSONArray resultArray = response.getJSONArray("orderInfoList");
         if (resultArray == null || resultArray.isEmpty()) {
             return Collections.emptyList();
         }
         try {
             return resultArray.toJavaList(AiyaOutboundResp.OutboundOrderDTO.class);
         } catch (Exception ex) {
-            log.error("[AIYA查询2C出库单] resultList数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
+            log.error("[AIYA查询2C出库单] orderInfoList 数组转换 OutboundOrderDTO 失败, {}", safeResponseLog(response), ex);
             throw new ServiceException(ApiError.WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED, ex.getMessage());
         }
     }
@@ -620,16 +618,19 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 从 AIYA 响应中提取可安全打印的字段（success / errorCode / errorMsg）。
+     * 从 AIYA 响应中提取可安全打印的字段（success / code / message）。
+     * <p>
+     * 爱亚各接口统一使用小写 {@code code}/{@code message}（2026-07-22 出库单查询联调再次确认），
+     * 勿再使用 WEGO 风格的 {@code errorCode}/{@code errorMsg}，否则失败日志会打成 null。
      */
     private String safeResponseLog(JSONObject response) {
         if (response == null) {
             return "response=null";
         }
-        return String.format("success=%s, errorCode=%s, errorMsg=%s",
+        return String.format("success=%s, code=%s, message=%s",
                 response.get("success"),
-                response.get("errorCode"),
-                response.get("errorMsg"));
+                response.get("code"),
+                response.get("message"));
     }
 
     /**

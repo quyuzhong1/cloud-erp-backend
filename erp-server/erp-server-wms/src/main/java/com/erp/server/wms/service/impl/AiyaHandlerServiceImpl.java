@@ -13,17 +13,20 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundSaveDTO;
+import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
 import com.sdk.wms.aiya.service.AiyaOpenApiService;
+import com.common.business.wrapper.FeignQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -164,6 +167,16 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final String SHIP_FROM_PLACEHOLDER_STATE = "Guangdong";
     private static final String SHIP_FROM_PLACEHOLDER_POSTAL_CODE = "518000";
     private static final String SHIP_FROM_PLACEHOLDER_COUNTRY_CODE = "CN";
+
+    /**
+     * Handler 侧按单号反查时使用的发运时间回溯天数（文档查询接口不支持按 orderNumber 精确查）。
+     */
+    private static final int QUERY_OUTBOUND_FALLBACK_DAYS = 7;
+
+    /**
+     * 发运时间格式（方案文档响应示例 {@code yyyy-MM-dd HH:mm:ss}，请求侧同格式）。
+     */
+    private static final DateTimeFormatter SHIPPING_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Resource
     private AiyaOpenApiService aiyaOpenApiService;
@@ -520,7 +533,8 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (!isSuccess(resp)) {
             return failure(buildErrorMessage(resp));
         }
-        // 方案文档结论：AIYA 建单成功不回传独立出库单号，orderNumber（=referenceNo）即最终单号。
+        // 2026-07-22 联调确认：成功响应为 {success:true,code:SUCCESS,message:null,data:null}，
+        // 不回传独立出库单号；orderNumber（=referenceNo）即最终单号，查询/取消均以此为 key。
         return success(ThirdWarehouseQueryOutboundResponse.builder()
                 .shippingOrderNo(request.getOrderNumber())
                 .build());
@@ -571,10 +585,14 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /**
-     * 查询 AIYA 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}，按 {@code orderNumber} 精确查）。
+     * 查询 AIYA 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}）。
      * <p>
-     * {@code erpOrderCode} 即建单时下发的 {@code orderNumber}（=referenceNo），无需像 WEGO 一样
-     * 按时间窗口反查（AIYA 支持直接按 orderNumber 精确查）。
+     * 方案文档查询接口必填 {@code warehouseCode}，过滤键为发运时间 {@code shippingTimeFrom}/
+     * {@code shippingTimeTo}，<b>不支持</b>按 {@code orderNumber} 精确查。
+     * {@link ThirdWarehouseQueryOutboundReq} 仅有 {@code erpOrderCode}（=orderNumber），无仓库编码，
+     * 因此本方法按授权服务商下全部可用仓库、近 {@value #QUERY_OUTBOUND_FALLBACK_DAYS} 天发运时间窗口拉取，
+     * 再在本地按 {@code orderNumber} 过滤（参照 WEGO 按时间窗反查范式）。日常状态同步仍以 DMP
+     * {@code AiyaOutboundInitHandler} 为准。
      */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
@@ -583,17 +601,50 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return failure("AIYA查询出库单参考号不能为空");
         }
         AiyaAuth auth = resolveAuth();
-        List<AiyaOutboundResp.OutboundOrderDTO> resultList = aiyaOpenApiService.query2cOrder(
-                auth.partnerId, auth.partnerKey, auth.customerCode,
-                Collections.singletonList(orderNumber), null, null, null, null);
-        if (CollUtil.isEmpty(resultList)) {
-            return failure("AIYA未查询到对应出库单（orderNumber=" + orderNumber + "）");
+        List<OverseasProviderWarehouseEntity> warehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .eq(OverseasProviderWarehouseEntity::getMainId, ThirdWarehouseContext.getAuthId())
+                .eq(OverseasProviderWarehouseEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(warehouseList)) {
+            return failure("AIYA查询出库单失败：当前授权下无可用仓库");
         }
-        AiyaOutboundResp.OutboundOrderDTO matched = resultList.get(0);
-        return success(ThirdWarehouseQueryOutboundResponse.builder()
-                .shippingOrderNo(matched.getOrderNumber())
-                .trackNo(matched.getTrackingNumber())
-                .build());
+
+        LocalDateTime now = LocalDateTime.now();
+        String shippingTimeFrom = now.minusDays(QUERY_OUTBOUND_FALLBACK_DAYS).format(SHIPPING_TIME_FORMATTER);
+        String shippingTimeTo = now.format(SHIPPING_TIME_FORMATTER);
+
+        for (OverseasProviderWarehouseEntity warehouse : warehouseList) {
+            String warehouseCode = warehouse.getPlatformWarehouseCode();
+            if (CharSequenceUtil.isBlank(warehouseCode)) {
+                continue;
+            }
+            AiyaOutboundQueryDTO.QueryReqDTO req = AiyaOutboundQueryDTO.QueryReqDTO.builder()
+                    .accessToken(auth.partnerId)
+                    .secret(auth.partnerKey)
+                    .customerCode(auth.customerCode)
+                    .warehouseCode(warehouseCode)
+                    .shippingTimeFrom(shippingTimeFrom)
+                    .shippingTimeTo(shippingTimeTo)
+                    .pageNum(1)
+                    .pageSize(AiyaOutboundQueryDTO.DEFAULT_PAGE_SIZE)
+                    .build();
+            List<AiyaOutboundResp.OutboundOrderDTO> page = aiyaOpenApiService.query2cOrder(req);
+            if (CollUtil.isEmpty(page)) {
+                continue;
+            }
+            AiyaOutboundResp.OutboundOrderDTO matched = page.stream()
+                    .filter(o -> orderNumber.equals(o.getOrderNumber()))
+                    .findFirst()
+                    .orElse(null);
+            if (matched != null) {
+                return success(ThirdWarehouseQueryOutboundResponse.builder()
+                        .shippingOrderNo(matched.getOrderNumber())
+                        .trackNo(matched.getTrackingNumber())
+                        .build());
+            }
+        }
+        return failure("AIYA未查询到对应出库单（orderNumber=" + orderNumber
+                + "，近" + QUERY_OUTBOUND_FALLBACK_DAYS + "天发运窗口）");
     }
 
     /**

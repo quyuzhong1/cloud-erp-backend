@@ -140,6 +140,7 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         int totalBatches = batches.size();
         int totalAddedCount = 0;
         int totalDisabledCount = 0;
+        int totalDeletedCount = 0;
         // 记录已成功处理的批次序号，便于中途失败时定位断点、人工核对 OMS 侧是否已产生重复处理
         int succeededBatchIndex = 0;
         try {
@@ -156,14 +157,16 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
                 WegoSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(reqDTO);
                 int addedCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getAddedCount();
                 int disabledCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDisabledCount();
+                int deletedCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDeletedCount();
                 totalAddedCount += addedCount;
                 totalDisabledCount += disabledCount;
+                totalDeletedCount += deletedCount;
                 succeededBatchIndex = currentBatchIndex;
-                log.warn("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{} 处理成功, 本批={}条, 新增={}条, 禁用={}条",
-                        authId, currentBatchIndex, totalBatches, batch.size(), addedCount, disabledCount);
+                log.warn("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{} 处理成功, 本批={}条, 新增={}条, 禁用={}条, 删除未匹配={}条",
+                        authId, currentBatchIndex, totalBatches, batch.size(), addedCount, disabledCount, deletedCount);
             }
-            log.info("[爱亚SKU OMS同步] 服务商[authId={}] SKU总数={}条，分{}批处理，新增未匹配记录={}条，禁用映射关系={}条",
-                    authId, skuItems.size(), totalBatches, totalAddedCount, totalDisabledCount);
+            log.warn("[爱亚SKU OMS同步] 服务商[authId={}] SKU总数={}条，分{}批处理，新增未匹配记录={}条，禁用映射关系={}条，删除未匹配={}条",
+                    authId, skuItems.size(), totalBatches, totalAddedCount, totalDisabledCount, totalDeletedCount);
         } catch (Exception e) {
             log.error("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{} 调用OMS异常，已成功批次={}/{}，已成功新增={}条: {}",
                     authId, succeededBatchIndex + 1, totalBatches, succeededBatchIndex, totalBatches,
