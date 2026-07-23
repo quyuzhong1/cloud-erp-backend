@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.AsnTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -156,6 +157,7 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
         req.setPageSize(DEFAULT_PAGE_SIZE);
         req.setReceiveTimeFrom(beginTime);
         req.setReceiveTimeTo(endTime);
+        req.setAsnType(AsnTypeEnum.SUPPLIER_RECEIPT.getCode());
         return req;
     }
 
