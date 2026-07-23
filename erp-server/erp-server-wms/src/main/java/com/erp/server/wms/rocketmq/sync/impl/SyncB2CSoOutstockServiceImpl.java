@@ -105,9 +105,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
-    private WdtSoOutstockAutoMoveService wdtSoOutstockAutoMoveService;
-
-    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
@@ -161,21 +158,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private MQProducerService mqProducerService;
 
-    private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
-
-    static {
-        WDT_NULL_LOCATION.add("直发暂存");
-        WDT_NULL_LOCATION.add("发货暂存待放回");
-        WDT_NULL_LOCATION.add("下架暂存");
-        WDT_NULL_LOCATION.add("销退质检");
-        WDT_NULL_LOCATION.add("补货暂存");
-        WDT_NULL_LOCATION.add("其它未上架");
-        WDT_NULL_LOCATION.add("销退暂存");
-        WDT_NULL_LOCATION.add("盘亏暂存");
-        WDT_NULL_LOCATION.add("发货暂存");
-        WDT_NULL_LOCATION.add("采购未上架");
-        WDT_NULL_LOCATION.add("空仓位");
-    }
 
     /**
      * 同步金蝶的销售出库单
@@ -245,8 +227,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * 将原方法拆分为四步，降低事务持有时间：
      * 1. 幂等检查（纯读，无事务）
      * 2. 前置查询：所有 Feign / DB 只读操作（无事务，{@link #preQueryForWdtSync}）
-     * 3. 扣库存前结构化预检：当前库位不足则改空仓位，按「出库数量-空仓位已有」从其他仓位移入
-     *    （{@link WdtSoOutstockAutoMoveService#preCheckAndAutoMove}；源仓排除空仓位与当前库位）
+     * 3. 出库仓位推荐：与人工审核 {@link SoOutstockService#applyOutStockLocationSuggest} 同口径
+     *    （拣货区直接出；非拣货区先移空仓位再出；找不到则失败）
      * 4. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
      * </p>
      */
@@ -277,13 +259,35 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 2. 前置查询：所有 Feign / 只读 DB 操作在事务外完成，避免长事务持有连接
         WdtSyncQueryContext ctx = preQueryForWdtSync(entity);
 
-        // 3. 扣库存事务外预检：当前库位不足则改空仓位，移仓数量=出库数量-空仓位已有（移仓独立事务提交）
-        wdtSoOutstockAutoMoveService.preCheckAndAutoMove(
-                ctx.soOutstock, ctx.detailList, ctx.inOutStockList,
-                ctx.soOutstock.getCode(), ctx.soOutstock.getCode());
+        // 3. 直扣可用：走出库仓位推荐（details 非 null 只改内存；移仓在独立事务内提交）
+        soOutstockService.applyOutStockLocationSuggest(ctx.soOutstock, ctx.detailList, true);
+        syncInOutStockLocationsFromDetails(ctx.detailList, ctx.inOutStockList);
 
         // 4. 写操作：短事务内完成保存 + 扣库存 + 推送
         service.doSyncWdtSoOutStock(ctx);
+    }
+
+    /**
+     * 将出库明细最终仓位回写到扣库 DTO，避免仍按预查询时的旧仓位扣库存。
+     */
+    private void syncInOutStockLocationsFromDetails(List<SoOutstockDetailEntity> detailList,
+                                                    List<InOutStockDTO> inOutStockList) {
+        if (CollUtil.isEmpty(detailList) || CollUtil.isEmpty(inOutStockList)) {
+            return;
+        }
+        Map<String, String> locationByDetailId = detailList.stream()
+                .filter(d -> d != null && CharSequenceUtil.isNotBlank(d.getId()))
+                .collect(Collectors.toMap(SoOutstockDetailEntity::getId,
+                        d -> CharSequenceUtil.nullToEmpty(d.getWarehouseLocation()), (a, b) -> a));
+        for (InOutStockDTO inOutStock : inOutStockList) {
+            if (inOutStock == null || CharSequenceUtil.isBlank(inOutStock.getSourceDetailId())) {
+                continue;
+            }
+            if (!locationByDetailId.containsKey(inOutStock.getSourceDetailId())) {
+                continue;
+            }
+            inOutStock.setWarehouseLocation(locationByDetailId.get(inOutStock.getSourceDetailId()));
+        }
     }
 
     /**
@@ -368,6 +372,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //仓库
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());
+        // 旺店通同步按 B2C 直扣可用走出库仓位推荐
+        if (CharSequenceUtil.isBlank(soOutstock.getOrderType())) {
+            soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
+        }
         //查询虚拟仓
         String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(), shopInfo.getId(), shopInfo.getCustomerId(), soOutstock.getCountry());
         //客户信息
@@ -421,8 +429,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 //仓库
                 detailEntity.setWarehouseId(warehouse.getId());
                 detailEntity.setWarehouseName(warehouse.getName());
-                // 默认库位取 PLM 推荐仓位（ProductDetail.warehouseLocation），不再用 WDT positionNo
-                detailEntity.setWarehouseLocation(resolveWdtSkuWarehouseLocation(warehouse, skuVO));
+                // 最终仓位由出库仓位推荐决定；预查询阶段先置空，不再用 WDT positionNo / PLM 推荐位
+                detailEntity.setWarehouseLocation(resolveWdtInitialWarehouseLocation(warehouse));
                 detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                 detailEntity.setPlanQty(detailDTO.getPlanQty());
                 detailEntity.setActualQty(detailDTO.getActualQty());
@@ -459,8 +467,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     //仓库
                     detailEntity.setWarehouseId(warehouse.getId());
                     detailEntity.setWarehouseName(warehouse.getName());
-                    // 仓位按 PLM 推荐位；positionDetailsList 仅用于拆数量/金额
-                    detailEntity.setWarehouseLocation(resolveWdtSkuWarehouseLocation(warehouse, skuVO));
+                    // 最终仓位由出库仓位推荐决定；positionDetailsList 仅用于拆数量/金额
+                    detailEntity.setWarehouseLocation(resolveWdtInitialWarehouseLocation(warehouse));
                     detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                     detailEntity.setPlanQty(detail.getPositionGoodsCount());
                     detailEntity.setActualQty(detail.getPositionGoodsCount());
@@ -491,17 +499,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
     /**
-     * 旺店通出库明细默认库位：取 PLM 推荐仓位，空/暂存类归一为空仓位。
+     * 旺店通出库明细预查询初始仓位：统一为空；最终仓位由出库仓位推荐回写。
+     *
+     * @param warehouse 出库仓库（预留参数，便于后续按仓策略扩展）
      */
-    private String resolveWdtSkuWarehouseLocation(WarehouseEntity warehouse, SkuVO skuVO) {
-        if (warehouse == null || Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
-            return "";
-        }
-        String raw = skuVO == null ? "" : CharSequenceUtil.nullToEmpty(skuVO.getWarehouseLocation());
-        if (CharSequenceUtil.isBlank(raw) || WDT_NULL_LOCATION.contains(raw)) {
-            return "";
-        }
-        return raw;
+    private String resolveWdtInitialWarehouseLocation(WarehouseEntity warehouse) {
+        return "";
     }
 
     /**

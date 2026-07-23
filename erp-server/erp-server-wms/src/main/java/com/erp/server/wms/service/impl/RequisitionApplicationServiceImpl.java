@@ -2491,97 +2491,111 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
     }
 
     /**
-     * 要货申请和发货通知单的生成拣货单
-     * 生成缺货 SKU 的仓位移动建议。
-     * <p>非拣货区可用库存合计不足拣货缺货数时抛出 {@link ApiError#WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT}；
-     * 快建移仓库存状态为可用→可用。</p>
+     * 要货申请和发货通知单的生成拣货单：生成缺货 SKU 的仓位移动建议。
+     * <p>仍用拣货策略判断缺货；缺货时复用 {@link CfgRulePickingService#resolveReplenishLocations}
+     * 按补货仓位推荐解析取货/上架仓位。快建移仓库存状态为可用→可用。</p>
      */
     @Override
-    public List<WarehouseLocationMoveDTO.GenPickToSkuMove> genPickToSkuMove(String warehouseId,String warehouseName,PickingListsDTO.AddDTO addDTO){
+    public List<WarehouseLocationMoveDTO.GenPickToSkuMove> genPickToSkuMove(String warehouseId, String warehouseName, PickingListsDTO.AddDTO addDTO) {
         List<WarehouseLocationMoveDTO.GenPickToSkuMove> moveEntityList = new ArrayList<>();
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = cfgRulePickingService.getPickingRuleExecutionData(addDTO);
         // ① 拣货仓位推荐：null 标识获取所有数据，再自行提取 qty>0 做分配
-        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = cfgRulePickingService.matchRuleActionList(executionData, null, RuleTypeEnum.PICKING_STRATEGY.getCode());
-        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryGtList = listListPair.getFirst().stream().filter(v -> v.getQty() > 0).collect(Collectors.toList());
-        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair = Pair.create(cfgRulePickingInventoryGtList, listListPair.getSecond());
-        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, gtPair);
+        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair =
+                cfgRulePickingService.matchRuleActionList(executionData, null, RuleTypeEnum.PICKING_STRATEGY.getCode());
+        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryGtList = listListPair.getFirst().stream()
+                .filter(v -> v.getQty() > 0)
+                .collect(Collectors.toList());
+        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair =
+                Pair.create(cfgRulePickingInventoryGtList, listListPair.getSecond());
+        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult =
+                cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, gtPair);
         if (ObjectUtil.isEmpty(ruleOrderMatchResult)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓位推荐");
         }
         addDTO.setRuleOrderMatchResult(ruleOrderMatchResult.getFirst());
         Map<String, Integer> errorList = ruleOrderMatchResult.getSecond();
-        if (!org.springframework.util.CollectionUtils.isEmpty(errorList)) {
-            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> allRuleInventories = listListPair.getFirst();
-            String inInventoryStatus = InventoryStatusEnum.USABLE.getCode();
-            String outInventoryStatus = InventoryStatusEnum.USABLE.getCode();
+        if (org.springframework.util.CollectionUtils.isEmpty(errorList)) {
+            return moveEntityList;
+        }
 
-            List<String> skuNos = errorList.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
-            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
-            Map<String, List<WarehouseLocationDTO.WareInventoryQtyDTO>> sourceBinsBySku = warehouseLocationService
-                    .listWareInventoryQtyBySkuNos(warehouseId, skuNos)
-                    .stream()
-                    .collect(Collectors.groupingBy(WarehouseLocationDTO.WareInventoryQtyDTO::getSkuNo));
-            // 快建移仓上架位：按产品确认，默认使用拣货策略推荐拣货位，不再读取 PLM SKU 大货区（warehouseLocationLarge）
-            Map<String, String> recommendedLocationBySku = new HashMap<>(skuNos.size());
-            for (String skuNo : skuNos) {
-                recommendedLocationBySku.put(skuNo, resolveRecommendedPickingLocation(warehouseId, skuNo, allRuleInventories));
+        String inInventoryStatus = InventoryStatusEnum.USABLE.getCode();
+        String outInventoryStatus = InventoryStatusEnum.USABLE.getCode();
+        // skuId 优先取规则执行明细（含组合拆件后子件），避免依赖 PLM 反查失败导致补货查库/匹配失败
+        Map<String, String> skuIdByNo = executionData.getDetails() == null ? Collections.emptyMap()
+                : executionData.getDetails().stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuNo()) && CharSequenceUtil.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toMap(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuNo,
+                        CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId, (a, b) -> a));
+        List<String> skuNos = errorList.keySet().stream()
+                .map(CfgRulePickingServiceImpl::parseShortageSkuNo)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        // PLM 仅用于补产品名称展示
+        Map<String, String> productNameBySkuNo = Collections.emptyMap();
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            productNameBySkuNo = plmTaskFeign.listBySkuNoList(skuNos).stream()
+                    .filter(v -> CharSequenceUtil.isNotBlank(v.getSkuNo()))
+                    .collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuName, (a, b) -> a));
+        }
+
+        Map<String, CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItemMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : errorList.entrySet()) {
+            String shortageKey = entry.getKey();
+            String shortageWarehouseId = CfgRulePickingServiceImpl.parseShortageWarehouseId(shortageKey);
+            if (CharSequenceUtil.isNotBlank(shortageWarehouseId) && !warehouseId.equals(shortageWarehouseId)) {
+                continue;
             }
-            Map<String, String> locationNameMap = resolveWarehouseLocationNameMap(warehouseId, recommendedLocationBySku.values());
-            List<String> validationErrors = new ArrayList<>();
-            boolean hasShortageError = false;
-            for (Map.Entry<String, Integer> entry : errorList.entrySet()) {
-                String skuNo = entry.getKey();
-                int pickingShortage = entry.getValue();
-                String inWarehouseLocation = recommendedLocationBySku.get(skuNo);
-                List<WarehouseLocationDTO.WareInventoryQtyDTO> sourceBins = sourceBinsBySku.getOrDefault(skuNo, Collections.emptyList());
-                int nonPickMovableQty = sourceBins.stream()
-                        .mapToInt(bin -> parseInventoryQty(bin.getQty()))
-                        .sum();
-                if (nonPickMovableQty < pickingShortage) {
-                    hasShortageError = true;
-                    validationErrors.add(MessageUtils.getMessage(ApiError.WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT,
-                            skuNo, pickingShortage, nonPickMovableQty, pickingShortage - nonPickMovableQty));
-                } else if (CharSequenceUtil.isBlank(inWarehouseLocation)) {
-                    validationErrors.add(MessageUtils.getMessage(ApiError.WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND, skuNo));
-                }
+            String skuNo = CfgRulePickingServiceImpl.parseShortageSkuNo(shortageKey);
+            if (CharSequenceUtil.isBlank(skuNo)) {
+                continue;
             }
-            if (CollUtil.isNotEmpty(validationErrors)) {
-                ApiError primaryError = hasShortageError
-                        ? ApiError.WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT
-                        : ApiError.WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND;
-                throw new ServiceException(primaryError.getCode(), String.join("\n", validationErrors));
+            String skuId = skuIdByNo.get(skuNo);
+            String dedupeKey = CharSequenceUtil.isNotBlank(skuId) ? skuId : skuNo;
+            if (shortageItemMap.containsKey(dedupeKey)) {
+                continue;
             }
-            for (Map.Entry<String, Integer> entry : errorList.entrySet()) {
-                String skuNo = entry.getKey();
-                int pickingShortage = entry.getValue();
-                SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-                String skuId = skuVO != null ? skuVO.getSkuId() : null;
-                String productName = skuVO != null ? skuVO.getSkuName() : null;
-                String inWarehouseLocation = recommendedLocationBySku.get(skuNo);
-                String inWarehouseLocationName = CharSequenceUtil.isNotBlank(inWarehouseLocation)
-                        ? locationNameMap.get(inWarehouseLocation) : null;
-                List<WarehouseLocationDTO.WareInventoryQtyDTO> sourceBins = sourceBinsBySku.getOrDefault(skuNo, Collections.emptyList());
-                int remainingShortage = pickingShortage;
-                for (WarehouseLocationDTO.WareInventoryQtyDTO sourceBin : sourceBins) {
-                    if (remainingShortage <= 0) {
-                        break;
-                    }
-                    int availableQty = parseInventoryQty(sourceBin.getQty());
-                    if (availableQty <= 0) {
-                        continue;
-                    }
-                    int moveQty = Math.min(availableQty, remainingShortage);
-                    moveEntityList.add(buildPickToSkuMoveLine(skuId, skuNo, productName, warehouseId, warehouseName,
-                            inWarehouseLocation, inWarehouseLocationName,
-                            sourceBin.getWarehouseLocationCode(), sourceBin.getWarehouseLocationName(),
-                            moveQty, inInventoryStatus, outInventoryStatus));
-                    remainingShortage -= moveQty;
-                }
+            shortageItemMap.put(dedupeKey, new CfgRulePickingDTO.ReplenishShortageItemDTO(skuId, skuNo, entry.getValue()));
+        }
+        if (shortageItemMap.isEmpty()) {
+            return moveEntityList;
+        }
+
+        List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> suggests = cfgRulePickingService.resolveReplenishLocations(
+                executionData, warehouseId, new ArrayList<>(shortageItemMap.values()));
+        Set<String> locationCodes = new HashSet<>();
+        for (CfgRulePickingDTO.ReplenishLocationSuggestDTO suggest : suggests) {
+            if (CharSequenceUtil.isNotBlank(suggest.getFromWarehouseLocation())) {
+                locationCodes.add(suggest.getFromWarehouseLocation());
             }
+            if (CharSequenceUtil.isNotBlank(suggest.getToWarehouseLocation())) {
+                locationCodes.add(suggest.getToWarehouseLocation());
+            }
+        }
+        Map<String, String> locationNameMap = resolveWarehouseLocationNameMap(warehouseId, locationCodes);
+        for (CfgRulePickingDTO.ReplenishLocationSuggestDTO suggest : suggests) {
+            String productName = productNameBySkuNo.get(suggest.getSkuNo());
+            int qty = suggest.getQty() == null ? 0 : suggest.getQty();
+            moveEntityList.add(buildPickToSkuMoveLine(
+                    suggest.getSkuId(),
+                    suggest.getSkuNo(),
+                    productName,
+                    warehouseId,
+                    warehouseName,
+                    suggest.getToWarehouseLocation(),
+                    locationNameMap.get(suggest.getToWarehouseLocation()),
+                    suggest.getFromWarehouseLocation(),
+                    locationNameMap.get(suggest.getFromWarehouseLocation()),
+                    qty,
+                    inInventoryStatus,
+                    outInventoryStatus));
         }
         return moveEntityList;
     }
 
+    /**
+     * 组装快建移仓建议行（可用→可用）。
+     */
     private WarehouseLocationMoveDTO.GenPickToSkuMove buildPickToSkuMoveLine(String skuId, String skuNo, String productName,
                                                                              String warehouseId, String warehouseName,
                                                                              String inWarehouseLocation, String inWarehouseLocationName,
@@ -2604,25 +2618,8 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
     }
 
     /**
-     * 解析快建移仓的上架仓位（拣货策略命中的推荐拣货位）。
-     * 排序口径与 {@code CfgRulePackingActionMapper#listLocationByRule} 一致：priority、updateTime desc、index、qty desc。
-     * 不使用 PLM {@code SkuVO#warehouseLocationLarge}，为产品确认的有意变更。
+     * 按仓库与仓位编码批量解析仓位名称。
      */
-    private String resolveRecommendedPickingLocation(String warehouseId, String skuNo,
-                                                     List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> ruleInventories) {
-        if (CollectionUtils.isEmpty(ruleInventories)) {
-            return null;
-        }
-        return ruleInventories.stream()
-                .filter(v -> warehouseId.equals(v.getWarehouseId()) && skuNo.equals(v.getSkuNo()))
-                .min(Comparator.comparing(CfgRulePickingDTO.CfgRulePickingInventoryDTO::getPriority, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(v -> ObjectUtil.defaultIfNull(v.getUpdateTime(), LocalDateTime.MIN), Comparator.reverseOrder())
-                        .thenComparing(v -> ObjectUtil.defaultIfNull(v.getIndex(), 0))
-                        .thenComparing(v -> ObjectUtil.defaultIfNull(v.getQty(), 0), Comparator.reverseOrder()))
-                .map(CfgRulePickingDTO.CfgRulePickingInventoryDTO::getWarehouseLocation)
-                .orElse(null);
-    }
-
     private Map<String, String> resolveWarehouseLocationNameMap(String warehouseId, Collection<String> warehouseLocationCodes) {
         if (CharSequenceUtil.isBlank(warehouseId) || CollectionUtils.isEmpty(warehouseLocationCodes)) {
             return Collections.emptyMap();
@@ -2638,13 +2635,6 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                 .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
                 .in(WarehouseLocationEntity::getCode, codes));
         return entities.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getName, (left, right) -> left));
-    }
-
-    private int parseInventoryQty(String qty) {
-        if (CharSequenceUtil.isBlank(qty) || !NumberUtil.isNumber(qty)) {
-            return 0;
-        }
-        return NumberUtil.parseInt(qty);
     }
 
     @Override
