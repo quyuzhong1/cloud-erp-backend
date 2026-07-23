@@ -377,6 +377,11 @@ public class SoB2cReturnDTO implements Serializable {
          */
         private Integer instockQty;
         /**
+         * 剩余应退货数量 = 退货数量 - 全部有效入库实退累计（含待审；与 listAddDetailView / WMS 口径一致）
+         * 注意：入库数量(instockQty)仍仅统计已审核，二者口径不同
+         */
+        private Integer remainMustQty;
+        /**
          * 备注
          */
         private String remark;

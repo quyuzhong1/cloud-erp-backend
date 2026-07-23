@@ -20,6 +20,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -55,6 +56,8 @@ import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -66,6 +69,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
@@ -356,6 +360,46 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> customerIds = records.stream().map(SoReturnInstockDTO.PagingView::getCustomerId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoEntities = CollUtil.isNotEmpty(customerIds) ? customerFeign.listCustomerByIds(customerIds) :Collections.emptyList();
         Map<String, String> customerMap = CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getName)) : Collections.emptyMap();
+        //客户归属平台
+        Map<String, String> customerPlatformMap = CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.stream()
+                .filter(c -> CharSequenceUtil.isNotBlank(c.getPlatformType()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType, (a, b) -> a)) : Collections.emptyMap();
+        //B2C售后单平台（type=B2C时按soReturnId取so_b2c_return.dict_platform）
+        List<String> b2cReturnIds = records.stream()
+                .filter(r -> BillTypeEnum.B2C.getCode().equals(r.getType()) && CharSequenceUtil.isNotBlank(r.getSoReturnId()))
+                .map(SoReturnInstockDTO.PagingView::getSoReturnId).distinct().collect(Collectors.toList());
+        List<SoB2cReturnEntity> b2cReturnEntities = CollUtil.isNotEmpty(b2cReturnIds) ? soB2cReturnFeign.listByIds(b2cReturnIds) : Collections.emptyList();
+        Map<String, String> b2cReturnPlatformMap = CollUtil.isNotEmpty(b2cReturnEntities) ? b2cReturnEntities.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getDictPlatform()))
+                .collect(Collectors.toMap(SoB2cReturnEntity::getId, SoB2cReturnEntity::getDictPlatform, (a, b) -> a)) : Collections.emptyMap();
+
+        // B2C售后明细退货数量，及按售后明细累计的入库实退数量（用于补齐 mustQty / remainShouldQty）
+        List<String> b2cReturnDetailIds = records.stream()
+                .filter(r -> BillTypeEnum.B2C.getCode().equals(r.getType()) && CharSequenceUtil.isNotBlank(r.getSoReturnDetailId()))
+                .map(SoReturnInstockDTO.PagingView::getSoReturnDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cReturnDetailEntity> b2cReturnDetailEntities = CollUtil.isNotEmpty(b2cReturnDetailIds)
+                ? FeignQuery.getByIds(SoB2cReturnDetailEntity.class, b2cReturnDetailIds) : Collections.emptyList();
+        Map<String, Integer> b2cReturnQtyMap = CollUtil.isNotEmpty(b2cReturnDetailEntities) ? b2cReturnDetailEntities.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getId()) && Objects.nonNull(d.getReturnQty()))
+                .collect(Collectors.toMap(SoB2cReturnDetailEntity::getId, SoB2cReturnDetailEntity::getReturnQty, (a, b) -> a)) : Collections.emptyMap();
+        List<SoReturnInstockDetailEntity> b2cInstockDetailEntities = CollUtil.isNotEmpty(b2cReturnDetailIds)
+                ? soReturnInstockDetailService.listDetailBySoReturnDetailIds(b2cReturnDetailIds) : Collections.emptyList();
+        Map<String, Integer> b2cInstockRealQtyMap = CollUtil.isNotEmpty(b2cInstockDetailEntities) ? b2cInstockDetailEntities.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
+        // 无售后关联时：按 sourceDetailId 累计有效入库实退（与落库口径一致）
+        List<String> b2cSourceDetailIds = records.stream()
+                .filter(r -> BillTypeEnum.B2C.getCode().equals(r.getType())
+                        && CharSequenceUtil.isBlank(r.getSoReturnDetailId())
+                        && CharSequenceUtil.isNotBlank(r.getSourceDetailId()))
+                .map(SoReturnInstockDTO.PagingView::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> b2cInstockBySourceDetailIds = CollUtil.isNotEmpty(b2cSourceDetailIds)
+                ? soReturnInstockDetailService.listDetailBySourceDetailIds(b2cSourceDetailIds) : Collections.emptyList();
+        Map<String, Integer> b2cSourceDetailRealQtyMap = CollUtil.isNotEmpty(b2cInstockBySourceDetailIds) ? b2cInstockBySourceDetailIds.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
 
         //查询审核流程
         List<String> ids = records.stream().map(SoReturnInstockDTO.PagingView::getId).distinct().collect(Collectors.toList());
@@ -372,13 +416,46 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setProductName(skuMap.get(obj.getSkuId()));
                 obj.setCustomerName(customerMap.get(obj.getCustomerId()));
-                if ("B2C".equals(obj.getType())) {
+                //平台：优先取新增/修改时已落库的dict_platform；老数据为空时按原有逻辑临时计算兜底
+                String platform = obj.getDictPlatform();
+                if (CharSequenceUtil.isBlank(platform)) {
+                    platform = resolveDictPlatform(obj.getType(), b2cReturnPlatformMap.get(obj.getSoReturnId()), customerPlatformMap.get(obj.getCustomerId()));
+                }
+                obj.setDictPlatform(platform);
+                obj.setDictPlatformName(CharSequenceUtil.isNotBlank(platform) ? PlatformDictEnum.getNameByCode(platform) : null);
+                if (BillTypeEnum.B2C.getCode().equals(obj.getType())) {
                     obj.setSalesQty(soB2cDetailEntityMap.getOrDefault(obj.getSoId() + "-" + obj.getSkuId(), 0));
                     obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     obj.setPlatformOrderCode(CharSequenceUtil.isNotBlank(obj.getPlatformOrderCode()) ? obj.getPlatformOrderCode() : platformCodeMap.get(obj.getSoId()));
                     obj.setDeliveryQty(actualQtyMap.getOrDefault(obj.getSoId() + "-" + obj.getSkuId(), 0));
                     if (obj.getReceiveQty() == 0) {
                         obj.setReceiveQty(receiveQtyMap.getOrDefault(obj.getSourceDetailId(), MathUtil.ZERO));
+                    }
+                    // B2C：应退取售后明细退货数量；无售后取 mustQty（仅 null 时用签收兜底）；剩余应退按售后明细或 sourceDetailId 累计入库
+                    Integer b2cReturnQty = b2cReturnQtyMap.get(obj.getSoReturnDetailId());
+                    boolean hasAuthoritativeReturnQty = Objects.nonNull(b2cReturnQty);
+                    if (Objects.isNull(b2cReturnQty)) {
+                        b2cReturnQty = obj.getMustQty();
+                    }
+                    if (b2cReturnQty == null && CharSequenceUtil.isBlank(obj.getSoReturnDetailId())
+                            && obj.getReceiveQty() != null) {
+                        b2cReturnQty = obj.getReceiveQty();
+                    }
+                    if (Objects.nonNull(b2cReturnQty)) {
+                        int instockQty;
+                        if (CharSequenceUtil.isNotBlank(obj.getSoReturnDetailId())) {
+                            instockQty = b2cInstockRealQtyMap.getOrDefault(obj.getSoReturnDetailId(), MathUtil.ZERO);
+                        } else if (CharSequenceUtil.isNotBlank(obj.getSourceDetailId())) {
+                            instockQty = b2cSourceDetailRealQtyMap.getOrDefault(obj.getSourceDetailId(), MathUtil.ZERO);
+                        } else {
+                            instockQty = obj.getRealQty() != null ? obj.getRealQty() : MathUtil.ZERO;
+                        }
+                        // 无售后单权威应退数量时，历史数据可能落成偏小/为0的 mustQty；以累计入库为下限，避免展示负数剩余应退
+                        if (!hasAuthoritativeReturnQty && b2cReturnQty < instockQty) {
+                            b2cReturnQty = instockQty;
+                        }
+                        obj.setMustQty(b2cReturnQty);
+                        obj.setRemainShouldQty(b2cReturnQty - instockQty);
                     }
                 } else {
                     String sourceDetailId = sourceDetailMap.get(obj.getSoReturnDetailId());
@@ -399,6 +476,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setType(BillTypeEnum.getName(obj.getType()));
             });
         }
+    }
+
+    /**
+     * 计算平台字典值：B2C取售后单自身平台，否则（B2B或B2C售后单未取到平台时）取客户归属平台，可能为空
+     */
+    private String resolveDictPlatform(String type, String soB2cReturnDictPlatform, String customerPlatformType) {
+        String platform = BillTypeEnum.B2C.getCode().equals(type) ? soB2cReturnDictPlatform : null;
+        if (CharSequenceUtil.isBlank(platform)) {
+            platform = customerPlatformType;
+        }
+        return platform;
     }
 
     private String getPermissionSql(String permissionSql) {
@@ -444,6 +532,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
+        return buildAndSaveInstock(dto).getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SoReturnInstockEntity addReturnEntity(SoReturnInstockDTO.Add dto) {
+        return buildAndSaveInstock(dto);
+    }
+
+    private SoReturnInstockEntity buildAndSaveInstock(SoReturnInstockDTO.Add dto) {
         //校验数据
         List<SoReturnInstockDetailDTO.Add> detailList = dto.getDetailList();
         if (CollUtil.isEmpty(detailList)) {
@@ -461,10 +559,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //退货单id
         String soReturnId = dto.getSoReturnId();
+        //B2C售后单，用于平台字段计算（B2C取售后单平台）
+        SoB2cReturnEntity soB2cReturnEntity = null;
         //当退货单不为空的时候
         if (CharSequenceUtil.isNotBlank(soReturnId)) {
-            if ("B2C".equals(dto.getType())) {
-                SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
+            if (BillTypeEnum.B2C.getCode().equals(dto.getType())) {
+                soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
                 dto.setShopId(soB2cReturnEntity.getShopId());
                 //获取销售单信息
                 SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, soB2cReturnEntity.getSoId());
@@ -564,6 +664,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCustomerId(dto.getCustomerId());
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
+        //平台：B2C取售后单平台，否则取客户归属平台（可能为空）
+        entity.setDictPlatform(resolveDictPlatform(dto.getType(), Objects.nonNull(soB2cReturnEntity) ? soB2cReturnEntity.getDictPlatform() : null, customerInfoEntity.getPlatformType()));
         entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         String warehouseKeeperUserName = userList.stream().filter(d -> d.getUserId().equals(dto.getWarehouseKeeperId())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
@@ -593,7 +695,872 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "新增操作");
 
         soReturnInstockDetailService.add(dto, entity.getId());
-        return entity.getId();
+        return entity;
+    }
+
+    @Override
+    public List<SoReturnInstockDTO.ReturnLogisticPrefill> queryByReturnLogisticCode(String returnLogisticCode) {
+        if (CharSequenceUtil.isBlank(returnLogisticCode)) {
+            return Collections.emptyList();
+        }
+        // 两侧按物流单号查询全部命中（可能多条）；Feign 集合可能返回 null，立即标准化避免单侧命中时对另一侧 stream NPE
+        List<SoReturnEntity> b2bReturnList = CollUtil.emptyIfNull(soReturnFeign.listByReturnLogisticCode(returnLogisticCode));
+        List<SoB2cReturnEntity> b2cReturnList = CollUtil.emptyIfNull(soB2cReturnFeign.listByReturnLogisticCode(returnLogisticCode));
+        if (CollUtil.isEmpty(b2bReturnList) && CollUtil.isEmpty(b2cReturnList)) {
+            // 未命中，保持人工录入
+            return Collections.emptyList();
+        }
+
+        // 批量预取B2B/B2C依赖数据，避免在循环内逐条查询Feign/DB（N+1）
+        ReturnLogisticPrefillContext context = buildReturnLogisticPrefillContext(b2bReturnList, b2cReturnList);
+
+        List<SoReturnInstockDTO.ReturnLogisticPrefill> result = new ArrayList<>();
+        if (CollUtil.isNotEmpty(b2bReturnList)) {
+            for (SoReturnEntity b2bReturn : b2bReturnList) {
+                SoReturnInstockDTO.ReturnLogisticPrefill prefill = new SoReturnInstockDTO.ReturnLogisticPrefill();
+                prefill.setReturnLogisticCode(returnLogisticCode);
+                fillPrefillByB2bReturn(prefill, b2bReturn, context);
+                result.add(prefill);
+            }
+        }
+        if (CollUtil.isNotEmpty(b2cReturnList)) {
+            for (SoB2cReturnEntity b2cReturn : b2cReturnList) {
+                SoReturnInstockDTO.ReturnLogisticPrefill prefill = new SoReturnInstockDTO.ReturnLogisticPrefill();
+                prefill.setReturnLogisticCode(returnLogisticCode);
+                fillPrefillByB2cReturn(prefill, b2cReturn, context);
+                result.add(prefill);
+            }
+        }
+        // 名称兜底统一批量补全（销售员/销售部门/销售组织）
+        batchFillPrefillSalesNames(result);
+        // 合并两类售后单，按创建时间倒序，供前端选择
+        result.sort(Comparator.comparing(SoReturnInstockDTO.ReturnLogisticPrefill::getCreateTime,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        return result;
+    }
+
+    /**
+     * 按批量维度一次性预取B2B/B2C售后单反查所需的所有关联数据
+     */
+    private ReturnLogisticPrefillContext buildReturnLogisticPrefillContext(List<SoReturnEntity> b2bReturnList,
+                                                                             List<SoB2cReturnEntity> b2cReturnList) {
+        ReturnLogisticPrefillContext context = new ReturnLogisticPrefillContext();
+
+        b2bReturnList = CollUtil.emptyIfNull(b2bReturnList);
+        b2cReturnList = CollUtil.emptyIfNull(b2cReturnList);
+
+        // B2B：批量取源销售单（用于平台订单号）
+        List<String> b2bSourceIds = b2bReturnList.stream().map(SoReturnEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(b2bSourceIds)) {
+            context.soInfoMap = CollUtil.emptyIfNull(soInfoFeign.listSoInfoByIds(b2bSourceIds)).stream()
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                    .collect(Collectors.toMap(SoInfoEntity::getId, Function.identity(), (a, b) -> a));
+        }
+
+        // 以下Map为"已出库数量"/"签收数量"/"剩余应退累计"批量预取所需的聚合集合，B2B与B2C共用同一套查询与计算口径
+        List<String> outstockSoIds = new ArrayList<>();
+        List<String> receiveSourceIds = new ArrayList<>();
+        List<String> allSkuIds = new ArrayList<>();
+        List<String> allReturnDetailIds = new ArrayList<>();
+
+        // B2B：批量取售后单明细 + 关联销售单明细（用于产品名/销售数量/已出库数量的单箱系数）
+        List<String> b2bReturnIds = b2bReturnList.stream().map(SoReturnEntity::getId)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(b2bReturnIds)) {
+            List<SoReturnDetailEntity> b2bAllDetails = CollUtil.emptyIfNull(soReturnFeign.listDetailByMainIds(b2bReturnIds));
+            context.b2bDetailsByMainId = b2bAllDetails.stream()
+                    .filter(d -> CharSequenceUtil.isNotBlank(d.getMainId()))
+                    .collect(Collectors.groupingBy(SoReturnDetailEntity::getMainId));
+            allSkuIds.addAll(b2bAllDetails.stream().map(SoReturnDetailEntity::getSkuId)
+                    .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+            allReturnDetailIds.addAll(b2bAllDetails.stream().map(SoReturnDetailEntity::getId)
+                    .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+            List<String> soDetailIds = b2bAllDetails.stream().map(SoReturnDetailEntity::getSourceDetailId)
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(soDetailIds)) {
+                context.soDetailById = CollUtil.emptyIfNull(soInfoFeign.listSoDetailByIds(soDetailIds)).stream()
+                        .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
+                        .collect(Collectors.toMap(SoDetailEntity::getId, Function.identity(), (a, b) -> a));
+                outstockSoIds.addAll(context.soDetailById.values().stream().map(SoDetailEntity::getMainId)
+                        .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+            }
+            receiveSourceIds.addAll(b2bReturnIds);
+        }
+
+        if (CollUtil.isNotEmpty(b2cReturnList)) {
+            // B2C：批量取关联销售单 + 销售出库单
+            List<String> b2cSoIds = b2cReturnList.stream().map(SoB2cReturnEntity::getSoId)
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(b2cSoIds)) {
+                context.soB2cMap = CollUtil.emptyIfNull(soB2cFeign.listByIds(b2cSoIds)).stream()
+                        .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                        .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (a, b) -> a));
+                context.soOutstockMap = CollUtil.emptyIfNull(soOutstockService.listBySoIds(b2cSoIds)).stream()
+                        .filter(e -> CharSequenceUtil.isNotBlank(e.getSoId()))
+                        .collect(Collectors.toMap(SoOutstockEntity::getSoId, Function.identity(), (a, b) -> a));
+                outstockSoIds.addAll(b2cSoIds);
+            }
+
+            // B2C：批量取店铺，再据此批量取客户档案
+            List<String> shopIds = b2cReturnList.stream().map(SoB2cReturnEntity::getShopId)
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(shopIds)) {
+                context.shopInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(ShopInfoEntity.class, shopIds)).stream()
+                        .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                        .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (a, b) -> a));
+                List<String> customerIds = context.shopInfoMap.values().stream().map(ShopInfoEntity::getCustomerId)
+                        .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(customerIds)) {
+                    context.customerInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(CustomerInfoEntity.class, customerIds)).stream()
+                            .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                            .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
+                }
+            }
+
+            // B2C：批量取全部售后单明细
+            List<String> b2cReturnIds = b2cReturnList.stream().map(SoB2cReturnEntity::getId)
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(b2cReturnIds)) {
+                List<SoB2cReturnDetailDTO.ViewDTO> allDetails = CollUtil.emptyIfNull(soB2cReturnFeign.listDetailByMainIds(b2cReturnIds));
+                context.b2cDetailsByMainId = allDetails.stream()
+                        .filter(d -> CharSequenceUtil.isNotBlank(d.getMainId()))
+                        .collect(Collectors.groupingBy(SoB2cReturnDetailDTO.ViewDTO::getMainId));
+                allSkuIds.addAll(allDetails.stream().map(SoB2cReturnDetailDTO.ViewDTO::getSkuId)
+                        .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+                allReturnDetailIds.addAll(allDetails.stream().map(SoB2cReturnDetailDTO.ViewDTO::getId)
+                        .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+                receiveSourceIds.addAll(b2cReturnIds);
+            }
+        }
+
+        // 产品名称：B2B/B2C全部SKU批量查询
+        List<String> distinctSkuIds = allSkuIds.stream().distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(distinctSkuIds)) {
+            context.skuNameById = CollUtil.emptyIfNull(plmTaskFeign.listSkuProductByIds(distinctSkuIds)).stream()
+                    .filter(s -> CharSequenceUtil.isNotBlank(s.getSkuId()))
+                    .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (a, b) -> a));
+        }
+
+        // 剩余应退累计：按售后/退货单明细id批量累计历史已入库实退数量（同一售后单分批多次生成退货入库单场景，与 view()/paging() 口径一致），B2B/B2C共用
+        List<String> distinctReturnDetailIds = allReturnDetailIds.stream().distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(distinctReturnDetailIds)) {
+            context.instockRealQtyBySoReturnDetailId = CollUtil.emptyIfNull(
+                            soReturnInstockDetailService.listDetailBySoReturnDetailIds(distinctReturnDetailIds)).stream()
+                    .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
+                    .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                            Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO)));
+        }
+
+        // 已出库数量：按 soId+"-"+skuId 汇总出库单明细实发数量（仅approve，与 view()/paging() 口径一致），B2B/B2C共用
+        List<String> distinctOutstockSoIds = outstockSoIds.stream().distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(distinctOutstockSoIds)) {
+            context.outstockActualQtyBySoIdSku = CollUtil.emptyIfNull(
+                            soOutstockDetailService.listDetailBySoIds(distinctOutstockSoIds)).stream()
+                    .filter(d -> CharSequenceUtil.isNotBlank(d.getSoId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(d.getApproveStatus()))
+                    .collect(Collectors.groupingBy(d -> d.getSoId() + "-" + d.getSkuId(),
+                            Collectors.summingInt(d -> d.getActualQty() != null ? d.getActualQty() : MathUtil.ZERO)));
+        }
+
+        // 签收数量：按售后/退货单明细id汇总签收单明细数量（仅approve，与 view()/paging() 口径一致），B2B/B2C共用
+        List<String> distinctReceiveSourceIds = receiveSourceIds.stream().distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(distinctReceiveSourceIds)) {
+            context.receiveQtyByReturnDetailId = CollUtil.emptyIfNull(
+                            soReturnReceiveDetailService.listDetailBySourceIds(distinctReceiveSourceIds)).stream()
+                    .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(d.getApproveStatus()))
+                    .collect(Collectors.groupingBy(SoReturnReceiveDetailEntity::getSourceDetailId,
+                            Collectors.summingInt(d -> d.getReceiveQty() != null ? d.getReceiveQty() : MathUtil.ZERO)));
+        }
+
+        return context;
+    }
+
+    /**
+     * B2B售后单带出：客户/销售组织/部门/销售员/币种，名称随售后单直接带出
+     */
+    private void fillPrefillByB2bReturn(SoReturnInstockDTO.ReturnLogisticPrefill prefill, SoReturnEntity soReturn,
+                                         ReturnLogisticPrefillContext context) {
+        prefill.setSoReturnId(soReturn.getId());
+        prefill.setSoReturnCode(soReturn.getCode());
+        prefill.setCreateTime(soReturn.getCreateTime());
+        prefill.setType(soReturn.getType());
+        prefill.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
+        prefill.setCustomerId(soReturn.getCustomerId());
+        prefill.setCustomerName(soReturn.getCustomerName());
+        prefill.setSalesOrgId(soReturn.getSalesOrgId());
+        prefill.setSalesOrgName(soReturn.getSalesOrgName());
+        prefill.setSalesDeptId(soReturn.getSalesDeptId());
+        prefill.setSalesDeptName(soReturn.getSalesDeptName());
+        prefill.setSellerId(soReturn.getSellerId());
+        prefill.setSellerName(soReturn.getSellerName());
+        prefill.setCurrency(soReturn.getCurrency());
+        prefill.setCurrencySymbol(CharSequenceUtil.isNotBlank(soReturn.getCurrencySymbol())
+                ? soReturn.getCurrencySymbol() : CurrencyEnum.getSymbolByCode(soReturn.getCurrency()));
+        // 平台订单号：取关联销售单（已批量预取）
+        if (CharSequenceUtil.isNotBlank(soReturn.getSourceId())) {
+            SoInfoEntity soInfo = context.soInfoMap.get(soReturn.getSourceId());
+            if (Objects.nonNull(soInfo)) {
+                prefill.setPlatformOrderCode(soInfo.getPlatformOrderCode());
+            }
+        }
+
+        // 明细：带出全部SKU，应退数量用退货单明细自身的退货数量(return_qty)，均取自批量预取的Map
+        List<SoReturnDetailEntity> details = context.b2bDetailsByMainId.get(soReturn.getId());
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        List<SoReturnInstockDTO.PrefillDetail> prefillDetails = new ArrayList<>(details.size());
+        for (SoReturnDetailEntity d : details) {
+            SoReturnInstockDTO.PrefillDetail pd = new SoReturnInstockDTO.PrefillDetail();
+            pd.setSoReturnDetailId(d.getId());
+            pd.setSkuId(d.getSkuId());
+            pd.setSkuNo(d.getSkuNo());
+            pd.setPlatformSkuNo(d.getPlatformSkuNo());
+            pd.setProductName(context.skuNameById.get(d.getSkuId()));
+            SoDetailEntity soDetail = context.soDetailById.get(d.getSourceDetailId());
+            pd.setSalesQty(Objects.nonNull(soDetail) ? soDetail.getQty() : null);
+            pd.setMustQty(d.getReturnQty());
+            // 剩余应退 = 应退数量 - 历史已入库实退数量累计（同一退货单分批多次生成退货入库单场景）
+            Integer mustQty = d.getReturnQty();
+            if (mustQty != null) {
+                int instockQty = context.instockRealQtyBySoReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO);
+                pd.setRemainShouldQty(mustQty - instockQty);
+            }
+            // 已出库数量：按销售单soId+skuId汇总，再乘以单箱数量（与 view() 口径一致）；签收数量：按退货单明细id汇总
+            if (Objects.nonNull(soDetail) && CharSequenceUtil.isNotBlank(soDetail.getMainId())) {
+                int actualQty = context.outstockActualQtyBySoIdSku.getOrDefault(soDetail.getMainId() + "-" + d.getSkuId(), MathUtil.ZERO);
+                int perBoxQty = Objects.nonNull(soDetail.getPerBoxQty()) ? soDetail.getPerBoxQty() : 1;
+                pd.setDeliveryQty(actualQty * perBoxQty);
+            } else {
+                pd.setDeliveryQty(MathUtil.ZERO);
+            }
+            pd.setReceiveQty(context.receiveQtyByReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO));
+            prefillDetails.add(pd);
+        }
+        prefill.setDetailList(prefillDetails);
+    }
+
+    /**
+     * B2C售后单带出：客户(店铺→客户)、销售组织/部门/销售员(出库单优先,客户档案兜底)、币种，并带出全部SKU明细
+     */
+    private void fillPrefillByB2cReturn(SoReturnInstockDTO.ReturnLogisticPrefill prefill, SoB2cReturnEntity soB2cReturn,
+                                         ReturnLogisticPrefillContext context) {
+        prefill.setSoReturnId(soB2cReturn.getId());
+        prefill.setSoReturnCode(soB2cReturn.getCode());
+        prefill.setCreateTime(soB2cReturn.getCreateTime());
+        prefill.setType(BillTypeEnum.B2C.getCode());
+        prefill.setSourceType(SourceTypeEnum.SO_B2C_RETURN.getCode());
+        prefill.setShopId(soB2cReturn.getShopId());
+        prefill.setCurrency(soB2cReturn.getCurrency());
+        prefill.setCurrencySymbol(CurrencyEnum.getSymbolByCode(soB2cReturn.getCurrency()));
+
+        // 销售单：平台订单号 + 销售组织/部门/销售员（与 add() 口径一致，均取自批量预取的Map）
+        SoB2cEntity soB2c = context.soB2cMap.get(soB2cReturn.getSoId());
+        if (Objects.nonNull(soB2c)) {
+            prefill.setPlatformOrderCode(soB2c.getPlatformCode());
+            if (CharSequenceUtil.isBlank(prefill.getCurrency())) {
+                prefill.setCurrency(soB2c.getCurrency());
+                prefill.setCurrencySymbol(CurrencyEnum.getSymbolByCode(soB2c.getCurrency()));
+            }
+            SoOutstockEntity soOutstock = context.soOutstockMap.get(soB2c.getId());
+            if (Objects.nonNull(soOutstock)) {
+                prefill.setSellerId(soOutstock.getSellerId());
+                prefill.setSalesDeptId(soOutstock.getSalesDeptId());
+                prefill.setSalesOrgId(soOutstock.getSalesOrgId());
+            }
+        }
+
+        // 客户：店铺 → 客户id → 客户档案，缺失的销售信息用客户档案兜底
+        ShopInfoEntity shopInfo = context.shopInfoMap.get(soB2cReturn.getShopId());
+        if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
+            prefill.setCustomerId(shopInfo.getCustomerId());
+            CustomerInfoEntity customerInfo = context.customerInfoMap.get(shopInfo.getCustomerId());
+            if (Objects.nonNull(customerInfo)) {
+                prefill.setCustomerName(customerInfo.getName());
+                prefill.setSellerId(CharSequenceUtil.isBlank(prefill.getSellerId()) ? customerInfo.getSellerId() : prefill.getSellerId());
+                prefill.setSalesDeptId(CharSequenceUtil.isBlank(prefill.getSalesDeptId()) ? customerInfo.getSalesDeptId() : prefill.getSalesDeptId());
+                prefill.setSalesOrgId(CharSequenceUtil.isBlank(prefill.getSalesOrgId()) ? customerInfo.getUseOrgId() : prefill.getSalesOrgId());
+            }
+        }
+
+        // 明细：带出全部SKU，应退数量用退货数量(return_qty)，均取自批量预取的Map
+        List<SoB2cReturnDetailDTO.ViewDTO> details = context.b2cDetailsByMainId.get(soB2cReturn.getId());
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        List<SoReturnInstockDTO.PrefillDetail> prefillDetails = new ArrayList<>(details.size());
+        for (SoB2cReturnDetailDTO.ViewDTO d : details) {
+            SoReturnInstockDTO.PrefillDetail pd = new SoReturnInstockDTO.PrefillDetail();
+            pd.setSoReturnDetailId(d.getId());
+            pd.setSkuId(d.getSkuId());
+            pd.setSkuNo(d.getSkuNo());
+            pd.setPlatformSkuNo(d.getPlatformSkuNo());
+            pd.setProductName(context.skuNameById.get(d.getSkuId()));
+            pd.setSalesQty(d.getSaleQty());
+            pd.setMustQty(d.getReturnQty());
+            // 剩余应退 = 应退数量 - 历史已入库实退数量累计（同一售后单分批多次生成退货入库单场景）
+            Integer mustQty = d.getReturnQty();
+            if (mustQty != null) {
+                int instockQty = context.instockRealQtyBySoReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO);
+                pd.setRemainShouldQty(mustQty - instockQty);
+            }
+            // 已出库数量 / 签收数量，口径与 view()/paging() 保持一致
+            pd.setDeliveryQty(context.outstockActualQtyBySoIdSku.getOrDefault(soB2cReturn.getSoId() + "-" + d.getSkuId(), MathUtil.ZERO));
+            pd.setReceiveQty(context.receiveQtyByReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO));
+            prefillDetails.add(pd);
+        }
+        prefill.setDetailList(prefillDetails);
+    }
+
+    /**
+     * 销售组织/部门/销售员名称批量补全（复用 add() 中的 sysUserFeign 查询口径，一次性批量查询避免逐条Feign调用）
+     */
+    private void batchFillPrefillSalesNames(List<SoReturnInstockDTO.ReturnLogisticPrefill> prefillList) {
+        if (CollUtil.isEmpty(prefillList)) {
+            return;
+        }
+        List<String> sellerIds = prefillList.stream()
+                .filter(p -> CharSequenceUtil.isNotBlank(p.getSellerId()) && CharSequenceUtil.isBlank(p.getSellerName()))
+                .map(SoReturnInstockDTO.ReturnLogisticPrefill::getSellerId).distinct().collect(Collectors.toList());
+        Map<String, String> sellerNameMap = CollUtil.isNotEmpty(sellerIds) ? sysUserFeign.getUserListByUserIds(sellerIds).stream()
+                .filter(u -> CharSequenceUtil.isNotBlank(u.getUserId()))
+                .collect(Collectors.toMap(FindUserDTO::getUserId, u -> CharSequenceUtil.emptyToDefault(u.getUserName(), ""), (a, b) -> a))
+                : Collections.emptyMap();
+
+        List<String> deptIds = prefillList.stream()
+                .filter(p -> CharSequenceUtil.isNotBlank(p.getSalesDeptId()) && CharSequenceUtil.isBlank(p.getSalesDeptName()))
+                .map(SoReturnInstockDTO.ReturnLogisticPrefill::getSalesDeptId).distinct().collect(Collectors.toList());
+        Map<String, String> deptNameMap = CollUtil.isNotEmpty(deptIds) ? sysUserFeign.listDeptByIds(deptIds).stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
+                .collect(Collectors.toMap(SysDepartmentEntity::getId, d -> CharSequenceUtil.emptyToDefault(d.getName(), ""), (a, b) -> a))
+                : Collections.emptyMap();
+
+        List<String> orgIds = prefillList.stream()
+                .filter(p -> CharSequenceUtil.isNotBlank(p.getSalesOrgId()) && CharSequenceUtil.isBlank(p.getSalesOrgName()))
+                .map(SoReturnInstockDTO.ReturnLogisticPrefill::getSalesOrgId).distinct().collect(Collectors.toList());
+        Map<String, String> orgNameMap = CollUtil.isNotEmpty(orgIds) ? sysUserFeign.getAccountingCompanyList(orgIds).stream()
+                .filter(o -> CharSequenceUtil.isNotBlank(o.getId()))
+                .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, o -> CharSequenceUtil.emptyToDefault(o.getName(), ""), (a, b) -> a))
+                : Collections.emptyMap();
+
+        for (SoReturnInstockDTO.ReturnLogisticPrefill prefill : prefillList) {
+            if (CharSequenceUtil.isNotBlank(prefill.getSellerId()) && CharSequenceUtil.isBlank(prefill.getSellerName())) {
+                prefill.setSellerName(sellerNameMap.getOrDefault(prefill.getSellerId(), ""));
+            }
+            if (CharSequenceUtil.isNotBlank(prefill.getSalesDeptId()) && CharSequenceUtil.isBlank(prefill.getSalesDeptName())) {
+                prefill.setSalesDeptName(deptNameMap.getOrDefault(prefill.getSalesDeptId(), ""));
+            }
+            if (CharSequenceUtil.isNotBlank(prefill.getSalesOrgId()) && CharSequenceUtil.isBlank(prefill.getSalesOrgName())) {
+                prefill.setSalesOrgName(orgNameMap.getOrDefault(prefill.getSalesOrgId(), ""));
+            }
+        }
+    }
+
+    /**
+     * queryByReturnLogisticCode 批量预取的依赖数据容器
+     */
+    private static class ReturnLogisticPrefillContext {
+        Map<String, SoInfoEntity> soInfoMap = Collections.emptyMap();
+        Map<String, SoB2cEntity> soB2cMap = Collections.emptyMap();
+        Map<String, SoOutstockEntity> soOutstockMap = Collections.emptyMap();
+        Map<String, ShopInfoEntity> shopInfoMap = Collections.emptyMap();
+        Map<String, CustomerInfoEntity> customerInfoMap = Collections.emptyMap();
+        Map<String, List<SoB2cReturnDetailDTO.ViewDTO>> b2cDetailsByMainId = Collections.emptyMap();
+        // B2B售后单明细，按退货单(so_return.id)分组
+        Map<String, List<SoReturnDetailEntity>> b2bDetailsByMainId = Collections.emptyMap();
+        // B2B销售单明细，按id索引（so_return_detail.source_detail_id -> so_detail），用于取soId/单箱数量/销售数量
+        Map<String, SoDetailEntity> soDetailById = Collections.emptyMap();
+        Map<String, String> skuNameById = Collections.emptyMap();
+        // 按售后/退货单明细id累计的历史已入库实退数量，用于计算剩余应退数量（跨批次退货入库单累计），B2B/B2C共用
+        Map<String, Integer> instockRealQtyBySoReturnDetailId = Collections.emptyMap();
+        // 按 soId+"-"+skuId 汇总的已出库数量（仅统计approve，与 view()/paging() 口径一致），B2B/B2C共用
+        Map<String, Integer> outstockActualQtyBySoIdSku = Collections.emptyMap();
+        // 按售后/退货单明细id汇总的签收数量（仅统计approve，与 view()/paging() 口径一致），B2B/B2C共用
+        Map<String, Integer> receiveQtyByReturnDetailId = Collections.emptyMap();
+    }
+
+    // ===================== matchAndCreateByReturnLogisticCode：按退货物流单号匹配售后单并生成退货入库单 =====================
+
+    /**
+     * 按退货物流单号匹配 B2B/B2C 售后单并生成已审核退货入库单；未匹配完的明细原样返回交由调用方后续分支。
+     * <p>
+     * 事务边界说明（供审查对照，勿按「长事务/无批次上限」要求拆事务或强行加硬截断）：
+     * <ul>
+     *   <li>整方法使用 {@code @GlobalTransactional}：一次物流单号匹配下「多张售后对应入库单落库 + B2C 待退货→已退货」须原子成功/失败，
+     *       若按 mainId 拆本地/全局事务，会出现部分入库已成功、售后状态只改了一半的中间态，MQ 重试也难自洽。</li>
+     *   <li>方法前半以只读 Feign/缺口计算为主，后半循环 {@code addByThirdWarehouse} 并批量 {@code updateBatch}；
+     *       B2C 状态更新已改为循环外分批 Feign 写，避免逐单远程写进一步拉长全局事务。</li>
+     *   <li>同一物流单号实务上极少挂载大量售后单；120s 超时覆盖常规峰值。若业务上出现超大候选集，应先治理数据/拆单推送，
+     *       而非在此静默截断部分售后（截断会破坏「同物流单号一次匹配」的分配完整性）。</li>
+     * </ul>
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<PlatformReturnInstockDTO.Detail> matchAndCreateByReturnLogisticCode(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
+        List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
+        if (CollUtil.isEmpty(details)) {
+            return Collections.emptyList();
+        }
+        String returnLogisticCode = dto.getReturnLogisticCode();
+        // Feign 集合可能返回 null：标准化后再做 isEmpty / stream，避免单侧命中时另一侧 NPE
+        List<SoReturnEntity> b2bReturnList = CollUtil.emptyIfNull(soReturnFeign.listByReturnLogisticCode(returnLogisticCode));
+        List<SoB2cReturnEntity> b2cReturnList = CollUtil.emptyIfNull(soB2cReturnFeign.listByReturnLogisticCode(returnLogisticCode));
+        if (CollUtil.isEmpty(b2bReturnList) && CollUtil.isEmpty(b2cReturnList)) {
+            // 两侧均未命中，原样返回交由调用方继续走下一分支
+            return details;
+        }
+
+        // B2C 数据完整性预校验：店铺/客户信息缺失的售后单不参与匹配，其明细视为未匹配，交由后续分支兜底
+        ReturnLogisticB2cContext b2cContext = buildReturnLogisticB2cContext(b2cReturnList);
+        List<SoB2cReturnEntity> validB2cReturnList = b2cReturnList.stream()
+                .filter(v -> {
+                    ShopInfoEntity shopInfo = b2cContext.shopInfoMap.get(v.getShopId());
+                    return Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())
+                            && b2cContext.customerInfoMap.containsKey(shopInfo.getCustomerId());
+                })
+                .collect(Collectors.toList());
+        if (validB2cReturnList.size() != b2cReturnList.size()) {
+            log.warn("[海外仓退货入库-物流单号匹配] 部分B2C售后单店铺/客户信息缺失，不参与匹配：returnLogisticCode={}", returnLogisticCode);
+        }
+
+        Map<String, SoReturnEntity> b2bReturnMap = b2bReturnList.stream()
+                .collect(Collectors.toMap(SoReturnEntity::getId, Function.identity(), (a, b) -> a));
+        Map<String, SoB2cReturnEntity> b2cReturnMap = validB2cReturnList.stream()
+                .collect(Collectors.toMap(SoB2cReturnEntity::getId, Function.identity(), (a, b) -> a));
+        // 批量预取B2B候选售后单对应客户的平台归属，用于回填退货入库单dictPlatform
+        Map<String, CustomerInfoEntity> b2bCustomerInfoMap = buildCustomerInfoMapByIds(
+                b2bReturnList.stream().map(SoReturnEntity::getCustomerId).collect(Collectors.toList()));
+
+        List<ReturnGapDetail> gapDetails = buildReturnGapDetails(b2bReturnList, validB2cReturnList);
+        if (CollUtil.isEmpty(gapDetails)) {
+            // 候选售后单均已完全入库（无缺口），视为未匹配
+            return details;
+        }
+        Map<String, List<ReturnGapDetail>> gapDetailsBySkuId = gapDetails.stream()
+                .collect(Collectors.groupingBy(g -> g.skuId));
+
+        Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMapByPlatformSku = buildSkuMappingByPlatformSku(dto);
+
+        // mainId -> 分配到的入库明细行；用LinkedHashMap保证生成顺序与匹配顺序一致，便于排查
+        Map<String, List<SoReturnInstockDetailEntity>> instockDetailsByMainId = new LinkedHashMap<>();
+        List<PlatformReturnInstockDTO.Detail> remaining = new ArrayList<>();
+
+        for (PlatformReturnInstockDTO.Detail detail : details) {
+            int mustQty = Objects.nonNull(detail.getMustQty()) ? detail.getMustQty() : 0;
+            SkuMappingDTO.MappingSkuViewDTO skuView = mustQty > 0 ? skuMapByPlatformSku.get(detail.getProductSku()) : null;
+            List<ReturnGapDetail> candidates = Objects.isNull(skuView) ? null : gapDetailsBySkuId.get(skuView.getProductSkuId());
+            if (CollUtil.isEmpty(candidates)) {
+                // 未映射到SKU，或该SKU无任何有缺口的候选售后单：整行未匹配
+                remaining.add(detail);
+                continue;
+            }
+
+            int receiveQty = Objects.nonNull(detail.getReceiveQty()) ? detail.getReceiveQty() : 0;
+            int realQty = Objects.nonNull(detail.getRealQty()) ? detail.getRealQty() : 0;
+            int mustQtyLeft = mustQty;
+            int receiveQtyLeft = receiveQty;
+            int realQtyLeft = realQty;
+            // 记录本行最后一次分配产生的入库明细，用于在应退数量分配完毕后补齐按比例向下取整产生的舍入余数
+            SoReturnInstockDetailEntity lastInstockDetail = null;
+            for (ReturnGapDetail candidate : candidates) {
+                if (mustQtyLeft <= 0) {
+                    break;
+                }
+                if (candidate.gapQty <= 0) {
+                    continue;
+                }
+                int allocateQty = Math.min(mustQtyLeft, candidate.gapQty);
+                // 签收/实退数量按应退数量的分配比例向下取整分摊，剩余部分随mustQtyLeft一起进入下一候选或最终剩余，保证总量守恒
+                int allocateReceiveQty = Math.min(receiveQtyLeft, proportionalFloor(receiveQty, allocateQty, mustQty));
+                int allocateRealQty = Math.min(realQtyLeft, proportionalFloor(realQty, allocateQty, mustQty));
+
+                SoReturnInstockDetailEntity instockDetail = new SoReturnInstockDetailEntity();
+                instockDetail.setSkuId(skuView.getProductSkuId());
+                instockDetail.setSkuNo(skuView.getProductSkuNo());
+                instockDetail.setPlatformSkuNo(detail.getProductSku());
+                instockDetail.setMustQty(allocateQty);
+                instockDetail.setReceiveQty(allocateReceiveQty);
+                instockDetail.setRealQty(allocateRealQty);
+                instockDetail.setWarehouseId(warehouseEntity.getId());
+                instockDetail.setWarehouseName(warehouseEntity.getName());
+                instockDetail.setRemark(dto.getReason());
+                // 退货类型/原因优先取匹配到的售后单，缺失时兜底用平台推送的退货类型（WEGO 默认"其他"）
+                instockDetail.setReturnTypeDict(CharSequenceUtil.emptyToDefault(candidate.returnTypeDict, dto.getReturnType()));
+                instockDetail.setReturnReasonDict(CharSequenceUtil.emptyToDefault(candidate.returnReasonDict, ""));
+                instockDetail.setSoReturnDetailId(candidate.detailId);
+                instockDetailsByMainId.computeIfAbsent(candidate.mainId, k -> new ArrayList<>()).add(instockDetail);
+
+                candidate.gapQty -= allocateQty;
+                mustQtyLeft -= allocateQty;
+                receiveQtyLeft -= allocateReceiveQty;
+                realQtyLeft -= allocateRealQty;
+                lastInstockDetail = instockDetail;
+            }
+            // 应退数量（mustQty）已在候选间全部分配完毕，但签收/实退数量按比例向下取整可能残留舍入余数，
+            // 此时不会再进入下方"remaining"未匹配分支承接，需补齐到本行最后一条入库明细，保证总量守恒
+            if (mustQtyLeft <= 0 && Objects.nonNull(lastInstockDetail) && (receiveQtyLeft > 0 || realQtyLeft > 0)) {
+                lastInstockDetail.setReceiveQty(lastInstockDetail.getReceiveQty() + receiveQtyLeft);
+                lastInstockDetail.setRealQty(lastInstockDetail.getRealQty() + realQtyLeft);
+            }
+            if (mustQtyLeft > 0) {
+                PlatformReturnInstockDTO.Detail remainingDetail = new PlatformReturnInstockDTO.Detail();
+                remainingDetail.setThirdBarcode(detail.getThirdBarcode());
+                remainingDetail.setProductSku(detail.getProductSku());
+                remainingDetail.setThirdId(detail.getThirdId());
+                remainingDetail.setMustQty(mustQtyLeft);
+                remainingDetail.setReceiveQty(receiveQtyLeft);
+                remainingDetail.setRealQty(realQtyLeft);
+                remaining.add(remainingDetail);
+            }
+        }
+
+        if (CollUtil.isEmpty(instockDetailsByMainId)) {
+            // 未能分配到任何候选售后单
+            return details;
+        }
+
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+        // 循环内只收集需流转状态的 B2C 售后单，建单完成后统一 updateBatch，避免逐单 Feign 写拉长全局事务
+        List<SoB2cReturnEntity> b2cStatusUpdateList = new ArrayList<>();
+        for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : instockDetailsByMainId.entrySet()) {
+            String mainId = entry.getKey();
+            List<SoReturnInstockDetailEntity> detailEntityList = entry.getValue();
+            SoReturnEntity b2bReturn = b2bReturnMap.get(mainId);
+            if (Objects.nonNull(b2bReturn)) {
+                SoReturnInstockEntity instockEntity = buildInstockEntityFromB2bReturn(dto, warehouseEntity, company, b2bReturn, b2bCustomerInfoMap);
+                this.addByThirdWarehouse(instockEntity, detailEntityList);
+                continue;
+            }
+            SoB2cReturnEntity b2cReturn = b2cReturnMap.get(mainId);
+            if (Objects.isNull(b2cReturn)) {
+                // 理论上不会发生：gapDetails 仅来自 b2bReturnMap/b2cReturnMap 的key集合
+                log.error("[海外仓退货入库-物流单号匹配] 内部状态异常，找不到对应售后单：mainId={}", mainId);
+                continue;
+            }
+            SoReturnInstockEntity instockEntity = buildInstockEntityFromB2cReturn(dto, warehouseEntity, company, b2cReturn, b2cContext);
+            // B2C售后单若为"待退货"，同步流转为"已退货"（先改内存，循环外批量落库）
+            if (SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(b2cReturn.getStatus())) {
+                b2cReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
+                b2cStatusUpdateList.add(b2cReturn);
+            }
+            this.addByThirdWarehouse(instockEntity, detailEntityList);
+        }
+        if (CollUtil.isNotEmpty(b2cStatusUpdateList)) {
+            for (List<SoB2cReturnEntity> batch : CollUtil.split(b2cStatusUpdateList, IMPORT_UPDATE_BATCH_SIZE)) {
+                soB2cReturnFeign.updateBatch(batch);
+            }
+        }
+        return remaining;
+    }
+
+    /**
+     * 按比例向下取整分摊：totalQty * allocateBase / totalBase
+     */
+    private int proportionalFloor(int totalQty, int allocateBase, int totalBase) {
+        if (totalBase <= 0 || totalQty <= 0) {
+            return 0;
+        }
+        return (int) Math.floor(totalQty * (double) allocateBase / totalBase);
+    }
+
+    /**
+     * 批量取B2B/B2C候选售后单明细，按已审核入库数量计算剩余缺口（缺口<=0的行剔除），
+     * 跨B2B/B2C全局按售后单创建时间升序排列（createTime → mainId → detailId），
+     * 保证同SKU多候选场景下的分配顺序与业务口径一致，不再因分段收集导致B2B整体优先于B2C。
+     */
+    private List<ReturnGapDetail> buildReturnGapDetails(List<SoReturnEntity> b2bReturnList, List<SoB2cReturnEntity> b2cReturnList) {
+        List<ReturnGapDetail> result = new ArrayList<>();
+        if (CollUtil.isNotEmpty(b2bReturnList)) {
+            List<String> b2bReturnIds = b2bReturnList.stream().map(SoReturnEntity::getId).collect(Collectors.toList());
+            List<SoReturnDetailEntity> b2bDetailList = soReturnFeign.listDetailByMainIds(b2bReturnIds);
+            if (CollUtil.isNotEmpty(b2bDetailList)) {
+                Map<String, Integer> instockQtyMap = sumApprovedInstockQtyByReturnDetailId(
+                        b2bDetailList.stream().map(SoReturnDetailEntity::getId).collect(Collectors.toList()));
+                Map<String, LocalDateTime> mainCreateTimeMap = b2bReturnList.stream()
+                        .collect(Collectors.toMap(SoReturnEntity::getId, SoReturnEntity::getCreateTime, (a, b) -> a));
+                for (SoReturnDetailEntity d : b2bDetailList) {
+                    if (CharSequenceUtil.isBlank(d.getSkuId())) {
+                        continue;
+                    }
+                    int returnQty = Objects.nonNull(d.getReturnQty()) ? d.getReturnQty() : 0;
+                    int gap = returnQty - instockQtyMap.getOrDefault(d.getId(), 0);
+                    if (gap > 0) {
+                        ReturnGapDetail gapDetail = new ReturnGapDetail();
+                        gapDetail.mainId = d.getMainId();
+                        gapDetail.detailId = d.getId();
+                        gapDetail.skuId = d.getSkuId();
+                        gapDetail.gapQty = gap;
+                        gapDetail.createTime = mainCreateTimeMap.get(d.getMainId());
+                        // B2B退货类型/原因取自退货单明细
+                        gapDetail.returnTypeDict = d.getReturnTypeDict();
+                        gapDetail.returnReasonDict = d.getReturnReasonDict();
+                        result.add(gapDetail);
+                    }
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(b2cReturnList)) {
+            List<String> b2cReturnIds = b2cReturnList.stream().map(SoB2cReturnEntity::getId).collect(Collectors.toList());
+            List<SoB2cReturnDetailDTO.ViewDTO> b2cDetailList = soB2cReturnFeign.listDetailByMainIds(b2cReturnIds);
+            if (CollUtil.isNotEmpty(b2cDetailList)) {
+                Map<String, Integer> instockQtyMap = sumApprovedInstockQtyByReturnDetailId(
+                        b2cDetailList.stream().map(SoB2cReturnDetailDTO.ViewDTO::getId).collect(Collectors.toList()));
+                Map<String, LocalDateTime> mainCreateTimeMap = b2cReturnList.stream()
+                        .collect(Collectors.toMap(SoB2cReturnEntity::getId, SoB2cReturnEntity::getCreateTime, (a, b) -> a));
+                // B2C退货类型/原因在售后单主表上，按 mainId 取用
+                Map<String, SoB2cReturnEntity> b2cReturnMap = b2cReturnList.stream()
+                        .collect(Collectors.toMap(SoB2cReturnEntity::getId, Function.identity(), (a, b) -> a));
+                for (SoB2cReturnDetailDTO.ViewDTO d : b2cDetailList) {
+                    if (CharSequenceUtil.isBlank(d.getSkuId())) {
+                        continue;
+                    }
+                    int returnQty = Objects.nonNull(d.getReturnQty()) ? d.getReturnQty() : 0;
+                    int gap = returnQty - instockQtyMap.getOrDefault(d.getId(), 0);
+                    if (gap > 0) {
+                        ReturnGapDetail gapDetail = new ReturnGapDetail();
+                        gapDetail.mainId = d.getMainId();
+                        gapDetail.detailId = d.getId();
+                        gapDetail.skuId = d.getSkuId();
+                        gapDetail.gapQty = gap;
+                        gapDetail.createTime = mainCreateTimeMap.get(d.getMainId());
+                        // B2C退货类型/原因取自售后单主表（type/reason）
+                        SoB2cReturnEntity b2cReturn = b2cReturnMap.get(d.getMainId());
+                        if (Objects.nonNull(b2cReturn)) {
+                            gapDetail.returnTypeDict = b2cReturn.getType();
+                            gapDetail.returnReasonDict = b2cReturn.getReason();
+                        }
+                        result.add(gapDetail);
+                    }
+                }
+            }
+        }
+        // 跨B2B/B2C全局排序，保证同SKU分配时早创建的售后单优先，而非B2B整体排在B2C之前
+        result.sort(Comparator
+                .comparing((ReturnGapDetail g) -> g.createTime, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(g -> g.mainId, Comparator.nullsLast(String::compareTo))
+                .thenComparing(g -> g.detailId, Comparator.nullsLast(String::compareTo)));
+        return result;
+    }
+
+    /**
+     * 按售后单明细id统计已审核入库单的实退数量之和；退货入库单明细的审核状态挂在主表，需先查明细再按主表id过滤已审核
+     */
+    private Map<String, Integer> sumApprovedInstockQtyByReturnDetailId(List<String> soReturnDetailIds) {
+        if (CollUtil.isEmpty(soReturnDetailIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnInstockDetailEntity> instockDetailList = soReturnInstockDetailService.lambdaQuery()
+                .in(SoReturnInstockDetailEntity::getSoReturnDetailId, soReturnDetailIds)
+                .list();
+        if (CollUtil.isEmpty(instockDetailList)) {
+            return Collections.emptyMap();
+        }
+        List<String> mainIds = instockDetailList.stream().map(SoReturnInstockDetailEntity::getMainId)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        Set<String> approvedMainIds = this.lambdaQuery()
+                .in(SoReturnInstockEntity::getId, mainIds)
+                .eq(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .list().stream().map(SoReturnInstockEntity::getId).collect(Collectors.toSet());
+        return instockDetailList.stream()
+                .filter(d -> approvedMainIds.contains(d.getMainId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                        Collectors.summingInt(d -> Objects.nonNull(d.getRealQty()) ? d.getRealQty() : 0)));
+    }
+
+    /**
+     * 平台SKU -> SKU映射，复用listing/SKU映射关系查询，未映射到的SKU不出现在返回结果中
+     */
+    private Map<String, SkuMappingDTO.MappingSkuViewDTO> buildSkuMappingByPlatformSku(PlatformReturnInstockDTO dto) {
+        List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
+        if (CollUtil.isEmpty(details)) {
+            return Collections.emptyMap();
+        }
+        List<String> platformSkuNoList = details.stream().map(PlatformReturnInstockDTO.Detail::getProductSku)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(platformSkuNoList)) {
+            return Collections.emptyMap();
+        }
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        paramDTO.setAuthId(dto.getAuthId());
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        return CollUtil.emptyIfNull(skuMappingFeign.listByPlatformSkuNoAndPlatform(paramDTO)).stream()
+                .filter(v -> CharSequenceUtil.isNotBlank(v.getPlatformSkuNo()) && CharSequenceUtil.isNotBlank(v.getProductSkuId()))
+                .collect(Collectors.toMap(SkuMappingDTO.MappingSkuViewDTO::getPlatformSkuNo, Function.identity(), (a, b) -> a));
+    }
+
+    /**
+     * 批量预取B2C候选售后单所需的店铺→客户→销售部门依赖数据。
+     * 销售部门通过 {@code sysUserFeign.listDeptByIds} 一次拉取，避免后续按售后单循环单条 Feign。
+     */
+    private ReturnLogisticB2cContext buildReturnLogisticB2cContext(List<SoB2cReturnEntity> b2cReturnList) {
+        ReturnLogisticB2cContext context = new ReturnLogisticB2cContext();
+        b2cReturnList = CollUtil.emptyIfNull(b2cReturnList);
+        if (CollUtil.isEmpty(b2cReturnList)) {
+            return context;
+        }
+        List<String> shopIds = b2cReturnList.stream().map(SoB2cReturnEntity::getShopId)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(shopIds)) {
+            return context;
+        }
+        context.shopInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(ShopInfoEntity.class, shopIds)).stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (a, b) -> a));
+        List<String> customerIds = context.shopInfoMap.values().stream().map(ShopInfoEntity::getCustomerId)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(customerIds)) {
+            context.customerInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(CustomerInfoEntity.class, customerIds)).stream()
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                    .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
+        }
+        List<String> salesDeptIds = context.customerInfoMap.values().stream()
+                .map(CustomerInfoEntity::getSalesDeptId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(salesDeptIds)) {
+            List<SysDepartmentEntity> deptList = CollUtil.emptyIfNull(sysUserFeign.listDeptByIds(salesDeptIds));
+            if (CollUtil.isNotEmpty(deptList)) {
+                context.deptNameMap = deptList.stream()
+                        .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
+                        .collect(Collectors.toMap(SysDepartmentEntity::getId,
+                                d -> CharSequenceUtil.emptyToDefault(d.getName(), ""), (a, b) -> a));
+            }
+        }
+        return context;
+    }
+
+    /**
+     * 按客户id批量查询客户档案，忽略空白id，找不到的id不出现在返回结果中
+     */
+    private Map<String, CustomerInfoEntity> buildCustomerInfoMapByIds(List<String> customerIds) {
+        List<String> distinctIds = CollUtil.emptyIfNull(customerIds).stream()
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctIds)) {
+            return Collections.emptyMap();
+        }
+        return CollUtil.emptyIfNull(FeignQuery.getByIds(CustomerInfoEntity.class, distinctIds)).stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
+    }
+
+    /**
+     * 由匹配到的B2B售后单构建退货入库单主表：客户/组织/销售员等字段直接取自售后单自身
+     */
+    private SoReturnInstockEntity buildInstockEntityFromB2bReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity,
+                                                                    SysAccountingCompanyEntity company, SoReturnEntity b2bReturn,
+                                                                    Map<String, CustomerInfoEntity> customerInfoMap) {
+        SoReturnInstockEntity entity = new SoReturnInstockEntity();
+        entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        entity.setApproveTime(LocalDateTime.now());
+        entity.setApproveUserName("system");
+        entity.setBillDate(dto.getPutawayLocalDate());
+        entity.setInventoryOrgId(warehouseEntity.getOrgId());
+        entity.setInventoryOrgName(Objects.nonNull(company) ? company.getCompanyName() : "");
+        entity.setWarehouseKeeperId(warehouseEntity.getChargeId());
+        entity.setType(OrderTypeEnum.B2B.getCode());
+        entity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
+        entity.setThirdCode(dto.getPlatformReturnOrderNo());
+        entity.setCreated(dto.getCreateTime());
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
+        entity.setSoReturnId(b2bReturn.getId());
+        entity.setSoReturnCode(b2bReturn.getCode());
+        // 本分支专属语义：来源编号=匹配到的售后单自身的销售单号，与平台仓分支(sourceCode=dto.getUniqueId())不同
+        entity.setSourceCode(b2bReturn.getSourceCode());
+        entity.setPlatformOrderCode(b2bReturn.getPlatformOrderCode());
+        entity.setCustomerId(b2bReturn.getCustomerId());
+        entity.setCustomerName(b2bReturn.getCustomerName());
+        entity.setSalesOrgId(b2bReturn.getSalesOrgId());
+        entity.setSalesOrgName(b2bReturn.getSalesOrgName());
+        entity.setSalesDeptId(b2bReturn.getSalesDeptId());
+        entity.setSalesDeptName(b2bReturn.getSalesDeptName());
+        entity.setSellerId(b2bReturn.getSellerId());
+        entity.setSellerName(b2bReturn.getSellerName());
+        entity.setCurrency(b2bReturn.getCurrency());
+        entity.setCurrencySymbol(CharSequenceUtil.isNotBlank(b2bReturn.getCurrencySymbol())
+                ? b2bReturn.getCurrencySymbol() : CurrencyEnum.getSymbolByCode(b2bReturn.getCurrency()));
+        // 平台：B2B无自身平台字段，取客户归属平台（可能为空）
+        CustomerInfoEntity customerInfo = customerInfoMap.get(b2bReturn.getCustomerId());
+        entity.setDictPlatform(resolveDictPlatform(entity.getType(), null,
+                Objects.nonNull(customerInfo) ? customerInfo.getPlatformType() : null));
+        return entity;
+    }
+
+    /**
+     * 由匹配到的B2C售后单构建退货入库单主表：客户走店铺→客户档案，组织/部门/销售员随客户档案带出（与既有buildPlatformSoReturnInstockEntity口径一致）
+     */
+    private SoReturnInstockEntity buildInstockEntityFromB2cReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity,
+                                                                    SysAccountingCompanyEntity company, SoB2cReturnEntity b2cReturn,
+                                                                    ReturnLogisticB2cContext context) {
+        ShopInfoEntity shopInfo = context.shopInfoMap.get(b2cReturn.getShopId());
+        CustomerInfoEntity customerInfo = context.customerInfoMap.get(shopInfo.getCustomerId());
+
+        SoReturnInstockEntity entity = new SoReturnInstockEntity();
+        entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        entity.setApproveTime(LocalDateTime.now());
+        entity.setApproveUserName("system");
+        entity.setBillDate(dto.getPutawayLocalDate());
+        entity.setInventoryOrgId(warehouseEntity.getOrgId());
+        entity.setInventoryOrgName(Objects.nonNull(company) ? company.getCompanyName() : "");
+        entity.setWarehouseKeeperId(warehouseEntity.getChargeId());
+        entity.setType(OrderTypeEnum.B2C.getCode());
+        entity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
+        entity.setThirdCode(dto.getPlatformReturnOrderNo());
+        entity.setCreated(dto.getCreateTime());
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
+        entity.setShopId(b2cReturn.getShopId());
+        entity.setSoReturnId(b2cReturn.getId());
+        entity.setSoReturnCode(b2cReturn.getCode());
+        // 本分支专属语义：来源编号=匹配到的售后单自身的销售单号，与平台仓分支(sourceCode=dto.getUniqueId())不同
+        entity.setSourceCode(b2cReturn.getSoCode());
+        entity.setPlatformOrderCode(b2cReturn.getPlatformOrderNo());
+        entity.setCurrency(CharSequenceUtil.isNotBlank(b2cReturn.getCurrency()) ? b2cReturn.getCurrency()
+                : CharSequenceUtil.emptyToDefault(shopInfo.getSettlementCurrency(), CurrencyEnum.CNY.getCurrencyCode()));
+        entity.setCurrencySymbol(CurrencyEnum.getSymbolByCode(entity.getCurrency()));
+        entity.setSalesOrgId(customerInfo.getUseOrgId());
+        entity.setSalesOrgName(customerInfo.getUseOrgName());
+        entity.setCustomerId(shopInfo.getCustomerId());
+        entity.setCustomerName(customerInfo.getName());
+        // 销售部门名称已在 ReturnLogisticB2cContext 批量预取，此处仅读 Map，避免循环内单条 Feign
+        if (CharSequenceUtil.isNotBlank(customerInfo.getSalesDeptId())
+                && context.deptNameMap.containsKey(customerInfo.getSalesDeptId())) {
+            entity.setSalesDeptId(customerInfo.getSalesDeptId());
+            entity.setSalesDeptName(context.deptNameMap.get(customerInfo.getSalesDeptId()));
+        }
+        entity.setSellerId(customerInfo.getSellerId());
+        entity.setSellerName(customerInfo.getSellerName());
+        // 平台：B2C取售后单自身平台，否则取客户归属平台（可能为空）
+        entity.setDictPlatform(resolveDictPlatform(entity.getType(), b2cReturn.getDictPlatform(), customerInfo.getPlatformType()));
+        return entity;
+    }
+
+    /**
+     * 候选售后单明细的剩余入库缺口（缺口 = 售后单退货数量 - 已审核入库数量），跨B2B/B2C统一表示，随分配过程递减
+     */
+    private static class ReturnGapDetail {
+        String mainId;
+        String detailId;
+        String skuId;
+        int gapQty;
+        /** 售后单主表创建时间，用于跨B2B/B2C全局按创建时间升序分配 */
+        LocalDateTime createTime;
+        /** 匹配到的售后单退货类型字典值（B2B取明细，B2C取售后单主表 type），用于回写退货入库单明细 */
+        String returnTypeDict;
+        /** 匹配到的售后单退货原因字典值（B2B取明细，B2C取售后单主表 reason），用于回写退货入库单明细 */
+        String returnReasonDict;
+    }
+
+    /**
+     * matchAndCreateByReturnLogisticCode 中B2C分支所需的批量预取依赖（店铺→客户→销售部门）
+     */
+    private static class ReturnLogisticB2cContext {
+        Map<String, ShopInfoEntity> shopInfoMap = Collections.emptyMap();
+        Map<String, CustomerInfoEntity> customerInfoMap = Collections.emptyMap();
+        /** 销售部门 id → 名称（来自 listDeptByIds） */
+        Map<String, String> deptNameMap = Collections.emptyMap();
     }
 
     @Override
@@ -629,12 +1596,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 warehouseKeeperName = userList.get(0).getUserName();
             }
         }
-        // 海外仓退货存在未关联订单，允许修改客户
+        // 海外仓退货存在未关联订单，允许修改客户；此处查询的customerInfo在下方计算dictPlatform时会复用，避免重复Feign调用
+        CustomerInfoEntity customerInfoFromEdit = null;
         if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType()) || SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
-            CustomerInfoEntity customerInfo = customerFeign.getCustomerById(dto.getCustomerId());
-            if (null == customerInfo) {
+            customerInfoFromEdit = customerFeign.getCustomerById(dto.getCustomerId());
+            if (null == customerInfoFromEdit) {
                 ServiceException.runError(ApiError.CUSTOMER_NOT_FOUND);
             }
+            CustomerInfoEntity customerInfo = customerInfoFromEdit;
             entity.setCustomerId(dto.getCustomerId());
             entity.setCustomerName(customerInfo.getName());
             entity.setSellerId(customerInfo.getSellerId());
@@ -671,6 +1640,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setInventoryOrgName(warehouseOrgName);
         entity.setBillDate(dto.getBillDate());
         entity.setType(dto.getType());
+        //平台：B2C取售后单平台，否则取客户归属平台（可能为空）；客户/类型在上方"海外仓退货"分支可能已变更，此处按更新后的entity重新计算
+        SoB2cReturnEntity soB2cReturnEntityForPlatform = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CharSequenceUtil.isNotBlank(entity.getSoReturnId())
+                ? FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId()) : null;
+        //上方"海外仓退货允许改客户"分支已按相同客户id查询过customerInfo，此处直接复用，避免重复Feign调用；
+        //非该分支时 Feign 也可能返回 null（客户停用/删除等），平台字段允许为空，不得直接解引用
+        CustomerInfoEntity customerInfoForPlatform = Objects.nonNull(customerInfoFromEdit) && customerInfoFromEdit.getId().equals(entity.getCustomerId())
+                ? customerInfoFromEdit
+                : (CharSequenceUtil.isNotBlank(entity.getCustomerId()) ? customerFeign.getCustomerById(entity.getCustomerId()) : null);
+        String customerPlatformType = Objects.nonNull(customerInfoForPlatform) ? customerInfoForPlatform.getPlatformType() : null;
+        entity.setDictPlatform(resolveDictPlatform(entity.getType(),
+                Objects.nonNull(soB2cReturnEntityForPlatform) ? soB2cReturnEntityForPlatform.getDictPlatform() : null,
+                customerPlatformType));
         if (!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())) {
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}", entity.getReturnLogisticCode(), dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
         }
@@ -700,6 +1681,25 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Collections.singletonList(entity.getSoReturnId()));
         List<SoB2cReturnDetailEntity> returnB2cDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class, returnDetailIds);
         SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId());
+        // B2C：按售后明细 / 来源明细累计入库实退，用于详情实时重算剩余应退货数量
+        List<String> b2cReturnDetailIdsForRemain = returnDetailIds.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> b2cInstockByReturnDetailIds = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CollUtil.isNotEmpty(b2cReturnDetailIdsForRemain)
+                ? soReturnInstockDetailService.listDetailBySoReturnDetailIds(b2cReturnDetailIdsForRemain) : Collections.emptyList();
+        Map<String, Integer> b2cInstockRealQtyMap = CollUtil.isNotEmpty(b2cInstockByReturnDetailIds) ? b2cInstockByReturnDetailIds.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
+        List<String> b2cSourceDetailIdsForRemain = BillTypeEnum.B2C.getCode().equals(entity.getType())
+                ? detailEntityList.stream()
+                .filter(d -> CharSequenceUtil.isBlank(d.getSoReturnDetailId()) && CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
+                .map(SoReturnInstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList())
+                : Collections.emptyList();
+        List<SoReturnInstockDetailEntity> b2cInstockBySourceDetailIds = CollUtil.isNotEmpty(b2cSourceDetailIdsForRemain)
+                ? soReturnInstockDetailService.listDetailBySourceDetailIds(b2cSourceDetailIdsForRemain) : Collections.emptyList();
+        Map<String, Integer> b2cSourceDetailRealQtyMap = CollUtil.isNotEmpty(b2cInstockBySourceDetailIds) ? b2cInstockBySourceDetailIds.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
@@ -710,6 +1710,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
+        //平台：优先取新增/修改时已落库的dict_platform（已由BeanMapperUtils.copy(entity, viewDTO)带出）；老数据为空时按原有逻辑临时计算兜底
+        String platform = viewDTO.getDictPlatform();
+        if (CharSequenceUtil.isBlank(platform)) {
+            platform = resolveDictPlatform(entity.getType(), Objects.nonNull(soB2cReturnEntity) ? soB2cReturnEntity.getDictPlatform() : null, customerInfoEntity.getPlatformType());
+        }
+        viewDTO.setDictPlatform(platform);
+        viewDTO.setDictPlatformName(CharSequenceUtil.isNotBlank(platform) ? PlatformDictEnum.getNameByCode(platform) : null);
         if (CharSequenceUtil.isNotBlank(entity.getSoReturnCode())) {
             viewDTO.setSourceCode(entity.getSoReturnCode());
         }
@@ -744,12 +1751,38 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setWarehouseId(viewDTO.getWarehouseId());
                 detailView.setWarehouseName(viewDTO.getWarehouseName());
             }
-            if ("B2C".equals(entity.getType())) {
+            if (BillTypeEnum.B2C.getCode().equals(entity.getType())) {
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = returnB2cDetailEntityList.stream().filter(v -> v.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setDeliveryQty(actualQty);
-                detailView.setMustQty(soB2cReturnDetailEntity.getReturnQty());
+                // 应退：优先售后明细退货数量；无售后关联时取落库 mustQty；仅 mustQty 为 null 时用签收数量兜底
+                Integer returnQty = soB2cReturnDetailEntity.getReturnQty();
+                boolean hasAuthoritativeReturnQty = returnQty != null;
+                if (returnQty == null) {
+                    returnQty = detailEntity.getMustQty();
+                }
+                if (returnQty == null && CharSequenceUtil.isBlank(detailEntity.getSoReturnDetailId())
+                        && detailEntity.getReceiveQty() != null) {
+                    returnQty = detailEntity.getReceiveQty();
+                }
+                // 剩余应退货数量 = 退货数量 - 累计入库（有售后按 soReturnDetailId；无售后按 sourceDetailId；皆空则本行实退）
+                if (returnQty != null) {
+                    int instockQty;
+                    if (CharSequenceUtil.isNotBlank(detailEntity.getSoReturnDetailId())) {
+                        instockQty = b2cInstockRealQtyMap.getOrDefault(detailEntity.getSoReturnDetailId(), MathUtil.ZERO);
+                    } else if (CharSequenceUtil.isNotBlank(detailEntity.getSourceDetailId())) {
+                        instockQty = b2cSourceDetailRealQtyMap.getOrDefault(detailEntity.getSourceDetailId(), MathUtil.ZERO);
+                    } else {
+                        instockQty = detailEntity.getRealQty() != null ? detailEntity.getRealQty() : MathUtil.ZERO;
+                    }
+                    // 无售后单权威应退数量时，历史数据可能落成偏小/为0的 mustQty；以累计入库为下限，避免展示负数剩余应退
+                    if (!hasAuthoritativeReturnQty && returnQty < instockQty) {
+                        returnQty = instockQty;
+                    }
+                    detailView.setRemainShouldQty(returnQty - instockQty);
+                }
+                detailView.setMustQty(returnQty);
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
                 detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
@@ -2039,6 +3072,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return null;
         }
         return lambdaQuery().eq(SoReturnInstockEntity::getThirdCode, thirdCode).last("limit 1").one();
+    }
+
+    @Override
+    public List<SoReturnInstockEntity> listByThirdCode(String thirdCode) {
+        if (CharSequenceUtil.isBlank(thirdCode)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(SoReturnInstockEntity::getThirdCode, thirdCode).list();
     }
 
     @Override

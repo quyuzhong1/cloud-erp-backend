@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.FileTemplateConstant;
@@ -32,6 +33,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -1224,6 +1226,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
         return this.stagingPacking(dto);
@@ -1435,6 +1438,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "addDTO.taskId", unlockAfterTx = true)
     public WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
@@ -1454,6 +1458,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             cartonEntity = wmsCartonService.getById(addDTO.getCartonId());
             if (Objects.isNull(cartonEntity)){
                 throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
+            }
+            // 单箱已完成，禁止再暂存/完成，避免另一端脏页面覆盖
+            if (PackingTaskStatusEnum.COMPLETED.getCode().equals(cartonEntity.getPackingStatus())){
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_CARTON_COMPLETED_FORBIDDEN);
             }
             //存在则删除之前装箱明细
             wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
@@ -1560,6 +1568,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
         PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
@@ -1773,6 +1782,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_SPEC_KEY, keyName = "dto.specId")
     public ApiResult<String> cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto) {
         WmsCartonSpecEntity old = wmsCartonSpecService.getById(dto.getSpecId());
         if (Objects.isNull(old)){

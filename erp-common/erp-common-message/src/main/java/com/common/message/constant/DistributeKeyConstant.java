@@ -54,4 +54,14 @@ public class DistributeKeyConstant {
      * TMS 异步任务执行锁（按 taskId 互斥，防 MQ 重投并发）
      */
     public static final String TMS_ASYNC_TASK_EXEC_KEY = "TMS_ASYNC_TASK_EXEC";
+
+    /**
+     * WMS 装箱单箱操作锁（暂存 / 完成 / 调整装箱共用）
+     */
+    public static final String WMS_PACKING_TASK_CARTON_KEY = "WMS_PACKING_TASK_CARTON_KEY";
+
+    /**
+     * WMS 装箱箱规操作锁
+     */
+    public static final String WMS_PACKING_TASK_CARTON_SPEC_KEY = "WMS_PACKING_TASK_CARTON_SPEC_KEY";
 }
