@@ -529,27 +529,45 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private ImportHistoryRecordDTO.PreQueryResultDTO preQueryDbData(Map<String, List<Object>> paramMap,
                                                                     List<TmsCfgCostEntity> reusedCfgCostList) {
+        Stopwatch preQueryStopwatch = Stopwatch.createStarted();
         // 费用项统一查尾程发货；主单 type 在 handleImportData 按匹配到的费用单 entity 解析。
         List<TmsCfgCostEntity> cfgCostList = CollUtil.isNotEmpty(reusedCfgCostList)
                 ? reusedCfgCostList
                 : tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
+        long billQueryStartMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS);
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = batchListLogisticsBillByUniqueKey(paramMap);
+        long billQueryMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS) - billQueryStartMs;
 
         List<String> logisticsBillDetailIdList = logisticsBillVos.stream()
                 .map(LogisticsBillDTO.LogisticsBillVo::getDetailId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        long costQueryStartMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS);
         List<LogisticsBillCostEntity> logisticsBillCostList = batchListByLogisticsBillDetailIds(logisticsBillDetailIdList);
+        long costQueryMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS) - costQueryStartMs;
 
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
+        long detailQueryMs = 0L;
         if (CollUtil.isNotEmpty(logisticsBillCostList)) {
             List<String> logisticsBillCostIdList = logisticsBillCostList.stream()
                     .map(LogisticsBillCostEntity::getId)
                     .filter(CharSequenceUtil::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
+            long detailQueryStartMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS);
             mainIdListMap.putAll(batchLoadCostDetailByBillCostIds(logisticsBillCostIdList));
+            detailQueryMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS) - detailQueryStartMs;
+        }
+        long totalMs = preQueryStopwatch.elapsed(TimeUnit.MILLISECONDS);
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+            int valueCount = paramMap == null ? 0 : paramMap.values().stream()
+                    .filter(CollUtil::isNotEmpty)
+                    .mapToInt(List::size)
+                    .sum();
+            log.info("[reconMatchTiming] source=preQuery identifyFieldCount={} valueCount={} hitBillCount={} hitCostCount={} billQueryMs={} costQueryMs={} detailQueryMs={} totalMs={}",
+                    paramMap == null ? 0 : paramMap.size(), valueCount, CollUtil.size(logisticsBillVos),
+                    CollUtil.size(logisticsBillCostList), billQueryMs, costQueryMs, detailQueryMs, totalMs);
         }
         return new ImportHistoryRecordDTO.PreQueryResultDTO(logisticsBillVos, mainIdListMap, logisticsBillCostList, cfgCostList);
     }
@@ -1367,10 +1385,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 result.setFailReason("未找到对应物流单");
                 return result;
             }).collect(Collectors.toList());
-            long totalMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
-            if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
-                log.debug("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount=0 persistGroupCount=0 persistBatchCount=0 outcome=no-match queryMs={} computeMs=0 persistMs=0 resultBuildMs=0 totalMs={}",
-                        ctx.getRows().size(), identifyFields.size(), totalMs, totalMs);
+            long queryMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
+            long totalMs = queryMs;
+            if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+                log.info("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount=0 persistGroupCount=0 persistBatchCount=0 resultCount={} outcome=no-match queryMs={} computeMs=0 persistMs=0 resultBuildMs=0 totalMs={}",
+                        ctx.getRows().size(), identifyFields.size(), noMatchResults.size(), queryMs, totalMs);
             }
             return noMatchResults;
         }
@@ -1466,9 +1485,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<LogisticsReconMatchDTO.MatchResultDTO> fanOutResults = fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
         long resultBuildMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS) - resultBuildStartMs;
         long totalMs = reconMatchStopwatch.elapsed(TimeUnit.MILLISECONDS);
-        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
             long failedGroupCount = groupResults.stream().filter(result -> !result.isSuccess()).count();
-            log.debug("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount={} persistGroupCount={} persistBatchCount={} resultCount={} outcome={} queryMs={} computeMs={} persistMs={} resultBuildMs={} totalMs={}",
+            log.info("[reconMatchTiming] source=engine rowCount={} identifyFieldCount={} groupCount={} persistGroupCount={} persistBatchCount={} resultCount={} outcome={} queryMs={} computeMs={} persistMs={} resultBuildMs={} totalMs={}",
                     ctx.getRows().size(), identifyFields.size(), groupRowsMap.size(), importDataList.size(), persistBatchCount,
                     fanOutResults.size(), partialPersist ? "partial-persist" : failedGroupCount > 0 ? "partial" : "success",
                     queryMs, computeMs, persistMs, resultBuildMs, totalMs);
@@ -1863,8 +1882,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             logisticsBillCostService.batchConfirmImport(confirmList, ReconciliationStatusEnum.CONFIRMED.getCode(), true);
         }
         long totalMs = persistStopwatch.elapsed(TimeUnit.MILLISECONDS);
-        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
-            log.debug("[reconMatchTiming] source=persist inputCount={} processingType={} importWriteMs={} confirmWriteMs={} totalMs={}",
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+            log.info("[reconMatchTiming] source=persist inputCount={} processingType={} importWriteMs={} confirmWriteMs={} totalMs={}",
                     importDataList.size(), processingType, importWriteMs, totalMs - importWriteMs, totalMs);
         }
     }

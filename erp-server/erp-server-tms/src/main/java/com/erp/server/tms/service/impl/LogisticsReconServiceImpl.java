@@ -3289,8 +3289,8 @@ public class LogisticsReconServiceImpl
             detailStatsMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS) - detailStatsStartMs;
         }
         long totalMs = chunkStopwatch.elapsed(TimeUnit.MILLISECONDS);
-        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
-            log.debug("[reconMatchTiming] source=chunk mainId={} confirm={} requestedSubCount={} executableSubCount={} resultCount={} loadMs={} executeMs={} commitMs={} detailStatsMs={} totalMs={}",
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+            log.info("[reconMatchTiming] source=chunk mainId={} confirm={} requestedSubCount={} executableSubCount={} resultCount={} loadMs={} executeMs={} commitMs={} detailStatsMs={} totalMs={}",
                     mainId, isConfirm, detailSubIds.size(), executableSubIds.size(), executionResult.getMatchResults().size(),
                     loadMs, executeMs, commitMs, detailStatsMs, totalMs);
         }
@@ -3445,8 +3445,8 @@ public class LogisticsReconServiceImpl
             log.warn("[commitReconMatchResult] ERP 单号快照回写失败 mainId={}", mainId, e);
         }
         long totalMs = commitStopwatch.elapsed(TimeUnit.MILLISECONDS);
-        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS && log.isDebugEnabled()) {
-            log.debug("[reconMatchTiming] source=commit mainId={} matchType={} resultCount={} writeResultMs={} erpSnapshotMs={} totalMs={}",
+        if (totalMs >= RECON_MATCH_TIMING_SLOW_THRESHOLD_MS) {
+            log.info("[reconMatchTiming] source=commit mainId={} matchType={} resultCount={} writeResultMs={} erpSnapshotMs={} totalMs={}",
                     mainId, matchType, matchResults == null ? 0 : matchResults.size(), writeResultMs,
                     totalMs - writeResultMs, totalMs);
         }
