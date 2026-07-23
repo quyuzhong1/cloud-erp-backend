@@ -703,9 +703,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CharSequenceUtil.isBlank(returnLogisticCode)) {
             return Collections.emptyList();
         }
-        // 两侧按物流单号查询全部命中（可能多条）
-        List<SoReturnEntity> b2bReturnList = soReturnFeign.listByReturnLogisticCode(returnLogisticCode);
-        List<SoB2cReturnEntity> b2cReturnList = soB2cReturnFeign.listByReturnLogisticCode(returnLogisticCode);
+        // 两侧按物流单号查询全部命中（可能多条）；Feign 集合可能返回 null，立即标准化避免单侧命中时对另一侧 stream NPE
+        List<SoReturnEntity> b2bReturnList = CollUtil.emptyIfNull(soReturnFeign.listByReturnLogisticCode(returnLogisticCode));
+        List<SoB2cReturnEntity> b2cReturnList = CollUtil.emptyIfNull(soB2cReturnFeign.listByReturnLogisticCode(returnLogisticCode));
         if (CollUtil.isEmpty(b2bReturnList) && CollUtil.isEmpty(b2cReturnList)) {
             // 未命中，保持人工录入
             return Collections.emptyList();
@@ -746,11 +746,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                                                                              List<SoB2cReturnEntity> b2cReturnList) {
         ReturnLogisticPrefillContext context = new ReturnLogisticPrefillContext();
 
+        b2bReturnList = CollUtil.emptyIfNull(b2bReturnList);
+        b2cReturnList = CollUtil.emptyIfNull(b2cReturnList);
+
         // B2B：批量取源销售单（用于平台订单号）
         List<String> b2bSourceIds = b2bReturnList.stream().map(SoReturnEntity::getSourceId)
                 .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(b2bSourceIds)) {
-            context.soInfoMap = soInfoFeign.listSoInfoByIds(b2bSourceIds).stream()
+            context.soInfoMap = CollUtil.emptyIfNull(soInfoFeign.listSoInfoByIds(b2bSourceIds)).stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                     .collect(Collectors.toMap(SoInfoEntity::getId, Function.identity(), (a, b) -> a));
         }
@@ -765,7 +768,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> b2bReturnIds = b2bReturnList.stream().map(SoReturnEntity::getId)
                 .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(b2bReturnIds)) {
-            List<SoReturnDetailEntity> b2bAllDetails = soReturnFeign.listDetailByMainIds(b2bReturnIds);
+            List<SoReturnDetailEntity> b2bAllDetails = CollUtil.emptyIfNull(soReturnFeign.listDetailByMainIds(b2bReturnIds));
             context.b2bDetailsByMainId = b2bAllDetails.stream()
                     .filter(d -> CharSequenceUtil.isNotBlank(d.getMainId()))
                     .collect(Collectors.groupingBy(SoReturnDetailEntity::getMainId));
@@ -776,7 +779,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<String> soDetailIds = b2bAllDetails.stream().map(SoReturnDetailEntity::getSourceDetailId)
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             if (CollUtil.isNotEmpty(soDetailIds)) {
-                context.soDetailById = soInfoFeign.listSoDetailByIds(soDetailIds).stream()
+                context.soDetailById = CollUtil.emptyIfNull(soInfoFeign.listSoDetailByIds(soDetailIds)).stream()
                         .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
                         .collect(Collectors.toMap(SoDetailEntity::getId, Function.identity(), (a, b) -> a));
                 outstockSoIds.addAll(context.soDetailById.values().stream().map(SoDetailEntity::getMainId)
@@ -790,10 +793,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<String> b2cSoIds = b2cReturnList.stream().map(SoB2cReturnEntity::getSoId)
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             if (CollUtil.isNotEmpty(b2cSoIds)) {
-                context.soB2cMap = soB2cFeign.listByIds(b2cSoIds).stream()
+                context.soB2cMap = CollUtil.emptyIfNull(soB2cFeign.listByIds(b2cSoIds)).stream()
                         .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                         .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (a, b) -> a));
-                context.soOutstockMap = soOutstockService.listBySoIds(b2cSoIds).stream()
+                context.soOutstockMap = CollUtil.emptyIfNull(soOutstockService.listBySoIds(b2cSoIds)).stream()
                         .filter(e -> CharSequenceUtil.isNotBlank(e.getSoId()))
                         .collect(Collectors.toMap(SoOutstockEntity::getSoId, Function.identity(), (a, b) -> a));
                 outstockSoIds.addAll(b2cSoIds);
@@ -803,13 +806,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<String> shopIds = b2cReturnList.stream().map(SoB2cReturnEntity::getShopId)
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             if (CollUtil.isNotEmpty(shopIds)) {
-                context.shopInfoMap = FeignQuery.getByIds(ShopInfoEntity.class, shopIds).stream()
+                context.shopInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(ShopInfoEntity.class, shopIds)).stream()
                         .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                         .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (a, b) -> a));
                 List<String> customerIds = context.shopInfoMap.values().stream().map(ShopInfoEntity::getCustomerId)
                         .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(customerIds)) {
-                    context.customerInfoMap = FeignQuery.getByIds(CustomerInfoEntity.class, customerIds).stream()
+                    context.customerInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(CustomerInfoEntity.class, customerIds)).stream()
                             .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                             .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
                 }
@@ -819,7 +822,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<String> b2cReturnIds = b2cReturnList.stream().map(SoB2cReturnEntity::getId)
                     .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             if (CollUtil.isNotEmpty(b2cReturnIds)) {
-                List<SoB2cReturnDetailDTO.ViewDTO> allDetails = soB2cReturnFeign.listDetailByMainIds(b2cReturnIds);
+                List<SoB2cReturnDetailDTO.ViewDTO> allDetails = CollUtil.emptyIfNull(soB2cReturnFeign.listDetailByMainIds(b2cReturnIds));
                 context.b2cDetailsByMainId = allDetails.stream()
                         .filter(d -> CharSequenceUtil.isNotBlank(d.getMainId()))
                         .collect(Collectors.groupingBy(SoB2cReturnDetailDTO.ViewDTO::getMainId));
@@ -834,7 +837,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         // 产品名称：B2B/B2C全部SKU批量查询
         List<String> distinctSkuIds = allSkuIds.stream().distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(distinctSkuIds)) {
-            context.skuNameById = plmTaskFeign.listSkuProductByIds(distinctSkuIds).stream()
+            context.skuNameById = CollUtil.emptyIfNull(plmTaskFeign.listSkuProductByIds(distinctSkuIds)).stream()
                     .filter(s -> CharSequenceUtil.isNotBlank(s.getSkuId()))
                     .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (a, b) -> a));
         }
@@ -842,7 +845,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         // 剩余应退累计：按售后/退货单明细id批量累计历史已入库实退数量（同一售后单分批多次生成退货入库单场景，与 view()/paging() 口径一致），B2B/B2C共用
         List<String> distinctReturnDetailIds = allReturnDetailIds.stream().distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(distinctReturnDetailIds)) {
-            context.instockRealQtyBySoReturnDetailId = soReturnInstockDetailService.listDetailBySoReturnDetailIds(distinctReturnDetailIds).stream()
+            context.instockRealQtyBySoReturnDetailId = CollUtil.emptyIfNull(
+                            soReturnInstockDetailService.listDetailBySoReturnDetailIds(distinctReturnDetailIds)).stream()
                     .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
                     .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
                             Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO)));
@@ -851,7 +855,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         // 已出库数量：按 soId+"-"+skuId 汇总出库单明细实发数量（仅approve，与 view()/paging() 口径一致），B2B/B2C共用
         List<String> distinctOutstockSoIds = outstockSoIds.stream().distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(distinctOutstockSoIds)) {
-            context.outstockActualQtyBySoIdSku = soOutstockDetailService.listDetailBySoIds(distinctOutstockSoIds).stream()
+            context.outstockActualQtyBySoIdSku = CollUtil.emptyIfNull(
+                            soOutstockDetailService.listDetailBySoIds(distinctOutstockSoIds)).stream()
                     .filter(d -> CharSequenceUtil.isNotBlank(d.getSoId())
                             && ApproveStatusEnum.APPROVE.getStatus().equals(d.getApproveStatus()))
                     .collect(Collectors.groupingBy(d -> d.getSoId() + "-" + d.getSkuId(),
@@ -861,7 +866,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         // 签收数量：按售后/退货单明细id汇总签收单明细数量（仅approve，与 view()/paging() 口径一致），B2B/B2C共用
         List<String> distinctReceiveSourceIds = receiveSourceIds.stream().distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(distinctReceiveSourceIds)) {
-            context.receiveQtyByReturnDetailId = soReturnReceiveDetailService.listDetailBySourceIds(distinctReceiveSourceIds).stream()
+            context.receiveQtyByReturnDetailId = CollUtil.emptyIfNull(
+                            soReturnReceiveDetailService.listDetailBySourceIds(distinctReceiveSourceIds)).stream()
                     .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId())
                             && ApproveStatusEnum.APPROVE.getStatus().equals(d.getApproveStatus()))
                     .collect(Collectors.groupingBy(SoReturnReceiveDetailEntity::getSourceDetailId,
@@ -1098,8 +1104,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return Collections.emptyList();
         }
         String returnLogisticCode = dto.getReturnLogisticCode();
-        List<SoReturnEntity> b2bReturnList = soReturnFeign.listByReturnLogisticCode(returnLogisticCode);
-        List<SoB2cReturnEntity> b2cReturnList = soB2cReturnFeign.listByReturnLogisticCode(returnLogisticCode);
+        // Feign 集合可能返回 null：标准化后再做 isEmpty / stream，避免单侧命中时另一侧 NPE
+        List<SoReturnEntity> b2bReturnList = CollUtil.emptyIfNull(soReturnFeign.listByReturnLogisticCode(returnLogisticCode));
+        List<SoB2cReturnEntity> b2cReturnList = CollUtil.emptyIfNull(soB2cReturnFeign.listByReturnLogisticCode(returnLogisticCode));
         if (CollUtil.isEmpty(b2bReturnList) && CollUtil.isEmpty(b2cReturnList)) {
             // 两侧均未命中，原样返回交由调用方继续走下一分支
             return details;
@@ -1379,7 +1386,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setAuthId(dto.getAuthId());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
-        return skuMappingFeign.listByPlatformSkuNoAndPlatform(paramDTO).stream()
+        return CollUtil.emptyIfNull(skuMappingFeign.listByPlatformSkuNoAndPlatform(paramDTO)).stream()
                 .filter(v -> CharSequenceUtil.isNotBlank(v.getPlatformSkuNo()) && CharSequenceUtil.isNotBlank(v.getProductSkuId()))
                 .collect(Collectors.toMap(SkuMappingDTO.MappingSkuViewDTO::getPlatformSkuNo, Function.identity(), (a, b) -> a));
     }
@@ -1390,6 +1397,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      */
     private ReturnLogisticB2cContext buildReturnLogisticB2cContext(List<SoB2cReturnEntity> b2cReturnList) {
         ReturnLogisticB2cContext context = new ReturnLogisticB2cContext();
+        b2cReturnList = CollUtil.emptyIfNull(b2cReturnList);
         if (CollUtil.isEmpty(b2cReturnList)) {
             return context;
         }
@@ -1398,13 +1406,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollUtil.isEmpty(shopIds)) {
             return context;
         }
-        context.shopInfoMap = FeignQuery.getByIds(ShopInfoEntity.class, shopIds).stream()
+        context.shopInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(ShopInfoEntity.class, shopIds)).stream()
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                 .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (a, b) -> a));
         List<String> customerIds = context.shopInfoMap.values().stream().map(ShopInfoEntity::getCustomerId)
                 .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(customerIds)) {
-            context.customerInfoMap = FeignQuery.getByIds(CustomerInfoEntity.class, customerIds).stream()
+            context.customerInfoMap = CollUtil.emptyIfNull(FeignQuery.getByIds(CustomerInfoEntity.class, customerIds)).stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                     .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
         }
@@ -1414,7 +1422,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(salesDeptIds)) {
-            List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(salesDeptIds);
+            List<SysDepartmentEntity> deptList = CollUtil.emptyIfNull(sysUserFeign.listDeptByIds(salesDeptIds));
             if (CollUtil.isNotEmpty(deptList)) {
                 context.deptNameMap = deptList.stream()
                         .filter(d -> CharSequenceUtil.isNotBlank(d.getId()))
@@ -1429,11 +1437,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * 按客户id批量查询客户档案，忽略空白id，找不到的id不出现在返回结果中
      */
     private Map<String, CustomerInfoEntity> buildCustomerInfoMapByIds(List<String> customerIds) {
-        List<String> distinctIds = customerIds.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> distinctIds = CollUtil.emptyIfNull(customerIds).stream()
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(distinctIds)) {
             return Collections.emptyMap();
         }
-        return FeignQuery.getByIds(CustomerInfoEntity.class, distinctIds).stream()
+        return CollUtil.emptyIfNull(FeignQuery.getByIds(CustomerInfoEntity.class, distinctIds)).stream()
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
                 .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
     }
