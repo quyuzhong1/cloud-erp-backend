@@ -64,7 +64,8 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * 批量关联店铺
      * <p>入参 ids 为预入库单主表 ID 列表，将多张预入库单下未关联的明细行整行关联到同一店铺。
      * B2B 与 B2C 关联的店铺不同，因此校验本次所选预入库单的单据类型必须一致，混合类型则整批拒绝。
-     * 更新明细行的店铺信息与关联状态，并联动刷新主表的关联状态。</p>
+     * 更新明细行的店铺信息与关联状态，并联动刷新主表的关联状态。
+     * 单次去重后预入库单数量有硬上限（超过则整批拒绝并提示分批），以避免超长全局事务超时回滚。</p>
      *
      * @param dto 批量关联店铺入参
      * @return 每张预入库单的操作结果
@@ -89,12 +90,12 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     BatchResultDTO confirmLinkShop(SoReturnPrestockDetailDTO.ConfirmLinkShop dto);
 
     /**
-     * 批量删除预入库单（软删）
+     * 按第三方/平台退货单号查询全部未删除预入库单（用于海外仓消息重试时与退货入库单一并做明细缺口对账）。
      *
-     * @param ids 主表 ID 列表
-     * @return 批量结果
+     * @param thirdCode 第三方/平台退货单号（platformReturnOrderNo）
+     * @return 同 thirdCode 下的预入库单列表，无则空列表
      */
-    List<BatchResultDTO> deleteByIds(List<String> ids);
+    List<SoReturnPrestockEntity> listByThirdCode(String thirdCode);
 
     /**
      * 由海外仓退货入库单（无物流单号、无参考单号，本次消息无法关联到任何单据）自动创建预入库单（系统内部调用）
@@ -131,14 +132,22 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     int forceCloseUnclaimedPrestock();
 
     /**
-     * 强制关闭一批预入库单（供 {@link #forceCloseUnclaimedPrestock} 分批调用，独立成事务方法）。
-     * <p>将该批预入库单下关联状态为「未关联」的明细行置为「强制关闭」（已关联明细不变），
-     * 再按明细最新关联状态重算并批量回写主表关联状态。声明为接口方法是为了支持
-     * 自注入代理调用，使每批在独立事务中提交，避免所有批次共用同一个长事务。</p>
+     * 强制关闭一批预入库单（供 {@link #forceCloseUnclaimedPrestock} 分批调用）。
+     * <p>批次内逐单调用 {@link #forceCloseSingle}，每张单独立加锁、独立事务；候选 ID 在处理前会重新校验主表状态。</p>
      *
-     * @param mainIds     本批处理的预入库单主表 ID
+     * @param mainIds     本批候选预入库单主表 ID
      * @param operateTime 本次强制关闭操作的统一操作时间
-     * @return 本批处理的预入库单数量
+     * @return 本批实际强制关闭处理的预入库单数量
      */
     int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime);
+
+    /**
+     * 强制关闭单张预入库单（与认领入口共用 {@code SO_RETURN_PRESTOCK_LINK} 分布式锁，按 mainId 串行）。
+     * 供 {@link #forceCloseBatch} 逐单代理调用，使每张单在独立事务中提交。
+     *
+     * @param mainId      预入库单主表 ID
+     * @param operateTime 本次强制关闭操作的统一操作时间
+     * @return 实际处理返回 1，主表状态已不满足关闭条件则返回 0
+     */
+    int forceCloseSingle(String mainId, LocalDateTime operateTime);
 }

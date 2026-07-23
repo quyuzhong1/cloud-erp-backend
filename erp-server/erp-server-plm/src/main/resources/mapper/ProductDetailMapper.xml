@@ -2107,7 +2107,7 @@
                     #{skuId}
                 </foreach>
             </if>
-            ORDER BY sku_id
+            ORDER BY sku_id, update_time DESC, id DESC
         ) pp ON pp.sku_id = pd.id
         WHERE pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">

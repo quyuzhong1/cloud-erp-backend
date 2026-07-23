@@ -22,6 +22,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -49,7 +50,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
@@ -81,6 +82,14 @@ public class SoReturnPrestockServiceImpl
      * 分组数过多会导致长事务、锁等待时间变长；超过阈值直接拒绝并提示分批操作，而不做架构级两阶段重构。
      */
     private static final int LINK_GROUP_MAX_SIZE = 50;
+
+    /**
+     * 批量关联店铺（linkShop）单次允许处理的预入库单数量上限。
+     * linkShop 在同一个 {@code @GlobalTransactional} 内逐张生成/审核退货入库单并做其他入库平账，
+     * 外层 mains 数量不受 {@link #LINK_GROUP_MAX_SIZE} 约束（该常量只限单张单内店铺分组数）；
+     * 超过本阈值直接拒绝并提示分批，避免 120s 超时整批回滚与长时间持锁。
+     */
+    private static final int LINK_SHOP_BATCH_MAX_SIZE = 50;
 
     /**
      * 确认关联循环耗时告警阈值（毫秒），超过该阈值仅记录警告日志，便于后续评估是否需要拆分事务，不阻断业务
@@ -134,8 +143,8 @@ public class SoReturnPrestockServiceImpl
     private OperateLogService operateLogService;
 
     /**
-     * 自注入代理：forceCloseUnclaimedPrestock 需要让每个批次的 forceCloseBatch 在独立事务中提交，
-     * 必须通过 Spring 代理调用（而非 this.forceCloseBatch(...)）才能使方法上的 @Transactional 生效；
+     * 自注入代理：forceCloseUnclaimedPrestock 需要让每个批次的 forceCloseBatch / forceCloseSingle
+     * 在独立事务中提交，且 forceCloseSingle 上的 {@code @DistributeLocker} 必须通过 Spring 代理调用才能生效；
      * 使用 @Lazy 避免 Bean 初始化阶段的循环依赖。
      */
     @Lazy
@@ -149,6 +158,9 @@ public class SoReturnPrestockServiceImpl
         Page<SoReturnPrestockDTO.PagingView> page = new Page<>(dto.getPage(), dto.getPageSize());
         IPage<SoReturnPrestockDTO.PagingView> result = baseMapper.paging(page, dto.getParams());
         List<SoReturnPrestockDTO.PagingView> records = result.getRecords();
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(result);
+        }
         List<String> ids = records.stream().map(SoReturnPrestockDTO.PagingView::getId).collect(Collectors.toList());
         // 查询详情行
         List<SoReturnPrestockDetailEntity> detailEntities = soReturnPrestockDetailService.listByMainIds(ids);
@@ -290,6 +302,14 @@ public class SoReturnPrestockServiceImpl
         List<SoReturnPrestockDetailEntity> newRows = new ArrayList<>();
         for (SoReturnPrestockDetailDTO.AfterSaleItem item : dto.getAfterSaleList()) {
             allocateAfterSaleItem(skuRowQueue.get(item.getSkuNo()), item, linkedPairs, newRows);
+        }
+
+        // 关联售后单会回填 skuId；回填后仍为空则禁止进入退货入库/库存联动，要求运营先维护映射
+        for (LinkedDetailPair pair : linkedPairs) {
+            if (CharSequenceUtil.isBlank(pair.detail.getSkuId())) {
+                throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_SKU_REQUIRED,
+                        CharSequenceUtil.emptyToDefault(pair.detail.getSkuNo(), pair.detail.getId()));
+            }
         }
 
         // 联动处理：为本次已关联的 SKU 按售后单分组生成《退货入库单》，并把生成的入库单号回写到对应明细行（内存）
@@ -509,6 +529,11 @@ public class SoReturnPrestockServiceImpl
         if (CollUtil.isEmpty(distinctIds)) {
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "预入库单");
         }
+        // 写操作前硬限制：单全局事务内逐张预入库单都会生成退货入库单并平账，数量过大易超时整批回滚
+        if (distinctIds.size() > LINK_SHOP_BATCH_MAX_SIZE) {
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_LINK_SHOP_BATCH_EXCEEDS,
+                    distinctIds.size(), LINK_SHOP_BATCH_MAX_SIZE);
+        }
 
         // 批量查询主表（MyBatis-Plus 逻辑删除自动过滤已软删数据）
         List<SoReturnPrestockEntity> mains = listByIds(distinctIds);
@@ -561,6 +586,16 @@ public class SoReturnPrestockServiceImpl
                     .collect(Collectors.toList());
             if (CollUtil.isEmpty(unlinked)) {
                 results.add(BatchResultDTO.fail(main.getId(), main.getCode(), "无可关联的明细行（均已关联或已强制关闭）"));
+                continue;
+            }
+            // 空 skuId 明细不允许进入关联店铺→退货入库/库存联动，需运营先维护内部SKU映射
+            SoReturnPrestockDetailEntity blankSkuDetail = unlinked.stream()
+                    .filter(d -> CharSequenceUtil.isBlank(d.getSkuId()))
+                    .findFirst().orElse(null);
+            if (Objects.nonNull(blankSkuDetail)) {
+                results.add(BatchResultDTO.fail(main.getId(), main.getCode(),
+                        MessageUtils.getMessage(ApiError.SO_RETURN_PRESTOCK_SKU_REQUIRED,
+                                CharSequenceUtil.emptyToDefault(blankSkuDetail.getSkuNo(), blankSkuDetail.getId()))));
                 continue;
             }
             // 整单关联：每条未关联明细行默认整行数量全部关联到本次选定的同一店铺（不拆行）
@@ -702,7 +737,8 @@ public class SoReturnPrestockServiceImpl
 
     /**
      * 为预入库单指定的明细行生成一张普通(增库存)其他入库单占位并直接已审核，写法参照
-     * {@code generateOtherInstockForPrestock}（预入库单创建时生成占位入库的范式）。明细行为空时不生成。
+     * {@code generateOtherInstockForPrestock}（预入库单创建时生成占位入库的范式）。
+     * 明细行为空时不生成；仅对已解析出内部 skuId 的行组单，空 skuId 行与创建路径一致跳过，避免进入库存核心。
      *
      * @param dept 已由调用方预取的仓储兜底部门，作为占位单归属部门，避免在此方法内重复发起 Feign 调用
      */
@@ -711,7 +747,19 @@ public class SoReturnPrestockServiceImpl
         if (CollUtil.isEmpty(details)) {
             return;
         }
-        Map<String, SkuVO> skuVOMap = listSkuVOMap(details.stream()
+        List<SoReturnPrestockDetailEntity> validDetails = details.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toList());
+        if (validDetails.isEmpty()) {
+            log.warn("[预入库单未关联占位其他入库单]全部明细行均未解析到内部SKU，跳过生成：预入库单={}，原行数={}",
+                    main.getCode(), details.size());
+            return;
+        }
+        if (validDetails.size() < details.size()) {
+            log.warn("[预入库单未关联占位其他入库单]部分明细行未解析到内部SKU，未计入本次库存联动：预入库单={}，总行数={}，已联动行数={}",
+                    main.getCode(), details.size(), validDetails.size());
+        }
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(validDetails.stream()
                 .map(SoReturnPrestockDetailEntity::getSkuId).collect(Collectors.toList()));
 
         OtherInstockEntity entity = new OtherInstockEntity();
@@ -733,7 +781,7 @@ public class SoReturnPrestockServiceImpl
         entity.setRemark(CharSequenceUtil.format("预入库单【{}】关联店铺后未关联SKU自动占位", main.getCode()));
 
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
-        for (SoReturnPrestockDetailEntity d : details) {
+        for (SoReturnPrestockDetailEntity d : validDetails) {
             SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
             detailEntity.setSkuId(d.getSkuId());
@@ -790,9 +838,12 @@ public class SoReturnPrestockServiceImpl
         Map<String, SoReturnPrestockDetailEntity> detailMap = soReturnPrestockDetailService.listByMainId(dto.getMainId())
                 .stream().collect(Collectors.toMap(SoReturnPrestockDetailEntity::getId, d -> d, (a, b) -> a));
 
-        // 逐行处理：仅在内存中变更明细行并收集"本次关联行→店铺项"配对，统一在生成退货入库单、回写单号后落库。
-        // 未选择店铺的行不会出现在 shopList 中，天然保持未关联
+        // 两阶段处理：第一阶段只做入参校验与内存拆行/关联计算，可返回 BatchResultDTO.fail 的路径中不执行任何持久化，
+        // 避免「先 save 剩余行、后校验失败直接 return」导致事务不回滚、收货数量被重复计算。
+        // 未选择店铺的行不会出现在 shopList 中，天然保持未关联。
         List<LinkedShopPair> linkedPairs = new ArrayList<>();
+        List<SoReturnPrestockDetailEntity> newRows = new ArrayList<>();
+        Set<String> claimedDetailIds = new HashSet<>();
         for (SoReturnPrestockDetailDTO.ShopItem item : dto.getShopList()) {
             // 未选择关联对象（B2C 店铺id / B2B 客户id 均为空）→ 保持未关联，跳过
             if (CharSequenceUtil.isBlank(resolveLinkTargetKey(main.getType(), item))) {
@@ -804,11 +855,20 @@ public class SoReturnPrestockServiceImpl
                 return BatchResultDTO.fail(main.getId(), main.getCode(),
                         "详情行不存在或不属于当前预入库单：" + item.getDetailId());
             }
+            if (!claimedDetailIds.add(detail.getId())) {
+                return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "同一明细行不可重复关联");
+            }
             if (PrestockClaimStatusEnum.LINKED.getStatus().equals(detail.getClaimStatus())) {
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已关联，请先解除关联");
             }
             if (PrestockClaimStatusEnum.FORCE_CLOSE.getStatus().equals(detail.getClaimStatus())) {
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已强制关闭，不可再关联");
+            }
+            if (CharSequenceUtil.isBlank(detail.getSkuId())) {
+                return BatchResultDTO.fail(detail.getId(),
+                        CharSequenceUtil.emptyToDefault(detail.getSkuNo(), detail.getId()),
+                        MessageUtils.getMessage(ApiError.SO_RETURN_PRESTOCK_SKU_REQUIRED,
+                                CharSequenceUtil.emptyToDefault(detail.getSkuNo(), detail.getId())));
             }
             int receivedQty = Objects.nonNull(detail.getReceivedQty()) ? detail.getReceivedQty() : 0;
             int claimQty = Objects.nonNull(item.getClaimedQty()) ? item.getClaimedQty() : receivedQty;
@@ -820,10 +880,10 @@ public class SoReturnPrestockServiceImpl
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(),
                         "认领数量不能超过当前行实际收货数量：" + receivedQty);
             }
-            // 认领数量 < 实际收货数量：按收货数量拆行，剩余收货数量拆为新未关联行，当前行仅保留认领数量并关联；
+            // 认领数量 < 实际收货数量：按收货数量拆行，剩余收货数量拆为新未关联行（仅内存），当前行仅保留认领数量并关联；
             // 认领数量 == 实际收货数量：整行关联
             if (claimQty < receivedQty) {
-                splitDetail(detail, claimQty);
+                newRows.add(splitDetailInMemory(detail, claimQty));
             } else {
                 detail.setReceivedQty(claimQty);
             }
@@ -834,9 +894,14 @@ public class SoReturnPrestockServiceImpl
             return BatchResultDTO.fail(main.getId(), main.getCode(), "无可关联的明细行（未选择店铺）");
         }
 
-        // 联动处理：关联相同店铺的行合并生成一张《退货入库单》，直接置为已审核状态，并把入库单号回写到对应明细行（内存）
+        // 第二阶段：全部校验通过后再生成下游单据，并统一落库拆行剩余行与本次关联行；
+        // 此后不可恢复的并发/业务失败抛 ServiceException，由事务回滚。
         generateReturnInstockByShop(main, linkedPairs, true);
 
+        // 拆行新增行统一插入（未关联剩余数量）；新行为纯插入，无需乐观锁
+        if (CollUtil.isNotEmpty(newRows)) {
+            soReturnPrestockDetailService.saveBatch(newRows, 500);
+        }
         // 统一落库本次关联的明细行（含店铺信息 + 退货入库单回写）
         for (LinkedShopPair pair : linkedPairs) {
             if (!soReturnPrestockDetailService.updateById(pair.detail)) {
@@ -920,8 +985,8 @@ public class SoReturnPrestockServiceImpl
         // 避免 resolveLinkCustomerId 在循环内逐组发起单条 Feign 查询（B2B 无需查店铺，返回空 Map）
         Map<String, ShopInfoEntity> shopInfoMap = isB2b ? Collections.emptyMap()
                 : listShopInfoMap(pairsByShop.values().stream()
-                        .map(pairs -> pairs.get(0).item.getShopId())
-                        .collect(Collectors.toList()));
+                .map(pairs -> pairs.get(0).item.getShopId())
+                .collect(Collectors.toList()));
         long loopStart = System.currentTimeMillis();
         for (List<LinkedShopPair> pairs : pairsByShop.values()) {
             SoReturnPrestockDetailDTO.ShopItem head = pairs.get(0).item;
@@ -1036,37 +1101,18 @@ public class SoReturnPrestockServiceImpl
         }
     }
 
-    // ===================== 删除 =====================
+    // ===================== 无物流单号+无参考单号自动创建（系统内部） =====================
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> deleteByIds(List<String> ids) {
-        List<BatchResultDTO> results = new ArrayList<>(ids.size());
-        for (String id : ids) {
-            try {
-                SoReturnPrestockEntity entity = getByIdOrThrow(id);
-                // 软删主表
-                removeById(entity.getId());
-                // 软删详情行
-                soReturnPrestockDetailService.deleteByMainId(entity.getId());
-                results.add(BatchResultDTO.success(id, entity.getCode()));
-            } catch (Exception e) {
-                log.error("删除预入库单失败, id={}", id, e);
-                results.add(BatchResultDTO.fail(id, id, e.getMessage()));
-            }
+    public List<SoReturnPrestockEntity> listByThirdCode(String thirdCode) {
+        if (CharSequenceUtil.isBlank(thirdCode)) {
+            return Collections.emptyList();
         }
-        // 只要本批次中出现任意一条失败（包含"主表已软删成功、但详情软删失败"这种半成品状态），
-        // 就将当前事务标记为仅回滚：撤销本次调用内已执行的全部软删（含批内其它已成功的条目），
-        // 避免主表与明细软删状态不一致；仍正常返回逐条结果，便于前端展示具体哪些失败，
-        // 定位问题后整批重新发起删除
-        if (results.stream().anyMatch(r -> !Boolean.TRUE.equals(r.getSuccess()))
-                && TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-        }
-        return results;
+        return lambdaQuery()
+                .eq(SoReturnPrestockEntity::getThirdCode, thirdCode)
+                .eq(SoReturnPrestockEntity::getIsDeleted, false)
+                .list();
     }
-
-    // ===================== 无物流单号+无参考单号自动创建（系统内部） =====================
 
     @Override
     @DistributeLocker(businessType = SO_RETURN_PRESTOCK_HEADLESS_LOCK_KEY, keyName = "dto.thirdCode")
@@ -1079,7 +1125,13 @@ public class SoReturnPrestockServiceImpl
                     .eq(SoReturnPrestockEntity::getIsDeleted, false)
                     .one();
             if (Objects.nonNull(existing)) {
-                log.info("预入库单已存在（无头件），第三方单号：{}，跳过创建", dto.getThirdCode());
+                // 本方法不追加明细：若调用方仍带着缺口明细进来，说明入口对账与已有预入库不对齐（历史脏数据/映射异常），
+                // 此处无法静默补单，打 warn 便于人工按 thirdCode 核对
+                int incomingDetailCount = CollUtil.isEmpty(dto.getDetailList()) ? 0 : dto.getDetailList().size();
+                int incomingQty = CollUtil.isEmpty(dto.getDetailList()) ? 0 : dto.getDetailList().stream()
+                        .mapToInt(d -> Objects.nonNull(d.getReceivedQty()) ? d.getReceivedQty() : 0).sum();
+                log.warn("预入库单已存在（无头件），第三方单号：{}，已有单id={}，本次入参明细行数={}、数量合计={}，跳过创建且不追加明细；若入口对账仍判有缺口请人工核对",
+                        dto.getThirdCode(), existing.getId(), incomingDetailCount, incomingQty);
                 return existing.getId();
             }
         } else {
@@ -1159,6 +1211,7 @@ public class SoReturnPrestockServiceImpl
     public int forceCloseUnclaimedPrestock() {
         // 仅查询主表 ID（不查询全部字段），减少一次性加载到内存的数据量：
         // 主表关联状态为未关联或部分关联，排除已关联、已强制关闭、已删除
+        // 强制关闭的数据不多，这里查询不需要分批查询
         List<String> mainIds = lambdaQuery()
                 .select(SoReturnPrestockEntity::getId)
                 .in(SoReturnPrestockEntity::getClaimStatus,
@@ -1184,66 +1237,95 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 强制关闭一批预入库单：将其下「未关联」明细行 claim_status 置为「强制关闭」（已关联明细不变），
-     * 再按明细最新关联状态重算并批量回写主表关联状态。均为集合式批量更新，避免逐行查改。
-     * <p>独立标注事务并通过 {@code self} 代理调用（见 {@link #forceCloseUnclaimedPrestock}），
-     * 使每批在自己的事务中提交，避免分批循环全部处于同一个长事务内。</p>
+     * 强制关闭一批预入库单：逐单加锁、独立事务处理，避免与认领入口并发覆盖状态。
+     * 外层 batchIds 仅为候选集合，每张单在处理前会重新校验主表当前关联状态。
      *
-     * @param mainIds     本批处理的预入库单主表 ID
+     * @param mainIds     本批候选预入库单主表 ID
      * @param operateTime 本次强制关闭操作的统一操作时间
-     * @return 本批处理的预入库单数量
+     * @return 本批实际强制关闭处理的预入库单数量
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime) {
-        // 明细：仅将「未关联」行强制关闭，已关联行保持不变
-        soReturnPrestockDetailService.lambdaUpdate()
-                .in(SoReturnPrestockDetailEntity::getMainId, mainIds)
-                .eq(SoReturnPrestockDetailEntity::getClaimStatus, PrestockClaimStatusEnum.UNLINKED.getStatus())
-                .eq(SoReturnPrestockDetailEntity::getIsDeleted, false)
-                .set(SoReturnPrestockDetailEntity::getClaimStatus, PrestockClaimStatusEnum.FORCE_CLOSE.getStatus())
-                .update();
-
-        // 主表：按明细最新关联状态分组回写（全部已关联→已关联；全部强制关闭→强制关闭；混合→部分关联）
-        Map<String, List<SoReturnPrestockDetailEntity>> detailMap = soReturnPrestockDetailService.listByMainIds(mainIds)
-                .stream().collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getMainId));
-        List<String> toLinked = new ArrayList<>();
-        List<String> toPartial = new ArrayList<>();
-        List<String> toForceClose = new ArrayList<>();
-        for (String mainId : mainIds) {
-            List<SoReturnPrestockDetailEntity> details = detailMap.get(mainId);
-            if (CollUtil.isEmpty(details)) {
-                continue;
-            }
-            long linkedCount = details.stream()
-                    .filter(d -> PrestockClaimStatusEnum.LINKED.getStatus().equals(d.getClaimStatus()))
-                    .count();
-            if (linkedCount == details.size()) {
-                toLinked.add(mainId);
-            } else if (linkedCount == 0) {
-                toForceClose.add(mainId);
-            } else {
-                toPartial.add(mainId);
-            }
+        if (CollUtil.isEmpty(mainIds)) {
+            return 0;
         }
-        batchUpdateMainClaimStatus(toLinked, PrestockClaimStatusEnum.LINKED.getStatus(), operateTime);
-        batchUpdateMainClaimStatus(toPartial, PrestockClaimStatusEnum.PARTIAL.getStatus(), operateTime);
-        batchUpdateMainClaimStatus(toForceClose, PrestockClaimStatusEnum.FORCE_CLOSE.getStatus(), operateTime);
-        return mainIds.size();
+        int processedCount = 0;
+        for (String mainId : mainIds) {
+            processedCount += self.forceCloseSingle(mainId, operateTime);
+        }
+        return processedCount;
     }
 
     /**
-     * 按 ID 集合批量更新主表关联状态与操作时间
+     * 强制关闭单张预入库单：将其下「未关联」明细行 claim_status 置为「强制关闭」（已关联明细不变），
+     * 再按明细最新关联状态回写主表。与认领入口共用分布式锁；明细与主表更新均携带 version 乐观锁，
+     * 任一失败抛异常触发事务回滚，避免与认领/拆行并发覆盖。
+     *
+     * @param mainId      预入库单主表 ID
+     * @param operateTime 本次强制关闭操作的统一操作时间
+     * @return 实际处理返回 1，主表状态已不满足关闭条件则返回 0
      */
-    private void batchUpdateMainClaimStatus(List<String> ids, String claimStatus, LocalDateTime operateTime) {
-        if (CollUtil.isEmpty(ids)) {
+    @Override
+    @DistributeLocker(businessType = SO_RETURN_PRESTOCK_LINK_LOCK_KEY, keyName = "mainId")
+    @Transactional(rollbackFor = Exception.class)
+    public int forceCloseSingle(String mainId, LocalDateTime operateTime) {
+        SoReturnPrestockEntity main = getById(mainId);
+        if (Objects.isNull(main) || Boolean.TRUE.equals(main.getIsDeleted())) {
+            return 0;
+        }
+        String claimStatus = main.getClaimStatus();
+        if (!PrestockClaimStatusEnum.UNLINKED.getStatus().equals(claimStatus)
+                && !PrestockClaimStatusEnum.PARTIAL.getStatus().equals(claimStatus)) {
+            return 0;
+        }
+
+        // 逐行带 version 更新，避免 lambdaUpdate 绕过明细乐观锁导致认领/拆行状态被覆盖
+        List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainId(mainId);
+        for (SoReturnPrestockDetailEntity detail : details) {
+            if (!PrestockClaimStatusEnum.UNLINKED.getStatus().equals(detail.getClaimStatus())) {
+                continue;
+            }
+            detail.setClaimStatus(PrestockClaimStatusEnum.FORCE_CLOSE.getStatus());
+            if (!soReturnPrestockDetailService.updateById(detail)) {
+                throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_DETAIL_MODIFIED);
+            }
+        }
+
+        refreshMainClaimStatusAfterForceClose(main, operateTime);
+        return 1;
+    }
+
+    /**
+     * 强制关闭后按明细最新关联状态回写主表；仅当主表仍为未关联/部分关联时才更新，并使用 version 乐观锁。
+     * <p>调用方须传入已加载且携带 {@code version} 的主表实体。更新失败时抛出异常触发事务回滚，
+     * 避免明细已强制关闭而主表仍为旧状态。</p>
+     */
+    private void refreshMainClaimStatusAfterForceClose(SoReturnPrestockEntity main, LocalDateTime operateTime) {
+        String currentStatus = main.getClaimStatus();
+        if (!PrestockClaimStatusEnum.UNLINKED.getStatus().equals(currentStatus)
+                && !PrestockClaimStatusEnum.PARTIAL.getStatus().equals(currentStatus)) {
             return;
         }
-        lambdaUpdate()
-                .in(SoReturnPrestockEntity::getId, ids)
-                .set(SoReturnPrestockEntity::getClaimStatus, claimStatus)
-                .set(SoReturnPrestockEntity::getOperateTime, operateTime)
-                .update();
+        List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainId(main.getId());
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        long linkedCount = details.stream()
+                .filter(d -> PrestockClaimStatusEnum.LINKED.getStatus().equals(d.getClaimStatus()))
+                .count();
+        String newClaimStatus;
+        if (linkedCount == details.size()) {
+            newClaimStatus = PrestockClaimStatusEnum.LINKED.getStatus();
+        } else if (linkedCount == 0) {
+            newClaimStatus = PrestockClaimStatusEnum.FORCE_CLOSE.getStatus();
+        } else {
+            newClaimStatus = PrestockClaimStatusEnum.PARTIAL.getStatus();
+        }
+        main.setClaimStatus(newClaimStatus);
+        main.setOperateTime(operateTime);
+        if (!updateById(main)) {
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_MODIFIED);
+        }
     }
 
     // ===================== 私有辅助方法 =====================
@@ -1295,30 +1377,16 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 拆行：认领数量 &lt; 当前行实际收货数量时，将剩余收货数量（receivedQty - linkQty）拆为新的未关联行，
-     * 原行收货数量收敛为本次认领数量，保证拆分前后两行收货数量之和不变。
-     *
-     * @return 承载剩余数量的新未关联详情行（已落库）
-     */
-    private SoReturnPrestockDetailEntity splitDetail(SoReturnPrestockDetailEntity original, int linkQty) {
-        int originalReceivedQty = Objects.nonNull(original.getReceivedQty()) ? original.getReceivedQty() : 0;
-        int remainReceivedQty = originalReceivedQty - linkQty;
-
-        SoReturnPrestockDetailEntity newDetail = buildLeftoverDetail(original, remainReceivedQty);
-        soReturnPrestockDetailService.save(newDetail);
-
-        // 原行收敛为本次认领数量，剩余部分已转入新行；由调用方在后续 updateById 中一并落库
-        original.setReceivedQty(linkQty);
-        return newDetail;
-    }
-
-    /**
-     * 拆行（仅内存）：与 {@link #splitDetail} 逻辑一致，但拆出的剩余行不在此处落库，
+     * 拆行（仅内存）：认领数量 &lt; 当前行实际收货数量时，将剩余收货数量（receivedQty - linkQty）拆为新的未关联行，
+     * 原行收货数量收敛为本次认领数量，保证拆分前后两行收货数量之和不变。拆出的剩余行不在此处落库，
      * 由调用方统一收集后作为「新增」一次性插入。
-     * <p>用于关联售后单场景：拆行剩余行会回队供后续同 SKU 售后单明细继续认领，可能再次被关联并进入
-     * 待落库列表。若在此处先 {@code save} 再由调用方对同一新行乐观锁 {@code updateById}，同事务内该新行
-     * 的 version 一旦被其它写操作顶高即会导致乐观锁冲突。故新行改为纯插入，避免二次乐观锁更新。</p>
+     * <p>用于关联售后单 / 关联店铺场景：校验循环中可能提前 {@code return BatchResultDTO.fail}，
+     * 若此处先 {@code save} 则事务不会因正常返回而回滚，会导致原行完整收货数量与剩余行并存、数量重复。
+     * 关联售后单场景下剩余行还会回队继续认领，若先 {@code save} 再乐观锁 {@code updateById} 也易触发 version 冲突，
+     * 故统一改为纯内存拆分 + 调用方最后插入。</p>
      *
+     * @param original 待拆分的原明细行（内存中其 {@code receivedQty} 会被收敛为 linkQty）
+     * @param linkQty  本次认领/关联数量，须满足 {@code 0 < linkQty < original.receivedQty}
      * @return 承载剩余数量的新未关联详情行（已预分配 ID，未落库）
      */
     private SoReturnPrestockDetailEntity splitDetailInMemory(SoReturnPrestockDetailEntity original, int linkQty) {
@@ -1368,8 +1436,12 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 联动刷新主表关联状态和操作时间
-     * 规则：全部已关联→LINKED；全部未关联→UNLINKED；混合→PARTIAL
+     * 联动刷新主表关联状态和操作时间。
+     * <p>规则：全部已关联→LINKED；全部未关联→UNLINKED；混合→PARTIAL。
+     * 先读取携带 {@code version} 的主表实体再乐观锁更新；更新失败抛出异常触发事务回滚，
+     * 避免明细/下游单据已变更而主表仍显示旧关联状态。</p>
+     *
+     * @param mainId 预入库单主表 ID
      */
     private void refreshMainClaimStatus(String mainId) {
         List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainId(mainId);
@@ -1388,11 +1460,13 @@ public class SoReturnPrestockServiceImpl
             newClaimStatus = PrestockClaimStatusEnum.PARTIAL.getStatus();
         }
 
-        SoReturnPrestockEntity main = new SoReturnPrestockEntity();
-        main.setId(mainId);
+        // 必须带 version 做乐观锁更新；仅 setId 的局部实体会导致乐观锁不生效或并发覆盖
+        SoReturnPrestockEntity main = getByIdOrThrow(mainId);
         main.setClaimStatus(newClaimStatus);
         main.setOperateTime(LocalDateTime.now());
-        updateById(main);
+        if (!updateById(main)) {
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_MODIFIED);
+        }
     }
 
     /**
@@ -1654,6 +1728,9 @@ public class SoReturnPrestockServiceImpl
      * （见调用方 {@code buildPrestockDetailList}），若把空skuId传入其他入库单，会一路带到库存核心服务
      * （{@code OtherInstockServiceImpl#updateInventoryTransCore}）导致报错回滚整单，或落下无法追溯的空SKU库存记录。
      * 未解析行只落预入库单明细，等运营人工核实SKU后再走关联流程；全部行都未解析到SKU时整单不生成其它入库单。</p>
+     * <p>SKU 占用标记（{@code plmTaskFeign.updateOccupyStatus}）不在本地事务内执行，改为调用方事务
+     * {@code afterCommit} 后再标记：成功路径最终仍会对同一批 skuId 调用占用接口，业务结果与原先一致；
+     * 本地单据回滚时不会残留远程占用。占用接口本身幂等，提交后标记失败会打 error 日志便于补偿。</p>
      */
     private void generateOtherInstockForPrestock(String prestockId, SoReturnPrestockDTO.Add prestockAdd) {
         List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList().stream()
@@ -1712,8 +1789,15 @@ public class SoReturnPrestockServiceImpl
             detailEntityList.add(detailEntity);
         }
         otherInstockEntity.setDetailEntityList(detailEntityList);
+        List<String> occupySkuIds = detailEntityList.stream()
+                .map(OtherInstockDetailEntity::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         long start = System.currentTimeMillis();
-        otherInstockService.addAndApprove(otherInstockEntity, false);
+        // 事务内不标记占用；本地事务提交后再标记，成功终态与原先一致（预入库单 + 已审核其它入库单 + SKU 已占用）
+        otherInstockService.addAndApprove(otherInstockEntity, false, false);
+        scheduleOccupyStatusAfterCommit(occupySkuIds, prestockEntity.getCode());
         long cost = System.currentTimeMillis() - start;
         if (cost > LINK_LOOP_WARN_THRESHOLD_MS) {
             log.warn("[预入库单联动生成其它入库单]addAndApprove耗时过长：预入库单={}，明细行数={}，耗时={}ms",
@@ -1723,6 +1807,43 @@ public class SoReturnPrestockServiceImpl
             log.warn("[预入库单联动生成其它入库单]部分明细行未解析到内部SKU，未计入本次库存联动：预入库单={}，" +
                             "总行数={}，已联动行数={}",
                     prestockEntity.getCode(), prestockAdd.getDetailList().size(), addDetailList.size());
+        }
+    }
+
+    /**
+     * 在调用方本地事务提交成功后再标记 SKU 占用。
+     * <p>与原先在 {@code addAndApprove} 事务内调用 {@code updateOccupyStatus} 相比，成功路径最终仍标记同一批 SKU，
+     * 业务结果一致；本地事务回滚时不会执行占用，避免“单据未落库但 SKU 已占用”。占用接口幂等可重放。</p>
+     *
+     * @param skuIds       待占用的 SKU ID 列表
+     * @param prestockCode 预入库单号（仅用于日志）
+     */
+    private void scheduleOccupyStatusAfterCommit(List<String> skuIds, String prestockCode) {
+        if (CollUtil.isEmpty(skuIds)) {
+            return;
+        }
+        // 拷贝一份，避免 afterCommit 时调用方列表被后续逻辑改动
+        List<String> occupySkuIds = new ArrayList<>(skuIds);
+        Runnable occupyTask = () -> {
+            try {
+                plmTaskFeign.updateOccupyStatus(occupySkuIds);
+            } catch (Exception e) {
+                // 单据已提交，占用失败不影响已落库结果；占用幂等，可人工/重试补偿
+                log.error("[预入库单联动其它入库]事务提交后SKU占用标记失败：预入库单={}，skuIds={}",
+                        prestockCode, occupySkuIds, e);
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    occupyTask.run();
+                }
+            });
+        } else {
+            // 无活跃事务时直接执行，保证与原先“生成其它入库后立即占用”的最终效果一致
+            occupyTask.run();
         }
     }
 

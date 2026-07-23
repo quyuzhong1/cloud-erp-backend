@@ -501,5 +501,6 @@ public final class ApiErrorWms {
     public static final ApiError WH_AFTER_SALE_PACK_STATE_CHANGED = new ApiError("WH_AFTER_SALE_PACK_STATE_CHANGED", 11259, "箱唛【{0}】状态已变更，请刷新后重试");
     public static final ApiError WH_PO_RETURN_REASON_TYPE_INVALID = new ApiError("WH_PO_RETURN_REASON_TYPE_INVALID", 11260, "退货原因类型不正确");
     public static final ApiError WH_PO_RETURN_REMARK_REQUIRED = new ApiError("WH_PO_RETURN_REMARK_REQUIRED", 11261, "退货原因类型为其它时，退货说明不能为空");
-
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_BATCH_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_BATCH_EXCEEDS", 11262, "本次批量关联预入库单数量过多（{0}张），单次全局事务超限，请分批关联（单次最多{1}张）");
+    public static final ApiError SO_RETURN_PRESTOCK_SKU_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_SKU_REQUIRED", 11263, "明细行未解析到内部SKU，请先维护SKU映射后再关联：{0}");
 }
