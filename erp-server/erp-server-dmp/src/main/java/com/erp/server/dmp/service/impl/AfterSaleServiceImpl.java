@@ -1603,8 +1603,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             try {
                 List<LogisticsBillDTO.LogisticsBillVo> resultList = logisticsBillFeign.getTrackStatusByTrackNo(batch);
                 if (CollUtil.isEmpty(resultList)) {
-                    failedBatchCount++;
-                    log.warn("寄修单物流轨迹状态同步失败，批次起始索引={}，请求数={}，返回数=0", i, batch.size());
+                    log.warn("寄修单物流轨迹状态同步跳过空结果，批次起始索引={}，请求数={}", i, batch.size());
                     continue;
                 }
                 for (LogisticsBillDTO.LogisticsBillVo vo : resultList) {
@@ -1619,9 +1618,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 failedBatchCount++;
                 log.warn("寄修单物流轨迹状态同步失败，批次起始索引={}", i, e);
             }
-        }
-        if (failedBatchCount > 0) {
-            throw new ServiceException(ApiError.DMP_AFTER_SALE_TRACK_SYNC_FAILED, failedBatchCount);
         }
 
         Map<String, String> mainIdStatusMap = new HashMap<>();
@@ -1644,7 +1640,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (CollUtil.isNotEmpty(updateList)) {
             ApplicationContextUtils.getBean(AfterSaleServiceImpl.class).batchUpdateOutboundTrackStatus(updateList);
         }
-        log.warn("寄修单物流轨迹状态同步完成，待处理={}，已更新={}", progressList.size(), updateList.size());
+        log.warn("寄修单物流轨迹状态同步完成，待处理={}，已更新={}，失败批次数={}",
+                progressList.size(), updateList.size(), failedBatchCount);
+        if (failedBatchCount > 0) {
+            throw new ServiceException(ApiError.DMP_AFTER_SALE_TRACK_SYNC_FAILED, failedBatchCount);
+        }
     }
 
     @Override
