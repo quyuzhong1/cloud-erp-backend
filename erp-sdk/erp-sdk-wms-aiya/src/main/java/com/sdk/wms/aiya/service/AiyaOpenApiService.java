@@ -103,7 +103,8 @@ public class AiyaOpenApiService {
      * （2026-07-22 联调确认）；Java 侧仍用 {@code pageNum} 命名，SDK 序列化时转为 {@code page}。
      */
     private static final Set<String> OUTBOUND_QUERY_RESERVED_PARAM_KEYS =
-            new HashSet<>(Arrays.asList("warehouseCode", "shippingTimeFrom", "shippingTimeTo", "page", "pageSize"));
+            new HashSet<>(Arrays.asList("warehouseCode", "createdTimeFrom", "createdTimeTo",
+                    "shippingTimeFrom", "shippingTimeTo", "page", "pageSize"));
 
     /**
      * 入库单批量查询专用保留参数：文档字段名为 {@code page}（而非 {@code pageNum}），
@@ -386,9 +387,11 @@ public class AiyaOpenApiService {
     /**
      * 调用 AIYA {@code GLINK_QUERY_ORDER_NOTIFY} 查询 2C 出库单。
      * <p>
-     * 请求字段：必填 {@code warehouseCode}，可选 {@code shippingTimeFrom}/{@code shippingTimeTo}/
-     * {@code page}/{@code pageSize}。方案文档写的 {@code pageNum} 有误，真实网关与其它爱亚查询接口一致用 {@code page}
+     * 请求字段：必填 {@code warehouseCode}，可选 {@code createdTimeFrom}/{@code createdTimeTo}/
+     * {@code shippingTimeFrom}/{@code shippingTimeTo}/{@code page}/{@code pageSize}。
+     * 方案文档写的 {@code pageNum} 有误，真实网关与其它爱亚查询接口一致用 {@code page}
      * （Java 侧 {@link AiyaOutboundQueryDTO.QueryReqDTO#getPageNum()} 序列化为 {@code page}）。
+     * 状态轮询优先传 {@code createdTime*}（可覆盖已提交未发货）；{@code shippingTime*} 仅适合已发货过滤。
      * 响应顶层（2026-07-22 联调确认）为 {@code {success, code, message, total, orderInfoList:[]}}。
      * <p>
      * 接口返回 {@code success=false} 视为真实失败，抛出 {@link ServiceException}；
@@ -403,6 +406,8 @@ public class AiyaOpenApiService {
         // 方案文档写 pageNum，真实网关字段为 page（与 SKU/库存/入库查询一致）
         params.put("page", dto.getPageNum());
         params.put("pageSize", dto.getPageSize());
+        putIfNotBlank(params, "createdTimeFrom", dto.getCreatedTimeFrom());
+        putIfNotBlank(params, "createdTimeTo", dto.getCreatedTimeTo());
         putIfNotBlank(params, "shippingTimeFrom", dto.getShippingTimeFrom());
         putIfNotBlank(params, "shippingTimeTo", dto.getShippingTimeTo());
         mergeBizParams(params, dto.getBizParams(), "查询2C出库单", OUTBOUND_QUERY_RESERVED_PARAM_KEYS);

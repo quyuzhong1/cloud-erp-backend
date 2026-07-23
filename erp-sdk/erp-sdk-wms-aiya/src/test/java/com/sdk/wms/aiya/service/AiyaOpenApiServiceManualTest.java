@@ -258,28 +258,24 @@ public class AiyaOpenApiServiceManualTest {
     /**
      * 查询 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}）。
      * <p>
-     * 入参按方案文档 6.3.3：必填 {@code warehouseCode}，可选 {@code shippingTimeFrom}/
-     * {@code shippingTimeTo}/{@code page}/{@code pageSize}（DTO 字段名仍为 pageNum，
-     * 序列化到网关时写 page；不是建单的 orderTime，也不是入库单的 putawayCompletedTime）。
+     * 入参：必填 {@code warehouseCode}；状态轮询优先 {@code createdTimeFrom}/{@code createdTimeTo}
+     * （可覆盖已提交未发货）；可选 {@code shippingTime*}/{@code page}/{@code pageSize}
+     * （DTO 字段名仍为 pageNum，序列化到网关时写 page）。
      * <p>
      * 重点核对：成功时 {@code orderInfoList} 明细字段（{@code orderNumber}/{@code shippingTime}/
      * {@code trackingNumber}/{@code actualLogistic}/{@code orderStatus} 等）。
      */
     @Test
     public void query2cOrderTest() {
-        // 临时联调：方案文档未列出 orderNumbers，试传单号集合看网关是否支持按单号精确查
-        Map<String, Object> bizParams = new HashMap<>();
-//        bizParams.put("orderNumbers", Collections.singletonList("WFHD-AIYA-TEST-202607220001"));
         AiyaOutboundQueryDTO.QueryReqDTO req = AiyaOutboundQueryDTO.QueryReqDTO.builder()
                 .accessToken(ACCESS_TOKEN)
                 .secret(SECRET)
                 .customerCode(CUSTOMER_CODE)
                 .warehouseCode(TEST_WAREHOUSE_CODE)
-                .shippingTimeFrom("2026-07-01 00:00:00")
-                .shippingTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .createdTimeFrom("2026-07-01 00:00:00")
+                .createdTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .pageNum(1)
                 .pageSize(50)
-                .bizParams(bizParams)
                 .build();
         List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(req);
         System.out.println(JSONUtil.toJsonStr(response));
