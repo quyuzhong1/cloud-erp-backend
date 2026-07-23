@@ -275,7 +275,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         try {
             String billType = resolveLinkAfterSaleBillType(params);
             if (StringUtils.isBlank(billType)) {
-                throw new ServiceException("单据类型不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "单据类型");
             }
             boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
             // B2B/B2C 分表别名不同，行级数据权限在 Service 按单据类型动态拼装后写入 params.permissionSql

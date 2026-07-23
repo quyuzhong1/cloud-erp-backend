@@ -4,6 +4,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.utils.QueryUtils;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -188,11 +189,11 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
             return null;
         }
         if (types.size() > 1) {
-            throw new ServiceException("单据类型参数非法：关联售后单查询仅支持单一单据类型");
+            throw new ServiceException(ApiError.SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_MULTI_FORBIDDEN);
         }
         String billType = types.get(0);
         if (!BillTypeEnum.B2B.getCode().equals(billType) && !BillTypeEnum.B2C.getCode().equals(billType)) {
-            throw new ServiceException("单据类型参数非法");
+            throw new ServiceException(ApiError.SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_INVALID);
         }
         return billType;
     }
@@ -205,11 +206,11 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
     private static String requireContextBillType() {
         String billType = LinkAfterSaleQueryContext.getBillType();
         if (StringUtils.isBlank(billType)) {
-            throw new ServiceException("单据类型不能为空");
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "单据类型");
         }
         if (!BillTypeEnum.B2B.getCode().equals(billType)
                 && !BillTypeEnum.B2C.getCode().equals(billType)) {
-            throw new ServiceException("单据类型参数非法");
+            throw new ServiceException(ApiError.SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_INVALID);
         }
         return billType;
     }
