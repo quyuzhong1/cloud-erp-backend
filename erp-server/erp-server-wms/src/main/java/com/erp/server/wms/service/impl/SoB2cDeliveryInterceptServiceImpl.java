@@ -632,8 +632,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
+        // 仅待处理可改状态（如取消拦截），避免覆盖已处理/已取消
         return lambdaUpdate()
                 .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds)
+                .eq(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus())
                 .set(SoB2cDeliveryInterceptEntity::getHandleStatus, status)
                 .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
                 .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
@@ -652,6 +654,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException("拦截单为空"));
         if (!SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
             throw new ServiceException("发货拦截单来源类型错误");
+        }
+        if (SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(entity.getHandleStatus())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "拦截单已取消，不可操作");
         }
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
             if (HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())) {
