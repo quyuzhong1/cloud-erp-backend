@@ -1,12 +1,17 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.PlatformReturnInstockDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnPrestockDetailEntity;
 import com.erp.model.wms.entity.SoReturnPrestockEntity;
+import com.erp.rpc.oms.feign.SoB2cReturnFeign;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import com.erp.server.wms.service.SoReturnPrestockDetailService;
@@ -19,6 +24,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,6 +53,64 @@ public class ReturnInstockGapReconciler {
 
 	@Resource
 	private SoReturnPrestockDetailService soReturnPrestockDetailService;
+
+	@Resource
+	private SoB2cReturnFeign soB2cReturnFeign;
+
+	/**
+	 * B2C 退货单明细尚未入库缺口（应退数量 - 已审核入库实退）。
+	 */
+	public static class B2cReturnGap {
+		private String detailId;
+		private String skuId;
+		private int gapQty;
+		private String returnTypeDict;
+		private String returnReasonDict;
+
+		public String getDetailId() {
+			return detailId;
+		}
+
+		public String getSkuId() {
+			return skuId;
+		}
+
+		public int getGapQty() {
+			return gapQty;
+		}
+
+		public String getReturnTypeDict() {
+			return returnTypeDict;
+		}
+
+		public String getReturnReasonDict() {
+			return returnReasonDict;
+		}
+	}
+
+	/**
+	 * 销售订单已匹配明细按退货单缺口分配后的结果。
+	 */
+	public static class ReturnGapAllocationResult {
+		/** 关联退货单明细的入库行（含 soReturnDetailId） */
+		private final List<SoReturnInstockDetailEntity> returnLinkedList = new ArrayList<>();
+		/** 超出缺口或退货单不存在的 SKU，继续销售订单匹配/预入库 */
+		private final List<PlatformReturnInstockDTO.Detail> remainingPushDetails = new ArrayList<>();
+		/** 分配后该退货单是否已无未入库缺口（可用于完结售后） */
+		private boolean allGapsClosed;
+
+		public List<SoReturnInstockDetailEntity> getReturnLinkedList() {
+			return returnLinkedList;
+		}
+
+		public List<PlatformReturnInstockDTO.Detail> getRemainingPushDetails() {
+			return remainingPushDetails;
+		}
+
+		public boolean isAllGapsClosed() {
+			return allGapsClosed;
+		}
+	}
 
 	/**
 	 * 按 thirdCode 汇总已落库的退货入库单 + 预入库单数量，从平台推送明细中扣减，得到尚未处理的缺口明细。
@@ -142,6 +206,192 @@ public class ReturnInstockGapReconciler {
 	}
 
 	/**
+	 * 加载指定 B2C 退货单仍有未入库缺口的明细（gap = returnQty - 已审核入库实退，仅保留 gap&gt;0）。
+	 *
+	 * @param matchedReturn B2C 退货单主表
+	 * @return 有缺口的明细列表；无明细或已全部入库时返回空列表
+	 */
+	public List<B2cReturnGap> loadOpenB2cReturnGaps(SoB2cReturnEntity matchedReturn) {
+		if (Objects.isNull(matchedReturn) || CharSequenceUtil.isBlank(matchedReturn.getId())) {
+			return Collections.emptyList();
+		}
+		return loadOpenB2cReturnGapsByMains(Collections.singletonList(matchedReturn))
+				.getOrDefault(matchedReturn.getId(), Collections.emptyList());
+	}
+
+	/**
+	 * 批量加载多张 B2C 退货单的未入库缺口，避免候选挑选时逐单 Feign。
+	 *
+	 * @param returns 退货单主表列表
+	 * @return mainId → 该单开放缺口列表
+	 */
+	public Map<String, List<B2cReturnGap>> loadOpenB2cReturnGapsByMains(List<SoB2cReturnEntity> returns) {
+		if (CollUtil.isEmpty(returns)) {
+			return Collections.emptyMap();
+		}
+		Map<String, SoB2cReturnEntity> returnMap = returns.stream()
+				.filter(r -> Objects.nonNull(r) && CharSequenceUtil.isNotBlank(r.getId()))
+				.collect(Collectors.toMap(SoB2cReturnEntity::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new));
+		if (returnMap.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		List<SoB2cReturnDetailDTO.ViewDTO> detailList = soB2cReturnFeign.listDetailByMainIds(new ArrayList<>(returnMap.keySet()));
+		if (CollUtil.isEmpty(detailList)) {
+			return Collections.emptyMap();
+		}
+		Map<String, Integer> instockQtyMap = sumApprovedInstockQtyByReturnDetailId(
+				detailList.stream().map(SoB2cReturnDetailDTO.ViewDTO::getId).collect(Collectors.toList()));
+		Map<String, List<B2cReturnGap>> result = new LinkedHashMap<>();
+		for (SoB2cReturnDetailDTO.ViewDTO detail : detailList) {
+			if (CharSequenceUtil.isBlank(detail.getSkuId()) || CharSequenceUtil.isBlank(detail.getMainId())) {
+				continue;
+			}
+			int returnQty = Objects.nonNull(detail.getReturnQty()) ? detail.getReturnQty() : 0;
+			int gapQty = returnQty - instockQtyMap.getOrDefault(detail.getId(), 0);
+			if (gapQty <= 0) {
+				continue;
+			}
+			SoB2cReturnEntity main = returnMap.get(detail.getMainId());
+			B2cReturnGap gap = new B2cReturnGap();
+			gap.detailId = detail.getId();
+			gap.skuId = detail.getSkuId();
+			gap.gapQty = gapQty;
+			if (Objects.nonNull(main)) {
+				gap.returnTypeDict = main.getType();
+				gap.returnReasonDict = main.getReason();
+			}
+			result.computeIfAbsent(detail.getMainId(), k -> new ArrayList<>()).add(gap);
+		}
+		return result;
+	}
+
+	/**
+	 * 判断 B2C 退货单是否已全部完成入库（所有明细 gap&lt;=0）。
+	 * <p>
+	 * 与 {@link #loadOpenB2cReturnGaps} 同一口径：应退数量对比已审核退货入库实退。
+	 * </p>
+	 *
+	 * @param returnMainId 退货单主表 id
+	 * @return true=无未入库缺口（含无明细）；false=仍有缺口或主表 id 为空
+	 */
+	public boolean isB2cReturnFullyInstocked(String returnMainId) {
+		if (CharSequenceUtil.isBlank(returnMainId)) {
+			return false;
+		}
+		SoB2cReturnEntity stub = new SoB2cReturnEntity();
+		stub.setId(returnMainId);
+		return CollUtil.isEmpty(loadOpenB2cReturnGaps(stub));
+	}
+
+	/**
+	 * 将销售订单已匹配的入库明细，按退货单尚未入库缺口分配：
+	 * 命中部分写入关联退货明细的入库行；超出数量与订单未匹配行转入剩余推送明细。
+	 *
+	 * @param soMatchedLines   已按销售订单匹配出的入库明细
+	 * @param soUnmatchedLines 销售订单未匹配的平台推送明细
+	 * @param gaps             退货单开放缺口（会被原地扣减）
+	 * @param defaultReturnType 缺口上退货类型为空时的兜底
+	 * @return 分配结果
+	 */
+	public ReturnGapAllocationResult allocateAgainstB2cReturnGaps(
+			List<SoReturnInstockDetailEntity> soMatchedLines,
+			List<PlatformReturnInstockDTO.Detail> soUnmatchedLines,
+			List<B2cReturnGap> gaps,
+			String defaultReturnType) {
+		ReturnGapAllocationResult result = new ReturnGapAllocationResult();
+		Map<String, List<B2cReturnGap>> gapsBySkuId = new LinkedHashMap<>();
+		if (CollUtil.isNotEmpty(gaps)) {
+			for (B2cReturnGap gap : gaps) {
+				gapsBySkuId.computeIfAbsent(gap.getSkuId(), k -> new ArrayList<>()).add(gap);
+			}
+		}
+		if (CollUtil.isNotEmpty(soMatchedLines)) {
+			for (SoReturnInstockDetailEntity line : soMatchedLines) {
+				int mustQty = Objects.nonNull(line.getMustQty()) ? line.getMustQty() : 0;
+				int receiveQty = Objects.nonNull(line.getReceiveQty()) ? line.getReceiveQty() : 0;
+				int realQty = Objects.nonNull(line.getRealQty()) ? line.getRealQty() : 0;
+				if (mustQty <= 0) {
+					continue;
+				}
+				List<B2cReturnGap> skuGaps = gapsBySkuId.getOrDefault(line.getSkuId(), Collections.emptyList());
+				int mustLeft = mustQty;
+				int receiveLeft = receiveQty;
+				int realLeft = realQty;
+				SoReturnInstockDetailEntity lastAllocated = null;
+				for (B2cReturnGap gap : skuGaps) {
+					if (mustLeft <= 0 || gap.gapQty <= 0) {
+						continue;
+					}
+					int allocateQty = Math.min(mustLeft, gap.gapQty);
+					int allocateReceiveQty = Math.min(receiveLeft, proportionalFloor(receiveQty, allocateQty, mustQty));
+					int allocateRealQty = Math.min(realLeft, proportionalFloor(realQty, allocateQty, mustQty));
+
+					SoReturnInstockDetailEntity part = copyInstockDetail(line);
+					part.setMustQty(allocateQty);
+					part.setReceiveQty(allocateReceiveQty);
+					part.setRealQty(allocateRealQty);
+					part.setSoReturnDetailId(gap.detailId);
+					part.setReturnTypeDict(CharSequenceUtil.emptyToDefault(gap.returnTypeDict, defaultReturnType));
+					part.setReturnReasonDict(CharSequenceUtil.nullToDefault(gap.returnReasonDict, ""));
+					result.returnLinkedList.add(part);
+
+					gap.gapQty -= allocateQty;
+					mustLeft -= allocateQty;
+					receiveLeft -= allocateReceiveQty;
+					realLeft -= allocateRealQty;
+					lastAllocated = part;
+				}
+				// 应退已分完时，签收/实退按比例向下取整的余数补到最后一次分配行，保证总量守恒
+				if (mustLeft <= 0 && lastAllocated != null && (receiveLeft > 0 || realLeft > 0)) {
+					lastAllocated.setReceiveQty(lastAllocated.getReceiveQty() + receiveLeft);
+					lastAllocated.setRealQty(lastAllocated.getRealQty() + realLeft);
+					receiveLeft = 0;
+					realLeft = 0;
+				}
+				if (mustLeft > 0) {
+					result.remainingPushDetails.add(toPlatformDetail(line, mustLeft, receiveLeft, realLeft));
+				}
+			}
+		}
+		if (CollUtil.isNotEmpty(soUnmatchedLines)) {
+			result.remainingPushDetails.addAll(soUnmatchedLines);
+		}
+		result.allGapsClosed = CollUtil.isEmpty(gaps) || gaps.stream().allMatch(g -> g.gapQty <= 0);
+		return result;
+	}
+
+	/**
+	 * 按售后单明细 id 统计已审核入库单的实退数量之和。
+	 *
+	 * @param soReturnDetailIds 售后/退货单明细 id 列表
+	 * @return detailId → 已审核实退合计
+	 */
+	public Map<String, Integer> sumApprovedInstockQtyByReturnDetailId(List<String> soReturnDetailIds) {
+		if (CollUtil.isEmpty(soReturnDetailIds)) {
+			return Collections.emptyMap();
+		}
+		List<SoReturnInstockDetailEntity> instockDetailList = soReturnInstockDetailService.lambdaQuery()
+				.in(SoReturnInstockDetailEntity::getSoReturnDetailId, soReturnDetailIds)
+				.list();
+		if (CollUtil.isEmpty(instockDetailList)) {
+			return Collections.emptyMap();
+		}
+		List<String> mainIds = instockDetailList.stream().map(SoReturnInstockDetailEntity::getMainId)
+				.filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+		if (CollUtil.isEmpty(mainIds)) {
+			return Collections.emptyMap();
+		}
+		java.util.Set<String> approvedMainIds = soReturnInstockService.lambdaQuery()
+				.in(SoReturnInstockEntity::getId, mainIds)
+				.eq(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+				.list().stream().map(SoReturnInstockEntity::getId).collect(Collectors.toSet());
+		return instockDetailList.stream()
+				.filter(d -> approvedMainIds.contains(d.getMainId()))
+				.collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+						Collectors.summingInt(d -> Objects.nonNull(d.getRealQty()) ? d.getRealQty() : 0)));
+	}
+
+	/**
 	 * 判断两批明细的「平台SKU + 不良品标志 + 数量」指纹是否一致（忽略顺序）。
 	 */
 	public boolean sameDetailQtyFingerprint(List<PlatformReturnInstockDTO.Detail> a, List<PlatformReturnInstockDTO.Detail> b) {
@@ -179,6 +429,61 @@ public class ReturnInstockGapReconciler {
 			return detail.getMustQty();
 		}
 		return 0;
+	}
+
+	/**
+	 * 按应退分配比例向下取整分摊签收/实退数量。
+	 *
+	 * @param totalQty     待分摊总量
+	 * @param allocateBase 本次分配的应退数量
+	 * @param totalBase    原应退总量
+	 * @return 分摊结果（向下取整）
+	 */
+	private int proportionalFloor(int totalQty, int allocateBase, int totalBase) {
+		if (totalBase <= 0 || totalQty <= 0 || allocateBase <= 0) {
+			return 0;
+		}
+		return (int) Math.floor(totalQty * (double) allocateBase / totalBase);
+	}
+
+	/**
+	 * 浅拷贝入库明细关键业务字段，供按缺口拆行使用。
+	 *
+	 * @param source 原入库明细
+	 * @return 新明细（未设置数量与售后明细 id）
+	 */
+	private SoReturnInstockDetailEntity copyInstockDetail(SoReturnInstockDetailEntity source) {
+		SoReturnInstockDetailEntity copy = new SoReturnInstockDetailEntity();
+		copy.setSkuId(source.getSkuId());
+		copy.setSkuNo(source.getSkuNo());
+		copy.setPlatformSkuNo(source.getPlatformSkuNo());
+		copy.setWarehouseId(source.getWarehouseId());
+		copy.setWarehouseName(source.getWarehouseName());
+		copy.setRemark(source.getRemark());
+		copy.setReturnTypeDict(source.getReturnTypeDict());
+		copy.setReturnReasonDict(source.getReturnReasonDict());
+		copy.setDefectiveProductFlag(source.getDefectiveProductFlag());
+		return copy;
+	}
+
+	/**
+	 * 将超出退货缺口的入库明细还原为平台推送明细，供后续销售订单匹配/预入库。
+	 *
+	 * @param line        原入库明细（取平台 SKU、不良品等）
+	 * @param mustLeft    剩余应退
+	 * @param receiveLeft 剩余签收
+	 * @param realLeft    剩余实退
+	 * @return 平台推送明细
+	 */
+	private PlatformReturnInstockDTO.Detail toPlatformDetail(SoReturnInstockDetailEntity line,
+															 int mustLeft, int receiveLeft, int realLeft) {
+		PlatformReturnInstockDTO.Detail detail = new PlatformReturnInstockDTO.Detail();
+		detail.setProductSku(line.getPlatformSkuNo());
+		detail.setMustQty(mustLeft);
+		detail.setReceiveQty(receiveLeft);
+		detail.setRealQty(realLeft);
+		detail.setDefectiveProductFlag(line.getDefectiveProductFlag());
+		return detail;
 	}
 
 	/**

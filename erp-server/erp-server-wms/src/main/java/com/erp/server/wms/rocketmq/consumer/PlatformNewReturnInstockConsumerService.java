@@ -244,8 +244,14 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		List<SoB2cReturnEntity> candidates = matchB2cReturnCandidates(dto.getOrderReferenceNo());
 		SoB2cReturnEntity matchedReturn = CollectionUtils.isEmpty(candidates) ? null : pickReturnBySkuMatch(candidates, incomingSkuIds);
 		if (Objects.nonNull(matchedReturn)) {
-			if (generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn, skuMappingMap)) {
-				return true;
+			// null=无法按退货单落库（回退原明细继续匹配）；empty=本批已处理完；non-empty=退货缺口已扣，剩余继续销售订单匹配/预入库
+			List<PlatformReturnInstockDTO.Detail> remainingAfterReturn =
+					generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn, skuMappingMap);
+			if (Objects.nonNull(remainingAfterReturn)) {
+				if (CollectionUtils.isEmpty(remainingAfterReturn)) {
+					return true;
+				}
+				dto.setProductDetailList(remainingAfterReturn);
 			}
 		}
 		SoB2cEntity soB2cEntity = matchB2cSoByReferenceNo(dto.getOrderReferenceNo(), incomingSkuIds);
@@ -271,26 +277,23 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	}
 
 	/**
-	 * 按SKU维度从候选退货单中挑选可匹配的一条：优先"待退货"状态，同状态内取第一个SKU命中的
+	 * 按SKU维度从候选退货单中挑选可匹配的一条：
+	 * 优先"待退货"，且要求推送 SKU 在该单上仍有未入库缺口；已全部入库的候选跳过，避免误关联已完结单据。
 	 */
 	private SoB2cReturnEntity pickReturnBySkuMatch(List<SoB2cReturnEntity> candidates, Set<String> incomingSkuIds) {
 		if (CollectionUtils.isEmpty(incomingSkuIds)) {
 			return null;
 		}
-		// 批量一次性取全部候选单明细，避免逐个候选单发起Feign查询
-		List<String> candidateIds = candidates.stream().map(SoB2cReturnEntity::getId).collect(Collectors.toList());
-		List<SoB2cReturnDetailEntity> allDetails = FeignQuery.create(SoB2cReturnDetailEntity.class)
-				.in(SoB2cReturnDetailEntity::getMainId, candidateIds).list();
-		Map<String, List<SoB2cReturnDetailEntity>> detailsByMainId = allDetails.stream()
-				.collect(Collectors.groupingBy(SoB2cReturnDetailEntity::getMainId));
-
+		Map<String, List<ReturnInstockGapReconciler.B2cReturnGap>> gapsByMainId =
+				returnInstockGapReconciler.loadOpenB2cReturnGapsByMains(candidates);
 		List<SoB2cReturnEntity> sorted = candidates.stream()
 				.sorted(Comparator.comparing(v -> SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(v.getStatus()) ? 0 : 1))
 				.collect(Collectors.toList());
 		for (SoB2cReturnEntity candidate : sorted) {
-			List<SoB2cReturnDetailEntity> detailList = detailsByMainId.getOrDefault(candidate.getId(), Collections.emptyList());
-			boolean skuMatched = detailList.stream()
-					.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
+			List<ReturnInstockGapReconciler.B2cReturnGap> openGaps =
+					gapsByMainId.getOrDefault(candidate.getId(), Collections.emptyList());
+			boolean skuMatched = openGaps.stream()
+					.anyMatch(g -> StringUtils.isNotBlank(g.getSkuId()) && incomingSkuIds.contains(g.getSkuId()));
 			if (skuMatched) {
 				return candidate;
 			}
@@ -357,56 +360,62 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	}
 
 	/**
-	 * 命中退货单后生成《已审核-退货入库单》，并将本次入库与该退货单及其SKU匹配明细关联
+	 * 命中退货单后，按退货单明细尚未入库缺口扣减推送量并生成《已审核-退货入库单》。
+	 * <p>
+	 * 仅缺口命中部分关联该退货单；超出数量与退货单不存在的 SKU 作为剩余明细返回，
+	 * 由调用方继续销售订单匹配或预入库。售后状态仅在该退货单全部应退完成入库后改为已退货。
+	 * </p>
 	 *
-	 * @return 是否生成成功；售后单/店铺数据不一致导致无法生成时返回 false，交由调用方回退到下一步匹配
+	 * @return {@code null} 无法按退货单落库（订单/店铺缺失或无缺口可分配），交由调用方用原明细继续匹配；
+	 *         空列表表示本批已处理完；非空列表为剩余推送明细
 	 */
-	private boolean generateInstockByMatchedReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cReturnEntity matchedReturn,
-													Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
+	private List<PlatformReturnInstockDTO.Detail> generateInstockByMatchedReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity,
+																				SoB2cReturnEntity matchedReturn,
+																				Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
 		SoB2cEntity soB2cEntity = soB2cFeign.getById(matchedReturn.getSoId());
 		if (Objects.isNull(soB2cEntity)) {
 			log.warn("[海外仓退货入库] 匹配到退货单{}但对应销售订单不存在，回退到销售订单匹配：soId={}", matchedReturn.getCode(), matchedReturn.getSoId());
-			return false;
+			return null;
 		}
 		ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
 		if (Objects.isNull(shopInfoEntity)) {
 			log.warn("[海外仓退货入库] 匹配到退货单{}但对应店铺不存在，回退到销售订单匹配：shopId={}", matchedReturn.getCode(), soB2cEntity.getShopId());
-			return false;
+			return null;
+		}
+		List<ReturnInstockGapReconciler.B2cReturnGap> openGaps = returnInstockGapReconciler.loadOpenB2cReturnGaps(matchedReturn);
+		if (CollectionUtils.isEmpty(openGaps)) {
+			log.warn("[海外仓退货入库] 退货单{}已无未入库缺口，回退到销售订单匹配", matchedReturn.getCode());
+			return null;
 		}
 		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity, skuMappingMap);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
-			// 整批SKU在销售订单里都对不上（销售订单本身命中了SKU匹配，但订单明细与本次退货入库明细完全不一致的极端情况）：
-			// 不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
-			log.warn("[海外仓退货入库] 退货单{}对应销售订单明细中一个SKU都匹配不上，全部改为生成预入库单：soCode={}",
+			log.warn("[海外仓退货入库] 退货单{}对应销售订单明细中一个SKU都匹配不上，回退剩余明细继续匹配：soCode={}",
 					matchedReturn.getCode(), soB2cEntity.getCode());
+			return null;
 		}
-		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
-		// 来源编号：该场景已匹配到具体的B2C退货单，取其挂载的销售订单编号作为来源追溯
-		if (StringUtils.isNotBlank(matchedReturn.getSoCode())) {
-			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
+		ReturnInstockGapReconciler.ReturnGapAllocationResult allocation = returnInstockGapReconciler.allocateAgainstB2cReturnGaps(
+				splitResult.matchedList, splitResult.unmatchedList, openGaps, dto.getReturnType());
+		if (CollectionUtils.isEmpty(allocation.getReturnLinkedList())) {
+			log.warn("[海外仓退货入库] 退货单{}与本次推送SKU无数量可分配缺口，回退到销售订单匹配", matchedReturn.getCode());
+			return null;
 		}
 
-		// 关联已匹配到的退货单：按SKU回写明细的退货单明细ID；售后状态在本地落库成功后再更新，避免远程已完结、本地回滚导致不一致
-		List<SoB2cReturnDetailEntity> matchedDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
-				.eq(SoB2cReturnDetailEntity::getMainId, matchedReturn.getId()).list();
-		for (SoReturnInstockDetailEntity soReturnInstockDetailEntity : splitResult.matchedList) {
-			matchedDetailList.stream()
-					.filter(v -> v.getSkuId().equals(soReturnInstockDetailEntity.getSkuId()))
-					.findFirst()
-					.ifPresent(v -> soReturnInstockDetailEntity.setSoReturnDetailId(v.getId()));
+		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		if (StringUtils.isNotBlank(matchedReturn.getSoCode())) {
+			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
 		}
 		soReturnInstockEntity.setSoReturnId(matchedReturn.getId());
 		soReturnInstockEntity.setSoReturnCode(matchedReturn.getCode());
 
-		// 已匹配到订单的SKU落退货入库单，订单里没有的SKU（unmatchedList）单独落预入库单，两者同一本地事务提交
-		this.persistMatchedInstockAndUnmatchedPrestock(soReturnInstockEntity, splitResult.matchedList, dto, warehouseEntity, splitResult.unmatchedList);
-		// 仅实际生成了退货入库明细时，才把售后从待退货改为已退货（整批走预入库不提前完结）
-		if (CollectionUtils.isNotEmpty(splitResult.matchedList)
+		// 仅落关联退货单的缺口命中部分；剩余明细交调用方继续销售订单匹配/预入库（不再在此处直接预入库）
+		this.persistMatchedInstockAndUnmatchedPrestock(soReturnInstockEntity, allocation.getReturnLinkedList(),
+				dto, warehouseEntity, Collections.emptyList());
+		if (allocation.isAllGapsClosed()
 				&& SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(matchedReturn.getStatus())) {
 			matchedReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
 			soB2cReturnFeign.updateBatch(Collections.singletonList(matchedReturn));
 		}
-		return true;
+		return allocation.getRemainingPushDetails();
 	}
 
 	/**
@@ -430,7 +439,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 	/**
 	 * 本地入库已落库但售后状态可能尚未同步（Feign 失败后 MQ 重试命中幂等跳过）时，
-	 * 补偿将关联退货单从待退货改为已退货。补偿本身可幂等：已是已退货则 no-op。
+	 * 在退货单全部应退数量已入库完成后，补偿将关联退货单从待退货改为已退货。
+	 * 补偿本身可幂等：已是已退货或仍有未入库缺口则 no-op。
 	 *
 	 * @param existEntity 已存在的退货入库单；无关联售后单时直接返回
 	 */
@@ -446,6 +456,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		}
 		SoB2cReturnEntity soReturn = returns.get(0);
 		if (!SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(soReturn.getStatus())) {
+			return;
+		}
+		if (!returnInstockGapReconciler.isB2cReturnFullyInstocked(soReturn.getId())) {
+			log.warn("[海外仓退货入库] 补偿售后状态跳过：退货单{}仍有未入库缺口（入库单：{}）",
+					soReturn.getCode(), existEntity.getCode());
 			return;
 		}
 		soReturn.setStatus(SoB2cReturnStatusEnum.RETURNED.getCode());
