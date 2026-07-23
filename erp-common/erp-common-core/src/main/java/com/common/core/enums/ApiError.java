@@ -1194,6 +1194,12 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AFTER_SALE_PACK_STATE_CHANGED = ApiErrorWms.WH_AFTER_SALE_PACK_STATE_CHANGED;
     public static final ApiError WH_PO_RETURN_REASON_TYPE_INVALID = ApiErrorWms.WH_PO_RETURN_REASON_TYPE_INVALID;
     public static final ApiError WH_PO_RETURN_REMARK_REQUIRED = ApiErrorWms.WH_PO_RETURN_REMARK_REQUIRED;
+    public static final ApiError WH_LOCATION_SUGGEST_NOT_FOUND = ApiErrorWms.WH_LOCATION_SUGGEST_NOT_FOUND;
+    public static final ApiError WH_REPLENISH_FROM_LOCATION_NOT_FOUND = ApiErrorWms.WH_REPLENISH_FROM_LOCATION_NOT_FOUND;
+    public static final ApiError WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED = ApiErrorWms.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED;
+    public static final ApiError WH_OUT_STOCK_RULE_NOT_FOUND = ApiErrorWms.WH_OUT_STOCK_RULE_NOT_FOUND;
+    public static final ApiError WH_OUT_STOCK_LOCATION_NOT_FOUND = ApiErrorWms.WH_OUT_STOCK_LOCATION_NOT_FOUND;
+    public static final ApiError WH_OUT_STOCK_MOVE_FAILED = ApiErrorWms.WH_OUT_STOCK_MOVE_FAILED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

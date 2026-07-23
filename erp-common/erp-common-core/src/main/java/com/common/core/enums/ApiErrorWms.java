@@ -502,4 +502,16 @@ public final class ApiErrorWms {
     public static final ApiError WH_PO_RETURN_REASON_TYPE_INVALID = new ApiError("WH_PO_RETURN_REASON_TYPE_INVALID", 11260, "退货原因类型不正确");
     public static final ApiError WH_PO_RETURN_REMARK_REQUIRED = new ApiError("WH_PO_RETURN_REMARK_REQUIRED", 11261, "退货原因类型为其它时，退货说明不能为空");
 
+    /** 仓位推荐规则未命中或本仓无补货动作 */
+    public static final ApiError WH_LOCATION_SUGGEST_NOT_FOUND = new ApiError("WH_LOCATION_SUGGEST_NOT_FOUND", 11221, "未找到推荐仓位，请检查推荐仓位配置");
+    /** 补货推荐取货仓位（补货库区）无可用库存 */
+    public static final ApiError WH_REPLENISH_FROM_LOCATION_NOT_FOUND = new ApiError("WH_REPLENISH_FROM_LOCATION_NOT_FOUND", 11222, "SKU【{0}】未找到补货推荐取货仓位");
+    /** 补货推荐上架仓位未配置或无法解析 */
+    public static final ApiError WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED = new ApiError("WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED", 11223, "SKU【{0}】未配置补货推荐上架仓位");
+    /** 未命中出库仓位推荐规则 */
+    public static final ApiError WH_OUT_STOCK_RULE_NOT_FOUND = new ApiError("WH_OUT_STOCK_RULE_NOT_FOUND", 11224, "未找到出库仓位推荐，请检查推荐仓位配置");
+    /** 出库推荐库区下无可用库存仓位 */
+    public static final ApiError WH_OUT_STOCK_LOCATION_NOT_FOUND = new ApiError("WH_OUT_STOCK_LOCATION_NOT_FOUND", 11225, "SKU【{0}】未找到出库推荐仓位");
+    /** 出库前自动仓位移动失败 */
+    public static final ApiError WH_OUT_STOCK_MOVE_FAILED = new ApiError("WH_OUT_STOCK_MOVE_FAILED", 11226, "SKU【{0}】出库前自动仓位移动失败：{1}");
 }

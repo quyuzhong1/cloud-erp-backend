@@ -140,4 +140,11 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
     List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId,@Param("fromTable") Boolean fromTable);
 
     IPage<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPagingByLocation(Page query,@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
+
+    /**
+     * 按 SKU 取拣货区最新出入库仓位（PostgreSQL DISTINCT ON）。
+     */
+    List<TransactionFlowEntity> listLatestLocationBySku(@Param("warehouseId") String warehouseId,
+                                                        @Param("skuIds") List<String> skuIds,
+                                                        @Param("warehouseLocations") List<String> warehouseLocations);
 }

@@ -120,6 +120,17 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean approveEnd(ApproveOneDTO dto, SoOutstockEntity entity);
 
     /**
+     * 按出库仓位推荐回写明细仓位；非拣货区先自动移至空仓位再出库。
+     * <p>
+     * 供审核、旺店通同步等「直接扣可用」链路复用。
+     *
+     * @param entity      出库单（需含 id/code/warehouse 等）
+     * @param details     明细；传 null 则按主单查库并 updateBatch；非 null 仅改内存明细（落库前准备场景）
+     * @param checkUsable true：仅 {@code SO_OUTSTOCK_USABLE} 场景执行（审核）；false：调用方已确认直扣可用（如旺店通）
+     */
+    void applyOutStockLocationSuggest(SoOutstockEntity entity, List<SoOutstockDetailEntity> details, boolean checkUsable);
+
+    /**
      * 审核
      * @author yl
      * @date 2023-05-19 11:42

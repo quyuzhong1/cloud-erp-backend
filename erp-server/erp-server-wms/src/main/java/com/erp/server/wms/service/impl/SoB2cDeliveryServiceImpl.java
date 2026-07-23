@@ -2245,11 +2245,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
             for (SoB2cDeliveryEntity entity : b2cDelivery) {
                 List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
-                List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
-                if (CollectionUtils.isNotEmpty(skus)) {
+                Map<String, Integer> shortageMap = generatePickingDetail(entity, detailEntities,dto.getWaveType());
+                if (shortageMap != null && !shortageMap.isEmpty()) {
                     try {
                         UserContext.setIsUserSystem(true);
-                        generateReplenish(detailEntities, entity, skus);
+                        generateStockOutReplenish(detailEntities, entity, shortageMap, dto.getWaveType());
                     }finally {
                         UserContext.clearIsUserSystem();
                     }
@@ -2350,58 +2350,91 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return platformList;
     }
 
-    private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity, List<String> skus) {
-        //根据sku、仓库合并生成数据
-        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().filter(obj -> skus.contains(obj.getSkuNo())).collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
-        List<WarehouseLocationReplenishDTO.AddDTO> addList = new ArrayList<>();
-        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
-            SoB2cDeliveryDetailEntity detailEntity = entry.getValue().get(0);
-
-            WarehouseLocationReplenishDTO.AddDTO addReplenishDTO = new WarehouseLocationReplenishDTO.AddDTO();
-            addReplenishDTO.setSkuId(detailEntity.getSkuId());
-            addReplenishDTO.setSkuNo(detailEntity.getSkuNo());
-            addReplenishDTO.setSourceId(deliveryEntity.getId());
-            addReplenishDTO.setSourceCode(deliveryEntity.getCode());
-            addReplenishDTO.setWarehouseId(detailEntity.getWarehouseId());
-            addReplenishDTO.setSourceType(ReplenishTypeEnum.DELIVER_STOCK_OUT);
-            //合计数量
-            Integer qty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            addReplenishDTO.setQty(qty);
-            addList.add(addReplenishDTO);
-            //记录日志
-            String msg = StrUtil.format("用户【{}】新增【{}】单据SKU为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位库存预警" , detailEntity.getSkuNo());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), deliveryEntity.getId(), "新增操作");
+    /**
+     * 发货缺货生成仓位补货单。
+     * <p>
+     * 流程：组装规则执行数据（含组合 SKU 拆分）→ 按仓库解析补货取货/上架仓位 → 预填 AddDTO 后批量落库。
+     * 数量取拣货匹配返回的缺货量；仓位解析失败时抛 {@link com.common.core.enums.ApiError} 业务异常。
+     */
+    @Override
+    public void generateStockOutReplenish(List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity,
+                                          Map<String, Integer> shortageMap, String waveType) {
+        if (shortageMap == null || shortageMap.isEmpty()) {
+            return;
         }
-        if(CollectionUtils.isNotEmpty(addList)){
+        CfgRulePickingDTO.CfgExecutionDataDTO executionData = buildPickingExecutionData(deliveryEntity, detailList, waveType);
+        Map<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseDetailMap = executionData.getDetails().stream()
+                .filter(d -> shortageMap.containsKey(
+                        CfgRulePickingServiceImpl.buildShortageKey(d.getWarehouseId(), d.getSkuNo())))
+                .collect(Collectors.groupingBy(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getWarehouseId));
+        List<WarehouseLocationReplenishDTO.AddDTO> addList = new ArrayList<>();
+        for (Map.Entry<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseEntry : warehouseDetailMap.entrySet()) {
+            String warehouseId = warehouseEntry.getKey();
+            Map<String, CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItemMap = new LinkedHashMap<>();
+            for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : warehouseEntry.getValue()) {
+                if (shortageItemMap.containsKey(detail.getSkuId())) {
+                    continue;
+                }
+                Integer shortageQty = shortageMap.get(
+                        CfgRulePickingServiceImpl.buildShortageKey(warehouseId, detail.getSkuNo()));
+                shortageItemMap.put(detail.getSkuId(), new CfgRulePickingDTO.ReplenishShortageItemDTO(
+                        detail.getSkuId(), detail.getSkuNo(), shortageQty == null ? detail.getQty() : shortageQty));
+            }
+            List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> suggests = cfgRulePickingService.resolveReplenishLocations(
+                    executionData, warehouseId, new ArrayList<>(shortageItemMap.values()));
+            for (CfgRulePickingDTO.ReplenishLocationSuggestDTO suggest : suggests) {
+                WarehouseLocationReplenishDTO.AddDTO addReplenishDTO = new WarehouseLocationReplenishDTO.AddDTO();
+                addReplenishDTO.setSkuId(suggest.getSkuId());
+                addReplenishDTO.setSkuNo(suggest.getSkuNo());
+                addReplenishDTO.setSourceId(deliveryEntity.getId());
+                addReplenishDTO.setSourceCode(deliveryEntity.getCode());
+                addReplenishDTO.setWarehouseId(warehouseId);
+                addReplenishDTO.setSourceType(ReplenishTypeEnum.DELIVER_STOCK_OUT);
+                addReplenishDTO.setQty(suggest.getQty());
+                addReplenishDTO.setFromWarehouseArea(suggest.getFromWarehouseArea());
+                addReplenishDTO.setFromWarehouseLocation(suggest.getFromWarehouseLocation());
+                addReplenishDTO.setToWarehouseArea(suggest.getToWarehouseArea());
+                addReplenishDTO.setToWarehouseLocation(suggest.getToWarehouseLocation());
+                addList.add(addReplenishDTO);
+                String msg = StrUtil.format("用户【{}】新增【{}】单据SKU为【{}】",
+                        UserContext.getDefaultLoginUser().getUserName(), "仓位库存预警", suggest.getSkuNo());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(),
+                        deliveryEntity.getId(), "新增操作");
+            }
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
             warehouseLocationReplenishService.addList(addList);
         }
     }
 
-    @Override
-    public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, String waveType) {
-        return generatePickingDetail(soB2cDeliveryEntity, soB2cDeliveryDetailEntities, null,waveType);
-    }
-
-    @Override
-    public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results, String waveType) {
+    /**
+     * 组装 B2C 拣货/补货规则执行数据。
+     * <p>
+     * 组合 SKU 按 BOM 拆成子件明细（数量 = 发货数量 × 子件用量），并写入 billType、waveType 供规则条件匹配。
+     *
+     * @param soB2cDeliveryEntity           发货单
+     * @param soB2cDeliveryDetailEntities   发货明细
+     * @param waveType                      波次类型，可空
+     * @return 规则执行入参
+     */
+    private CfgRulePickingDTO.CfgExecutionDataDTO buildPickingExecutionData(SoB2cDeliveryEntity soB2cDeliveryEntity,
+                                                                           List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities,
+                                                                           String waveType) {
         List<String> skuIds = soB2cDeliveryDetailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = new ArrayList<>();
-        Map<String, String> warehouseMap = soB2cDeliveryDetailEntities.stream().collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getWarehouseId, SoB2cDeliveryDetailEntity::getWarehouseName, (o1, o2) -> o1));
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntities) {
-            //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(),detailEntity.getVirtualWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(),"",
+                    detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(), "",
                             detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity(), detailEntity.getId()));
                 }
             } else {
-                detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(),detailEntity.getVirtualWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),"",
+                detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(), "",
                         detailEntity.getDeliveryQty(), detailEntity.getId()));
             }
         }
@@ -2409,9 +2442,22 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
         executionData.setSourceCode(soB2cDeliveryEntity.getCode());
         executionData.setDetails(detailList);
-        if(CharSequenceUtil.isNotBlank(waveType)){//波次类型
+        if (CharSequenceUtil.isNotBlank(waveType)) {
             executionData.setWaveType(waveType);
         }
+        return executionData;
+    }
+
+    @Override
+    public Map<String, Integer> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, String waveType) {
+        return generatePickingDetail(soB2cDeliveryEntity, soB2cDeliveryDetailEntities, null,waveType);
+    }
+
+    @Override
+    public Map<String, Integer> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results, String waveType) {
+        Map<String, String> warehouseMap = soB2cDeliveryDetailEntities.stream()
+                .collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getWarehouseId, SoB2cDeliveryDetailEntity::getWarehouseName, (o1, o2) -> o1));
+        CfgRulePickingDTO.CfgExecutionDataDTO executionData = buildPickingExecutionData(soB2cDeliveryEntity, soB2cDeliveryDetailEntities, waveType);
         return pickingListsService.generateSoB2cPicking(soB2cDeliveryEntity, executionData, warehouseMap, results);
     }
 

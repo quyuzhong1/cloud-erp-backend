@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
- * 拣货规则表 Mapper 接口
+ * 仓位推荐表 Mapper 接口
  * </p>
  *
  * @author Lambda

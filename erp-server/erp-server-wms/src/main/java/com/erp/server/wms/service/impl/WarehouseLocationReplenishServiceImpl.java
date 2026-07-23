@@ -209,18 +209,96 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             toWarehouseLocationMap = productDetailEntities.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getWarehouseLocation())).collect(Collectors.toMap(ProductDetailEntity::getId,ProductDetailEntity::getWarehouseLocation));
         }
         for (WarehouseLocationReplenishDTO.AddDTO dto : addList) {
-            if(toWarehouseLocationMap.containsKey(dto.getSkuId())){
+            // 已预填取货/上架时不再覆盖产品小货区推荐
+            boolean prefilled = CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+                    && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation());
+            if (!prefilled && toWarehouseLocationMap.containsKey(dto.getSkuId())) {
                 //推荐仓位（小货区）
                 dto.setToWarehouseLocation(toWarehouseLocationMap.get(dto.getSkuId()));
             }
-            resultDTOList.add(this.add(dto));
+        }
+        // 预填场景批量计算建议数量，避免循环内 2N 查库
+        prefillDeliverStockOutSuggestQty(addList);
+        for (WarehouseLocationReplenishDTO.AddDTO dto : addList) {
+            // 内部批量预计算可信，允许复用 suggestQty
+            resultDTOList.add(this.doAdd(dto, true));
         }
         return resultDTOList;
+    }
+
+    /**
+     * 批量预计算发货缺货补货建议数量。
+     */
+    private void prefillDeliverStockOutSuggestQty(List<WarehouseLocationReplenishDTO.AddDTO> addList) {
+        List<WarehouseLocationReplenishDTO.AddDTO> prefilledList = addList.stream()
+                .filter(dto -> ReplenishTypeEnum.DELIVER_STOCK_OUT.equals(dto.getSourceType()))
+                .filter(dto -> CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+                        && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation()))
+                .filter(dto -> dto.getSuggestQty() == null)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(prefilledList)) {
+            return;
+        }
+        Set<String> warehouseIds = prefilledList.stream()
+                .map(WarehouseLocationReplenishDTO.AddDTO::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Set<String> skuIdSet = prefilledList.stream()
+                .map(WarehouseLocationReplenishDTO.AddDTO::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Set<String> toLocations = prefilledList.stream()
+                .map(WarehouseLocationReplenishDTO.AddDTO::getToWarehouseLocation)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(warehouseIds) || CollectionUtils.isEmpty(skuIdSet) || CollectionUtils.isEmpty(toLocations)) {
+            return;
+        }
+        Map<String, InventoryEntity> inventoryMap = inventoryService.lambdaQuery()
+                .in(InventoryEntity::getWarehouseId, warehouseIds)
+                .in(InventoryEntity::getSkuId, skuIdSet)
+                .in(InventoryEntity::getWarehouseLocation, toLocations)
+                .eq(InventoryEntity::getDictInventoryStatus, "usable")
+                .list()
+                .stream()
+                .collect(Collectors.toMap(
+                        inv -> buildSuggestKey(inv.getWarehouseId(), inv.getSkuId(), inv.getWarehouseLocation()),
+                        inv -> inv,
+                        (a, b) -> a));
+        Map<String, WarehouseLocationSafetyInventoryEntity> safetyMap = safetyInventoryService.lambdaQuery()
+                .in(WarehouseLocationSafetyInventoryEntity::getWarehouseId, warehouseIds)
+                .in(WarehouseLocationSafetyInventoryEntity::getSkuId, skuIdSet)
+                .in(WarehouseLocationSafetyInventoryEntity::getWarehouseLocation, toLocations)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(
+                        safety -> buildSuggestKey(safety.getWarehouseId(), safety.getSkuId(), safety.getWarehouseLocation()),
+                        safety -> safety,
+                        (a, b) -> a));
+        for (WarehouseLocationReplenishDTO.AddDTO dto : prefilledList) {
+            String key = buildSuggestKey(dto.getWarehouseId(), dto.getSkuId(), dto.getToWarehouseLocation());
+            dto.setSuggestQty(calcDeliverStockOutSuggestQty(
+                    dto, inventoryMap.get(key), safetyMap.get(key)));
+        }
+    }
+
+    private static String buildSuggestKey(String warehouseId, String skuId, String warehouseLocation) {
+        return CharSequenceUtil.nullToEmpty(warehouseId) + "#"
+                + CharSequenceUtil.nullToEmpty(skuId) + "#"
+                + CharSequenceUtil.nullToEmpty(warehouseLocation);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO add(WarehouseLocationReplenishDTO.AddDTO dto) {
+        // 公开入口不可信任客户端传入的 suggestQty
+        return doAdd(dto, false);
+    }
+
+    /**
+     * @param trustSuggestQty true 仅内部 addList 预计算后可信；false 忽略入参，始终服务端计算
+     */
+    private BatchResultDTO doAdd(WarehouseLocationReplenishDTO.AddDTO dto, boolean trustSuggestQty) {
         WarehouseLocationReplenishEntity entity = new WarehouseLocationReplenishEntity();
         entity.setSkuId(dto.getSkuId());
         entity.setSkuNo(dto.getSkuNo());
@@ -232,6 +310,20 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
         //发货缺货补货
         if(dto.getSourceType().equals(ReplenishTypeEnum.DELIVER_STOCK_OUT)){
+            // 已由仓位推荐预填取货/上架时，直接落库并计算建议数量
+            if (CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+                    && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation())) {
+                entity.setFromWarehouseArea(dto.getFromWarehouseArea());
+                entity.setFromWarehouseLocation(dto.getFromWarehouseLocation());
+                entity.setToWarehouseArea(dto.getToWarehouseArea());
+                entity.setToWarehouseLocation(dto.getToWarehouseLocation());
+                entity.setSuggestQty(trustSuggestQty && dto.getSuggestQty() != null
+                        ? dto.getSuggestQty()
+                        : calcDeliverStockOutSuggestQty(dto, dto.getToWarehouseLocation()));
+                this.save(entity);
+                return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+            }
+
             //推荐取货库区和取货仓位
             Pair<WarehouseLocationEntity, InventoryEntity> pair = getFromAreaAndLocation(dto);
             entity.setFromWarehouseArea(pair.getKey().getCode());
@@ -393,6 +485,48 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+    }
+
+    /**
+     * 发货缺货补货：按上架仓位安全库存/最大补货量计算建议补货数量。
+     * <p>
+     * 有最大补货量：maxQty + 缺货数量 - 上架仓位可用库存；<br>
+     * 仅有安全库存：safetyQty + 缺货数量 - 上架仓位可用库存；<br>
+     * 否则：等于缺货数量。
+     *
+     * @param dto                 补货新增入参
+     * @param toWarehouseLocation 上架仓位编码
+     * @return 建议补货数量
+     */
+    private Integer calcDeliverStockOutSuggestQty(WarehouseLocationReplenishDTO.AddDTO dto, String toWarehouseLocation) {
+        InventoryEntity inventoryEntity = inventoryService.getOne(new QueryWrapper<InventoryEntity>()
+                .eq("warehouse_id", dto.getWarehouseId())
+                .eq("sku_id", dto.getSkuId())
+                .eq("warehouse_location", toWarehouseLocation)
+                .eq("dict_inventory_status", "usable")
+                .eq("is_deleted", false)
+                .last("limit 1")
+        );
+        WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
+                .eq("sku_id", dto.getSkuId())
+                .eq("warehouse_id", dto.getWarehouseId())
+                .eq("warehouse_location", toWarehouseLocation)
+        );
+        return calcDeliverStockOutSuggestQty(dto, inventoryEntity, safetyInventoryEntity);
+    }
+
+    private Integer calcDeliverStockOutSuggestQty(WarehouseLocationReplenishDTO.AddDTO dto,
+                                                 InventoryEntity inventoryEntity,
+                                                 WarehouseLocationSafetyInventoryEntity safetyInventoryEntity) {
+        if (safetyInventoryEntity != null && inventoryEntity != null) {
+            if (safetyInventoryEntity.getMaxQty() != 0) {
+                return safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
+            }
+            if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0) {
+                return safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
+            }
+        }
+        return dto.getQty();
     }
 
     private InventoryEntity findLastInventory(WarehouseLocationReplenishDTO.AddDTO dto , List<String> pickLocationCodeList , List<InventoryEntity> pickInventoryList){

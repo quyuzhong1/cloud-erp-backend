@@ -35,7 +35,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
-import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.*;
@@ -110,8 +109,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private CfgRuleWaveRecordService cfgRuleWaveRecordService;
-    @Resource
-    private WarehouseLocationReplenishService warehouseLocationReplenishService;
 
     @Resource
     @Lazy
@@ -449,10 +446,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 log.error("发货单【{}】未找到明细数据", deliveryEntity.getCode());
                 continue;
             }
-            List<String> skus = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList,entity.getWaveType());
-            if (CollUtil.isNotEmpty(skus)) {
+            Map<String, Integer> shortageMap = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList,entity.getWaveType());
+            if (CollUtil.isNotEmpty(shortageMap)) {
                 //生成缺货补货数据
-                generateReplenish(detailList, deliveryEntity, skus);
+                soB2cDeliveryService.generateStockOutReplenish(detailList, deliveryEntity, shortageMap, entity.getWaveType());
                 //添加波次生成的缺货异常
                 updateDeliveryList.add(deliveryEntity.getId());
                 continue;
@@ -534,35 +531,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //添加map数据
             Integer totalDeliveryQty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             sameMap.put(key,totalDeliveryQty);
-        }
-    }
-
-    /**
-     * 生成缺货补货数据
-     *
-     * @param detailList
-     * @param deliveryEntity
-     * @param skus
-     * @author will
-     * @date 2024/7/5 16:53
-     */
-    private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity, List<String> skus) {
-        //根据sku、仓库合并生成数据
-        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().filter(obj -> skus.contains(obj.getSkuNo())).collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
-        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
-            SoB2cDeliveryDetailEntity detailEntity = entry.getValue().get(0);
-
-            WarehouseLocationReplenishDTO.AddDTO addReplenishDTO = new WarehouseLocationReplenishDTO.AddDTO();
-            addReplenishDTO.setSkuId(detailEntity.getSkuId());
-            addReplenishDTO.setSkuNo(detailEntity.getSkuNo());
-            addReplenishDTO.setSourceId(deliveryEntity.getId());
-            addReplenishDTO.setSourceCode(deliveryEntity.getCode());
-            addReplenishDTO.setWarehouseId(detailEntity.getWarehouseId());
-            addReplenishDTO.setSourceType(ReplenishTypeEnum.DELIVER_STOCK_OUT);
-            //合计数量
-            Integer qty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            addReplenishDTO.setQty(qty);
-            warehouseLocationReplenishService.add(addReplenishDTO);
         }
     }
 

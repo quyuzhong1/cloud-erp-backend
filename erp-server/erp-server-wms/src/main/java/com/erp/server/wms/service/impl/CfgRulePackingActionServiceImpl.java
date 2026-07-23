@@ -1,8 +1,9 @@
 package com.erp.server.wms.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleActionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
@@ -18,6 +19,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -43,12 +46,16 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions) {
+    public void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions, String ruleType) {
+        if(CollectionUtils.isEmpty(actions)){
+            return;
+        }
         AtomicInteger index = new AtomicInteger(0);
         List<CfgRulePackingActionEntity> actionEntities = actions.stream()
                 .map(action -> {
                     CfgRulePackingActionEntity entity = BeanMapperUtils.map(CfgRulePackingActionEntity.class, action);
                     entity.setRuleId(ruleId);
+                    entity.setRuleType(ruleType);
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
@@ -57,43 +64,79 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actionList) {
-
+    public void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actionList, String ruleType) {
+        //为空时删除对应的动作明细
+        if(CollectionUtils.isEmpty(actionList)){
+            remove(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().eq(CfgRulePackingActionEntity::getRuleId, ruleId).eq(CfgRulePackingActionEntity::getRuleType, ruleType));
+            return;
+        }
         AtomicInteger index = new AtomicInteger(0);
         // 查询规则动作
         List<CfgRulePackingActionEntity> oldActions = list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery()
+                .eq(CfgRulePackingActionEntity::getRuleType, ruleType)
                 .eq(CfgRulePackingActionEntity::getRuleId, ruleId));
-        List<String> actionIds = actionList.stream().map(CfgRuleActionDTO.Update::getId).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(actionIds)) {
-            List<String> removeIds = oldActions.stream()
-                    .map(CfgRulePackingActionEntity::getId)
-                    .filter(id -> !actionIds.contains(id))
-                    .collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(removeIds)) {
-                removeByIds(removeIds);
-            }
+        List<String> actionIds = actionList.stream()
+                .map(CfgRuleActionDTO.Update::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        // 更新 ID 必须属于当前规则 + 动作类型，防止跨规则覆盖
+        validateActionIdsBelongToRule(ruleId, ruleType, actionIds);
+        // 始终删除「旧有但本次未提交」的动作；actionIds 为空表示全量替换，删除该类型全部旧动作
+        List<String> removeIds = oldActions.stream()
+                .map(CfgRulePackingActionEntity::getId)
+                .filter(id -> !actionIds.contains(id))
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(removeIds)) {
+            removeByIds(removeIds);
         }
         List<CfgRulePackingActionEntity> actions = actionList.stream()
                 .map(action -> {
                     CfgRulePackingActionEntity entity = BeanMapperUtils.map(CfgRulePackingActionEntity.class, action);
                     entity.setRuleId(ruleId);
+                    entity.setRuleType(ruleType);
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
         service.saveOrUpdateBatch(actions);
     }
 
-    @Override
-    public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds) {
-        return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds));
+    private void validateActionIdsBelongToRule(String ruleId, String ruleType, List<String> actionIds) {
+        if (CollectionUtils.isEmpty(actionIds)) {
+            return;
+        }
+        List<CfgRulePackingActionEntity> existingActions = listByIds(actionIds);
+        if (existingActions.size() != actionIds.stream().distinct().count()) {
+            throw new ServiceException("仓位推荐动作不存在或已删除，请刷新后重试");
+        }
+        Set<String> ownedIds = existingActions.stream()
+                .filter(action -> Objects.equals(ruleId, action.getRuleId())
+                        && Objects.equals(ruleType, action.getRuleType()))
+                .map(CfgRulePackingActionEntity::getId)
+                .collect(Collectors.toSet());
+        for (String actionId : actionIds) {
+            if (!ownedIds.contains(actionId)) {
+                throw new ServiceException("仓位推荐动作不属于当前规则，请检查");
+            }
+        }
     }
 
+    /**
+     * 按规则 ID + 动作类型（拣货/补货/出库）查询仓位推荐动作。
+     */
     @Override
-    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds,String determiningCondition) {
+    public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds, String ruleType) {
+        return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds).eq(CfgRulePackingActionEntity::getRuleType, ruleType));
+    }
+
+    /**
+     * 委托 Mapper：按规则、仓库、SKU、库存条件与动作类型查询仓位库存候选。
+     */
+    @Override
+    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds, String determiningCondition, String ruleType) {
         if (CollectionUtils.isEmpty(rules)) {
             return Collections.emptyList();
         }
         List<String> ruleIds = rules.parallelStream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
-        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds,determiningCondition);
+        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds, determiningCondition, ruleType);
     }
 }

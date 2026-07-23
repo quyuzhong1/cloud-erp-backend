@@ -88,7 +88,7 @@ public enum ModuleTypeEnum {
     DMP_THIRD_SHOP("77", "第三方店铺"),
     DMP_THIRD_MAPPING("78", "第三方映射"),
     WAREHOUSE_AREA("80", "库区"),
-    PICKING_STRATEGY("81", "拣货策略"),
+    PICKING_STRATEGY("81", "仓位推荐"),
     WAREHOUSE_LOCATION("90", "仓位"),
     WAREHOUSE_LOCATION_MAPPING("168", "仓位绑定"),
 

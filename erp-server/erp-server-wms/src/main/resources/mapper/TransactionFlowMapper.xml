@@ -848,4 +848,25 @@
         ORDER BY tf.sku_id, tf.warehouse_id
     </select>
 
+    <!-- 按 SKU 取指定仓位集合内最新出入库流水仓位 -->
+    <select id="listLatestLocationBySku" resultType="com.erp.model.wms.entity.TransactionFlowEntity">
+        SELECT DISTINCT ON (sku_id)
+            id,
+            sku_id,
+            warehouse_location,
+            bill_date
+        FROM transaction_flow
+        WHERE is_deleted = FALSE
+          AND warehouse_id = #{warehouseId}
+          AND sku_id IN
+        <foreach collection="skuIds" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+          AND warehouse_location IN
+        <foreach collection="warehouseLocations" item="warehouseLocation" open="(" close=")" separator=",">
+            #{warehouseLocation}
+        </foreach>
+        ORDER BY sku_id, bill_date DESC NULLS LAST, id DESC
+    </select>
+
 </mapper>

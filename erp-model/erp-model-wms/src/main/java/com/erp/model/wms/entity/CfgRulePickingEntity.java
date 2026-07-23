@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 拣货规则表
+ * 仓位推荐表
  * </p>
  *
  * @author Lambda
@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("cfg_rule_picking")
+@TableName("cfg_rule_location_suggest")
 public class CfgRulePickingEntity extends BaseEntity<CfgRulePickingEntity> {
 
     /**
@@ -34,6 +34,28 @@ public class CfgRulePickingEntity extends BaseEntity<CfgRulePickingEntity> {
      */
     @TableField("disabled")
     private Boolean disabled;
+
+    /**
+     * 拣货禁用状态 false 未禁用
+     */
+    @TableField("pick_disabled")
+    private Boolean pickDisabled;
+    /**
+     * 补货禁用状态 false 未禁用
+     */
+    @TableField("replenish_disabled")
+    private Boolean replenishDisabled;
+    /**
+     * 出库禁用状态 false 未禁用
+     */
+    @TableField("out_stock_disabled")
+    private Boolean outStockDisabled;
+    /**
+     * 上架仓位
+     *  InWarehouseLocationEnum
+     */
+    @TableField("in_warehouse_location")
+    private String inWarehouseLocation;
 
     /**
      * 优先级
