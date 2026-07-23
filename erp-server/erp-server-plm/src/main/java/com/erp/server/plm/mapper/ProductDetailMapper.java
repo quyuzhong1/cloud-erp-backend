@@ -170,6 +170,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
 
     /**
+     * PDA扫码：按 sku_no / ean 精确匹配（UNION 走索引，避免 OR 导致全表扫描）
+     *
+     * @param skuNo  扫描码
+     * @param status SKU 状态，通常传审核通过
+     * @return 匹配的 SKU 列表
+     */
+    List<SkuVO> pdaSearchSkuByScanCode(@Param("skuNo") String skuNo, @Param("status") Integer status);
+
+    /**
      * PDA:根据skuId批量查询sku（与pdaSearchSku字段一致）
      */
     List<SkuVO> pdaSearchSkuBySkuIds(@Param("skuIds") List<String> skuIds, @Param("status") Integer status);

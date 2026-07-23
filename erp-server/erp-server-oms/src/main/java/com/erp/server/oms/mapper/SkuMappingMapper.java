@@ -147,4 +147,12 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * 按扫描码查询SKU映射（平台SKU/三方条码/ERP SKU）
      */
     List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(@Param("scanCode") String scanCode);
+
+    /**
+     * PDA扫码：按客户SKU/三方条码查询映射的内部SKU id（不含 product_sku_no，避免与 PLM sku_no 重复扫描）
+     *
+     * @param scanCode 扫描码
+     * @return 去重后的 product_sku_id 列表
+     */
+    List<String> listSkuIdsByScanCode(@Param("scanCode") String scanCode);
 }

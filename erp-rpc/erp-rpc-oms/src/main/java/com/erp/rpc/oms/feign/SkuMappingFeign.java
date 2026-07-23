@@ -110,4 +110,10 @@ public interface SkuMappingFeign {
      */
     @PostMapping("feign/skuMapping/listByScanCode")
     List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(@RequestParam("scanCode") String scanCode);
+
+    /**
+     * PDA扫码：按客户SKU/三方条码返回映射的内部 SKU id（轻量接口）
+     */
+    @PostMapping("feign/skuMapping/listSkuIdsByScanCode")
+    List<String> listSkuIdsByScanCode(@RequestParam("scanCode") String scanCode);
 }

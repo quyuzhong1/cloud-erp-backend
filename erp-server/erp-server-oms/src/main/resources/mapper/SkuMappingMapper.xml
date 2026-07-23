@@ -977,4 +977,16 @@
             OR sm.product_sku_no = #{scanCode})
     </select>
 
+    <!-- PDA扫码：仅查客户SKU/三方条码映射，返回去重 skuId，避免 product_sku_no 命中大量对照行 -->
+    <select id="listSkuIdsByScanCode" resultType="java.lang.String">
+        SELECT DISTINCT sm.product_sku_id
+        FROM sku_mapping sm
+                 INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
+        WHERE sm.is_deleted = FALSE
+          AND sm.is_expire = FALSE
+          AND sm.product_sku_id IS NOT NULL
+          AND TRIM(sm.product_sku_id) &lt;&gt; ''
+          AND (li.platform_sku_no = #{scanCode} OR li.third_barcode = #{scanCode})
+    </select>
+
 </mapper>
