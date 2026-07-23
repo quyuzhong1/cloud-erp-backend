@@ -7,6 +7,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.PdaSearchSkuVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -165,9 +166,9 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2023/8/21 12:09
      * @param dto
-     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @return java.util.List<com.erp.model.plm.vo.PdaSearchSkuVO>
      **/
-    List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
+    List<PdaSearchSkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
 
     /**
      * PDA扫码：按 sku_no / ean 精确匹配（UNION 走索引，避免 OR 导致全表扫描）
@@ -176,12 +177,12 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param status SKU 状态，通常传审核通过
      * @return 匹配的 SKU 列表
      */
-    List<SkuVO> pdaSearchSkuByScanCode(@Param("skuNo") String skuNo, @Param("status") Integer status);
+    List<PdaSearchSkuVO> pdaSearchSkuByScanCode(@Param("skuNo") String skuNo, @Param("status") Integer status);
 
     /**
      * PDA:根据skuId批量查询sku（与pdaSearchSku字段一致）
      */
-    List<SkuVO> pdaSearchSkuBySkuIds(@Param("skuIds") List<String> skuIds, @Param("status") Integer status);
+    List<PdaSearchSkuVO> pdaSearchSkuBySkuIds(@Param("skuIds") List<String> skuIds, @Param("status") Integer status);
 
     /**
      * PDA:产品查询
