@@ -235,6 +235,12 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
   需先检查附加的 import 区块，若已在其中出现，则**不得**报告为问题；
   若附加区块中也未出现，方可以「（需确认）」方式标注，并说明「可能定义于其他文件或未在 import 区块中展示」。
 
+**跨单据/跨实体字段对齐审查边界（必须遵守）：**
+- **不得**仅因「同类 B2B/B2C、主从、新旧接口、相邻单据」中一方存在某字段或过滤条件，就要求另一方补齐相同条件
+- 报告「缺少 xxx 字段过滤 / 未对齐作废状态」前，须能从本次 diff 或同批变更中的 Entity / 表结构 / Mapper 结果映射**直接确认**该字段存在；否则问题等级最高只能标为「低」，标题末尾须加「（需确认）」，并写明「目标 Entity/表是否存在该字段需人工验证」
+- **禁止**建议对不存在的列或 Entity 属性编写 SQL / MyBatis-Plus 条件（例如对无 `invalid_status` 的 B2C 售后表写 `invalid_status = FALSE`，或对无对应 getter 的 Entity 写 `.eq(Xxx::getInvalidStatus, …)`）
+- 典型误报禁止项：看到 B2B `so_return.invalid_status` 就要求 B2C `so_b2c_return` 同步过滤；看到 A 单据有某状态字段就要求 B 单据补相同 where，而 B 的 Entity 中并无该字段
+
 ### 问题分级约束（必须遵守）
 
 | 等级 | 判定标准 | 典型例子 |
