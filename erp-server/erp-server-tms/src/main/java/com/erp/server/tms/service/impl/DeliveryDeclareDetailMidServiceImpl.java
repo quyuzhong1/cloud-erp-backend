@@ -1,11 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.enums.BasicDictTypeEnum;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.tms.entity.*;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,6 +13,7 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -27,6 +23,8 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -422,6 +420,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     public Boolean deleteDeliveryDeclareDetailMid(List<String> sourceIds) {
         if (CollUtil.isEmpty(sourceIds)) {
             return  Boolean.TRUE;
+        }
+        Integer count = lambdaQuery()
+                .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIds)
+                .count();
+        if (count == null || count == 0) {
+            return Boolean.TRUE;
         }
         return lambdaUpdate().in(DeliveryDeclareDetailMidEntity::getSourceId,sourceIds).remove();
     }

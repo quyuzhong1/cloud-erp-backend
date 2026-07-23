@@ -21,6 +21,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.oms.query.SoReturnQueryHandler;
+import com.erp.server.oms.query.SoReturnLinkAfterSaleQueryHandler;
 import com.erp.server.oms.service.SoB2cReturnService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
@@ -70,6 +71,25 @@ public class SoReturnController extends BaseController {
     public ApiResult<PagingVO<SoReturnDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnDTO.PagingParam> dto) {
         PagingVO<SoReturnDTO.PagingView> pagingVO = soReturnService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 预入库-关联售后单：分页查询候选售后单
+     * <p>预入库列表点击"关联售后单"时调用：根据该行的售后单据类型（B2B 查 so_return / B2C 查 so_b2c_return）、
+     * 仓库信息、选择的 sku 过滤</p>
+     * <p>前端在 WMS 预入库模块调用，经网关路由至 OMS；{@code @DataPermission} 使用 WMS 菜单权限码校验入口，
+     * 行级仓库/店铺/创建人过滤在 Service 内按 B2B/B2C 表别名动态拼装（见 {@code SoReturnServiceImpl#applyLinkAfterSaleDataPermission}）。</p>
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>>
+     **/
+    @PostMapping("/pagingLinkAfterSale")
+    @DataPermission(
+            operationType = DataAttributeEnum.LIST,
+            menuCode = "wms:soReturnPrestock:linkAfterSale"
+    )
+    @WebAdvanceQuery(handler = SoReturnLinkAfterSaleQueryHandler.class)
+    public ApiResult<PagingVO<SoReturnDTO.LinkAfterSaleView>> pagingLinkAfterSale(@RequestBody @Validated PagingDTO<SoReturnDTO.LinkAfterSalePagingParam> dto) {
+        return success(soReturnService.pagingLinkAfterSale(dto));
     }
 
     /**

@@ -137,11 +137,7 @@ public class FullyManagedOrderController extends BaseController {
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
-                SoB2cEntity entity = soB2cService.getById(id);
-                if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
-                        || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id,logisticsRuleResult.getName());
-                }
+                soB2cRuleService.handleAutoLogisticsAction(id, logisticsRuleResult);
             }
         }
         //自动计算预估运费到订单的预估运费字段
@@ -290,13 +286,7 @@ public class FullyManagedOrderController extends BaseController {
         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
         if (warehouseRuleMatch) {
             SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
-            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-            Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-            Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
-            if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                    || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
-            }
+            soB2cRuleService.handleAutoLogisticsAction(id, logisticsRuleResult);
         }
 
         //清除预报异常

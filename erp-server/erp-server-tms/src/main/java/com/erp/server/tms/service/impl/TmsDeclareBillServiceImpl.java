@@ -3154,9 +3154,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         int firstDetailRowIndex = 17;
         for (int rowIndex = firstDetailRowIndex; rowIndex < firstDetailRowIndex + detailSize; rowIndex++) {
             addMergedRegionIfAbsent(sheet, rowIndex, 10, 11);
-            addMergedRegionIfAbsent(sheet, rowIndex, 13, 14);
-            addMergedRegionIfAbsent(sheet, rowIndex, 15, 16);
-            addMergedRegionIfAbsent(sheet, rowIndex, 17, 18);
+            addMergedRegionIfAbsent(sheet, rowIndex, 13, 18);
         }
     }
 

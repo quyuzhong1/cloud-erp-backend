@@ -166,6 +166,11 @@ public class StocktakingTaskDetailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 库区名称（导出按库区分 sheet；无仓位时为「空仓位」）
+         */
+        private String warehouseAreaName;
+
+        /**
          * sku id
          */
         private String skuId;

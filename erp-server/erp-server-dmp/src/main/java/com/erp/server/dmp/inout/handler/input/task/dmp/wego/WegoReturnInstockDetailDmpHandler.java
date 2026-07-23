@@ -41,6 +41,8 @@ public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler 
 
     /** WEGO API 返回的库存类型字段名，取值见 {@link WegoEnums.InventoryTypeEnum} */
     private static final String MONGO_KEY_INVENTORY_TYPE = "inventoryType";
+    /** WEGO 不良品库存类型值 */
+    private static final int INVENTORY_TYPE_DEFECTIVE = 3;
     /** DMP 明细字段：是否不良品 */
     private static final String DMP_KEY_DEFECTIVE_PRODUCT_FLAG = "defectiveProductFlag";
 
