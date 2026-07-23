@@ -1584,7 +1584,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         executionData.setSourceCode(entity.getCode());
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = details.stream()
                 .map(d -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(
-                        CharSequenceUtil.isNotBlank(d.getWarehouseId()) ? d.getWarehouseId() : entity.getWarehouseId(),
+                        CharSequenceUtil.isNotBlank(d.getWarehouseId()) ? d.getWarehouseId() : entity.getWarehouseId(),"",
                         d.getSkuId(), d.getSkuNo(), "",
                         d.getActualQty(), d.getId()))
                 .collect(Collectors.toList());
