@@ -1803,6 +1803,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (CollUtil.isEmpty(paramMap)) {
             return Collections.emptyList();
         }
+        boolean hasValues = paramMap.values().stream().anyMatch(CollUtil::isNotEmpty);
+        if (!hasValues) {
+            return Collections.emptyList();
+        }
         return baseMapper.listLogisticsBillByUniqueKey(paramMap);
     }
 
