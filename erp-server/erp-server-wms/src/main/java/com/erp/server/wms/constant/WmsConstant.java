@@ -94,6 +94,12 @@ public interface WmsConstant {
     String DG_AFTER_SALES_WAREHOUSE_CODE = "jp-gdshc";
 
     /**
+     * 默认仓储部门ID：系统内部自动生成"其它入库"单（如旺店通预入库、退货入库单转预入库）时，
+     * 当上下文无法提供明确归属部门时使用的兜底部门。沿用旺店通预入库同款硬编码部门ID。
+     */
+    String DEFAULT_WAREHOUSING_DEPT_ID = "1675799739955679233";
+
+    /**
      * 盘点任务明细导出：无仓位或找不到所属库区时的 sheet / 库区名
      */
     String EMPTY_WAREHOUSE_AREA_NAME = "空仓位";

@@ -102,6 +102,17 @@ public class SoReturnInstockController extends BaseController {
     }
 
     /**
+     * 退货物流单号反查B2B/B2C售后单并带出预填信息（命中多个时返回列表供前端选择）
+     * 已确认该接口不需要增加权限控制
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.ReturnLogisticPrefill>>
+     **/
+    @PostMapping("/queryByReturnLogisticCode")
+    public ApiResult<List<SoReturnInstockDTO.ReturnLogisticPrefill>> queryByReturnLogisticCode(@RequestBody @Validated SoReturnInstockDTO.ReturnLogisticQuery dto) {
+        return success(soReturnInstockService.queryByReturnLogisticCode(dto.getReturnLogisticCode()));
+    }
+
+    /**
      * 新增
      * @Author Luo_WG
      * @Date 2023/4/6 18:46

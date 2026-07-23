@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -18,6 +19,7 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +54,13 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     List<SoReturnInstockDTO.StatusCountDTO> listCount(PermissionsDTO dto);
 
     /**
+     * 根据退货物流单号反查B2B/B2C售后单并组装预填信息（命中多个时返回列表供前端选择）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.ReturnLogisticPrefill>
+     **/
+    List<SoReturnInstockDTO.ReturnLogisticPrefill> queryByReturnLogisticCode(String returnLogisticCode);
+
+    /**
      * 新增
      * @Author Luo_WG
      * @Date 2023/4/13 11:03
@@ -59,6 +68,15 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return com.common.core.controller.vo.ApiResult
      **/
     String add(SoReturnInstockDTO.Add dto);
+
+    /**
+     * 新增并返回落库后的实体（含 id、单号），供调用方直接使用内存实体做后续提交/审核，
+     * 避免"写入后再查询"在同一事务未提交或读写分离场景下查不到数据。
+     *
+     * @param dto 退货入库单新增入参
+     * @return 落库后的退货入库单实体
+     */
+    SoReturnInstockEntity addReturnEntity(SoReturnInstockDTO.Add dto);
 
     /**
      * 修改
@@ -343,9 +361,29 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO);
 
     SoReturnInstockEntity getByThirdCode(String thirdCode);
+
+    /**
+     * 按第三方/平台退货单号查询全部退货入库单（用于海外仓消息重试时按明细缺口对账，而非「存在任意一条即整单跳过」）。
+     *
+     * @param thirdCode 第三方/平台退货单号（platformReturnOrderNo）
+     * @return 同 thirdCode 下的退货入库单列表，无则空列表
+     */
+    List<SoReturnInstockEntity> listByThirdCode(String thirdCode);
+
     SoReturnInstockEntity getBySourceId(String sourceId);
 
     void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
+
+    /**
+     * 按退货物流单号 + SKU 匹配《B2B/B2C 售后单-退货单》中未入库/部分入库的明细行，
+     * 为匹配上的部分按售后单分组生成已审核退货入库单；返回未能匹配的剩余明细（数量已扣减），
+     * 供调用方继续走后续分支处理。保证：入参明细 = 本方法生成的退货入库单明细 ∪ 返回的剩余明细。
+     *
+     * @param dto             平台退货入库消息（须已确认 returnLogisticCode 非空）
+     * @param warehouseEntity 已解析好的仓库信息
+     * @return 未能匹配上的剩余明细（数量已扣减，可能为空列表表示全部匹配完成）
+     */
+    List<PlatformReturnInstockDTO.Detail> matchAndCreateByReturnLogisticCode(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity);
 
     List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
     /**
