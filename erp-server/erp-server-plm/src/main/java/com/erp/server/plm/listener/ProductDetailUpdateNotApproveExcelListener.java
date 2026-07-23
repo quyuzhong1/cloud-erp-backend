@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventListener<ProductDetailImprotUpdateExcelDTO> {
+    private static final int MAX_IMPORT_ROWS = 5000;
+    private boolean importSizeExceeded;
+
     /**
      * 错误信息
      */
@@ -32,6 +35,10 @@ public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventLis
      **/
     @Override
     public void invoke(ProductDetailImprotUpdateExcelDTO dto, AnalysisContext analysisContext) {
+        if (dataList.size() >= MAX_IMPORT_ROWS) {
+            importSizeExceeded = true;
+            return;
+        }
         List<String> errorMsgList = new ArrayList<>();
         //添加数据用于判断是否为空
         dataList.add(dto);
@@ -73,6 +80,15 @@ public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventLis
 
     public List<ProductDetailImprotUpdateExcelDTO> getExcelDateList() {
         return dataList;
+    }
+
+    public boolean isImportSizeExceeded() {
+        return importSizeExceeded;
+    }
+
+    @Override
+    public boolean hasNext(AnalysisContext analysisContext) {
+        return !importSizeExceeded;
     }
 
 

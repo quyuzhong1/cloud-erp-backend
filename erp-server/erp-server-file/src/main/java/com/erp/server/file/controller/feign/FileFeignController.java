@@ -77,6 +77,16 @@ public class FileFeignController {
         return fileService.downloadFile(fileId);
     }
 
+    @PostMapping("/downloadFileStream")
+    public void downloadFileStream(@RequestParam("fileId") String fileId, HttpServletResponse response) throws IOException {
+        FileService fileService = fileRegistry.getHandler();
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        try (OutputStream outputStream = response.getOutputStream()) {
+            fileService.downloadFile(fileId, outputStream);
+            outputStream.flush();
+        }
+    }
+
     @GetMapping("/getInputStream/{fileId}")
     public void getInputStream(@PathVariable("fileId") String fileId, HttpServletResponse response) throws IOException {
         FileService fileService = fileRegistry.getHandler();

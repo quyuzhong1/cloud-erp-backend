@@ -53,6 +53,16 @@ public interface FileFeign {
      */
     @PostMapping("/feign/file/downloadFile")
     byte[] downloadFile(@RequestParam("fileId") String fileId);
+
+    /**
+     * 流式下载文件，供大文件消费场景使用，避免 Feign 将响应完整解码为 byte[]。
+     *
+     * @param fileId 文件ID
+     * @return 原始响应
+     */
+    @PostMapping("/feign/file/downloadFileStream")
+    Response downloadFileStream(@RequestParam("fileId") String fileId);
+
     /**
      * 下载文件
      * @param fileId

@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ public interface FileService {
     int deleteFile(String url);
     void deleteBatchFile(List<String> urlList);
     byte[] downloadFile(String fileId);
+    void downloadFile(String fileId, OutputStream outputStream);
     ResponseEntity<byte[]> downloadByte(String fileId, String fileName, String contentType, boolean bPreview);
     InputStream getInputStream(String fileId);
 
