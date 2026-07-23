@@ -62,16 +62,6 @@ public class ProductForbiddenWordCheckDTO implements Serializable {
         private Integer status;
 
         /**
-         * 检测完成开始时间
-         */
-        private LocalDateTime finishStartTime;
-
-        /**
-         * 检测完成结束时间
-         */
-        private LocalDateTime finishEndTime;
-
-        /**
          * 创建人
          */
         private String createUserName;
@@ -136,7 +126,5 @@ public class ProductForbiddenWordCheckDTO implements Serializable {
         private String skuNo;
 
         private String name;
-
-        private Integer status;
     }
 }

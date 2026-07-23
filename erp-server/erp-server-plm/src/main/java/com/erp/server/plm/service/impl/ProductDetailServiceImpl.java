@@ -31,6 +31,7 @@ import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -82,6 +83,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -128,6 +130,7 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -154,6 +157,7 @@ import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU_DYNAMIC;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_PRODUCT_DETAIL;
 
 /**
  * @Description: 产品明细信息服务类
@@ -324,6 +328,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private FileFeign fileFeign;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -5373,11 +5380,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
-        if(importType.equals(ImportTypeEnum.IMPORT_ADD.getCode())){//导入新增
-            return importAdd(excelFile, importType, response);
-        }else{//导入更新
-            return importUpdate(excelFile,importType, response);
+    public Boolean importProductFile(MultipartFile excelFile, Integer importType) {
+        ImportTypeEnum typeEnum = ImportTypeEnum.getEnum(importType);
+        if (Objects.isNull(typeEnum)) {
+            throw new ServiceException("导入类型有误");
+        }
+        String fileUrl = FastDFSClientUtil.uploadFile(excelFile);
+        BaseDTO.ImportTypeDTO dto = new BaseDTO.ImportTypeDTO(fileUrl, String.valueOf(importType), "");
+        downloadTaskFeign.saveImportTask(typeEnum.getName() + "产品信息", IMPORT_PLM_PRODUCT_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void importProductFile(BaseDTO.ImportTypeDTO dto) {
+        Integer importType;
+        try {
+            importType = Integer.valueOf(dto.getImportType());
+        } catch (NumberFormatException e) {
+            throw new ServiceException("导入类型有误");
+        }
+        if (Objects.isNull(ImportTypeEnum.getEnum(importType))) {
+            throw new ServiceException("导入类型有误");
+        }
+        byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+        if (importType.equals(ImportTypeEnum.IMPORT_ADD.getCode())) {
+            importAdd(new ByteArrayInputStream(bytes), importType, dto.getTaskId());
+        } else {
+            importUpdate(new ByteArrayInputStream(bytes), importType, dto.getTaskId());
         }
     }
 
@@ -5433,13 +5462,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return result.toString();
     }
 
-    private ExcelImportFsDTO.UrlDTO importUpdate(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importUpdate(InputStream inputStream, Integer importType, String taskId) {
         ProductDetailUpdateNotApproveExcelListener excelListenerUtil = new ProductDetailUpdateNotApproveExcelListener();
         try {
-            read(excelFile.getInputStream(), ProductDetailImprotUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+            read(inputStream, ProductDetailImprotUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
@@ -5480,7 +5506,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
         }
+        completeProductImportTask(taskId, excelDateList.size(), errorList.size(), errorUrl);
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
+    }
+
+    private void completeProductImportTask(String taskId, int count, int errorCount, String errorUrl) {
+        BaseDTO.ImportResultDTO resultDTO = new BaseDTO.ImportResultDTO();
+        resultDTO.setTaskId(taskId);
+        resultDTO.setCount(count);
+        resultDTO.setErrorUrl(errorUrl);
+        resultDTO.setRemark("处理完成，失败" + errorCount + "条");
+        resultDTO.setFinishTime(LocalDateTime.now());
+        resultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(resultDTO);
     }
 
     /**
@@ -6391,6 +6429,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //获取产品包装信息修改的字段
             productPackDTO.setId(productKey.getPackId());
             List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,oldPackEntity);
+            try {
+                if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
+                    bean.inportExcel(productNoSpecDTO);
+                }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
+                    bean.inportExcelAndSync(productNoSpecDTO,productBy);
+                }
+            } catch (Exception e) {
+                log.error("产品信息导入更新失败，SKU={}", dto.getSkuNo(), e);
+                dto.setErrorMsg(getImportErrorMessage(e));
+                errorList.add(dto);
+                continue;
+            }
+
             //发送通知
             ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
             noticeDTO.setProductId(productInfoDTO.getId());
@@ -6402,12 +6453,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeDTO.setProductPackChangeField(productPackChangeField);
             noticeDTOList.add(noticeDTO);
             productIdList.add(productInfoDTO.getId());
-
-            if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
-                bean.inportExcel(productNoSpecDTO);
-            }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
-                bean.inportExcelAndSync(productNoSpecDTO,productBy);
-            }
         }
         //发送消息
         handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
@@ -6415,13 +6460,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //导入新增
-    private ExcelImportFsDTO.UrlDTO importAdd(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importAdd(InputStream inputStream, Integer importType, String taskId) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener();
         try {
-            read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+            read(inputStream, ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
@@ -6458,6 +6500,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
         }
+        completeProductImportTask(taskId, excelDateList.size(), errorList.size(), errorUrl);
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
@@ -7169,10 +7212,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            String productId = bean.inportExcel(productNoSpecDTO);
-            prodcutIdList.add(productId);
+            try {
+                String productId = bean.inportExcel(productNoSpecDTO);
+                prodcutIdList.add(productId);
+            } catch (Exception e) {
+                log.error("产品信息导入新增失败，SKU={}", dto.getSkuNo(), e);
+                dto.setErrorMsg(getImportErrorMessage(e));
+                errorList.add(dto);
+            }
         }
         return prodcutIdList;
+    }
+
+    private String getImportErrorMessage(Exception e) {
+        return StringUtils.defaultIfBlank(e.getMessage(), "导入处理失败");
     }
 
     /**

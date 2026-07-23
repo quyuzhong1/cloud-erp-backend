@@ -18,6 +18,7 @@ import com.erp.model.plm.entity.CfgProductForbiddenWordEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.mapper.CfgProductForbiddenWordMapper;
 import com.erp.server.plm.service.CfgProductForbiddenWordService;
+import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.support.PlmPagingSortSupport;
 import com.erp.server.plm.support.ProductForbiddenWordMatcher;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,9 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(CfgProductForbiddenWordDTO.AddDTO dto) {
@@ -70,6 +74,7 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
             entity.setForbiddenWord(word);
             entity.setDisabled(DisabledEnum.ENABLE.getCode());
             super.save(entity);
+            addOperateLog(entity.getId(), StrUtil.format("新增违禁词【{}】", word), "新增信息");
             if (StringUtils.isBlank(firstId)) {
                 firstId = entity.getId();
             }
@@ -95,6 +100,9 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
         if (!update) {
             throw new ServiceException("违禁词保存失败");
         }
+        addOperateLog(old.getId(),
+                StrUtil.format("编辑违禁词：由【{}】变更为【{}】", old.getForbiddenWord(), word),
+                "编辑信息");
         productForbiddenWordMatcher.refreshNow();
         return Boolean.TRUE;
     }
@@ -137,6 +145,7 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
     public BatchResultDTO delete(String id) {
         CfgProductForbiddenWordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到违禁词数据"));
         super.removeById(id);
+        addOperateLog(entity.getId(), StrUtil.format("删除违禁词【{}】", entity.getForbiddenWord()), "删除信息");
         productForbiddenWordMatcher.refreshNow();
         return BatchResultDTO.success(entity.getId(), entity.getForbiddenWord(), OperationTypeEnum.DELETE);
     }
@@ -153,6 +162,10 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
         if (!updated) {
             throw new ServiceException("违禁词状态更新失败，数据已被修改");
         }
+        addOperateLog(entity.getId(),
+                StrUtil.format("违禁词【{}】状态由【{}】变更为【{}】",
+                        entity.getForbiddenWord(), DisabledEnum.getName(entity.getDisabled()), DisabledEnum.getName(disabled)),
+                "状态变更");
         productForbiddenWordMatcher.refreshNow();
         return BatchResultDTO.success(entity.getId(), entity.getForbiddenWord(), OperationTypeEnum.DISABLED);
     }
@@ -249,5 +262,10 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
 
     private String normalizeKey(String word) {
         return word.trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    // 页面“查看日志”查询 PLM operate_log；Controller 的全局 @LogAction 不会写入该表。
+    private void addOperateLog(String businessId, String content, String operation) {
+        operateLogService.addSysLogBySave(content, String.valueOf(CfgProductForbiddenWordEntity.class), businessId, "", operation);
     }
 }
