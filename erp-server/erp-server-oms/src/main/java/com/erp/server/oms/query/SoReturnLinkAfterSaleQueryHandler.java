@@ -4,13 +4,16 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.utils.QueryUtils;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.enums.BillTypeEnum;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,8 +24,8 @@ import java.util.stream.Collectors;
  * <p>该接口同时服务 B2B（so_return，别名 sr）与 B2C（so_b2c_return，别名 sbr）两张表，
  * 单据类型、仓库等条件均通过高级查询传入，需在此做特殊处理（前端只传结构化的值，不传 SQL）：</p>
  * <ul>
- *   <li>type：单据类型（BillTypeEnum），驱动 B2B / B2C 分表，不作为列过滤（B2C 表无单据类型列），
- *       仅记录到上下文供仓库字段判定表别名；要求其在 warehouseId 之前处理。</li>
+ *   <li>type：单据类型，仅允许 B2B / B2C（单一值），驱动分表，不作为列过滤（B2C 表无单据类型列），
+ *       非法值或集合多值直接拒绝，禁止默认路由到 B2C；要求其在 warehouseId / 单号字段之前处理。</li>
  *   <li>warehouseId：按单据类型手动拼接仓库过滤 —— B2B 用 so_return.warehouse_id（sr），
  *       B2C 用关联销售订单明细 so_b2c_detail.warehouse_id（sbd）。</li>
  *   <li>剩余应退货数量：通过 {@link #fillRemainReturnQtySql} 生成入库实退 LEFT JOIN、SELECT 表达式
@@ -136,9 +139,9 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        //单据类型：只用于分表与仓库表别名判定，不生成列过滤
+        //单据类型：只用于分表与仓库表别名判定，不生成列过滤；仅允许单一合法 B2B/B2C
         if (FIELD_TYPE.equals(field)) {
-            LinkAfterSaleQueryContext.setBillType(value == null ? null : value.toString());
+            LinkAfterSaleQueryContext.setBillType(resolveAndValidateBillType(value));
             return getQueryAllSql();
         }
         //仓库：前端只传仓库 id(列表)，按单据类型手动拼接到不同表的仓库列
@@ -151,6 +154,64 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
             return codeSql;
         }
         return null;
+    }
+
+    /**
+     * 解析并校验关联售后单查询的单据类型。
+     * <p>仅允许 {@link BillTypeEnum#B2B} / {@link BillTypeEnum#B2C}；高级查询集合入参必须恰好包含一个合法值，
+     * 禁止多类型混传，也禁止把非法值静默当成 B2C。</p>
+     *
+     * @param value 高级查询 type 字段原值（字符串或集合）
+     * @return 合法单据类型编码；值为空时返回 null（由调用方决定是否必填）
+     */
+    public static String resolveAndValidateBillType(Object value) {
+        if (value == null) {
+            return null;
+        }
+        List<String> types;
+        if (value instanceof Collection) {
+            types = new ArrayList<>();
+            for (Object item : (Collection<?>) value) {
+                if (item == null) {
+                    continue;
+                }
+                String code = item.toString().trim();
+                if (StringUtils.isNotBlank(code) && !types.contains(code)) {
+                    types.add(code);
+                }
+            }
+        } else {
+            String code = value.toString().trim();
+            types = StringUtils.isBlank(code) ? Collections.emptyList() : Collections.singletonList(code);
+        }
+        if (types.isEmpty()) {
+            return null;
+        }
+        if (types.size() > 1) {
+            throw new ServiceException("单据类型参数非法：关联售后单查询仅支持单一单据类型");
+        }
+        String billType = types.get(0);
+        if (!BillTypeEnum.B2B.getCode().equals(billType) && !BillTypeEnum.B2C.getCode().equals(billType)) {
+            throw new ServiceException("单据类型参数非法");
+        }
+        return billType;
+    }
+
+    /**
+     * 读取并校验上下文中的单据类型，避免 Service 校验被绕过时仓库/单号条件默认走 B2C。
+     *
+     * @return 合法的 B2B / B2C 编码
+     */
+    private static String requireContextBillType() {
+        String billType = LinkAfterSaleQueryContext.getBillType();
+        if (StringUtils.isBlank(billType)) {
+            throw new ServiceException("单据类型不能为空");
+        }
+        if (!BillTypeEnum.B2B.getCode().equals(billType)
+                && !BillTypeEnum.B2C.getCode().equals(billType)) {
+            throw new ServiceException("单据类型参数非法");
+        }
+        return billType;
     }
 
     /**
@@ -231,7 +292,17 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
      * @return java.lang.String 单号过滤 SQL 片段；非单号字段返回 null 交由后续默认逻辑处理
      */
     private String buildOrderCodeSql(String field, String compareCodeSplicingValueSql) {
-        boolean isB2b = BillTypeEnum.B2B.getCode().equals(LinkAfterSaleQueryContext.getBillType());
+        // 非单号字段直接放行，避免在 type 尚未写入上下文时误触发单据类型校验
+        boolean isOrderCodeField = FIELD_B2B_SO_CODE.equals(field)
+                || FIELD_B2B_PLATFORM_ORDER_CODE.equals(field)
+                || FIELD_B2B_AFTER_SALE_CODE.equals(field)
+                || FIELD_B2C_SO_CODE.equals(field)
+                || FIELD_B2C_PLATFORM_ORDER_CODE.equals(field)
+                || FIELD_B2C_AFTER_SALE_CODE.equals(field);
+        if (!isOrderCodeField) {
+            return null;
+        }
+        boolean isB2b = BillTypeEnum.B2B.getCode().equals(requireContextBillType());
         String column;
         switch (field) {
             case FIELD_B2B_SO_CODE:
@@ -268,7 +339,7 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
      * @return java.lang.String 仓库过滤 SQL 片段
      */
     private String buildWarehouseSql(Object value) {
-        String billType = LinkAfterSaleQueryContext.getBillType();
+        String billType = requireContextBillType();
         String warehouseColumn = BillTypeEnum.B2B.getCode().equals(billType) ? "sr.warehouse_id" : "sbd.warehouse_id";
         if (value instanceof Collection) {
             List<String> warehouseIds = ((Collection<?>) value).stream()
