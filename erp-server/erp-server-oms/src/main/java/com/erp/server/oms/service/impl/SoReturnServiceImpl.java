@@ -275,7 +275,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         try {
             String billType = resolveLinkAfterSaleBillType(params);
             if (StringUtils.isBlank(billType)) {
-                throw new ServiceException("单据类型不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "单据类型");
             }
             boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
             // B2B/B2C 分表别名不同，行级数据权限在 Service 按单据类型动态拼装后写入 params.permissionSql
@@ -320,19 +320,22 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     /**
-     * 解析关联售后单查询的单据类型：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件中 type 字段（BillTypeEnum）。
+     * 解析关联售后单查询的单据类型：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件中 type 字段。
+     * <p>仅允许 {@link BillTypeEnum#B2B} / {@link BillTypeEnum#B2C}；非法值或集合多值在
+     * {@link SoReturnLinkAfterSaleQueryHandler#resolveAndValidateBillType} 中直接拒绝，禁止默认路由到 B2C。</p>
+     *
      * @param params 关联售后单分页入参
-     * @return java.lang.String 单据类型编码（B2B / B2C）
+     * @return 单据类型编码（B2B / B2C）；未传 type 时返回 null
      */
     private String resolveLinkAfterSaleBillType(SoReturnDTO.LinkAfterSalePagingParam params) {
         String billType = LinkAfterSaleQueryContext.getBillType();
         if (StringUtils.isNotBlank(billType)) {
-            return billType;
+            return SoReturnLinkAfterSaleQueryHandler.resolveAndValidateBillType(billType);
         }
         if (params != null && CollectionUtils.isNotEmpty(params.getAdvanceQueryDTOList())) {
             for (AdvanceQueryDTO advanceQueryDTO : params.getAdvanceQueryDTOList()) {
                 if ("type".equals(advanceQueryDTO.getField()) && advanceQueryDTO.getValue() != null) {
-                    return advanceQueryDTO.getValue().toString();
+                    return SoReturnLinkAfterSaleQueryHandler.resolveAndValidateBillType(advanceQueryDTO.getValue());
                 }
             }
         }

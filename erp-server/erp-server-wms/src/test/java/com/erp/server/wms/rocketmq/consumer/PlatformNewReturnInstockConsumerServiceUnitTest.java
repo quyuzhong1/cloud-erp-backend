@@ -135,6 +135,7 @@ public class PlatformNewReturnInstockConsumerServiceUnitTest {
     private void mockNearestOutstockMatch() {
         SoOutstockEntity outstockEntity = new SoOutstockEntity();
         outstockEntity.setId(OUTSTOCK_ID);
+        // 此处赋值没问题，因为该字段是枚举
         outstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
         outstockEntity.setInvalidStatus(Boolean.FALSE);
         outstockEntity.setBillDate(LocalDate.now());

@@ -156,6 +156,9 @@ public class SoReturnPrestockServiceImpl
         Page<SoReturnPrestockDTO.PagingView> page = new Page<>(dto.getPage(), dto.getPageSize());
         IPage<SoReturnPrestockDTO.PagingView> result = baseMapper.paging(page, dto.getParams());
         List<SoReturnPrestockDTO.PagingView> records = result.getRecords();
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(result);
+        }
         List<String> ids = records.stream().map(SoReturnPrestockDTO.PagingView::getId).collect(Collectors.toList());
         // 查询详情行
         List<SoReturnPrestockDetailEntity> detailEntities = soReturnPrestockDetailService.listByMainIds(ids);
@@ -1206,6 +1209,7 @@ public class SoReturnPrestockServiceImpl
     public int forceCloseUnclaimedPrestock() {
         // 仅查询主表 ID（不查询全部字段），减少一次性加载到内存的数据量：
         // 主表关联状态为未关联或部分关联，排除已关联、已强制关闭、已删除
+        // 强制关闭的数据不多，这里查询不需要分批查询
         List<String> mainIds = lambdaQuery()
                 .select(SoReturnPrestockEntity::getId)
                 .in(SoReturnPrestockEntity::getClaimStatus,
@@ -1252,7 +1256,8 @@ public class SoReturnPrestockServiceImpl
 
     /**
      * 强制关闭单张预入库单：将其下「未关联」明细行 claim_status 置为「强制关闭」（已关联明细不变），
-     * 再按明细最新关联状态回写主表。与认领入口共用分布式锁，主表回写携带 version 乐观锁。
+     * 再按明细最新关联状态回写主表。与认领入口共用分布式锁；明细与主表更新均携带 version 乐观锁，
+     * 任一失败抛异常触发事务回滚，避免与认领/拆行并发覆盖。
      *
      * @param mainId      预入库单主表 ID
      * @param operateTime 本次强制关闭操作的统一操作时间
@@ -1272,12 +1277,17 @@ public class SoReturnPrestockServiceImpl
             return 0;
         }
 
-        soReturnPrestockDetailService.lambdaUpdate()
-                .eq(SoReturnPrestockDetailEntity::getMainId, mainId)
-                .eq(SoReturnPrestockDetailEntity::getClaimStatus, PrestockClaimStatusEnum.UNLINKED.getStatus())
-                .eq(SoReturnPrestockDetailEntity::getIsDeleted, false)
-                .set(SoReturnPrestockDetailEntity::getClaimStatus, PrestockClaimStatusEnum.FORCE_CLOSE.getStatus())
-                .update();
+        // 逐行带 version 更新，避免 lambdaUpdate 绕过明细乐观锁导致认领/拆行状态被覆盖
+        List<SoReturnPrestockDetailEntity> details = soReturnPrestockDetailService.listByMainId(mainId);
+        for (SoReturnPrestockDetailEntity detail : details) {
+            if (!PrestockClaimStatusEnum.UNLINKED.getStatus().equals(detail.getClaimStatus())) {
+                continue;
+            }
+            detail.setClaimStatus(PrestockClaimStatusEnum.FORCE_CLOSE.getStatus());
+            if (!soReturnPrestockDetailService.updateById(detail)) {
+                throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_DETAIL_MODIFIED);
+            }
+        }
 
         refreshMainClaimStatusAfterForceClose(main, operateTime);
         return 1;
