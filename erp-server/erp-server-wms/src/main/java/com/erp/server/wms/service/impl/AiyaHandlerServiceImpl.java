@@ -204,22 +204,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        if (CharSequenceUtil.isBlank(createInboundReq.getReceivingCode())) {
-            throw new ServiceException(ApiError.WH_AIYA_INBOUND_CODE_REQUIRED);
-        }
-        AiyaAuth auth = resolveAuth();
-        // 爱亚 GLINK_CREATE_ASN_NOTIFY 创建/修改合一，按 asnNumber 幂等 upsert，修改同样传全量报文。
-        AiyaInboundSaveDTO request = buildInboundSaveDto(createInboundReq);
-        log.warn("{}修改入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
-        JSONObject resp = aiyaOpenApiService.saveInorder(auth.partnerId, auth.partnerKey, auth.customerCode, request);
-        log.warn("{}修改入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
-        if (!isSuccess(resp)) {
-            return failure(buildErrorMessage(resp));
-        }
-        // 同创建：以我方下发的 asnNumber(=发货单号) 作为 ERP 单据编号，保持回传关联一致。
-        log.warn("{}修改入库单成功, asnNumber={}, wmsAsnNumber={}", getPlatForm().getName(),
-                request.getAsnNumber(), extractAsnNumber(resp));
-        return success(request.getAsnNumber());
+        return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
     }
 
     @Override
