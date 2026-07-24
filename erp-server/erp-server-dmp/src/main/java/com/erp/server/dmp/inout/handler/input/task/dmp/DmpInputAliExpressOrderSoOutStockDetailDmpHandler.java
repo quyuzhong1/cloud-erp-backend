@@ -11,6 +11,9 @@ import javax.annotation.Resource;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.utils.CurrencyUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -45,15 +48,26 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
 			List<String> orderIdList = dmpInputMongoChildList.stream().map(d -> d.get("fulfillment_order_no").toString()).collect(Collectors.toList());
 			List<ParamData> paramDataList = new ArrayList<>();
+			paramDataList.add(new ParamData(
+					DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+					DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+					PannoEnum.EQ,
+					getSiblingOutstockTask().getId()));
 			paramDataList.add(new ParamData("fulfillment_order_no", "fulfillment_order_no", PannoEnum.IN, orderIdList));
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList,
 					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
 							dmpCfgInputEntity.getSystemId(), SO_OUTSTOCK_CODE));
 			if(CollUtil.isNotEmpty(findMongoData)) {
-				Map<String, Map<String, Object>> orderNoMainMap = findMongoData.stream().collect(Collectors.toMap(f -> f.get("fulfillment_order_no").toString(), f -> f));
+				Map<String, Map<String, Object>> orderNoMainMap = findMongoData.stream().collect(Collectors.toMap(
+						f -> f.get("fulfillment_order_no").toString(),
+						f -> f,
+						(left, right) -> left));
 				for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 					Map<String, Object> mainMap = orderNoMainMap.get(dmpInputMongoChild.get("fulfillment_order_no"));
+					if (mainMap == null) {
+						throw new ServiceException("未找到当前批次速卖通发货主单，履约单号:"
+								+ dmpInputMongoChild.get("fulfillment_order_no"));
+					}
 					dmpInputMongoChild.put("warehouseName", mainMap.get("warehouse_name"));
 					dmpInputMongoChild.put("thirdOrderCode", mainMap.get("trade_order_no"));
 					dmpInputMongoChild.put("platformOrderCode", mainMap.get("trade_order_no"));
@@ -83,6 +97,31 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 			}
 		}
 		return dmpInputMongoChildList;
+	}
+
+	/**
+	 * 获取当前订单主任务下的发货主单兄弟任务。
+	 *
+	 * @return 本批次发货主单任务
+	 */
+	private DmpInputTaskEntity getSiblingOutstockTask() {
+		DmpCfgInputEntity outstockInput = AliExpressDmpHandlerUtils.getDmpCfgInputEntity(
+				dmpCfgInputService,
+				dmpHandlerCache,
+				dmpCfgInputEntity.getSystemId(),
+				SO_OUTSTOCK_CODE);
+		if (outstockInput == null) {
+			throw new ServiceException("未找到速卖通soOutstock输入配置");
+		}
+		DmpInputTaskEntity outstockTask = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getParentTaskId, inputTaskId)
+				.eq(DmpInputTaskEntity::getCfgInputId, outstockInput.getId())
+				.last("limit 1")
+				.one();
+		if (outstockTask == null) {
+			throw new ServiceException("未找到当前批次速卖通soOutstock兄弟任务");
+		}
+		return outstockTask;
 	}
 	
 	@Override

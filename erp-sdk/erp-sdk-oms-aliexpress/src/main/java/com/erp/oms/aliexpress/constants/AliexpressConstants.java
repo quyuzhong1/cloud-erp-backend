@@ -68,6 +68,26 @@ public interface AliexpressConstants {
     String SELLER_RELATION_QUERY = "global.seller.relation.query";
 
     /**
+     * 查询速卖通货品关系
+     */
+    String ASCP_ITEM_QUERY = "aliexpress.ascp.item.query";
+
+    /**
+     * 查询速卖通官方仓库存流水
+     */
+    String AIC_INVENTORY_LOG_QUERY = "global.merchant.aic.invLog";
+
+    /**
+     * 全托管店铺卖家关系业务类型
+     */
+    String ONE_STOP_SERVICE = "ONE_STOP_SERVICE";
+
+    /**
+     * 全托管货品业务租户
+     */
+    Integer FULL_MANAGED_ITEM_BIZ_TYPE = 5110000;
+
+    /**
      * 海外仓表示
      */
     String CAINIAO_INTERNATIONAL_WAREHOUSE="cainiaoInternationalWarehouse";

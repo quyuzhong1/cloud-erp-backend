@@ -35,6 +35,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.init.api.aliexpress.CaiNiaoAuthorizedShopResolver;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
@@ -50,10 +51,14 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
 
 	@Resource
     private AliExpressOrderService aliExpressOrderService;
+
+	@Resource
+	private CaiNiaoAuthorizedShopResolver caiNiaoAuthorizedShopResolver;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(nextLevelId);
+		String apiShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(nextLevelId);
+		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(apiShopId);
 		String appKey = aliExpressShopInfoDTO.getClientId();
         String appSecret = aliExpressShopInfoDTO.getClientSecret();
         String baseUrl = aliExpressShopInfoDTO.getBaseUrl();

@@ -31,6 +31,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.init.api.aliexpress.CaiNiaoAuthorizedShopResolver;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
 import cn.hutool.core.collection.CollUtil;
@@ -49,6 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 public class DmpInputAliExpressOrderDetailInitHandler extends DmpInputInitHandler{
 	@Resource
     private AliExpressOrderService aliExpressOrderService;
+
+	@Resource
+	private CaiNiaoAuthorizedShopResolver caiNiaoAuthorizedShopResolver;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -65,7 +69,9 @@ public class DmpInputAliExpressOrderDetailInitHandler extends DmpInputInitHandle
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 		
-		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+		String taskAuthId = findMongoData.get(0).get("nextLevelId").toString();
+		String apiShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(taskAuthId);
+		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(apiShopId);
 		String appKey = aliExpressShopInfoDTO.getClientId();
         String appSecret = aliExpressShopInfoDTO.getClientSecret();
         String baseUrl = aliExpressShopInfoDTO.getBaseUrl();
