@@ -9,7 +9,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.WegoSkuSyncDTO;
+import com.erp.model.wms.dto.WarehouseSkuSyncDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -85,5 +85,5 @@ public interface OmsListingInfoFeign {
      * @return 本次处理统计结果（新增/禁用/删除数量）
      */
     @PostMapping("feign/listing/syncWarehouseNotMatchSku")
-    WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto);
+    WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WarehouseSkuSyncDTO.SyncReqDTO dto);
 }

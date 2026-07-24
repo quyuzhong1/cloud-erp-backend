@@ -10,7 +10,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.WegoSkuSyncDTO;
+import com.erp.model.wms.dto.WarehouseSkuSyncDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.validation.annotation.Validated;
@@ -114,7 +114,7 @@ public class ListingInfoFeignController extends BaseController {
      * @return 本次处理统计结果（新增/禁用数量）
      */
     @PostMapping("/syncWarehouseNotMatchSku")
-    public WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto) {
+    public WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WarehouseSkuSyncDTO.SyncReqDTO dto) {
         return listingInfoService.syncWarehouseNotMatchSku(dto);
     }
 }

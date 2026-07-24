@@ -6,7 +6,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.WegoSkuSyncDTO;
+import com.erp.model.wms.dto.WarehouseSkuSyncDTO;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputBaseDmpHandler;
@@ -61,7 +61,7 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         }
 
         String authId = null;
-        List<WegoSkuSyncDTO.SkuItemDTO> skuItems = new ArrayList<>();
+        List<WarehouseSkuSyncDTO.SkuItemDTO> skuItems = new ArrayList<>();
 
         for (Map<String, Object> mongoData : inputMongoEntityList) {
             if (authId == null) {
@@ -81,7 +81,7 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             if (!WegoSkuStatusEnum.needSync(status)) {
                 continue;
             }
-            WegoSkuSyncDTO.SkuItemDTO item = new WegoSkuSyncDTO.SkuItemDTO();
+            WarehouseSkuSyncDTO.SkuItemDTO item = new WarehouseSkuSyncDTO.SkuItemDTO();
             item.setSku(sku);
             item.setName(toStr(mongoData.get("name")));
             item.setBarcode(parseBarcodeList(mongoData));
@@ -118,22 +118,22 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         }
 
         // 大批量 SKU 分批推送，避免单次 Feign 请求体过大导致超时/OMS 长事务/OOM
-        List<List<WegoSkuSyncDTO.SkuItemDTO>> batches = ListUtil.split(skuItems, SYNC_BATCH_SIZE);
+        List<List<WarehouseSkuSyncDTO.SkuItemDTO>> batches = ListUtil.split(skuItems, SYNC_BATCH_SIZE);
         int totalBatches = batches.size();
         int totalSyncCount = 0;
         // 记录已成功推送的批次序号，便于中途失败时定位断点、人工核对 OMS 侧是否已产生重复未匹配记录
         int succeededBatchIndex = 0;
         try {
-            for (List<WegoSkuSyncDTO.SkuItemDTO> batch : batches) {
+            for (List<WarehouseSkuSyncDTO.SkuItemDTO> batch : batches) {
                 int currentBatchIndex = succeededBatchIndex + 1;
-                WegoSkuSyncDTO.SyncReqDTO syncReqDTO = new WegoSkuSyncDTO.SyncReqDTO();
+                WarehouseSkuSyncDTO.SyncReqDTO syncReqDTO = new WarehouseSkuSyncDTO.SyncReqDTO();
                 syncReqDTO.setAuthId(authId);
                 syncReqDTO.setPlatform(OmsPlatformEnum.WE_GO.getCode());
                 syncReqDTO.setWarehouseId(warehouseId);
                 syncReqDTO.setWarehouseName(warehouseName);
                 syncReqDTO.setSkuList(batch);
 
-                WegoSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(syncReqDTO);
+                WarehouseSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(syncReqDTO);
                 int syncCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getAddedCount();
                 totalSyncCount += syncCount;
                 succeededBatchIndex = currentBatchIndex;

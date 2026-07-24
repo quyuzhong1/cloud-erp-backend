@@ -5,7 +5,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.WegoSkuSyncDTO;
+import com.erp.model.wms.dto.WarehouseSkuSyncDTO;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputBaseDmpHandler;
@@ -31,10 +31,9 @@ import java.util.Objects;
  * （爱亚等三方仓通常会把已下架/停用的 SKU 继续保留在拉取结果里，只是状态变化，不会整条消失），
  * 因此各批次调用之间互不依赖，无需区分"是否最后一批"。
  * <p>
- * 复用的 {@link WegoSkuSyncDTO} 已确认为平台无关的通用 DTO（按 {@code dto.getPlatform()}/{@code dto.getAuthId()}
- * 落库），命名沿用历史 "Wego" 前缀，但对爱亚可直接复用；{@code syncWarehouseNotMatchSku} 同样按
- * {@code authId} 维度实现禁用回收，为平台无关的公共能力，本轮仅接入爱亚。WEGO 现有调用不传 {@code status}，
- * 因此不会触发禁用分支，行为不受影响。
+ * 入参使用平台无关的 {@link WarehouseSkuSyncDTO}（按 {@code dto.getPlatform()}/{@code dto.getAuthId()} 落库）；
+ * {@code syncWarehouseNotMatchSku} 同样按 {@code authId} 维度实现禁用/删除回收。WEGO 现有调用不传 {@code status}，
+ * 因此不会触发禁用/删除分支，行为不受影响。
  * <p>
  * {@code storage_name} 设为 {@code dmp_sku_info} 仅用于满足
  * {@link com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDmpHandler}
@@ -69,7 +68,7 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         }
 
         String authId = null;
-        List<WegoSkuSyncDTO.SkuItemDTO> skuItems = new ArrayList<>();
+        List<WarehouseSkuSyncDTO.SkuItemDTO> skuItems = new ArrayList<>();
 
         for (Map<String, Object> mongoData : inputMongoEntityList) {
             if (authId == null) {
@@ -88,7 +87,7 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             if (!AiyaSkuStatusEnum.needSync(status)) {
                 continue;
             }
-            WegoSkuSyncDTO.SkuItemDTO item = new WegoSkuSyncDTO.SkuItemDTO();
+            WarehouseSkuSyncDTO.SkuItemDTO item = new WarehouseSkuSyncDTO.SkuItemDTO();
             item.setSku(sku);
             // description（商品名称描述）为文档必填字段，实测响应必带；name（商品名-前端不展示）为可选字段，
             // 2026-07-16 实测两条真实测试SKU（未设置name）响应里完全没有 name 键，只有 description。
@@ -136,7 +135,7 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         // 大批量 SKU 分批推送，避免单次 Feign 请求体过大导致超时/OMS 长事务/OOM。
         // syncWarehouseNotMatchSku 的禁用判断只看本批 SKU 各自携带的状态，不需要"完整快照"比对，
         // 因此每一批都独立调用同一个接口即可，不需要区分"是否最后一批"。
-        List<List<WegoSkuSyncDTO.SkuItemDTO>> batches = ListUtil.split(skuItems, SYNC_BATCH_SIZE);
+        List<List<WarehouseSkuSyncDTO.SkuItemDTO>> batches = ListUtil.split(skuItems, SYNC_BATCH_SIZE);
         int totalBatches = batches.size();
         int totalAddedCount = 0;
         int totalDisabledCount = 0;
@@ -144,17 +143,17 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         // 记录已成功处理的批次序号，便于中途失败时定位断点、人工核对 OMS 侧是否已产生重复处理
         int succeededBatchIndex = 0;
         try {
-            for (List<WegoSkuSyncDTO.SkuItemDTO> batch : batches) {
+            for (List<WarehouseSkuSyncDTO.SkuItemDTO> batch : batches) {
                 int currentBatchIndex = succeededBatchIndex + 1;
 
-                WegoSkuSyncDTO.SyncReqDTO reqDTO = new WegoSkuSyncDTO.SyncReqDTO();
+                WarehouseSkuSyncDTO.SyncReqDTO reqDTO = new WarehouseSkuSyncDTO.SyncReqDTO();
                 reqDTO.setAuthId(authId);
                 reqDTO.setPlatform(OmsPlatformEnum.AI_YA.getCode());
                 reqDTO.setWarehouseId(warehouseId);
                 reqDTO.setWarehouseName(warehouseName);
                 reqDTO.setSkuList(batch);
 
-                WegoSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(reqDTO);
+                WarehouseSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(reqDTO);
                 int addedCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getAddedCount();
                 int disabledCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDisabledCount();
                 int deletedCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDeletedCount();

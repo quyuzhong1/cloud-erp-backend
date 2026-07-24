@@ -192,7 +192,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         createInboundReq.setReceivingCode(CharSequenceUtil.format("{}_{}", createInboundReq.getReferenceNo(), timeFormatter));
         AiyaInboundSaveDTO request = buildInboundSaveDto(createInboundReq);
         log.warn("{}创建入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
-        JSONObject resp = aiyaOpenApiService.saveInorder(auth.partnerId, auth.partnerKey, auth.customerCode, toBizParams(request));
+        JSONObject resp = aiyaOpenApiService.saveInorder(auth.partnerId, auth.partnerKey, auth.customerCode, request);
         log.warn("{}创建入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (!isSuccess(resp)) {
             return failure(buildErrorMessage(resp));
@@ -211,7 +211,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         // 爱亚 GLINK_CREATE_ASN_NOTIFY 创建/修改合一，按 asnNumber 幂等 upsert，修改同样传全量报文。
         AiyaInboundSaveDTO request = buildInboundSaveDto(createInboundReq);
         log.warn("{}修改入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
-        JSONObject resp = aiyaOpenApiService.saveInorder(auth.partnerId, auth.partnerKey, auth.customerCode, toBizParams(request));
+        JSONObject resp = aiyaOpenApiService.saveInorder(auth.partnerId, auth.partnerKey, auth.customerCode, request);
         log.warn("{}修改入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (!isSuccess(resp)) {
             return failure(buildErrorMessage(resp));
@@ -391,13 +391,6 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /**
-     * 将强类型请求转换为 SDK 需要的 bizParams（fastjson 默认忽略 null 字段）。
-     */
-    private Map<String, Object> toBizParams(AiyaInboundSaveDTO request) {
-        return (JSONObject) JSON.toJSON(request);
-    }
-
-    /**
      * 解析授权信息：partnerId（回退 appKey）/ customerCode / partnerKey（回退 appSecret）。
      */
     private AiyaAuth resolveAuth() {
@@ -554,7 +547,8 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         AiyaAuth auth = resolveAuth();
         log.warn("{}截单请求:orderNumber={}", getPlatForm().getName(), cancelOutboundReq.getOrderCode());
-        JSONObject resp = aiyaOpenApiService.intercept2cOrder(auth.partnerId, auth.partnerKey, auth.customerCode, cancelOutboundReq.getOrderCode());
+        JSONObject resp = aiyaOpenApiService.intercept2cOrder(auth.partnerId, auth.partnerKey, auth.customerCode,
+                Collections.singletonList(cancelOutboundReq.getOrderCode()));
         log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (isSuccess(resp)) {
             return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
