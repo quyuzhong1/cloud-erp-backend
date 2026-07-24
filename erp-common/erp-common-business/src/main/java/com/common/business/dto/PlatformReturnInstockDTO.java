@@ -5,8 +5,10 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *  平台退货入库DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -66,6 +68,12 @@ public class PlatformReturnInstockDTO extends UniqueDto {
     //明细
     private List<PlatformReturnInstockDTO.Detail> productDetailList;
 
+    /**
+     * 上架完成时间转日期，putawayTime 为空时兜底取当前日期（部分上游平台可能不回传该字段）
+     */
+    public LocalDate getPutawayLocalDate() {
+        return Objects.nonNull(putawayTime) ? putawayTime.toLocalDate() : LocalDate.now();
+    }
 
     @Data
     @ToString
