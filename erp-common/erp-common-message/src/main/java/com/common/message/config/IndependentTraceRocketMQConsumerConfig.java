@@ -24,7 +24,7 @@ import org.springframework.core.annotation.AnnotationUtils;
  * -Dplugin.exclude_plugins=rocketmq-4.x-plugin
  * </pre>
  * 或环境变量 {@code SW_EXCLUDE_PLUGINS=rocketmq-4.x-plugin}。
- * 否则 Agent 会在进入 {@code onMessage} 前解析消息中的 SW8 上下文，{@code @Trace} 无法真正换新 traceId。
+ * 否则 Agent 会在进入 {@code onMessage} 前解析消息中的 SW8 上下文，即便使用 EntrySpan 也会继承上游 TraceId。
  * <p>
  * 启用后发送侧也不再注入 SW8，HTTP/Feign 与 MQ 消费在 SkyWalking UI 中不再自动串联；如需人工关联可在消息体中携带业务 traceId。
  */
