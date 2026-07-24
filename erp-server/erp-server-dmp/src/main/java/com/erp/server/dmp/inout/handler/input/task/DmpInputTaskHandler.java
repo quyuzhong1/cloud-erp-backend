@@ -29,6 +29,7 @@ import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputChildTransactionalTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
@@ -480,7 +481,27 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 		return dmpCfgInputChildService.lambdaQuery()
 				.eq(DmpCfgInputChildEntity::getParentId, dmpResponse.getDmpCfgInputEntity().getId())
 				.eq(DmpCfgInputChildEntity::getInputStatus, dmpRequest.getDealTaskStatus())
+				.orderByAsc(shouldOrderAliExpressOrderChildren(dmpResponse),
+						DmpCfgInputChildEntity::getId)
 				.list();
+	}
+
+	/**
+	 * 速卖通订单发货子任务依赖订单详情，并且发货明细依赖发货主单。
+	 *
+	 * @param dmpResponse 当前输入任务上下文
+	 * @return 是否需要按配置 ID 保证子任务顺序
+	 */
+	private boolean shouldOrderAliExpressOrderChildren(DmpInputTaskResponse dmpResponse) {
+		DmpCfgInputEntity input = dmpResponse.getDmpCfgInputEntity();
+		DmpBasicSystemEntity system = dmpResponse.getDmpBasicSystemEntity();
+		if (input == null || system == null || !"order".equalsIgnoreCase(input.getCode())) {
+			return false;
+		}
+		String systemCode = system.getCode();
+		return DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(systemCode)
+				|| DmpBasicSystemCodeEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode()
+				.equalsIgnoreCase(systemCode);
 	}
 	
 	/**-----------------------------------------------------------下方都为各状态执行前后预置方法，全部用来继承-----------------------------------------------------------*/

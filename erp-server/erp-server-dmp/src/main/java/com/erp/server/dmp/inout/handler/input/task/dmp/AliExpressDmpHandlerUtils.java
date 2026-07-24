@@ -83,7 +83,16 @@ public final class AliExpressDmpHandlerUtils {
 		return new ArrayList<>(orderIds);
 	}
 
-	private static DmpCfgInputEntity getDmpCfgInputEntity(DmpCfgInputService dmpCfgInputService,
+	/**
+	 * 根据系统和输入编码获取有效的输入配置。
+	 *
+	 * @param dmpCfgInputService 输入配置服务
+	 * @param dmpHandlerCache DMP 配置缓存
+	 * @param systemId 系统 ID
+	 * @param inputCode 输入编码
+	 * @return 输入配置，不存在时返回 null
+	 */
+	public static DmpCfgInputEntity getDmpCfgInputEntity(DmpCfgInputService dmpCfgInputService,
 			DmpHandlerCache dmpHandlerCache,
 			String systemId,
 			String inputCode) {

@@ -20,6 +20,9 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
@@ -33,6 +36,8 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.dmp.AliExpressDmpHandlerUtils;
+import com.erp.server.dmp.inout.handler.input.task.init.api.aliexpress.AliExpressOfficialWarehouseChildService;
+import com.erp.server.dmp.inout.handler.input.task.init.api.aliexpress.CaiNiaoAuthorizedShopResolver;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
 import cn.hutool.core.collection.CollUtil;
@@ -52,6 +57,12 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 
 	@Resource
     private AliExpressOrderService aliExpressOrderService;
+
+	@Resource
+	private AliExpressOfficialWarehouseChildService officialWarehouseChildService;
+
+	@Resource
+	private CaiNiaoAuthorizedShopResolver caiNiaoAuthorizedShopResolver;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -65,13 +76,21 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
-		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+		if (isOverseasManaged()) {
+			return getOfficialWarehouseOutstockDetails(findMongoData);
+		}
+		String taskAuthId = findMongoData.get(0).get("nextLevelId").toString();
+		String apiShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(taskAuthId);
+		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(apiShopId);
 		
 		List<ParamData> paramDataList = new ArrayList<>();
 		List<String> orderIdList = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(findMongoData);
+		paramDataList.add(new ParamData(
+				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+				PannoEnum.EQ,
+				getSiblingTask(SO_OUTSTOCK_CODE).getId()));
 		paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
-		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID,
-				DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, dmpInputTaskEntity.getNextLevelId()));
 		findMongoData = mongoService.findMongoData(paramDataList,
 				AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
 						dmpCfgInputEntity.getSystemId(), SO_OUTSTOCK_CODE));
@@ -136,6 +155,80 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         
 		return dmpInputTaskInitDTOList;
+	}
+
+	/**
+	 * 从已完成的官方仓发货主子任务中展开发货明细，避免重复调用平台接口。
+	 *
+	 * @param parentOrderData 订单列表主任务 Mongo 数据
+	 * @return 现有 soOutstockDetail 子任务可处理的数据
+	 */
+	private List<DmpInputTaskInitDTO> getOfficialWarehouseOutstockDetails(
+			List<Map<String, Object>> parentOrderData) {
+		DmpInputTaskEntity parentTask = dmpInputTaskService.getById(
+				dmpInputTaskEntity.getParentTaskId());
+		if (parentTask == null || StringUtils.isBlank(parentTask.getNextLevelId())) {
+			throw new ServiceException("速卖通海外托管发货明细子任务未找到主任务授权");
+		}
+		List<String> orderIds = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(
+				parentOrderData);
+		DmpInputTaskEntity outstockTask = getSiblingTask(SO_OUTSTOCK_CODE);
+		List<ParamData> params = new ArrayList<>();
+		params.add(new ParamData(
+				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+				PannoEnum.EQ,
+				outstockTask.getId()));
+		params.add(new ParamData(
+				"trade_order_no", "trade_order_no", PannoEnum.IN, orderIds));
+		List<Map<String, Object>> outstockData = mongoService.findMongoData(
+				params,
+				AliExpressDmpHandlerUtils.getMongoStorageName(
+						dmpBasicSystemEntity,
+						dmpCfgInputService,
+						dmpHandlerCache,
+						dmpCfgInputEntity.getSystemId(),
+						SO_OUTSTOCK_CODE));
+		JSONArray result = officialWarehouseChildService.flattenOutstockDetails(outstockData);
+		return java.util.Collections.singletonList(
+				DmpInputTaskInitDTO.initMsg(result.toJSONString()));
+	}
+
+	/**
+	 * 获取当前订单主任务下指定编码的兄弟子任务。
+	 *
+	 * @param inputCode 子任务输入编码
+	 * @return 本批次兄弟任务
+	 */
+	private DmpInputTaskEntity getSiblingTask(String inputCode) {
+		DmpCfgInputEntity siblingInput = AliExpressDmpHandlerUtils.getDmpCfgInputEntity(
+				dmpCfgInputService,
+				dmpHandlerCache,
+				dmpCfgInputEntity.getSystemId(),
+				inputCode);
+		if (siblingInput == null) {
+			throw new ServiceException("未找到速卖通" + inputCode + "输入配置");
+		}
+		DmpInputTaskEntity siblingTask = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getParentTaskId, dmpInputTaskEntity.getParentTaskId())
+				.eq(DmpInputTaskEntity::getCfgInputId, siblingInput.getId())
+				.last("limit 1")
+				.one();
+		if (siblingTask == null) {
+			throw new ServiceException("未找到当前批次速卖通" + inputCode + "兄弟任务");
+		}
+		return siblingTask;
+	}
+
+	/**
+	 * 判断当前任务是否属于速卖通海外托管。
+	 *
+	 * @return 是否为海外托管任务
+	 */
+	private boolean isOverseasManaged() {
+		return dmpBasicSystemEntity != null
+				&& DmpBasicSystemCodeEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode()
+				.equalsIgnoreCase(dmpBasicSystemEntity.getCode());
 	}
 	
 	private JSONObject execute(IopClient client , IopRequest request , String token , String apiType){
