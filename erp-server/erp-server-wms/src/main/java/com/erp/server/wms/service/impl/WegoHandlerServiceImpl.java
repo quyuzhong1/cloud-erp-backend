@@ -35,8 +35,9 @@ import java.util.stream.Collectors;
 /**
  * WEGO 三方海外仓处理服务实现类
  * <p>
- * 仅在 {@link OmsPlatformEnum#WE_GO} 渠道下生效，
- * 入库单创建/修改统一调用 WEGO {@code inorder.save} 接口。
+ * 仅在 {@link OmsPlatformEnum#WE_GO} 渠道下生效。
+ * 入库单创建调用 WEGO {@code inorder.save}（autoCommit=true 自动提交）；
+ * 提交后不支持编辑，需先取消再重新创建。
  */
 @Slf4j
 @Service
@@ -177,7 +178,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        WegoInOrderSaveDTO.SaveReqDTO request = buildInorderSaveDto(createInboundReq, null);
+        WegoInOrderSaveDTO.SaveReqDTO request = buildInorderSaveDto(createInboundReq);
         log.warn("{}创建入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.saveInorder(request);
         log.warn("{}创建入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
@@ -187,39 +188,25 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(extractOrderNo(resp));
     }
 
+    /**
+     * WEGO 创建入库单时已 autoCommit=true 自动提交，提交后不允许修改。
+     * 需要变更时请先取消入库单再重新创建。
+     */
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        if (CharSequenceUtil.isBlank(createInboundReq.getReceivingCode())) {
-            throw new ServiceException(ApiError.WH_WEGO_INBOUND_CODE_REQUIRED);
-        }
-        WegoInOrderSaveDTO.SaveReqDTO request = buildInorderSaveDto(createInboundReq, createInboundReq.getReceivingCode());
-        log.warn("{}修改入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
-        JSONObject resp = wegoOpenApiService.saveInorder(request);
-        log.warn("{}修改入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
-        if (!isSuccess(resp)) {
-            return failure(buildErrorMessage(resp));
-        }
-        return success(CharSequenceUtil.blankToDefault(extractOrderNo(resp), createInboundReq.getReceivingCode()));
+        return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
     }
 
     /**
-     * 构造 WEGO inorder.save 请求 DTO。
+     * 构造 WEGO inorder.save 创建请求 DTO。
      * <p>
-     * details 字段的传输策略：
-     * <ul>
-     *     <li>新增场景（{@code no} 为空）：完整传 details，由 WEGO 落库为入库单明细；</li>
-     *     <li>修改场景（{@code no} 非空）：<b>不传 details</b>。
-     *         {@code OverseasWarehouseInboundServiceImpl#update} 仅允许修改单据头部信息（如运输方式、跟踪号等），
-     *         ERP 侧入库单明细一旦生成即不可修改，故修改请求中不携带 details 字段，
-     *         避免与 WEGO 服务端已有明细产生冲突或被全量覆盖。</li>
-     * </ul>
-     * 入参 details 在 SDK 层（{@code WegoOpenApiService#saveInorder}）通过
-     * {@code putIfNotNull} 控制，null 时不参与签名、不出现在请求体。
+     * 固定传 {@code autoCommit=true}，创建后由 WEGO 自动提交且不可再改；
+     * details 完整传箱明细，由 WEGO 落库。
      *
      * @param createInboundReq ERP 统一入库单请求
-     * @param no               WEGO 单号；新增传 null，修改传已有单号
+     * @return WEGO inorder.save 请求体
      */
-    private WegoInOrderSaveDTO.SaveReqDTO buildInorderSaveDto(ThirdWarehouseCreateInboundReq createInboundReq, String no) {
+    private WegoInOrderSaveDTO.SaveReqDTO buildInorderSaveDto(ThirdWarehouseCreateInboundReq createInboundReq) {
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
             throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
@@ -229,11 +216,9 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
             throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
-        boolean isCreate = CharSequenceUtil.isBlank(no);
         return WegoInOrderSaveDTO.SaveReqDTO.builder()
                 .accessToken(accessToken)
                 .secret(secret)
-                .no(no)
                 .warehouseBusiness(getPlatForm().getName())
                 .warehouseCode(createInboundReq.getWarehouseCode())
                 .warehouseDelivery(resolveWarehouseDelivery(createInboundReq))
@@ -244,7 +229,8 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         createInboundReq.getDeliveryCode()))
                 .referenceNumber(createInboundReq.getReferenceNo())
                 .notes(createInboundReq.getRemark())
-                .details(isCreate ? buildDetails(createInboundReq) : null)
+                .autoCommit(Boolean.TRUE)
+                .details(buildDetails(createInboundReq))
                 .build();
     }
 

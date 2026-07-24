@@ -175,6 +175,7 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "trackNumber", dto.getTrackNumber());
         putIfNotNull(bizParams, "referenceNumber", dto.getReferenceNumber());
         putIfNotNull(bizParams, "notes", dto.getNotes());
+        putIfNotNull(bizParams, "autoCommit", dto.getAutoCommit());
         if (dto.getDetails() != null) {
             // 将 POJO 列表转换为 JSONArray (List<JSONObject>)，让内层 Map 统一为 LinkedHashMap：
             // 这样后续两次 fastjson 序列化（实际发送 + 签名计算）输出的字段顺序完全一致，
