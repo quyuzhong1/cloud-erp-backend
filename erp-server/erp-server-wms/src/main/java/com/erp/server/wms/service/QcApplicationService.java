@@ -58,6 +58,13 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
     List<QcApplicationDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
+     * 飞书pda接口
+     * @param dto
+     * @return
+     */
+    List<QcApplicationDTO.TabListDTO> pdaTabList(PermissionsDTO dto);
+
+    /**
     * 详情
     * @author will
     * @date: 2026-03-20

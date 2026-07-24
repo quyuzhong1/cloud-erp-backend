@@ -188,6 +188,32 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     }
 
     @Override
+    public List<QcApplicationDTO.TabListDTO> pdaTabList(PermissionsDTO param) {
+        QcApplicationDTO.PagingParamDTO searchParam = new QcApplicationDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<QcApplicationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        // 获取状态列表
+        List<String> statusList = ApproveStatusEnum.getStatusList();
+        List<QcApplicationDTO.TabListDTO> result = new ArrayList<>();
+        for (String status : statusList) {
+            //待提交和不通过汇总在一起
+            if (CharSequenceUtil.equals(status, ApproveStatusEnum.REJECT.getStatus())) {
+                continue;
+            }
+            if (CharSequenceUtil.equals(status, ApproveStatusEnum.WAIT_SUBMIT.getStatus())){
+                Integer count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getTabFlag(), status) || CharSequenceUtil.equals(obj.getTabFlag(), ApproveStatusEnum.REJECT.getStatus()) )
+                        .map(QcApplicationDTO.TabListDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+                result.add(new QcApplicationDTO.TabListDTO(status, "待提交/不通过", count));
+            }else {
+                Integer count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getTabFlag(), status))
+                        .map(QcApplicationDTO.TabListDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+                result.add(new QcApplicationDTO.TabListDTO(status, ApproveStatusEnum.getName(status), count));
+            }
+        }
+        return result;
+    }
+
+    @Override
     public Boolean exportList(QcApplicationDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("质检申请导出", EXPORT_WMS_QC_APPLICATION.getCode(), dto);
         return Boolean.TRUE;

@@ -30,6 +30,7 @@ import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -258,7 +259,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 .in(InventoryEntity::getWarehouseId, warehouseIds)
                 .in(InventoryEntity::getSkuId, skuIdSet)
                 .in(InventoryEntity::getWarehouseLocation, toLocations)
-                .eq(InventoryEntity::getDictInventoryStatus, "usable")
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
                 .list()
                 .stream()
                 .collect(Collectors.toMap(
@@ -411,29 +412,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
             }
 
-            Integer suggestQty = 0;
-            WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
-                    .eq("sku_id", dto.getSkuId())
-                    .eq("warehouse_id", dto.getWarehouseId())
-                    .eq("warehouse_location", replenishItem.getToWarehouseLocation())
-            );
-            if (safetyInventoryEntity != null && inventoryEntity != null) {
-                //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
-                if (safetyInventoryEntity.getMaxQty() != 0) {
-                    suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
-                }
-                //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
-                if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0) {
-                    suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
-                }
-                //无最大补货量无安全库存时：等于缺货数量
-                if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0) {
-                    suggestQty = dto.getQty();
-                }
-            } else {
-                suggestQty = dto.getQty();
-            }
-            replenishItem.setSuggestQty(suggestQty);
+            replenishItem.setSuggestQty(calcDeliverStockOutSuggestQty(dto, replenishItem.getToWarehouseLocation()));
             this.save(replenishItem);
         }
 
@@ -492,11 +471,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
      * <p>
      * 有最大补货量：maxQty + 缺货数量 - 上架仓位可用库存；<br>
      * 仅有安全库存：safetyQty + 缺货数量 - 上架仓位可用库存；<br>
-     * 否则：等于缺货数量。
+     * 否则：等于缺货数量。<br>
+     * 上架仓位无即时库存记录时按可用库存 0 计算；结果不小于 0。
      *
      * @param dto                 补货新增入参
      * @param toWarehouseLocation 上架仓位编码
-     * @return 建议补货数量
+     * @return 建议补货数量（非负）
      */
     private Integer calcDeliverStockOutSuggestQty(WarehouseLocationReplenishDTO.AddDTO dto, String toWarehouseLocation) {
         InventoryEntity inventoryEntity = inventoryService.getOne(new QueryWrapper<InventoryEntity>()
@@ -515,18 +495,34 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         return calcDeliverStockOutSuggestQty(dto, inventoryEntity, safetyInventoryEntity);
     }
 
+    /**
+     * 发货缺货补货建议数量计算（库存/安全库存可为空）。
+     *
+     * @param dto                   补货新增入参（缺货数量取 {@code dto.qty}）
+     * @param inventoryEntity       上架仓位可用库存，null 视为 0
+     * @param safetyInventoryEntity 上架仓位安全库存配置，null 或目标均为 0 时仅返回缺货数量
+     * @return 建议补货数量（非负）
+     */
     private Integer calcDeliverStockOutSuggestQty(WarehouseLocationReplenishDTO.AddDTO dto,
                                                  InventoryEntity inventoryEntity,
                                                  WarehouseLocationSafetyInventoryEntity safetyInventoryEntity) {
-        if (safetyInventoryEntity != null && inventoryEntity != null) {
-            if (safetyInventoryEntity.getMaxQty() != 0) {
-                return safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
+        int shortageQty = dto.getQty() == null ? 0 : dto.getQty();
+        int currentQty = inventoryEntity == null || inventoryEntity.getQty() == null
+                ? 0 : inventoryEntity.getQty();
+
+        if (safetyInventoryEntity != null) {
+            Integer maxQty = safetyInventoryEntity.getMaxQty();
+            Integer safetyQty = safetyInventoryEntity.getSafetyQty();
+            // 有最大补货量：maxQty + 缺货数量 - 上架可用库存
+            if (maxQty != null && maxQty != 0) {
+                return Math.max(0, maxQty + shortageQty - currentQty);
             }
-            if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0) {
-                return safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
+            // 仅有安全库存：safetyQty + 缺货数量 - 上架可用库存
+            if (safetyQty != null && safetyQty != 0) {
+                return Math.max(0, safetyQty + shortageQty - currentQty);
             }
         }
-        return dto.getQty();
+        return Math.max(0, shortageQty);
     }
 
     private InventoryEntity findLastInventory(WarehouseLocationReplenishDTO.AddDTO dto , List<String> pickLocationCodeList , List<InventoryEntity> pickInventoryList){
