@@ -294,10 +294,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     }
 
     /**
-     * 按明细需求，在这些候选上做数量优先占用，输出「拣货结果 + 缺货清单」。
-     * @param executionData
-     * @param listListPair
-     * @return
+     * 按明细需求，在这些候选上按「优先级 → 策略 → 库位」顺序占用库存，输出「拣货结果 + 缺货清单」。
+     * <p>同一物理库位跨策略共享剩余量；当前明细仍不足时回滚本明细分配并写入缺货 Map。</p>
+     *
+     * @param executionData 规则执行上下文（含待分配明细）
+     * @param listListPair  策略匹配得到的候选库存与仓位元数据
+     * @return 拣货分配结果与缺货 Map（key 为 warehouseId#skuNo）
      */
     @Override
     public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO executionData,Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair) {
@@ -305,52 +307,145 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         Map<String, Integer> stockSku = new HashMap<>();
         List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOS = listListPair.getFirst();
         List<WarehouseLocationEntity> locationList = listListPair.getSecond();
+        Map<String, Integer> remainingByInventoryKey = new HashMap<>();
         for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : executionData.getDetails()) {
+            Map<String, Integer> remainingSnapshot = new HashMap<>(remainingByInventoryKey);
+            int resultSizeBeforeDetail = result.size();
             AtomicInteger quantity = new AtomicInteger(detail.getQty());
             List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> inventoryByWarehouse = cfgRulePickingInventoryDTOS.stream()
                     .filter(v -> v.getWarehouseId().equals(detail.getWarehouseId()))
                     .filter(v -> v.getSkuId().equals(detail.getSkuId()))
                     .filter(v -> v.getQty() > 0)
                     .collect(Collectors.toList());
-            for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : inventoryByWarehouse) {
-                log.warn("单据【{}】执行拣货策略，规则{},sku{},仓位{},数量{}", executionData.getSourceCode(), inventory.getRuleId(), inventory.getSkuNo(), inventory.getWarehouseLocation(), inventory.getQty());
-                LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
-                inventoryResultDTO.setSkuId(detail.getSkuId());
-                inventoryResultDTO.setSkuNo(detail.getSkuNo());
-                inventoryResultDTO.setPlatformSkuNo(detail.getPlatformSkuNo());
-                WarehouseLocationEntity entity = locationList.stream().filter(location -> location.getCode().equals(inventory.getWarehouseLocation()))
-                        .findFirst().orElse(new WarehouseLocationEntity());
-                inventoryResultDTO.setWarehouseId(inventory.getWarehouseId());
-                inventoryResultDTO.setVirtualWarehouseId(detail.getVirtualWarehouseId());
-                inventoryResultDTO.setWarehouseAreaId(inventory.getWarehouseAreaId());
-                inventoryResultDTO.setWarehouseLocationId(entity.getId());
-                inventoryResultDTO.setWarehouseLocation(inventory.getWarehouseLocation());
-                inventoryResultDTO.setSourceDetailId(detail.getSourceDetailId());
-                if (inventory.getQty() >= quantity.get()) {
-                    inventoryResultDTO.setQuantity(quantity.get());
-                    result.add(inventoryResultDTO);
-                    inventory.setQty(inventory.getQty() - quantity.get());
-                    quantity.set(0);
+            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> orderedInventories =
+                    orderInventoriesByPriorityAndRule(inventoryByWarehouse);
+            for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : orderedInventories) {
+                if (quantity.get() <= 0) {
                     break;
-                } else {
-                    inventoryResultDTO.setQuantity(inventory.getQty());
-                    quantity.set(quantity.get() - inventory.getQty());
-                    inventory.setQty(0);
-                    result.add(inventoryResultDTO);
                 }
+                String inventoryKey = buildPickingInventoryKey(inventory);
+                int availableQty = remainingByInventoryKey.computeIfAbsent(inventoryKey, k -> inventory.getQty());
+                if (availableQty <= 0) {
+                    continue;
+                }
+                int allocateQty = Math.min(availableQty, quantity.get());
+                log.warn("单据【{}】执行拣货策略，规则{},sku{},仓位{},可用{},分配{}",
+                        executionData.getSourceCode(), inventory.getRuleId(), inventory.getSkuNo(),
+                        inventory.getWarehouseLocation(), availableQty, allocateQty);
+                LocationInventoryResultDTO inventoryResultDTO = buildLocationInventoryResult(
+                        detail, inventory, locationList, allocateQty);
+                result.add(inventoryResultDTO);
+                remainingByInventoryKey.put(inventoryKey, availableQty - allocateQty);
+                quantity.addAndGet(-allocateQty);
             }
             if (0 != quantity.get()) {
-                // 缺货 key：warehouseId#skuNo，避免跨仓汇总后重复补货
+                remainingByInventoryKey.clear();
+                remainingByInventoryKey.putAll(remainingSnapshot);
                 String shortageKey = buildShortageKey(detail.getWarehouseId(), detail.getSkuNo());
                 stockSku.merge(shortageKey, quantity.get(), Integer::sum);
-                result = result.stream()
-                        .filter(v -> !(Objects.equals(v.getWarehouseId(), detail.getWarehouseId())
-                                && Objects.equals(v.getSkuNo(), detail.getSkuNo())))
-                        .collect(Collectors.toList());
+                rollbackCurrentDetailAllocations(result, resultSizeBeforeDetail, detail.getSourceDetailId());
             }
         }
         log.warn("单据【{}】完成执行拣货策略，完成时间为{}", executionData.getSourceCode(), System.currentTimeMillis());
         return Pair.create(result, stockSku);
+    }
+
+    /**
+     * 按优先级与策略（拣货规则）排序库存候选行：策略顺序与 listLocationByRule 结果中首次出现顺序一致；
+     * 策略内部按 action index 升序、同 index 下库存数量降序。
+     *
+     * @param inventories 同一仓库、SKU 且 qty&gt;0 的候选库存行（须保持 listLocationByRule 原始顺序）
+     * @return 按「优先级 → 策略 → 库位」顺序排列后的列表
+     */
+    private List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> orderInventoriesByPriorityAndRule(
+            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> inventories) {
+        if (CollectionUtils.isEmpty(inventories)) {
+            return Collections.emptyList();
+        }
+        Map<String, List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>> inventoriesByRule = inventories.stream()
+                .collect(Collectors.groupingBy(CfgRulePickingDTO.CfgRulePickingInventoryDTO::getRuleId));
+        List<String> orderedRuleIds = new ArrayList<>();
+        Set<String> seenRuleIds = new HashSet<>();
+        for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : inventories) {
+            if (seenRuleIds.add(inventory.getRuleId())) {
+                orderedRuleIds.add(inventory.getRuleId());
+            }
+        }
+        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> ordered = new ArrayList<>(inventories.size());
+        for (String ruleId : orderedRuleIds) {
+            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> ruleInventories = inventoriesByRule.get(ruleId);
+            ruleInventories.sort(Comparator
+                    .comparing(CfgRulePickingDTO.CfgRulePickingInventoryDTO::getIndex,
+                            Comparator.nullsLast(Integer::compareTo))
+                    .thenComparing(CfgRulePickingDTO.CfgRulePickingInventoryDTO::getQty,
+                            Comparator.nullsLast(Comparator.reverseOrder())));
+            ordered.addAll(ruleInventories);
+        }
+        return ordered;
+    }
+
+    /**
+     * 物理库位剩余量共享键：同仓库、同 SKU、同仓位在跨策略分配时共用剩余可用数量。
+     *
+     * @param inventory 策略库存候选行
+     * @return warehouseId|skuId|warehouseLocation 组合键
+     */
+    private String buildPickingInventoryKey(CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory) {
+        return inventory.getWarehouseId() + "|" + inventory.getSkuId() + "|" + inventory.getWarehouseLocation();
+    }
+
+    /**
+     * 构建单条拣货分配结果。
+     *
+     * @param detail       待分配明细
+     * @param inventory    命中的策略库存行
+     * @param locationList 仓库仓位元数据
+     * @param allocateQty  本次分配数量
+     * @return 拣货仓位分配结果
+     */
+    private LocationInventoryResultDTO buildLocationInventoryResult(
+            CfgRulePickingDTO.CfgExecutionDataDetailDTO detail,
+            CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory,
+            List<WarehouseLocationEntity> locationList,
+            int allocateQty) {
+        LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
+        inventoryResultDTO.setSkuId(detail.getSkuId());
+        inventoryResultDTO.setSkuNo(detail.getSkuNo());
+        inventoryResultDTO.setPlatformSkuNo(detail.getPlatformSkuNo());
+        WarehouseLocationEntity entity = locationList.stream()
+                .filter(location -> location.getCode().equals(inventory.getWarehouseLocation()))
+                .findFirst()
+                .orElse(new WarehouseLocationEntity());
+        inventoryResultDTO.setWarehouseId(inventory.getWarehouseId());
+        inventoryResultDTO.setVirtualWarehouseId(detail.getVirtualWarehouseId());
+        inventoryResultDTO.setWarehouseAreaId(inventory.getWarehouseAreaId());
+        inventoryResultDTO.setWarehouseLocationId(entity.getId());
+        inventoryResultDTO.setWarehouseLocation(inventory.getWarehouseLocation());
+        inventoryResultDTO.setSourceDetailId(detail.getSourceDetailId());
+        inventoryResultDTO.setQuantity(allocateQty);
+        return inventoryResultDTO;
+    }
+
+    /**
+     * 回滚当前明细缺货时已写入的分配结果。
+     * <p>有 sourceDetailId 时按明细 ID 精确删除；为空时仅移除本明细循环开始前之后新增的行。</p>
+     *
+     * @param result                 累计分配结果
+     * @param resultSizeBeforeDetail 本明细分配前的 result 长度
+     * @param sourceDetailId         来源明细 ID，可为空
+     */
+    private void rollbackCurrentDetailAllocations(List<LocationInventoryResultDTO> result,
+                                                  int resultSizeBeforeDetail,
+                                                  String sourceDetailId) {
+        if (sourceDetailId != null && !sourceDetailId.isEmpty()) {
+            result.removeIf(v -> Objects.equals(sourceDetailId, v.getSourceDetailId()));
+            return;
+        }
+        if (result.size() > resultSizeBeforeDetail) {
+            log.warn("拣货分配回滚：sourceDetailId 为空，按本明细新增行回滚，移除 {} 条",
+                    result.size() - resultSizeBeforeDetail);
+            result.subList(resultSizeBeforeDetail, result.size()).clear();
+        }
     }
 
     /**
