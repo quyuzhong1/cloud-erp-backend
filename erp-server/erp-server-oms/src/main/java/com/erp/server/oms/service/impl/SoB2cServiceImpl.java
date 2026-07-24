@@ -4535,7 +4535,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_PROCESSING_FORBIDDEN_CANCEL);
         }
 
-        soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
+        Boolean interceptUpdated = soB2cDeliveryInterceptFeign.updateHandleStatus(
+                Arrays.asList(entity.getId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
+        if (!Boolean.TRUE.equals(interceptUpdated)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消发货拦截失败：拦截单状态更新失败");
+        }
 
         //修改拦截打标识、冻结订单
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
