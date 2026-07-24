@@ -79,9 +79,4 @@ public class AiyaConstants {
      */
     public static final String TWO_C_INVENTORY_SEARCH = "GLINK_QUERY_INVENTORY_NOTIFY_NEW";
 
-    /**
-     * 退货订单分页查询
-     */
-    public static final String RETURN_ORDER_QUERY_PAGE = "returnorder.queryPage";
-
 }

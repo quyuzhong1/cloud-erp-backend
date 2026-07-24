@@ -10,7 +10,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.WegoSkuSyncDTO;
+import com.erp.model.wms.dto.WarehouseSkuSyncDTO;
 import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
 import org.apache.commons.math3.util.Pair;
 
@@ -128,5 +128,5 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      *            {@code skuList} 为空时跳过处理
      * @return 本次处理统计结果（新增/禁用/删除数量）
      */
-    WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto);
+    WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WarehouseSkuSyncDTO.SyncReqDTO dto);
 }

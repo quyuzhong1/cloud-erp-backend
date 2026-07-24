@@ -10,14 +10,15 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * WEGO SKU 同步参数
+ * 三方仓（海外仓）SKU 同步参数，平台无关。
+ * 爱亚、WEGO 等海外仓共用，通过 {@link SyncReqDTO#platform} / {@link SyncReqDTO#authId} 区分服务商。
  */
 @Data
 @NoArgsConstructor
-public class WegoSkuSyncDTO implements Serializable {
+public class WarehouseSkuSyncDTO implements Serializable {
 
     /**
-     * WEGO SKU 批量同步入参
+     * 三方仓 SKU 批量同步入参
      */
     @Data
     @NoArgsConstructor
@@ -29,7 +30,7 @@ public class WegoSkuSyncDTO implements Serializable {
         private String authId;
 
         /**
-         * 平台编码（wego）
+         * 平台编码（如 wego / ai_ya）
          */
         @NotBlank(message = "platform不能为空")
         private String platform;
@@ -54,7 +55,7 @@ public class WegoSkuSyncDTO implements Serializable {
     }
 
     /**
-     * WEGO SKU 项
+     * 三方仓 SKU 项
      */
     @Data
     @NoArgsConstructor

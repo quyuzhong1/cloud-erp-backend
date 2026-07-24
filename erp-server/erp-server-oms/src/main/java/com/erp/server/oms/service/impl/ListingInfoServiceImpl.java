@@ -35,7 +35,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.dto.WegoSkuSyncDTO;
+import com.erp.model.wms.dto.WarehouseSkuSyncDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
@@ -690,14 +690,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto) {
-        WegoSkuSyncDTO.ReconcileResultDTO result = new WegoSkuSyncDTO.ReconcileResultDTO();
+    public WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WarehouseSkuSyncDTO.SyncReqDTO dto) {
+        WarehouseSkuSyncDTO.ReconcileResultDTO result = new WarehouseSkuSyncDTO.ReconcileResultDTO();
         if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuList())) {
             return result;
         }
         // 按平台SKU去重，保留最后一条数据
-        Map<String, WegoSkuSyncDTO.SkuItemDTO> itemMap = new LinkedHashMap<>();
-        for (WegoSkuSyncDTO.SkuItemDTO itemDTO : dto.getSkuList()) {
+        Map<String, WarehouseSkuSyncDTO.SkuItemDTO> itemMap = new LinkedHashMap<>();
+        for (WarehouseSkuSyncDTO.SkuItemDTO itemDTO : dto.getSkuList()) {
             if (Objects.isNull(itemDTO) || StringUtils.isBlank(itemDTO.getSku())) {
                 continue;
             }
@@ -720,7 +720,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         List<ListingInfoEntity> toInsert = new ArrayList<>();
         List<ListingInfoEntity> toUpdate = new ArrayList<>();
         List<String> existingListingIds = new ArrayList<>();
-        for (WegoSkuSyncDTO.SkuItemDTO itemDTO : itemMap.values()) {
+        for (WarehouseSkuSyncDTO.SkuItemDTO itemDTO : itemMap.values()) {
             String latestBarcode = buildBarcode(itemDTO.getBarcode());
             ListingInfoEntity listingInfoEntity = existingMap.get(itemDTO.getSku());
             boolean inactive = isInactiveStatus(itemDTO.getStatus());
@@ -831,7 +831,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         // 源端明确回传为非启用状态（如爱亚 Inactive）的 SKU 编号；未回传状态（如WEGO现有调用）不参与禁用/删除判断
         Set<String> inactiveSkuNoSet = itemMap.values().stream()
                 .filter(item -> isInactiveStatus(item.getStatus()))
-                .map(WegoSkuSyncDTO.SkuItemDTO::getSku)
+                .map(WarehouseSkuSyncDTO.SkuItemDTO::getSku)
                 .collect(Collectors.toSet());
         if (CollectionUtils.isEmpty(inactiveSkuNoSet)) {
             return result;

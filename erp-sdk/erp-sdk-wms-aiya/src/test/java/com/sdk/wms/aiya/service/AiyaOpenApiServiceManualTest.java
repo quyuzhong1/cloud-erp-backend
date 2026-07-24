@@ -5,13 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
+import com.erp.model.wms.dto.AiyaInboundSaveDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
-import com.sdk.wms.aiya.dto.response.AiyaReturnOrderResp;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,7 +68,7 @@ public class AiyaOpenApiServiceManualTest {
     /**
      * 账户只有生产账号，无独立测试环境；生产账号下专门划出的测试仓库编码。
      * 文档里 warehouseCode 为「是」（必填）的接口（queryTransport/queryInventory/saveInorder/
-     * save2cOrder/query2cOrderPage）必须带这个仓库编码，避免误操作到真实生产仓库数据。
+     * save2cOrder/query2cOrder/batchQueryAsn）必须带这个仓库编码，避免误操作到真实生产仓库数据。
      * 注：batchQueryAsn（入库单批量查询 GLINK_BATCH_QUERY_ASN_NOTIFY）warehouseCode 为必填，须带该仓库编码。
      */
     private static final String TEST_WAREHOUSE_CODE = "SHENZHEN-01";
@@ -136,14 +137,66 @@ public class AiyaOpenApiServiceManualTest {
 
     // ===================== 入库单相关 =====================
 
+    /**
+     * 创建/修改入库单（{@code GLINK_CREATE_ASN_NOTIFY}）。
+     * <p>
+     * 字段按官方「创建入库单」接口 + 方案文档头程下推映射，用 {@link AiyaInboundSaveDTO} 组装：
+     * 官方必填 {@code warehouseCode}/{@code asnNumber}/{@code asnLineItems}（明细 sku/quantity），
+     * 以及业务侧常用可选字段（refNumber/extAsnNumber/asnType/trackingNumber/markList 等）。
+     * <p>
+     * 重点核对：
+     * <ul>
+     *     <li>{@code success=true} 时 {@code data} 是否为 JSON 字符串，内含 {@code asnNumber}/{@code wmsAsnNumber}；</li>
+     *     <li>{@code asnNumber} 是否可作为后续批量查询/取消的幂等键；</li>
+     *     <li>同一 {@code asnNumber} 再次调用是否走修改（upsert）而非报重复。</li>
+     * </ul>
+     * 联调前请把 SKU 换成测试仓真实已映射商品；asnNumber 每次换新号以免污染已有单据。
+     */
     @Test
     public void saveInorderTest() {
-        Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填（目的仓的仓库编码），生产账号必须带测试专属仓库编码
-        bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
-        // TODO：按 AiyaConstants.GLINK_CREATE_ASN_NOTIFY 真实字段补充剩余业务参数（refNumber/markList 明细等）
-        JSONObject response = aiyaOpenApiService.saveInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, bizParams);
+        // asnNumber = ERP 入库单号，创建/修改幂等键；建议带时间戳避免与正式单据冲突
+        String asnNumber = "ASN-AIYA-TEST-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String refNumber = "FHD-AIYA-TEST-001";
+        String markCode = refNumber + "-1";
+
+        AiyaInboundSaveDTO request = AiyaInboundSaveDTO.builder()
+                .asnNumber(asnNumber)
+                .warehouseCode(TEST_WAREHOUSE_CODE)
+                // 可选：对应《海外仓入库单》头程发货单号
+                .extAsnNumber(refNumber)
+                .refNumber(refNumber)
+                .referenceNumber(refNumber)
+                // SUPPLIER_RECEIPT=供应商入库（头程自发）；也可试 CONTAINER/RETURN/RELABEL
+                .asnType("RETURN")
+                .trackingNumber("TRACK-AIYA-TEST-001")
+                .warehouseNotes("ManualTest create ASN")
+                .expectedReceiptDate(LocalDateTime.now().plusDays(7).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .itemLineQty(1)
+                .cartonQty("1")
+                .markList(Collections.singletonList(
+                        AiyaInboundSaveDTO.MarkList.builder()
+                                .markCode(markCode)
+                                .length(new BigDecimal("30.00"))
+                                .width(new BigDecimal("20.00"))
+                                .height(new BigDecimal("15.00"))
+                                .weight(new BigDecimal("1.50"))
+                                .lengthUnit("CM")
+                                .weightUnit("KG")
+                                .build()))
+                .asnLineItems(Collections.singletonList(
+                        // TODO：换成测试仓库真实已映射且可入库的平台 SKU
+                        AiyaInboundSaveDTO.AsnLineItem.builder()
+                                .lineNo("1")
+                                .sku("test1602")
+                                .quantity(1)
+                                .markCode(markCode)
+                                .skuStatus("GOOD")
+                                .build()))
+                .build();
+
+        JSONObject response = aiyaOpenApiService.saveInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, request);
         System.out.println(JSONUtil.toJsonStr(response));
+        // 成功时可解析 response.data（JSON 字符串）核对 asnNumber / wmsAsnNumber / warehouseCode
     }
 
     @Test
@@ -284,21 +337,13 @@ public class AiyaOpenApiServiceManualTest {
     /**
      * 截单（取消）2C 出库单（{@code GLINK_CANCEL_ORDER_NOTIFY}）。
      * <p>
-     * 入参已从骨架时期的 {@code no} 改为 {@code orderNumber}，与建单/查询保持一致的幂等键命名。
+     * 入参为 {@code orderNumbers[]}（字符串集合），与方案文档及入库取消 {@code asnNumbers[]} 对齐。
      */
     @Test
     public void intercept2cOrderTest() {
-        String orderNumber = "WFHD-AIYA-TEST-202607220002";
-        JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumber);
+        List<String> orderNumbers = Collections.singletonList("WFHD-AIYA-TEST-202607220002");
+        JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumbers);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
-    // ===================== 退货订单相关 =====================
-
-    @Test
-    public void queryReturnOrderPageTest() {
-        AiyaReturnOrderResp response = aiyaOpenApiService.queryReturnOrderPage(
-                ACCESS_TOKEN, SECRET, CUSTOMER_CODE, null, null, 1, 100);
-        System.out.println(JSONUtil.toJsonStr(response));
-    }
 }

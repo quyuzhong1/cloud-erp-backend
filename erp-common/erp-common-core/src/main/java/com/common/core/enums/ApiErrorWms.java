@@ -461,7 +461,6 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED", 11221, "AIYA 查询2C出库单接口失败: {0}");
     public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED", 11222, "AIYA 查询2C出库单接口响应转换失败: {0}");
     public static final ApiError WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED", 11223, "AIYA 分页查询2C出库单接口响应转换失败: {0}");
-    public static final ApiError WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED", 11224, "AIYA 分页查询退货订单接口响应转换失败: {0}");
     public static final ApiError WH_AIYA_SDK_API_CALL_ERROR = new ApiError("WH_AIYA_SDK_API_CALL_ERROR", 11225, "AIYA {0}接口调用异常: {1}");
     public static final ApiError WH_AIYA_SDK_API_RESPONSE_EMPTY = new ApiError("WH_AIYA_SDK_API_RESPONSE_EMPTY", 11226, "AIYA {0}接口返回为空");
     public static final ApiError WH_AIYA_SDK_API_RESPONSE_NOT_JSON = new ApiError("WH_AIYA_SDK_API_RESPONSE_NOT_JSON", 11227, "AIYA {0}接口返回非JSON格式");
