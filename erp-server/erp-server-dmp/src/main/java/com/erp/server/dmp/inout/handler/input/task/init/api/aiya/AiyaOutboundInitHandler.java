@@ -29,10 +29,10 @@ import java.util.List;
  * AIYA（爱亚）2C 出库单状态轮询 InitHandler，对齐 {@code WegoOutboundInitHandler} 结构，
  * 复用 {@link AbstractAiyaInitHandler} 的授权解析。
  * <p>
- * 按方案文档 6.3.3「4、爱亚出库单查询」：以 [date-1]~[date] 作为「发运时间」窗口
- * （{@code shippingTimeFrom}/{@code shippingTimeTo}），并按服务商下每个已启用仓库分页拉取
- * （{@code warehouseCode} 文档必填）。翻页终止：优先看响应 {@code total}，否则用
- * 「本页条数 &lt; pageSize」。
+ * 以 [date-1]~[date] 作为「创建时间」窗口（{@code createdTimeFrom}/{@code createdTimeTo}），
+ * 对齐 WEGO 按订单日期拉取，可覆盖已提交未发货单；勿单独依赖 {@code shippingTime*}（仅已发货有值）。
+ * 按服务商下每个已启用仓库分页拉取（{@code warehouseCode} 文档必填）。
+ * 翻页终止：暂以「本页条数 &lt; pageSize」判断末页。
  */
 @Slf4j
 @Service
@@ -41,8 +41,8 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
 
     private static final String ACTION = "2C出库单";
 
-    /** 发运时间格式：文档响应示例为 {@code yyyy-MM-dd HH:mm:ss}，请求侧同格式 */
-    private static final DateTimeFormatter SHIPPING_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    /** 创建/发运时间格式：{@code yyyy-MM-dd HH:mm:ss} */
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final int DEFAULT_PAGE_SIZE = AiyaOutboundQueryDTO.DEFAULT_PAGE_SIZE;
 
@@ -59,8 +59,8 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
             return Collections.emptyList();
         }
 
-        String shippingTimeFrom = resolveShippingTimeFrom();
-        String shippingTimeTo = resolveShippingTimeTo();
+        String createdTimeFrom = resolveCreatedTimeFrom();
+        String createdTimeTo = resolveCreatedTimeTo();
 
         List<Object> allResult = new ArrayList<>();
         for (OverseasProviderWarehouseEntity warehouse : warehouseList) {
@@ -70,26 +70,26 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
                         auth.getAuthId(), warehouse.getId());
                 continue;
             }
-            allResult.addAll(fetchOutboundByWarehouse(auth, warehouseCode, shippingTimeFrom, shippingTimeTo));
+            allResult.addAll(fetchOutboundByWarehouse(auth, warehouseCode, createdTimeFrom, createdTimeTo));
         }
 
         if (allResult.isEmpty()) {
-            log.info("[AIYA出库] 服务商[id={}] 发运时间[{} ~ {}] 未拉到任何出库单",
-                    auth.getAuthId(), shippingTimeFrom, shippingTimeTo);
+            log.warn("[AIYA出库] 服务商[id={}] 创建时间[{} ~ {}] 未拉到任何出库单",
+                    auth.getAuthId(), createdTimeFrom, createdTimeTo);
             return Collections.emptyList();
         }
 
         JSONArray result = JSON.parseArray(JSONObject.toJSONString(allResult));
-        log.info("[AIYA出库] 服务商[id={}] 发运时间[{} ~ {}] 共拉取={}条",
-                auth.getAuthId(), shippingTimeFrom, shippingTimeTo, result.size());
+        log.warn("[AIYA出库] 服务商[id={}] 创建时间[{} ~ {}] 共拉取={}条",
+                auth.getAuthId(), createdTimeFrom, createdTimeTo, result.size());
         return Collections.singletonList(buildInitDTO(result, auth.getAuthId()));
     }
 
     /**
-     * 按仓库 + 发运时间窗口分页拉取出库单。
+     * 按仓库 + 创建时间窗口分页拉取出库单。
      */
     private List<AiyaOutboundResp.OutboundOrderDTO> fetchOutboundByWarehouse(
-            AiyaAuth auth, String warehouseCode, String shippingTimeFrom, String shippingTimeTo) {
+            AiyaAuth auth, String warehouseCode, String createdTimeFrom, String createdTimeTo) {
         List<AiyaOutboundResp.OutboundOrderDTO> orderList = new ArrayList<>();
         int pageNum = 1;
         while (pageNum <= MAX_PAGE_LIMIT) {
@@ -98,8 +98,8 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
                     .secret(auth.getPartnerKey())
                     .customerCode(auth.getCustomerCode())
                     .warehouseCode(warehouseCode)
-                    .shippingTimeFrom(shippingTimeFrom)
-                    .shippingTimeTo(shippingTimeTo)
+                    .createdTimeFrom(createdTimeFrom)
+                    .createdTimeTo(createdTimeTo)
                     .pageNum(pageNum)
                     .pageSize(DEFAULT_PAGE_SIZE)
                     .build();
@@ -129,24 +129,24 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
     }
 
     /**
-     * 「发运开始时间」：dmp 任务有 startTime 则取 startTime 当天 00:00:00，否则回退为「昨天 00:00:00」。
+     * 「创建开始时间」：dmp 任务有 startTime 则取 startTime 当天 00:00:00，否则回退为「昨天 00:00:00」。
      */
-    private String resolveShippingTimeFrom() {
+    private String resolveCreatedTimeFrom() {
         LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
         LocalDateTime begin = startTime != null
                 ? startTime.toLocalDate().atStartOfDay()
                 : LocalDate.now().minusDays(1).atStartOfDay();
-        return begin.format(SHIPPING_TIME_FORMATTER);
+        return begin.format(TIME_FORMATTER);
     }
 
     /**
-     * 「发运结束时间」：dmp 任务有 endTime 则取 endTime 当天 00:00:00，否则回退为「今天 00:00:00」。
+     * 「创建结束时间」：dmp 任务有 endTime 则取 endTime 当天 00:00:00，否则回退为「今天 00:00:00」。
      */
-    private String resolveShippingTimeTo() {
+    private String resolveCreatedTimeTo() {
         LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
         LocalDateTime end = endTime != null
                 ? endTime.toLocalDate().atStartOfDay()
                 : LocalDate.now().atStartOfDay();
-        return end.format(SHIPPING_TIME_FORMATTER);
+        return end.format(TIME_FORMATTER);
     }
 }

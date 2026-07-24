@@ -8,15 +8,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.AsnTypeEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.AiyaInboundCancelDTO;
-import com.erp.model.wms.dto.AiyaInboundSaveDTO;
-import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
-import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
-import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -26,7 +23,6 @@ import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
 import com.sdk.wms.aiya.service.AiyaOpenApiService;
-import com.common.business.wrapper.FeignQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -69,11 +65,6 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      */
     private static final String AUTH_KEY_PARTNER_KEY = "partnerKey";
     private static final String AUTH_KEY_APP_SECRET = "appSecret";
-
-    /**
-     * 默认入库单类型：供应商入库。
-     */
-    private static final String DEFAULT_ASN_TYPE = "SUPPLIER_RECEIPT";
 
     /**
      * SKU 良品状态。
@@ -169,12 +160,12 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final String SHIP_FROM_PLACEHOLDER_COUNTRY_CODE = "CN";
 
     /**
-     * Handler 侧按单号反查时使用的发运时间回溯天数（文档查询接口不支持按 orderNumber 精确查）。
+     * Handler 侧按单号反查时使用的创建时间回溯天数（查询接口不支持按 orderNumber 精确查）。
      */
     private static final int QUERY_OUTBOUND_FALLBACK_DAYS = 7;
 
     /**
-     * 发运时间格式（方案文档响应示例 {@code yyyy-MM-dd HH:mm:ss}，请求侧同格式）。
+     * 创建/发运时间格式（请求侧 {@code yyyy-MM-dd HH:mm:ss}）。
      */
     private static final DateTimeFormatter SHIPPING_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -282,7 +273,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .warehouseNotes(createInboundReq.getRemark())
                 .trackingNumber(trackingNumber)
                 .containerNumber(createInboundReq.getContainerType())
-                .asnType(DEFAULT_ASN_TYPE)
+                .asnType(AsnTypeEnum.SUPPLIER_RECEIPT.getCode())
                 .expectedReceiptDate(createInboundReq.getEtaDate() == null ? null
                         : createInboundReq.getEtaDate().format(ETA_DATE_FORMATTER))
                 .itemLineQty(skuTypeCount)
@@ -587,12 +578,12 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     /**
      * 查询 AIYA 2C 出库单（{@code GLINK_QUERY_ORDER_NOTIFY}）。
      * <p>
-     * 方案文档查询接口必填 {@code warehouseCode}，过滤键为发运时间 {@code shippingTimeFrom}/
-     * {@code shippingTimeTo}，<b>不支持</b>按 {@code orderNumber} 精确查。
+     * 查询接口必填 {@code warehouseCode}；状态反查用创建时间 {@code createdTimeFrom}/
+     * {@code createdTimeTo}（对齐 WEGO {@code orderDate*}，可覆盖已提交未发货），
+     * <b>不支持</b>按 {@code orderNumber} 精确查。
      * {@link ThirdWarehouseQueryOutboundReq} 仅有 {@code erpOrderCode}（=orderNumber），无仓库编码，
-     * 因此本方法按授权服务商下全部可用仓库、近 {@value #QUERY_OUTBOUND_FALLBACK_DAYS} 天发运时间窗口拉取，
-     * 再在本地按 {@code orderNumber} 过滤（参照 WEGO 按时间窗反查范式）。日常状态同步仍以 DMP
-     * {@code AiyaOutboundInitHandler} 为准。
+     * 因此本方法按授权服务商下全部可用仓库、近 {@value #QUERY_OUTBOUND_FALLBACK_DAYS} 天创建时间窗口拉取，
+     * 再在本地按 {@code orderNumber} 过滤。日常状态同步仍以 DMP {@code AiyaOutboundInitHandler} 为准。
      */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
@@ -610,8 +601,8 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        String shippingTimeFrom = now.minusDays(QUERY_OUTBOUND_FALLBACK_DAYS).format(SHIPPING_TIME_FORMATTER);
-        String shippingTimeTo = now.format(SHIPPING_TIME_FORMATTER);
+        String createdTimeFrom = now.minusDays(QUERY_OUTBOUND_FALLBACK_DAYS).format(SHIPPING_TIME_FORMATTER);
+        String createdTimeTo = now.format(SHIPPING_TIME_FORMATTER);
 
         for (OverseasProviderWarehouseEntity warehouse : warehouseList) {
             String warehouseCode = warehouse.getPlatformWarehouseCode();
@@ -623,8 +614,8 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .secret(auth.partnerKey)
                     .customerCode(auth.customerCode)
                     .warehouseCode(warehouseCode)
-                    .shippingTimeFrom(shippingTimeFrom)
-                    .shippingTimeTo(shippingTimeTo)
+                    .createdTimeFrom(createdTimeFrom)
+                    .createdTimeTo(createdTimeTo)
                     .pageNum(1)
                     .pageSize(AiyaOutboundQueryDTO.DEFAULT_PAGE_SIZE)
                     .build();
@@ -644,7 +635,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             }
         }
         return failure("AIYA未查询到对应出库单（orderNumber=" + orderNumber
-                + "，近" + QUERY_OUTBOUND_FALLBACK_DAYS + "天发运窗口）");
+                + "，近" + QUERY_OUTBOUND_FALLBACK_DAYS + "天创建窗口）");
     }
 
     /**
