@@ -22,7 +22,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
@@ -95,9 +94,6 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
     			finishFlag = parseObject.getBooleanValue("finish");
     		}
     	}
-		if(finishFlag && isOverseasManaged()) {
-			return Collections.emptyList();
-		}
         if(DmpInputTaskTaskTypeEnum.HISTORY.getCode().equals(taskType)){
         	paramMap.put("create_date_start", startTime);
     		paramMap.put("create_date_end", endTime);
@@ -204,10 +200,5 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
         	}
         }
 		return data;
-	}
-
-	private boolean isOverseasManaged() {
-		return dmpBasicSystemEntity != null
-				&& DmpBasicSystemCodeEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(dmpBasicSystemEntity.getCode());
 	}
 }

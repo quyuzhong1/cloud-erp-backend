@@ -299,15 +299,14 @@ public class AliExpressOfficialWarehouseChildService {
         candidates = findByRelation(scItems,
                 relation -> StrUtil.isNotBlank(itemContext.getProductId())
                         && itemContext.getProductId().equals(relation.getItemId()),
-                item -> Objects.equals(itemContext.getSkuCode(), item.getSupplierSkuCode()));
+                item -> matchesSkuCode(itemContext.getSkuCode(), item));
         if (candidates.size() == 1) {
             return candidates.get(0);
         }
         assertNotAmbiguous(itemContext, candidates, "productId+skuCode");
 
         candidates = scItems.stream()
-                .filter(item -> StrUtil.isNotBlank(itemContext.getSkuCode())
-                        && itemContext.getSkuCode().equals(item.getSupplierSkuCode()))
+                .filter(item -> matchesSkuCode(itemContext.getSkuCode(), item))
                 .collect(Collectors.toList());
         if (candidates.size() == 1) {
             return candidates.get(0);
@@ -319,6 +318,22 @@ public class AliExpressOfficialWarehouseChildService {
                 itemContext.getProductId(),
                 itemContext.getSkuId(),
                 itemContext.getSkuCode()));
+    }
+
+    /**
+     * 使用平台可能返回的供应商 SKU、货品编码或仓库条码精确匹配订单 SKU。
+     *
+     * @param skuCode 订单 SKU 编码
+     * @param scItem 速卖通货品
+     * @return 任一货品编码与订单 SKU 完全一致时返回 true
+     */
+    private boolean matchesSkuCode(String skuCode, ScItemDTO scItem) {
+        if (StrUtil.isBlank(skuCode) || Objects.isNull(scItem)) {
+            return false;
+        }
+        return skuCode.equals(scItem.getSupplierSkuCode())
+                || skuCode.equals(scItem.getItemCode())
+                || skuCode.equals(scItem.getWhcBarCode());
     }
 
     /**
