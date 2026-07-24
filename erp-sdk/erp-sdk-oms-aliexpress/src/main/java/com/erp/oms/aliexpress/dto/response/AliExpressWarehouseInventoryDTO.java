@@ -25,6 +25,7 @@ public final class AliExpressWarehouseInventoryDTO {
 
         private String channelSellerId;
         private String channel;
+        private String businessType;
         private List<ScItemDTO> scItemList;
     }
 
