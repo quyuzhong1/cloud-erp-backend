@@ -137,12 +137,13 @@ public class AliExpressWarehouseInventoryService {
                     AliexpressConstants.AIC_INVENTORY_LOG_QUERY,
                     Constants.METHOD_POST,
                     params,
+                    "global_merchant_aic_invLog_response",
                     "global_merchant_aic_inv_log_response",
                     "global_merchant_aic_invlog_response"
             );
             assertSuccess(payload, "查询速卖通官方仓库存流水失败");
             List<InventoryLogDTO> pageData = parseInventoryLogs(
-                    normalizeArray(payload.get("result"), "data", "data_list", "list"));
+                    normalizeArray(payload.get("result"), "dto", "data", "data_list", "list"));
             result.addAll(pageData.stream().filter(this::isValidOutboundLog).collect(Collectors.toList()));
 
             Integer totalPage = payload.getInt("total_page");
@@ -404,7 +405,8 @@ public class AliExpressWarehouseInventoryService {
             scItem.setWhcBarCode(data.getStr("whc_bar_code"));
 
             List<ScItemRelationDTO> relationList = new ArrayList<>();
-            JSONArray relationArray = data.getJSONArray("relation_list");
+            JSONArray relationArray = normalizeArray(
+                    data.get("relation_list"), "relation", "data", "list");
             if (Objects.nonNull(relationArray)) {
                 for (Object relationItem : relationArray) {
                     JSONObject relationData = JSONUtil.parseObj(relationItem);
