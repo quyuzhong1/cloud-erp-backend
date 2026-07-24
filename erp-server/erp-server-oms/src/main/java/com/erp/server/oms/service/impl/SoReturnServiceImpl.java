@@ -280,7 +280,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
             // B2B/B2C 分表别名不同，行级数据权限在 Service 按单据类型动态拼装后写入 params.permissionSql
             applyLinkAfterSaleDataPermission(params, isB2b);
-            // 剩余应退货数量在 SQL 层计算并过滤（OMS 本地 so_return_instock* 表，片段由高级查询 Handler 统一生成）
+            // 剩余应退货数量在 SQL 层计算并过滤（so_return_instock* 为 WMS FDW 外表；非关联汇总 + 候选明细 IN 收窄，片段由 Handler 生成）
             SoReturnLinkAfterSaleQueryHandler.fillRemainReturnQtySql(params, isB2b);
             Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(dto.getPage(), dto.getPageSize());
             IPage<SoReturnDTO.LinkAfterSaleView> pageData = isB2b

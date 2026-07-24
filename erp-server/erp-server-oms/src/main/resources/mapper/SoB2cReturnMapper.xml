@@ -258,6 +258,7 @@
 
     <!-- 预入库-关联售后单：B2C 售后单（so_b2c_return），按仓库、sku 过滤 -->
     <!-- so_b2c_return 无仓库字段，通过 so_detail_id 关联 B2C 销售订单明细 so_b2c_detail 取仓库 -->
+    <!-- 入库汇总经 params.instockJoinSql 注入（FDW 非关联 + 候选明细 IN，禁止改为逐行关联子查询） -->
     <select id="pagingLinkAfterSaleB2C" resultType="com.erp.model.oms.dto.SoReturnDTO$LinkAfterSaleView">
         SELECT
             sbr.id,

@@ -217,7 +217,7 @@
         order by sr.code desc
     </select>
 
-    <!-- 预入库-关联售后单：B2B 售后单（so_return），按仓库、sku 过滤 -->
+    <!-- 预入库-关联售后单：B2B 售后单（so_return），按仓库、sku 过滤；入库汇总经 params.instockJoinSql 注入（FDW 非关联 + 候选明细 IN） -->
     <select id="pagingLinkAfterSaleB2B" resultType="com.erp.model.oms.dto.SoReturnDTO$LinkAfterSaleView">
         SELECT
             sr.id,
