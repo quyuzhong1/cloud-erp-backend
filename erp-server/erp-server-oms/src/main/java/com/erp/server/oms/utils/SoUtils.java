@@ -59,9 +59,9 @@ public class SoUtils {
         // 销售毛利率：分母为 amountLocalCurrency；saleAmount 仅作分母>0 的前置校验
         BigDecimal saleAmount = ObjectUtil.defaultIfNull(costParam.getSaleAmount(), BigDecimal.ZERO);
         if (saleAmount.compareTo(BigDecimal.ZERO) > 0 && amountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
-            skuCostProfitResult.setSaleProfitRate(MathUtil.multiplyWithSix(
-                    MathUtil.divideWithSix(skuCostProfitResult.getSaleProfit(), amountLocalCurrency),
-                    MathUtil.BigDecimal_100));
+            skuCostProfitResult.setSaleProfitRate(MathUtil.divideWithSix(
+                    skuCostProfitResult.getSaleProfit().multiply(MathUtil.BigDecimal_100),
+                    amountLocalCurrency));
         }
         return skuCostProfitResult;
     }
