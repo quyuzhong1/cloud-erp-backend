@@ -44,7 +44,8 @@ public class SoUtils {
         BigDecimal normalizedPurchasePrice = Objects.isNull(purchasePrice) || purchasePrice.compareTo(BigDecimal.ZERO) < 0
                 ? BigDecimal.ZERO : purchasePrice;
         skuCostProfitResult.setPurchasePrice(normalizedPurchasePrice);
-        skuCostProfitResult.setSaleCost(normalizedPurchasePrice.multiply(new BigDecimal(costParam.getQty())).setScale(4, BigDecimal.ROUND_HALF_UP));
+        skuCostProfitResult.setSaleCost(MathUtil.scaleToSix(
+                normalizedPurchasePrice.multiply(new BigDecimal(costParam.getQty()))));
         if (Objects.isNull(costParam.getTaxRate())) {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
@@ -53,13 +54,14 @@ public class SoUtils {
         BigDecimal amountLocalCurrency = ObjectUtil.defaultIfNull(costParam.getAmountLocalCurrency(), BigDecimal.ZERO);
         BigDecimal saleCost = skuCostProfitResult.getSaleCost();
 
-        BigDecimal saleProfit = amountLocalCurrency.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal saleProfit = MathUtil.scaleToSix(amountLocalCurrency.subtract(saleCost));
         skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率：分母为 amountLocalCurrency；saleAmount 仅作分母>0 的前置校验
         BigDecimal saleAmount = ObjectUtil.defaultIfNull(costParam.getSaleAmount(), BigDecimal.ZERO);
         if (saleAmount.compareTo(BigDecimal.ZERO) > 0 && amountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
-            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit()
-                    .divide(amountLocalCurrency, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
+            skuCostProfitResult.setSaleProfitRate(MathUtil.multiplyWithSix(
+                    MathUtil.divideWithSix(skuCostProfitResult.getSaleProfit(), amountLocalCurrency),
+                    MathUtil.BigDecimal_100));
         }
         return skuCostProfitResult;
     }
@@ -81,7 +83,7 @@ public class SoUtils {
         costParam.setSkuId(item.getSkuId());
         //该值应该为数量*单价*汇率
         BigDecimal amount = MathUtil.multiplyWithTwo(item.getPrice(), item.getQty());
-        BigDecimal saleAmount = MathUtil.multiplyWithTwo(amount, item.getExchangeRate());
+        BigDecimal saleAmount = MathUtil.multiplyWithSix(amount, item.getExchangeRate());
         //销售毛利=销售金额(折后)*汇率-总成本
         //销售金额(折后)*汇率
         BigDecimal amountLocalCurrency = item.getAmountLocalCurrency();
