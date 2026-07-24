@@ -56,11 +56,13 @@ public class AliExpressWarehouseInventoryService {
     private static final String GOOD_INVENTORY_TYPE = "0";
     private static final String OUTBOUND_BIZ_TYPE = "soDecrease";
     private static final String BOUND_STATUS = "2";
+    private static final String PLATFORM_NULL_MARKER = "\\N";
+    private static final String DEFAULT_MERCHANT_CODE = "AETK";
 
     @Resource
     private AliExpressOrderService aliExpressOrderService;
 
-    @Value("${aliexpress.overseas-managed.outstock.merchant-code:AECHOICE}")
+    @Value("${aliexpress.overseas-managed.outstock.merchant-code:" + DEFAULT_MERCHANT_CODE + "}")
     private String merchantCode;
 
     @Value("${aliexpress.overseas-managed.outstock.max-qps:20}")
@@ -76,7 +78,7 @@ public class AliExpressWarehouseInventoryService {
      */
     public ShopItemRelationDTO queryShopItemRelation(String shopId) {
         AliExpressShopInfoDTO shopInfo = getShopInfo(shopId);
-        ShopItemRelationDTO shopRelation = queryOneStopSellerRelation(shopId, shopInfo);
+        ShopItemRelationDTO shopRelation = querySellerRelation(shopId, shopInfo);
         shopRelation.setScItemList(queryAllScItems(shopId, shopInfo, shopRelation));
         return shopRelation;
     }
@@ -118,7 +120,7 @@ public class AliExpressWarehouseInventoryService {
         while (pageIndex <= MAX_PAGE_COUNT) {
             Map<String, String> params = new LinkedHashMap<>();
             params.put("merchant_code",
-                    CharSequenceUtil.blankToDefault(merchantCode, "AECHOICE"));
+                    CharSequenceUtil.blankToDefault(merchantCode, DEFAULT_MERCHANT_CODE));
             params.put("inventory_type", GOOD_INVENTORY_TYPE);
             params.put("biz_trade_ids", String.join(",", distinctTradeIds));
             params.put("page_size", String.valueOf(INVENTORY_LOG_PAGE_SIZE));
@@ -159,13 +161,14 @@ public class AliExpressWarehouseInventoryService {
     }
 
     /**
-     * 查询 ONE_STOP_SERVICE 卖家关系。
+     * 查询库存流水使用的卖家关系，优先使用 ONE_STOP_SERVICE。
+     * 平台可能忽略 business_type 并返回唯一的其他关系，此时允许回退使用。
      *
      * @param shopId   店铺 ID
      * @param shopInfo 店铺授权信息
-     * @return 唯一的全托管卖家关系
+     * @return 唯一可用的卖家关系
      */
-    private ShopItemRelationDTO queryOneStopSellerRelation(String shopId, AliExpressShopInfoDTO shopInfo) {
+    private ShopItemRelationDTO querySellerRelation(String shopId, AliExpressShopInfoDTO shopInfo) {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("business_type", AliexpressConstants.ONE_STOP_SERVICE);
         params.put("simplify", Boolean.TRUE.toString());
@@ -188,24 +191,37 @@ public class AliExpressWarehouseInventoryService {
             for (Object item : relationArray) {
                 JSONObject relation = JSONUtil.parseObj(item);
                 String businessType = relation.getStr("business_type");
-                if (CharSequenceUtil.isNotBlank(businessType)
-                        && !AliexpressConstants.ONE_STOP_SERVICE.equalsIgnoreCase(businessType)) {
-                    continue;
-                }
                 ShopItemRelationDTO dto = new ShopItemRelationDTO();
                 dto.setChannelSellerId(stringValue(firstNotNull(
                         relation.get("channel_seller_id"), relation.get("channelSellerId"))));
                 dto.setChannel(relation.getStr("channel"));
+                dto.setBusinessType(businessType);
                 relationList.add(dto);
             }
         }
-        if (CollUtil.isEmpty(relationList)) {
-            throw new ServiceException(StrUtil.format("速卖通海外托管店铺{}未获取到ONE_STOP_SERVICE卖家关系", shopId));
-        }
 
-        Map<String, ShopItemRelationDTO> distinctRelations = relationList.stream()
+        List<ShopItemRelationDTO> validRelations = relationList.stream()
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getChannelSellerId())
                         && CharSequenceUtil.isNotBlank(e.getChannel()))
+                .collect(Collectors.toList());
+        List<ShopItemRelationDTO> oneStopRelations = validRelations.stream()
+                .filter(e -> AliexpressConstants.ONE_STOP_SERVICE.equalsIgnoreCase(e.getBusinessType()))
+                .collect(Collectors.toList());
+        List<ShopItemRelationDTO> candidateRelations = CollUtil.isNotEmpty(oneStopRelations)
+                ? oneStopRelations : validRelations;
+        if (CollUtil.isEmpty(candidateRelations)) {
+            throw new ServiceException(StrUtil.format("速卖通海外托管店铺{}未获取到可用卖家关系", shopId));
+        }
+        if (CollUtil.isEmpty(oneStopRelations)) {
+            log.warn("速卖通海外托管店铺未返回ONE_STOP_SERVICE关系，回退使用唯一卖家关系, shopId={}, businessTypes={}",
+                    shopId, candidateRelations.stream()
+                            .map(ShopItemRelationDTO::getBusinessType)
+                            .filter(CharSequenceUtil::isNotBlank)
+                            .distinct()
+                            .collect(Collectors.toList()));
+        }
+
+        Map<String, ShopItemRelationDTO> distinctRelations = candidateRelations.stream()
                 .collect(Collectors.toMap(
                         e -> e.getChannelSellerId() + ":" + e.getChannel(),
                         e -> e,
@@ -213,7 +229,7 @@ public class AliExpressWarehouseInventoryService {
                         LinkedHashMap::new
                 ));
         if (distinctRelations.size() != 1) {
-            throw new ServiceException(StrUtil.format("速卖通海外托管店铺{}存在多个ONE_STOP_SERVICE卖家关系", shopId));
+            throw new ServiceException(StrUtil.format("速卖通海外托管店铺{}存在多个可用卖家关系", shopId));
         }
         return distinctRelations.values().iterator().next();
     }
@@ -484,6 +500,7 @@ public class AliExpressWarehouseInventoryService {
                 && Objects.nonNull(inventoryLog.getChangeQuantity())
                 && inventoryLog.getChangeQuantity() < 0
                 && CharSequenceUtil.isNotBlank(inventoryLog.getWhOrderCode())
+                && !PLATFORM_NULL_MARKER.equalsIgnoreCase(inventoryLog.getWhOrderCode().trim())
                 && CharSequenceUtil.isNotBlank(inventoryLog.getBizTradeId())
                 && CharSequenceUtil.isNotBlank(inventoryLog.getBizSubTradeId())
                 && Objects.nonNull(inventoryLog.getOperateTime())
@@ -611,6 +628,7 @@ public class AliExpressWarehouseInventoryService {
         ShopItemRelationDTO relation = new ShopItemRelationDTO();
         relation.setChannelSellerId(channelSellerId);
         relation.setChannel(channel);
+        relation.setBusinessType(payload.getStr("business_type"));
         relationList.add(relation);
     }
 
