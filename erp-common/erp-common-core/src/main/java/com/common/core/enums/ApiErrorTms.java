@@ -305,6 +305,7 @@ public final class ApiErrorTms {
     public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_DUPLICATE = new ApiError("LOGISTICS_CONTRACT_AGREEMENT_NO_DUPLICATE", 13725, "核算公司和合同协议号不可重复");
     public static final ApiError LOGISTICS_BILL_COST_ACTUAL_CONFIRM_AMOUNT_CATEGORIES_ALL_ZERO = new ApiError("LOGISTICS_BILL_COST_ACTUAL_CONFIRM_AMOUNT_CATEGORIES_ALL_ZERO", 13727, "账单确认时当前单据费用分类实际金额不能全部等于0");
     public static final ApiError LOGISTICS_BILL_COST_ESTIMATED_CONFIRM_AMOUNT_CATEGORIES_ALL_ZERO = new ApiError("LOGISTICS_BILL_COST_ESTIMATED_CONFIRM_AMOUNT_CATEGORIES_ALL_ZERO", 13728, "暂估确认时当前单据费用分类暂估金额不能全部等于0");
+    public static final ApiError LOGISTICS_BILL_COST_DETAIL_EMPTY = new ApiError("LOGISTICS_BILL_COST_DETAIL_EMPTY", 13729, "费用明细为空");
     public static final ApiError LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED = new ApiError("LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED", 13648, "无法识别导入模板，请检查配置是否正确");
     public static final ApiError LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND = new ApiError("LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND", 13649, "未读取到 Excel 表头");
     public static final ApiError LOGISTICS_RECON_SAVE_FAILED = new ApiError("LOGISTICS_RECON_SAVE_FAILED", 13650, "物流商对账单保存失败");

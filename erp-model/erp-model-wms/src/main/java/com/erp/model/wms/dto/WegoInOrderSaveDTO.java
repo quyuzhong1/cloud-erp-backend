@@ -101,6 +101,14 @@ public class WegoInOrderSaveDTO implements Serializable {
         private String notes;
 
         /**
+         * 是否自动提交：可选，默认 false。
+         * <p>
+         * 传 true 时创建后自动提交订单，提交后无法再修改；
+         * 未传或 false 时仅保存为可编辑草稿状态。
+         */
+        private Boolean autoCommit;
+
+        /**
          * 入库产品明细
          */
         private List<Detail> details;

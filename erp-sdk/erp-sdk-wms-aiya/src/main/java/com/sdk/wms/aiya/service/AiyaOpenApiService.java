@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundQueryDTO;
+import com.erp.model.wms.dto.AiyaInboundSaveDTO;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundQueryDTO;
 import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
@@ -17,7 +18,6 @@ import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.constants.AiyaConstants;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
-import com.sdk.wms.aiya.dto.response.AiyaReturnOrderResp;
 import com.sdk.wms.aiya.utils.AiyaSignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -103,7 +103,8 @@ public class AiyaOpenApiService {
      * （2026-07-22 联调确认）；Java 侧仍用 {@code pageNum} 命名，SDK 序列化时转为 {@code page}。
      */
     private static final Set<String> OUTBOUND_QUERY_RESERVED_PARAM_KEYS =
-            new HashSet<>(Arrays.asList("warehouseCode", "shippingTimeFrom", "shippingTimeTo", "page", "pageSize"));
+            new HashSet<>(Arrays.asList("warehouseCode", "createdTimeFrom", "createdTimeTo",
+                    "shippingTimeFrom", "shippingTimeTo", "page", "pageSize"));
 
     /**
      * 入库单批量查询专用保留参数：文档字段名为 {@code page}（而非 {@code pageNum}），
@@ -266,17 +267,28 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 调用 AIYA inorder.save 创建或修改入库单。
+     * 调用 AIYA {@code GLINK_CREATE_ASN_NOTIFY} 创建或修改入库单。
+     * <p>
+     * 创建/修改合一：以 {@link AiyaInboundSaveDTO#getAsnNumber()} 为幂等键 upsert。
+     * 官方必填：{@code customerCode}（由 {@link #doQuery} 注入）、{@code warehouseCode}、{@code asnNumber}、
+     * {@code asnLineItems[]}（明细内 {@code sku}/{@code quantity} 必填）。
+     * 成功响应形如 {@code {success, code, message, data}}，其中 {@code data} 为 JSON 字符串，
+     * 内含 {@code asnNumber}/{@code wmsAsnNumber} 等回显字段。
      *
      * @param accessToken  AIYA partnerId（客户ID）
      * @param secret       AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
-     * @param bizParams    入库单业务字段
+     * @param request      入库单请求（见 {@link AiyaInboundSaveDTO}）
      * @return AIYA 接口原始响应解析后的 JSONObject
      */
-    public JSONObject saveInorder(String accessToken, String secret, String customerCode, Map<String, Object> bizParams) {
+    public JSONObject saveInorder(String accessToken, String secret, String customerCode, AiyaInboundSaveDTO request) {
         Map<String, Object> params = new HashMap<>();
-        mergeBizParams(params, bizParams, "保存入库单", Collections.emptySet());
+        if (request != null) {
+            // fastjson 默认忽略 null，可选字段未赋值时不会出现在 bizData 中
+            @SuppressWarnings("unchecked")
+            Map<String, Object> bizParams = (JSONObject) JSON.toJSON(request);
+            mergeBizParams(params, bizParams, "保存入库单", Collections.emptySet());
+        }
         return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_CREATE_ASN_NOTIFY, params, "保存入库单");
     }
 
@@ -386,9 +398,11 @@ public class AiyaOpenApiService {
     /**
      * 调用 AIYA {@code GLINK_QUERY_ORDER_NOTIFY} 查询 2C 出库单。
      * <p>
-     * 请求字段：必填 {@code warehouseCode}，可选 {@code shippingTimeFrom}/{@code shippingTimeTo}/
-     * {@code page}/{@code pageSize}。方案文档写的 {@code pageNum} 有误，真实网关与其它爱亚查询接口一致用 {@code page}
+     * 请求字段：必填 {@code warehouseCode}，可选 {@code createdTimeFrom}/{@code createdTimeTo}/
+     * {@code shippingTimeFrom}/{@code shippingTimeTo}/{@code page}/{@code pageSize}。
+     * 方案文档写的 {@code pageNum} 有误，真实网关与其它爱亚查询接口一致用 {@code page}
      * （Java 侧 {@link AiyaOutboundQueryDTO.QueryReqDTO#getPageNum()} 序列化为 {@code page}）。
+     * 状态轮询优先传 {@code createdTime*}（可覆盖已提交未发货）；{@code shippingTime*} 仅适合已发货过滤。
      * 响应顶层（2026-07-22 联调确认）为 {@code {success, code, message, total, orderInfoList:[]}}。
      * <p>
      * 接口返回 {@code success=false} 视为真实失败，抛出 {@link ServiceException}；
@@ -403,6 +417,8 @@ public class AiyaOpenApiService {
         // 方案文档写 pageNum，真实网关字段为 page（与 SKU/库存/入库查询一致）
         params.put("page", dto.getPageNum());
         params.put("pageSize", dto.getPageSize());
+        putIfNotBlank(params, "createdTimeFrom", dto.getCreatedTimeFrom());
+        putIfNotBlank(params, "createdTimeTo", dto.getCreatedTimeTo());
         putIfNotBlank(params, "shippingTimeFrom", dto.getShippingTimeFrom());
         putIfNotBlank(params, "shippingTimeTo", dto.getShippingTimeTo());
         mergeBizParams(params, dto.getBizParams(), "查询2C出库单", OUTBOUND_QUERY_RESERVED_PARAM_KEYS);
@@ -431,60 +447,23 @@ public class AiyaOpenApiService {
 
     /**
      * 调用 AIYA {@code GLINK_CANCEL_ORDER_NOTIFY} 截单（取消）2C 出库单。
+     * <p>
+     * 业务字段为 {@code orderNumbers[]}（出库单号字符串集合，对齐入库取消的 {@code asnNumbers[]}；
+     * 方案文档写明允许以客户单号提交取消申请）。单笔截单时传单元素列表即可。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
-     * @param customerCode AIYA 客户code（必填业务参数）
-     * @param orderNumber  AIYA 出库单号（建单幂等键 orderNumber，与建单/查询保持一致，而非骨架时期的 {@code no}）
+     * @param accessToken   AIYA partnerId（客户ID）
+     * @param secret        AIYA partnerKey（仅用于本地签名）
+     * @param customerCode  AIYA 客户code（必填业务参数）
+     * @param orderNumbers  AIYA 出库单号列表（建单幂等键 orderNumber，与建单/查询保持一致）
      * @return AIYA 接口原始响应解析后的 JSONObject
      */
-    public JSONObject intercept2cOrder(String accessToken, String secret, String customerCode, String orderNumber) {
+    public JSONObject intercept2cOrder(String accessToken, String secret, String customerCode, List<String> orderNumbers) {
+        if (orderNumbers == null || orderNumbers.isEmpty()) {
+            throw new ServiceException(ApiError.COMMON_PARAM_LIST_REQUIRED);
+        }
         Map<String, Object> params = new HashMap<>();
-        params.put("orderNumber", orderNumber);
+        params.put("orderNumbers", JSON.toJSON(orderNumbers));
         return doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_ORDER_INTERCEPT, params, "截单2C出库单");
-    }
-
-    /**
-     * 调用 AIYA returnorder.queryPage 分页查询退货订单。
-     *
-     * @param accessToken      AIYA partnerId（客户ID）
-     * @param secret           AIYA partnerKey（仅用于本地签名）
-     * @param customerCode     AIYA 客户code（必填业务参数）
-     * @param arrivalDateBegin 到仓日期开始（YYYY-MM-DD，可为 null）
-     * @param arrivalDateEnd   到仓日期结束（YYYY-MM-DD，可为 null）
-     * @param pageNum          页码（从 1 开始）
-     * @param pageSize         每页数量
-     * @return 分页结果；无响应时返回 null
-     */
-    public AiyaReturnOrderResp queryReturnOrderPage(String accessToken, String secret, String customerCode,
-                                                    String arrivalDateBegin, String arrivalDateEnd,
-                                                    int pageNum, int pageSize) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("pageNum", pageNum);
-        params.put("pageSize", pageSize);
-        putIfNotNull(params, "arrivalDateBegin", arrivalDateBegin);
-        putIfNotNull(params, "arrivalDateEnd", arrivalDateEnd);
-        JSONObject response = doQuery(accessToken, secret, customerCode, AiyaConstants.RETURN_ORDER_QUERY_PAGE, params, "分页查询退货订单");
-        if (response == null) {
-            log.warn("[AIYA分页查询退货订单] 接口无响应");
-            return null;
-        }
-        try {
-            return response.toJavaObject(AiyaReturnOrderResp.class);
-        } catch (Exception ex) {
-            log.error("[AIYA分页查询退货订单] 响应JSON转换AiyaReturnOrderResp失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException(ApiError.WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED, ex.getMessage());
-        }
-    }
-
-    /**
-     * 仅在 value 非 null 时写入 map。
-     */
-    private void putIfNotNull(Map<String, Object> params, String key, Object value) {
-        if (value == null) {
-            return;
-        }
-        params.put(key, value);
     }
 
     /**

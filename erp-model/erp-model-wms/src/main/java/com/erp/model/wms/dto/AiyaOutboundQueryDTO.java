@@ -14,15 +14,16 @@ import java.util.Map;
 /**
  * AIYA（爱亚/百世 GLINK）2C 出库单查询（serviceType={@code GLINK_QUERY_ORDER_NOTIFY}）请求报文。
  * <p>
- * 字段按《爱亚海外仓对接方案文档》6.3.3「4、爱亚出库单查询」请求参数表落地：
+ * 字段说明：
  * <ul>
  *     <li>必填：{@code customerCode}（SDK 注入）、{@code warehouseCode}；</li>
- *     <li>可选：{@code shippingTimeFrom}/{@code shippingTimeTo}（发运时间窗口，DMP 定时拉取用）、
- *         {@code page}/{@code pageSize}。方案文档写的 {@code pageNum} 有误，真实网关字段为 {@code page}
- *         （与 SKU/库存/入库查询一致）；本 DTO Java 侧仍用 {@code pageNum}，由 SDK 序列化为 {@code page}。</li>
+ *     <li>可选：{@code createdTimeFrom}/{@code createdTimeTo}（创建时间窗口，对齐 WEGO 按订单日期拉取，
+ *         可覆盖已提交未发货单）、{@code shippingTimeFrom}/{@code shippingTimeTo}（发运时间，仅已发货有值）、
+ *         {@code page}/{@code pageSize}。方案文档写的 {@code pageNum} 有误，真实网关字段为 {@code page}；
+ *         本 DTO Java 侧仍用 {@code pageNum}，由 SDK 序列化为 {@code page}。</li>
  * </ul>
- * 注意：勿与入库单查询的 {@code putawayCompletedTimeFrom}/{@code putawayCompletedTimeTo}（上架时间）混淆，
- * 也勿使用建单字段 {@code orderTime}——查询侧过滤键是发运时间 {@code shippingTime*}。
+ * 注意：勿与入库单查询的 {@code putawayCompletedTimeFrom}/{@code putawayCompletedTimeTo}（上架时间）混淆。
+ * DMP / Handler 状态轮询优先用 {@code createdTime*}，勿单独依赖 {@code shippingTime*}（会漏未发货单）。
  * <p>
  * 响应结构见 {@code AiyaOutboundResp}（顶层 {@code orderInfoList}，2026-07-22 联调确认）。
  */
@@ -69,7 +70,19 @@ public class AiyaOutboundQueryDTO implements Serializable {
         private String warehouseCode;
 
         /**
-         * 发运时间开始（可选，格式 {@code yyyy-MM-dd HH:mm:ss}；方案文档业务约定按 [date-1]~[date] 窗口拉取）。
+         * 创建时间开始（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * DMP / Handler 状态轮询主窗口；对齐 WEGO {@code orderDate*}，可覆盖已提交未发货单。
+         */
+        private String createdTimeFrom;
+
+        /**
+         * 创建时间结束（可选）。
+         */
+        private String createdTimeTo;
+
+        /**
+         * 发运时间开始（可选，格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * 仅已发货单据通常有发运时间；单独用此条件会漏未发货单。
          */
         private String shippingTimeFrom;
 

@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -33,6 +36,7 @@ import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.AmountInfo;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.aliexpress.CaiNiaoAuthorizedShopResolver;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
@@ -58,6 +62,9 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 	
 	@Autowired
 	private DmpSoDetailService dmpSoDetailService;
+
+	@Autowired
+	private CaiNiaoAuthorizedShopResolver caiNiaoAuthorizedShopResolver;
 	
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -71,8 +78,13 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			for(List<Map<String, Object>> key : keySet) {
 				orderIdList.addAll(key.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList()));
 			}
+			DmpInputTaskEntity orderDetailTask = getOrderDetailTask();
+			paramDataList.add(new ParamData(
+					DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+					DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+					PannoEnum.EQ,
+					orderDetailTask.getId()));
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			findMongoData = mongoService.findMongoData(paramDataList,
 					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
 							dmpCfgInputEntity.getSystemId(), ORDER_DETAIL_CODE));
@@ -93,15 +105,19 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			}
 		}
 		
-		Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
+		Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(
+				f -> f.get("order_id").toString(),
+				f -> f,
+				(left, right) -> left));
 		BigDecimal payAmount = BigDecimal.ZERO;
+		String businessShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(nextLevelId);
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
 			Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
 			AliExpressOrder sourceOrder = JSON.parseObject(JSON.toJSONString(mongoDataMap), AliExpressOrder.class);
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				dmpDataMap.put("shopId", nextLevelId);
+				dmpDataMap.put("shopId", businessShopId);
 				Object payAmountObj = mongoDataMap.get("pay_amount");
 				if(payAmountObj != null) {
 					Map<String, Object> payAmountMap = (Map)payAmountObj;
@@ -270,6 +286,31 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 				dmpDataMap.put("invalidStatus", isCancel && !isFrozen);
 			}
 		}
+	}
+
+	/**
+	 * 获取当前订单主任务下的订单详情子任务。
+	 *
+	 * @return 本批次订单详情任务
+	 */
+	private DmpInputTaskEntity getOrderDetailTask() {
+		DmpCfgInputEntity orderDetailInput = AliExpressDmpHandlerUtils.getDmpCfgInputEntity(
+				dmpCfgInputService,
+				dmpHandlerCache,
+				dmpCfgInputEntity.getSystemId(),
+				ORDER_DETAIL_CODE);
+		if (orderDetailInput == null) {
+			throw new ServiceException("未找到速卖通orderDetail输入配置");
+		}
+		DmpInputTaskEntity orderDetailTask = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getParentTaskId, inputTaskId)
+				.eq(DmpInputTaskEntity::getCfgInputId, orderDetailInput.getId())
+				.last("limit 1")
+				.one();
+		if (orderDetailTask == null) {
+			throw new ServiceException("未找到当前批次速卖通orderDetail子任务");
+		}
+		return orderDetailTask;
 	}
 
 	public static void main(String[] args) {

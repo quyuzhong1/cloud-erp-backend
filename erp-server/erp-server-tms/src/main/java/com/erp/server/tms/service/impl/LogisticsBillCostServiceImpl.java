@@ -875,8 +875,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * <p>仅在对账状态为账单确认（CONFIRMED）或暂估确认（ESTIMATE_CONFIRM）时生效；
      * 账单确认校验实际金额，暂估确认校验暂估金额。供物流商模板导入（confirmImport）及标准导入勾选确认场景使用，
      * 返回错误文案供行级收集，不抛异常。</p>
-     * <p>业务规则：只校验当前费用单中实际存在费用明细的费用分类；没有费用明细的费用分类不参与校验。
-     * 只要任一存在的费用分类金额不等于 0 即通过，只有全部存在分类金额均等于 0 才返回错误。</p>
+     * <p>业务规则：目标类型费用明细为空时返回“费用明细为空”；存在明细时按费用分类汇总，
+     * 只要任一费用分类金额不等于 0 即通过，只有全部存在分类金额均等于 0 才返回错误。</p>
      *
      * @param logisticsCostId      目标物流费用单 ID
      * @param importList           本次导入待合并的费用明细，可为 null（仅校验库内已有明细）
@@ -897,7 +897,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param importList           本次导入待合并的费用明细，可为 null
      * @param reconciliationStatus 目标对账状态，非确认类状态直接返回 null
      * @param existingDetailMap    预查询的费用明细，key 为费用单 ID；可为 null
-     * @return 全部存在分类金额均为 0 时返回错误文案，否则返回 null
+     * @return 费用明细为空或全部存在分类金额均为 0 时返回错误文案，否则返回 null
      */
     @Override
     public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
@@ -963,8 +963,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * 校验目标费用单在合并导入明细后的费用分类确认金额是否不全部为 0。
      * <p>方法先以费用配置 ID 为维度得到预计金额，再解析每个费用配置所属的费用分类，
      * 最后按费用分类汇总并校验。这样可以覆盖同一费用分类下存在多个费用名称的场景。</p>
-     * <p>业务规则：只校验当前费用单中实际存在费用明细的费用分类；没有费用明细的费用分类不参与校验。
-     * 只要任一存在的费用分类金额不等于 0 即通过，只有全部存在分类金额均等于 0 才返回错误。</p>
+     * <p>业务规则：目标类型费用明细为空时返回“费用明细为空”；存在明细时按费用分类汇总，
+     * 只要任一费用分类金额不等于 0 即通过，只有全部存在分类金额均等于 0 才返回错误。</p>
      *
      * @param logisticsCostId      目标物流费用单 ID
      * @param importList           本次导入待合并的费用明细，可为空
@@ -972,7 +972,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param existingDetailMap    预查询的费用明细，key 为费用单 ID；可为空
      * @param cfgCategoryCache     批量预取的费用配置分类缓存，key 为费用配置 ID；可为空
      * @param reconciliationStatus 目标对账状态
-     * @return 全部存在分类金额均为 0 时返回标准错误信息，否则返回 null
+     * @return 费用明细为空或全部存在分类金额均为 0 时返回标准错误信息，否则返回 null
      */
     private ApiError validateProjectedConfirmAmountByCategory(String logisticsCostId,
                                                               List<TmsCostDetailDTO.UpdateDTO> importList,
@@ -983,8 +983,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Map<String, BigDecimal> cfgAmountMap = buildProjectedConfirmCfgAmountMap(
                 logisticsCostId, importList, costType, existingDetailMap);
         if (CollUtil.isEmpty(cfgAmountMap)) {
-            // 当前单据没有目标类型明细时，不校验不存在的费用分类。
-            return null;
+            // 当前单据没有目标类型费用明细时，确认状态不能继续流转。
+            return ApiError.LOGISTICS_BILL_COST_DETAIL_EMPTY;
         }
         Map<String, String> cfgCategoryMap = resolveCfgCostCategoryMap(
                 cfgAmountMap.keySet(), importList, costType, cfgCategoryCache);
