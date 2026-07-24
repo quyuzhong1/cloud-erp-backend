@@ -202,11 +202,11 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             }
             if (CharSequenceUtil.equals(status, ApproveStatusEnum.WAIT_SUBMIT.getStatus())){
                 Integer count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getTabFlag(), status) || CharSequenceUtil.equals(obj.getTabFlag(), ApproveStatusEnum.REJECT.getStatus()) )
-                        .map(QcApplicationDTO.TabListDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+                        .map(QcApplicationDTO.TabListDTO::getCount).reduce(Integer::sum).orElse(MathUtil.ZERO);
                 result.add(new QcApplicationDTO.TabListDTO(status, "待提交/不通过", count));
             }else {
                 Integer count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getTabFlag(), status))
-                        .map(QcApplicationDTO.TabListDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+                        .map(QcApplicationDTO.TabListDTO::getCount).reduce(Integer::sum).orElse(MathUtil.ZERO);
                 result.add(new QcApplicationDTO.TabListDTO(status, ApproveStatusEnum.getName(status), count));
             }
         }
