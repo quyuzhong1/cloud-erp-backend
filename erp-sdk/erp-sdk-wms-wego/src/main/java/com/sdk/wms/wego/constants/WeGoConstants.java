@@ -79,6 +79,11 @@ public class WeGoConstants {
     public static final String TWO_C_ORDER_INTERCEPT = "2c.order.intercept";
 
     /**
+     * 2C订单异常出库取消（仅出库异常/提交失败等异常态可用）
+     */
+    public static final String TWO_C_ORDER_ERROR_HANDLE = "2c.order.errorHandle";
+
+    /**
      * 2C订单加急
      */
     public static final String TWO_C_ORDER_URGENT = "2c.order.urgent";
