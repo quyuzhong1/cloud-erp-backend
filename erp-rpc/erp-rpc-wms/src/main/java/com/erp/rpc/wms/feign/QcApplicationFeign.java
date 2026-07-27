@@ -39,8 +39,8 @@ public interface QcApplicationFeign {
     /**
      * 质检申请单 - 分页查询（支持高级搜索）
      */
-    @PostMapping("/paging")
-    ApiResult<PagingVO<QcApplicationDTO.ListDTO>> qcApplicationPaging(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
+    @PostMapping("/pdaPaging")
+    ApiResult<PagingVO<QcApplicationDTO.PdaListDTO>> qcApplicationPdaPaging(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
 
     /**
      * 质检申请单 - 详情
@@ -82,6 +82,5 @@ public interface QcApplicationFeign {
      * 质检申请单 - 下推质检通知数据保存
      */
     @PostMapping("/generateQcNotice")
-    ApiResult<List<BatchResultDTO>> qcApplicationGenerateQcNotice(
-            @RequestBody @Valid ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list);
+    ApiResult<List<BatchResultDTO>> qcApplicationGenerateQcNotice(@RequestBody @Valid QcApplicationDTO.PdaGenerateQcNoticeDTO dto);
 }

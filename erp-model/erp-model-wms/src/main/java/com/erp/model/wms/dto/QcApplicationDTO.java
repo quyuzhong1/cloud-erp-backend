@@ -83,7 +83,53 @@ public class QcApplicationDTO implements Serializable {
         private Map<String,String> sqlMap;
 
      }
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaListDTO {
+        /**
+         * 主键id【可排序】
+         */
+        private String  id;
+        /**
+         * 质检申请单号【可排序】
+         */
+        private String code;
 
+        /**
+         * 来源id【可排序】
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码【可排序】
+         */
+        private String sourceCode;
+
+        /**
+         * 单据状态【可排序】
+         */
+        private String approveStatus;
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+        /**
+         * 供应商id【可排序】
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 期望质检日期【可排序】
+         */
+        private LocalDate expectQcDate;
+    }
 
     /**
     * 分页列表
@@ -468,6 +514,26 @@ public class QcApplicationDTO implements Serializable {
         private LocalDate expectQcDate;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PdaGenerateQcNoticeDTO {
+        /**
+         * 质检申请ids
+         */
+        @NotBlank(message = "质检申请ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 期望质检日期
+         */
+        @NotNull(message = "期望质检日期不能为空")
+        private LocalDate expectQcDate;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+    }
     @Data
     @NoArgsConstructor
     public static class GenerateQcNoticeDTO {

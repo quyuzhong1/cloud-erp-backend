@@ -31,6 +31,14 @@ public interface QcApplicationMapper extends BaseMapper<QcApplicationEntity> {
     IPage<QcApplicationDTO.ListDTO> paging(Page query, @Param("params") QcApplicationDTO.PagingParamDTO params);
 
     /**
+     * pda  分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<QcApplicationDTO.PdaListDTO> pdaPaging(Page query, @Param("params") QcApplicationDTO.PagingParamDTO params);
+
+    /**
      * 分页查询
      * @param query
      * @param params
