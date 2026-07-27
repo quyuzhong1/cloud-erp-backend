@@ -419,45 +419,40 @@
         ) m group by warehouse_id,org_id,sku_id,warehouse_location order by real_inventory desc
     </select>
 
-    <select id="getInventoryByWarehouseId" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaHomeInventoryBalanceDTO">
+    <!-- PDA首页：可用库存汇总（与今日流水拆分查询，避免大表 JOIN） -->
+    <select id="sumUsableQtyForPdaHome" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaHomeInventoryBalanceDTO">
         SELECT
-            t.warehouse_id,
-            t.usableQty,
-            tt.todayStockInQty,
-            tt.todayDeliveryQty
-        FROM (
-            SELECT
-                i.warehouse_id,
-                SUM(qty) AS usableQty
-            FROM inventory i
-            WHERE is_deleted = FALSE
-            <if test="status != null and status != ''">
-                AND dict_inventory_status = #{status}
-            </if>
-            <if test="warehouseId != null and warehouseId != ''">
-                AND warehouse_id = #{warehouseId}
-            </if>
-            GROUP BY i.warehouse_id
-        ) t
-        LEFT JOIN (
-            SELECT
-                warehouse_id,
-                SUM(qty) FILTER (WHERE qty > 0) AS todayStockInQty,
-                SUM(qty) FILTER (WHERE qty &lt; 0) AS todayDeliveryQty
-            FROM transaction_flow
-            WHERE is_deleted = FALSE
-            AND is_unapproved = FALSE
-            AND create_time >= CURRENT_DATE
-            AND create_time &lt; CURRENT_DATE + INTERVAL '1 day'
-            <if test="status != null and status != ''">
-                AND dict_inventory_status = #{status}
-            </if>
-            <if test="warehouseId != null and warehouseId != ''">
-                AND warehouse_id = #{warehouseId}
-            </if>
-            AND dict_inventory_status = 'usable'
-            GROUP BY warehouse_id
-        ) tt ON t.warehouse_id = tt.warehouse_id
+            i.warehouse_id AS warehouseId,
+            SUM(i.qty) AS usableQty
+        FROM inventory i
+        WHERE i.is_deleted = FALSE
+        <if test="status != null and status != ''">
+            AND i.dict_inventory_status = #{status}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            AND i.warehouse_id = #{warehouseId}
+        </if>
+        GROUP BY i.warehouse_id
+    </select>
+
+    <!-- PDA首页：当日出入库流水汇总（依赖覆盖索引 idx_tf_pda_home_wh_ct_qty） -->
+    <select id="sumTodayFlowForPdaHome" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaHomeInventoryBalanceDTO">
+        SELECT
+            tf.warehouse_id AS warehouseId,
+            SUM(tf.qty) FILTER (WHERE tf.qty > 0) AS todayStockInQty,
+            SUM(tf.qty) FILTER (WHERE tf.qty &lt; 0) AS todayDeliveryQty
+        FROM transaction_flow tf
+        WHERE tf.is_deleted = FALSE
+          AND tf.is_unapproved = FALSE
+          AND tf.create_time &gt;= CURRENT_DATE
+          AND tf.create_time &lt; CURRENT_DATE + INTERVAL '1 day'
+        <if test="status != null and status != ''">
+            AND tf.dict_inventory_status = #{status}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            AND tf.warehouse_id = #{warehouseId}
+        </if>
+        GROUP BY tf.warehouse_id
     </select>
 
     <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">

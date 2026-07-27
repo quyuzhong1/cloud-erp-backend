@@ -1081,8 +1081,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public InventoryDTO.PdaHomeInventoryBalanceDTO getInventoryByWarehouseId(String warehouseId) {
+        String usableStatus = InventoryStatusEnum.USABLE.getCode();
+        // 拆成库存汇总 + 当日流水汇总，避免大表 JOIN；流水侧依赖覆盖索引加速
+        List<InventoryDTO.PdaHomeInventoryBalanceDTO> usableList =
+                baseMapper.sumUsableQtyForPdaHome(warehouseId, usableStatus);
+        List<InventoryDTO.PdaHomeInventoryBalanceDTO> todayFlowList =
+                baseMapper.sumTodayFlowForPdaHome(warehouseId, usableStatus);
+        List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory =
+                mergePdaHomeInventoryBalance(usableList, todayFlowList);
+
         InventoryDTO.PdaHomeInventoryBalanceDTO pdaHomeInventoryBalanceDTO = new InventoryDTO.PdaHomeInventoryBalanceDTO();
-        List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory = baseMapper.getInventoryByWarehouseId(warehouseId, InventoryStatusEnum.USABLE.getCode());
         if (CharSequenceUtil.isBlank(warehouseId)) {
             long usableQty = 0L;
             long todayDeliveryQty = 0L;
@@ -1115,6 +1123,40 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         return pdaHomeInventoryBalanceDTO;
+    }
+
+    /**
+     * 合并 PDA 首页可用库存与当日流水：以库存汇总为主（LEFT JOIN 语义），按仓库ID回填今日入/出库数量。
+     *
+     * @param usableList    可用库存按仓库汇总
+     * @param todayFlowList 当日流水按仓库汇总
+     * @return 合并后的首页余额列表
+     */
+    private List<InventoryDTO.PdaHomeInventoryBalanceDTO> mergePdaHomeInventoryBalance(
+            List<InventoryDTO.PdaHomeInventoryBalanceDTO> usableList,
+            List<InventoryDTO.PdaHomeInventoryBalanceDTO> todayFlowList) {
+        if (CollectionUtils.isEmpty(usableList)) {
+            return Collections.emptyList();
+        }
+        Map<String, InventoryDTO.PdaHomeInventoryBalanceDTO> flowByWarehouseId = Optional.ofNullable(todayFlowList)
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getWarehouseId()))
+                .collect(Collectors.toMap(InventoryDTO.PdaHomeInventoryBalanceDTO::getWarehouseId, item -> item, (a, b) -> a));
+        for (InventoryDTO.PdaHomeInventoryBalanceDTO usable : usableList) {
+            InventoryDTO.PdaHomeInventoryBalanceDTO flow = flowByWarehouseId.get(usable.getWarehouseId());
+            if (flow != null) {
+                usable.setTodayStockInQty(flow.getTodayStockInQty() == null ? 0L : flow.getTodayStockInQty());
+                usable.setTodayDeliveryQty(flow.getTodayDeliveryQty() == null ? 0L : flow.getTodayDeliveryQty());
+            } else {
+                usable.setTodayStockInQty(0L);
+                usable.setTodayDeliveryQty(0L);
+            }
+            if (usable.getUsableQty() == null) {
+                usable.setUsableQty(0L);
+            }
+        }
+        return usableList;
     }
 
     @Override
