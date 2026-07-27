@@ -120,13 +120,11 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * 3) 源端停用且已映射 → 映射关系置禁用（不做自动恢复）；
      * 4) 源端停用且未映射 → 软删 listing 及占位 mapping。
      * <p>
-     * 禁用/删除判断仅依赖本次传入 SKU 各自携带的状态，可按任意批次调用。
-     * 未回传状态的调用方（如历史 WEGO 调用不传 {@code status}）不会触发禁用/删除分支，行为与此前一致。
-     * 平台无关实现（按 authId 维度处理），本轮仅接入爱亚，后续其它三方仓可直接复用。
+     * @deprecated 爱亚/WEGO 已改走旧链路 MQ 消费 + {@code WarehouseSkuReconcileHelper}；过渡期保留，请勿新增调用。
      *
-     * @param dto 三方仓 SKU 同步参数（服务商、平台、本次批次的 SKU 及其可选的源端状态）；
-     *            {@code skuList} 为空时跳过处理
+     * @param dto 三方仓 SKU 同步参数
      * @return 本次处理统计结果（新增/禁用/删除数量）
      */
+    @Deprecated
     WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WarehouseSkuSyncDTO.SyncReqDTO dto);
 }

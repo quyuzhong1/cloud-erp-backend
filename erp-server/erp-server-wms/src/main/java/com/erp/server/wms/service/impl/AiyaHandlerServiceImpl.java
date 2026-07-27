@@ -243,7 +243,9 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         List<AiyaInboundSaveDTO.MarkList> markList = new ArrayList<>();
         List<AiyaInboundSaveDTO.AsnLineItem> lineItems = new ArrayList<>();
-        buildBoxAndLines(packingItems, markList, lineItems);
+        // markCode 前缀与 asnNumber 一致，使用 receivingCode（发货单号_HHmmss），
+        // 避免取消后重推时仍用裸发货单号导致爱亚侧箱唛 markCode 重复。
+        buildBoxAndLines(packingItems, createInboundReq.getReceivingCode(), markList, lineItems);
         if (CollUtil.isEmpty(lineItems)) {
             log.warn("[AIYA入库] 装箱清单缺少有效箱号或明细，referenceNo={}", createInboundReq.getReferenceNo());
             throw new ServiceException(ApiError.WH_AIYA_PACKING_LIST_MISSING_BOX_NO);
@@ -274,8 +276,16 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * <p>
      * 按 {@code boxNo} 分组：每箱一条 markList；箱内相同 SKU 数量累加后按「箱唛 + SKU」生成一条明细，
      * 明细通过 {@code markCode}（箱唛）关联到对应箱。
+     * {@code markCode} 前缀使用本次下推的 {@code receivingCode}（发货单号_HHmmss），与 asnNumber 对齐，
+     * 保证取消后重推时箱唛不会与历史已取消单据冲突（仅爱亚逻辑，不影响其他三方仓）。
+     *
+     * @param packingItems  装箱明细
+     * @param receivingCode 本次入库单号（= asnNumber = 发货单号_HHmmss），作为 markCode 前缀
+     * @param markList      输出：爱亚箱信息
+     * @param lineItems     输出：发运明细
      */
     private void buildBoxAndLines(List<WmsCartonSpecDTO.PackingItemDTO> packingItems,
+                                  String receivingCode,
                                   List<AiyaInboundSaveDTO.MarkList> markList,
                                   List<AiyaInboundSaveDTO.AsnLineItem> lineItems) {
         Map<String, List<WmsCartonSpecDTO.PackingItemDTO>> boxMap = packingItems.stream()
@@ -287,7 +297,9 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         int[] lineNo = {0};
         boxMap.forEach((boxNo, items) -> {
             WmsCartonSpecDTO.PackingItemDTO first = items.get(0);
-            String boxLabel = buildBoxLabel(first.getSourceCode(), boxNo);
+            // 优先用 receivingCode，为空时回退装箱来源单号，避免 markCode 仅剩箱号
+            String markCodePrefix = CharSequenceUtil.blankToDefault(receivingCode, first.getSourceCode());
+            String boxLabel = buildBoxLabel(markCodePrefix, boxNo);
             Map<String, Integer> skuQtyMap = new LinkedHashMap<>();
             for (WmsCartonSpecDTO.PackingItemDTO item : items) {
                 if (CharSequenceUtil.isBlank(item.getPlatformSkuNo()) || item.getPackQty() == null) {
@@ -319,16 +331,16 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /**
-     * 箱唛：发货单号 + "-" + 箱号；发货单号为空时退化为仅用箱号。
+     * 箱唛：receivingCode（发货单号_HHmmss）+ "-" + 箱号；前缀为空时退化为仅用箱号。
      */
-    private String buildBoxLabel(String sourceCode, String boxNo) {
+    private String buildBoxLabel(String markCodePrefix, String boxNo) {
         if (CharSequenceUtil.isBlank(boxNo)) {
-            return CharSequenceUtil.isBlank(sourceCode) ? null : sourceCode;
+            return CharSequenceUtil.isBlank(markCodePrefix) ? null : markCodePrefix;
         }
-        if (CharSequenceUtil.isBlank(sourceCode)) {
+        if (CharSequenceUtil.isBlank(markCodePrefix)) {
             return boxNo;
         }
-        return sourceCode + "-" + boxNo;
+        return markCodePrefix + "-" + boxNo;
     }
 
     /**

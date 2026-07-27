@@ -1818,7 +1818,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 .eq(WarehouseLocationMoveEntity::getSourceCode, changeNo)
                 .one();
         if (existed != null) {
-            return resumeAiyaChangeAttributeByApproveStatus(existed, changeNo);
+            String resumeMoveId = resumeAiyaChangeAttributeByApproveStatus(existed, changeNo);
+            logAiyaWebhookOperateLog(resumeMoveId, changeNo, dto.getWarehouseCode(),
+                    CharSequenceUtil.format("幂等续跑，审核状态【{}】",
+                            existed.getApproveStatus() == null ? "" : existed.getApproveStatus().getStatus()));
+            return resumeMoveId;
         }
 
         // CHANGE_STATUS：全有或全无，任一行非法直接失败，避免爱亚以为整单成功而 ERP 少落明细
@@ -1929,6 +1933,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         // 分步提交，对齐 addAndApprove：add / submit / approve 各自事务
         String moveId = service.add(addDTO);
         submitAndApproveAiyaChangeAttribute(moveId);
+        logAiyaWebhookOperateLog(moveId, changeNo, platformWarehouseCode,
+                CharSequenceUtil.format("新建并自动审核，明细【{}】行", detailList.size()));
         log.warn("爱亚转移单落仓位移动成功 changeAttributeNumber={} moveId={} warehouseId={} detailSize={}",
                 changeNo, moveId, warehouseId, detailList.size());
         return moveId;
@@ -1970,6 +1976,25 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private void submitAndApproveAiyaChangeAttribute(String moveId) {
         service.submit(moveId);
         service.approve(new ApproveOneDTO(moveId, ApproveTypeEnum.PASS.getStatus(), "爱亚库存状态转化自动审核"));
+    }
+
+    /**
+     * 爱亚 Webhook 不做业务鉴权，每次成功落单/幂等命中时写入仓位移动 operate_log，便于审计接口调用。
+     */
+    private void logAiyaWebhookOperateLog(String moveId, String changeNo, String warehouseCode, String detail) {
+        if (CharSequenceUtil.isBlank(moveId)) {
+            return;
+        }
+        String msg = CharSequenceUtil.format(
+                "爱亚Webhook调用：转移单号【{}】，仓库【{}】，{}",
+                CharSequenceUtil.nullToEmpty(changeNo),
+                CharSequenceUtil.nullToEmpty(warehouseCode),
+                CharSequenceUtil.nullToEmpty(detail));
+        operateLogService.addModuleOperateLog(
+                msg,
+                ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(),
+                moveId,
+                "爱亚Webhook接收");
     }
 
     /**

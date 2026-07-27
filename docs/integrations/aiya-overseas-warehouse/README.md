@@ -52,6 +52,8 @@
 | 2026-07-27 | 调整单审查续修：① 分步提交后幂等按审核状态续跑；② 同 SKU+出库状态汇总校验空仓位库存；③ `confirmDate` 固定 `Asia/Shanghai`。ApiError 11255 不改 |
 | 2026-07-27 | 调整单入口改 DMP Webhook：`POST /webhook/receive/aiyaChangeAttribute`（裸 body + MetaResponse）；新增 `AiyaChangeAttributeWebhookHandler`；删除 auth `AiyaOpenApi` |
 | 2026-07-27 | 审查收尾：DTO `partnerId`/`customerCode` 注释去掉 OpenAPI 残留；联调清单与「待确认」统一将 `verify` 标为上线阻断（非可选）；唯一索引仍按约定不加 |
+| 2026-07-27 | 调整单鉴权讨论确认：不做业务鉴权；成功落单/幂等命中写 WMS 仓位移动 `operate_log`（`operation=爱亚Webhook接收`） |
+| 2026-07-27 | **SKU 对照改回旧链路**：取消爱亚/WEGO Feign `syncWarehouseNotMatchSku` 主路径；新增 `AiyaSkuInfoDmpHandler`/`WegoSkuInfoDmpHandler` + `AiyaProductRocketMQTaskHandler`/`WegoProductRocketMQTaskHandler`；`PlatformListingConsumer` 补齐 WAREHOUSE 默认 disable/停用回收；公共逻辑抽 `WarehouseSkuReconcileHelper`；`PlatformDictEnum` 补 `WEGO`。环境切换见 `SKU旧链路切换清单.md` |
 
 ## 退货入库相关（2026-07-24）
 
@@ -172,7 +174,7 @@ DMP定时「爱亚退货入库」
 
 - [ ] 已将回调 URL 同步给爱亚/EDI（配置到 `glink.change.feed.back.url` 或对等项）  
 - [ ] 首笔联调：对方推送裸 body，我方返回 MetaResponse，并落已审核《仓位移动》  
-- [ ] **【上线阻断】对方鉴权**：与爱亚确认签名/IP 白名单等方案后实现 `AiyaChangeAttributeWebhookHandler#verify`（联调可暂空，禁止空实现长期上生产）
+- [x] **鉴权口径（2026-07-27 讨论确认）**：不做业务鉴权（与极兔等 Webhook 一致）；接口调用写入 WMS `operate_log`（仓位移动单，`operation=爱亚Webhook接收`）
 
 > 历史脚本 [`sql/aiya_openapi_referer_config.sql`](sql/aiya_openapi_referer_config.sql) 仅用于 OpenAPI 调试，**调整单回调不再依赖**。
 
@@ -274,7 +276,7 @@ DMP定时「爱亚退货入库」
 - [x] **仓/SKU 映射失败策略**：抛错 → MetaResponse 失败（2026-07-27）
 - [x] **并发幂等**：`@DistributeLocker` + 先查后写（2026-07-27）
 - [x] **入口协议**：改为 DMP Webhook 裸报文 + MetaResponse（2026-07-27）；不再走 `AiyaOpenApi`
-- [ ] **对方鉴权（上线阻断）**：`AiyaChangeAttributeWebhookHandler#verify` 当前为空；上线前必须确认签名/IP 白名单并实现，禁止长期仅靠网关免登白名单
+- [x] **鉴权口径**：不做业务鉴权；调用审计靠仓位移动 `operate_log`（2026-07-27 讨论确认）
 - [ ] **过期自动良转不良**：是否全部走本回调
 - [ ] **金蝶/下游是否需同步**：本期未做
 - [ ] **冒烟用例**：Postman 直推裸 body 到 webhook，核对仓位移动 + 即时库存

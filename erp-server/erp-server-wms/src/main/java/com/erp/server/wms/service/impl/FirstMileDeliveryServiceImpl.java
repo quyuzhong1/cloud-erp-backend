@@ -1279,7 +1279,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.JI_TU.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())
-                            && !OmsPlatformEnum.WE_GO.getCode().equals(providerEntity.getCode())) {
+                            && !OmsPlatformEnum.WE_GO.getCode().equals(providerEntity.getCode())
+                            // 爱亚（百世）入库单在创建时已下推，且不支持编辑；审核通过时跳过第三方推送，仅更新本地入库状态为待签收
+                            && !OmsPlatformEnum.AI_YA.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                         if (200 != resultInfo.getCode()) {

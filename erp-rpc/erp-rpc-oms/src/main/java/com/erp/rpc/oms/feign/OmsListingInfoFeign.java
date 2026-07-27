@@ -79,11 +79,10 @@ public interface OmsListingInfoFeign {
 
     /**
      * 同步三方仓SKU到对照表：新增未匹配占位（默认禁用）、源端停用已映射置禁用、源端停用未映射软删。
-     * 判断仅依赖本次传入 SKU 各自的状态，可按任意批次调用；未回传状态的调用方（如WEGO）不会触发禁用/删除分支。
-     *
-     * @param dto 三方仓 SKU 同步参数（服务商、平台、本次批次的 SKU 及其可选的源端状态）
-     * @return 本次处理统计结果（新增/禁用/删除数量）
+     * <p>
+     * @deprecated 爱亚/WEGO 已改走旧链路（DMP → Product MQ → PlatformListingConsumer），请勿新增调用方。
      */
+    @Deprecated
     @PostMapping("feign/listing/syncWarehouseNotMatchSku")
     WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WarehouseSkuSyncDTO.SyncReqDTO dto);
 }

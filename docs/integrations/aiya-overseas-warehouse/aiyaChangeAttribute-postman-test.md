@@ -11,7 +11,7 @@
 | Method | `POST` |
 | URL | `{{HOST}}/webhook/receive/aiyaChangeAttribute` |
 | Content-Type | `application/json` |
-| 鉴权 | 网关免登（`AuthPassPath` 含 `/webhook/receive/`）；`verify` 暂空实现（**上线阻断项**，见 README） |
+| 鉴权 | 网关免登（`AuthPassPath` 含 `/webhook/receive/`）；不做业务 `verify`；成功后写入仓位移动 `operate_log` |
 | 请求体 | 与对方 `changeAttribute4Edi` 业务 example 一致（裸 JSON） |
 | 响应 | MetaResponse：`{ success, code, message, data }` |
 
