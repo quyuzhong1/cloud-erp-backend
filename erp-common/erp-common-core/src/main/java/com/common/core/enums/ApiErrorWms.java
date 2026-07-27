@@ -260,6 +260,7 @@ public final class ApiErrorWms {
     public static final ApiError WH_LOCATION_MOVE_DETAIL_SAVE_FAILED = new ApiError("WH_LOCATION_MOVE_DETAIL_SAVE_FAILED", 11054, "仓位移动明细单保存失败");
     public static final ApiError WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE = new ApiError("WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE", 11055, "SKU【{0}】仓位移动数量不能大于可用库存数量");
     public static final ApiError WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS = new ApiError("WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS", 11056, "sku【{0}】仓位移动数量不能大于冻结库存数量");
+    public static final ApiError WH_LOCATION_MOVE_DEFECTIVE_QTY_EXCEEDS = new ApiError("WH_LOCATION_MOVE_DEFECTIVE_QTY_EXCEEDS", 11255, "SKU【{0}】仓位移动数量不能大于不良品库存数量");
     public static final ApiError WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME = new ApiError("WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME", 11057, "仓位移动的当前仓与目的仓必须为同一仓库");
     public static final ApiError WH_INV_CLOSED = new ApiError("WH_INV_CLOSED", 11058, "库存已关账，不允许操作【{0}】之前的单据");
     public static final ApiError WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF = new ApiError("WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF", 11059, "加工单子件【{0}】仓库【{1}】不属于库存组织【{2}】");

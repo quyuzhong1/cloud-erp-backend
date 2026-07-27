@@ -76,9 +76,17 @@ public class WebhookController extends BaseController {
     private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
         if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)) {
             return ResponseEntity.ok().body(result.toXml());
-        } else {
-            return ResponseEntity.ok(result);
         }
+        // 爱亚 GOMS/EDI 认 MetaResponse：{ success, code, message, data }
+        if (WebhookServiceEnum.AIYA_CHANGE_ATTRIBUTE.getCode().equals(serviceFlag)) {
+            java.util.Map<String, Object> meta = new java.util.LinkedHashMap<>(4);
+            meta.put("success", Boolean.TRUE.equals(result.getSuccess()));
+            meta.put("code", result.getFlag() != null ? result.getFlag() : (Boolean.TRUE.equals(result.getSuccess()) ? "SUCCESS" : "INTERNAL_ERROR"));
+            meta.put("message", result.getMessage());
+            meta.put("data", result.getData());
+            return ResponseEntity.ok(meta);
+        }
+        return ResponseEntity.ok(result);
     }
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
         WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByCode(serviceFlag);

@@ -49,6 +49,9 @@
 | 2026-07-23 | 完成「调整单/库存状态转化」对接（文档 6.3.5）：爱亚按数大臣 OpenAPI 协议推送（`method=aiyaChangeAttribute`），auth `AiyaOpenApi` → WMS `receiveAiyaChangeAttribute` 幂等落已审核《仓位移动》。仅处理 `CHANGE_STATUS` + `GOOD↔DAMAGE`；仓/SKU 走爱亚仓库映射与 SKU 映射；双侧空仓位；操作类型 `overseasStockStatusConvert`。详见下方「调整单相关」与「已确认结论」 |
 | 2026-07-24 | 完成「退货入库单对接」（文档 6.3.4）DMP 拉取链路：按用户确认口径用 `GLINK_BATCH_QUERY_ASN_NOTIFY`（`asnType=RETURN`）拉取，过滤 `status=Fulfilled` + `putawayStage=COMPLETED`，时间窗与头程一致用 `receiveTime`；明细取 `asnLineItems.putawayedQuantity` + `skuStatus`。新增 `AiyaReturnInstockInitHandler` / `AiyaReturnInstockDmpHandler` / `AiyaReturnInstockDetailDmpHandler` / `AiyaReturnInstockRocketMQTaskHandler`；**不改**数臣生成退货入库单/预入库单的现有代码。删除误仿 WEGO 的骨架 `AiyaReturnOrderResp` / `queryReturnOrderPage` / `RETURN_ORDER_QUERY_PAGE` 及对应 `ApiError`。test 库已有 `dmp_cfg_input`（爱亚退货入库）及 convert 指向上述 Handler，但 mapping/output 为空，脚本见 `sql/aiya_return_inbound_dmp_mapping.sql`。详见下方「退货入库相关」与「已确认结论」 |
 | 2026-07-24 | 尾程出库单联调确认并落文档：① 建单幂等重复提交返回 `success=true, message="Order already exist."`，Handler 当成功、无需反查；② 截单首次成功 / 重复截单 `This order has been cancelled!` 均当成功；③ `success=false` 直接 `failure` 透传爱亚原文，去掉「已出库」关键词与 `INTERCEPTING` 猜测分支；④ `intercept2cOrder` 入参为 `orderNumbers[]`；⑤ **`shipFrom` 可不传**（官方曾标必填，实测不填可建单），去掉占位常量，Handler 默认不下发 |
+| 2026-07-27 | 调整单审查续修：① 分步提交后幂等按审核状态续跑；② 同 SKU+出库状态汇总校验空仓位库存；③ `confirmDate` 固定 `Asia/Shanghai`。ApiError 11255 不改 |
+| 2026-07-27 | 调整单入口改 DMP Webhook：`POST /webhook/receive/aiyaChangeAttribute`（裸 body + MetaResponse）；新增 `AiyaChangeAttributeWebhookHandler`；删除 auth `AiyaOpenApi` |
+| 2026-07-27 | 审查收尾：DTO `partnerId`/`customerCode` 注释去掉 OpenAPI 残留；联调清单与「待确认」统一将 `verify` 标为上线阻断（非可选）；唯一索引仍按约定不加 |
 
 ## 退货入库相关（2026-07-24）
 
@@ -122,18 +125,21 @@ DMP定时「爱亚退货入库」
 
 ## 调整单相关（2026-07-23）
 
-### 调用约定（爱亚/EDI 按我们 OpenAPI 调）
+### 调用约定
 
-- 入口：`POST /open/api/service`（旧验签）或 `/open/api/service/v2`（网关鉴权）
-- Header：`appId` / `Referer`（旧）或 `App-Id`（v2）
-- `method`：`aiyaChangeAttribute`
-- `data`：业务 JSON（字段对齐爱亚 `changeAttribute4Edi` 业务体）
-- 响应：`ApiResult`（不是爱亚 `MetaResponse`）
+- 入口：`POST /webhook/receive/aiyaChangeAttribute`（DMP `WebhookController`，网关免登路径已含 `/webhook/receive/`）
+- 请求体：爱亚 `changeAttribute4Edi` **裸业务 JSON**（无 OpenAPI 外壳、无 `method/sign/data`）
+- 响应：爱亚 `MetaResponse`（`success` / `code` / `message` / `data`），非 `ApiResult`
+- 链路：`WebhookController` → `AiyaChangeAttributeWebhookHandler` → WMS `receiveAiyaChangeAttribute` → 已审核《仓位移动》
 
-`data` 示例：
+联调手册见：
+[`aiyaChangeAttribute-postman-test.md`](./aiyaChangeAttribute-postman-test.md)
+
+业务报文示例（与对方 JSON 契约一致）：
 
 ```json
 {
+  "partnerId": "PARTNER001",
   "customerCode": "CUST001",
   "warehouseCode": "WH001",
   "changeAttributeNumber": "CA202506140001",
@@ -152,41 +158,132 @@ DMP定时「爱亚退货入库」
 
 ### 实施配置（待完成）
 
-- [ ] 为爱亚配置 `SysRefererConfig` appId/secret（或走 `/open/api/service/v2` + 网关 `App-Id`）
-- [ ] 把爱亚/EDI 回调 URL 配成我们的 OpenAPI 地址（`/open/api/service` 或 `/service/v2`），**不是**裸路径 `/api/xingng/feedback/changeAttribute4Edi`
-- [ ] 把 OpenAPI 调用约定（method、data 示例、ApiResult）同步给爱亚/实施，确认对方已按我们协议改推送
+#### 回调 URL（给爱亚 / EDI）
+
+对方按 `changeAttribute4Edi` **裸报文**推送，不再使用 OpenAPI / `sys_referer_config` 验签。
+
+告知对方：
+
+- 回调地址：`https://{环境网关或域名}/webhook/receive/aiyaChangeAttribute`  
+  （落 DMP；网关免登白名单已含 `/webhook/receive/`）
+- Content-Type：`application/json`
+- Body：与 `changeAttribute4Edi(2).json` 业务字段一致（无外壳）
+- 成功判定：HTTP 200 且响应体 `success === true`（MetaResponse）
+
+- [ ] 已将回调 URL 同步给爱亚/EDI（配置到 `glink.change.feed.back.url` 或对等项）  
+- [ ] 首笔联调：对方推送裸 body，我方返回 MetaResponse，并落已审核《仓位移动》  
+- [ ] **【上线阻断】对方鉴权**：与爱亚确认签名/IP 白名单等方案后实现 `AiyaChangeAttributeWebhookHandler#verify`（联调可暂空，禁止空实现长期上生产）
+
+> 历史脚本 [`sql/aiya_openapi_referer_config.sql`](sql/aiya_openapi_referer_config.sql) 仅用于 OpenAPI 调试，**调整单回调不再依赖**。
 
 ### 联调注意（已实现口径）
 
 - 仓库映射：`overseas_provider_warehouse.platform_warehouse_code` + 平台 `aiya`
 - SKU 映射：`skuMappingFeign.listByWarehouseAndPlatformSku`
-- 幂等：`source_type=aiyaChangeAttribute` + `source_code=changeAttributeNumber`
-- 非本期类型/明细：忽略并成功返回（空 id 字符串）
+- 幂等：`source_type=aiyaChangeAttribute` + `source_code=changeAttributeNumber`  
+  - 代码：`@DistributeLocker(businessType=aiyaChangeAttribute, unlockAfterTx=false)` + 落单前先查后写（不加 DB 唯一索引）  
+  - 事务：无外层 `@Transactional`，对齐 `addAndApprove`（`add` → `submit` → `approve` 分步提交，避免事务内 Feign/流程）  
+  - 幂等续跑：已存在且 `approve` 直接返回；`waitSubmit` 续 `submit+approve`；`approveIng` 续 `approve`；`reject` 抛错需人工处理  
+  - 建单前按 `(skuId, outInventoryStatus)` 汇总校验空仓位库存（避免同行拆行超库存）  
+  - `confirmDate` → `billDate` 按 `Asia/Shanghai` 解释毫秒时间戳
+- 处理策略（折中）：
+  - 非 `CHANGE_STATUS`：忽略并成功返回（MetaResponse `success=true`，`data` 可为空串）
+  - `CHANGE_STATUS`：全有或全无——任一行非 GOOD↔DAMAGE / 数量非法则整单失败
+  - 仓/SKU 映射失败：失败 MetaResponse（`success=false`）
+  - 幂等重复：成功，`data` 为原主单 id
 - 状态映射：爱亚 `GOOD`→ERP `usable`（可用）；`DAMAGE`→ERP `defectiveProduct`（不良品）
-- 仓位：取货/上架默认空仓位（`""`）；操作类型 `overseasStockStatusConvert` 已放宽「同仓位禁止」校验
-- 代码入口：`AiyaOpenApi#aiyaChangeAttribute` → `WarehouseLocationMoveFeign#receiveAiyaChangeAttribute` → `WarehouseLocationMoveServiceImpl#receiveAiyaChangeAttribute`
+- 仓位：取货/上架默认空仓位（`""`）；库存校验按空仓位过滤；操作类型 `overseasStockStatusConvert` 已放宽「同仓位禁止」校验
+- 不良品出库：建单阶段校验空仓位上的 `defectiveProductQty`（`WH_LOCATION_MOVE_DEFECTIVE_QTY_EXCEEDS`）
+- `customerCode`：DTO 必填校验，不参与仓路由（映射表无客户字段）
+- 代码入口：`WebhookController#receiveWebhook(aiyaChangeAttribute)` → `AiyaChangeAttributeWebhookHandler` → `WarehouseLocationMoveFeign#receiveAiyaChangeAttribute` → `WarehouseLocationMoveServiceImpl#receiveAiyaChangeAttribute`
+
+### 数据链路示例（调整单）
+
+公共前置：对方回调 URL 已指向我们 webhook；ERP 已维护该仓 `overseas_provider_warehouse`（platform=`aiya`）与 SKU 映射；空仓位上已有对应状态库存。
+
+#### 1）GOOD → DAMAGE（成功）
+
+请求业务体要点：`type=CHANGE_STATUS`，`fromStatus=GOOD`，`toStatus=DAMAGE`，`changeQty=10`，`changeAttributeNumber=CA001`
+
+落库：
+
+- `warehouse_location_move`：`source_type=aiyaChangeAttribute`，`source_code=CA001`，`operate_type=overseasStockStatusConvert`，已审核，`bill_date`←`confirmDate`
+- 明细：出库 `usable` / 入库 `defectiveProduct`，双侧仓位 `""`，备注 `CA001+爱亚海外仓良品转不良品`
+
+库存：空仓位 `usable -10`，`defectiveProduct +10`
+
+响应：
+
+```json
+{ "success": true, "code": "SUCCESS", "message": null, "data": "主单id" }
+```
+
+#### 2）DAMAGE → GOOD（成功）
+
+请求：`fromStatus=DAMAGE`，`toStatus=GOOD`，`changeQty=5`，`changeAttributeNumber=CA002`
+
+落库：明细出库 `defectiveProduct` / 入库 `usable`，备注 `CA002+爱亚海外仓不良品转良品`
+
+库存：空仓位 `defectiveProduct -5`，`usable +5`  
+（若不良品库存不足，建单即失败：`WH_LOCATION_MOVE_DEFECTIVE_QTY_EXCEEDS`）
+
+响应：`success=true`，`data` = 新主单 id
+
+#### 3）幂等重复（成功返回原单）
+
+同一 `changeAttributeNumber=CA001` 再推一次
+
+行为：分布式锁内查到已有 `source_type+source_code`，不新建单、不改库存
+
+响应：`success=true`，`data` = 首次落单的主单 id
+
+#### 4）仓/SKU 映射失败（失败）
+
+`warehouseCode` 或 `sku` 在 ERP 无映射
+
+行为：WMS 抛 `ServiceException`；Webhook 转为 MetaResponse 失败
+
+响应示例：
+
+```json
+{ "success": false, "code": "INVALID_OPERATION", "message": "未找到爱亚仓库映射...", "data": null }
+```
+
+#### 5）非 CHANGE_STATUS（忽略成功）
+
+请求：`type=CHANGE_BATCHNO`（或其它非库存状态转移）
+
+行为：warn 日志后直接返回，不落单
+
+响应：
+
+```json
+{ "success": true, "code": "SUCCESS", "message": null, "data": "" }
+```
+
+补充：`type=CHANGE_STATUS` 时任一行非 GOOD↔DAMAGE / 数量非法 → **整单失败**（全有或全无，不再静默丢明细）
 
 ### 待产品确认 / 待联调验证（调整单）
 
 核心代码已按约定写完，以下需联调或产品确认后才能算闭环：
 
-- [ ] **【高优】爱亚侧接口是否已就绪**：方案文档曾写「接口开发不完善，需等待调整」；需确认 EDI/`glink.change.feed.back.url`（或对等回调）是否已能打到我们 OpenAPI
-- [ ] **【高优】真实推送样例**：要一份真实 `CHANGE_STATUS` + `GOOD↔DAMAGE` 的请求体（含 `confirmDate` 是否毫秒时间戳、`changeList` 字段是否齐全）
-- [ ] **【高优】空仓位 + 即时库存**：海外仓库存是否落在空仓位（`warehouse_location=""`）上的 `usable`/`defectiveProduct`；联调验证审核后可用/不良品数量是否正确增减
-- [ ] **不良品出库数量校验**：从 `DAMAGE` 转 `GOOD` 时，现有 PDA 库存查询 DTO 无 `defectiveProductQty`，代码对不良品出库未做数量前置校验（依赖审核库存引擎）；需确认是否够用，不够则补校验
-- [ ] **仓/SKU 映射失败策略**：当前映射不到会 `ServiceException` 失败返回；是否改为告警落异常表 + 仍返回成功（避免对方重试风暴），需产品定
-- [ ] **并发幂等**：当前按 `source_type+source_code` 先查后写，极端并发可能双写；是否要加 DB 唯一索引或分布式锁
-- [ ] **`customerCode` 是否参与路由**：当前只用 `warehouseCode` 找仓映射，未用 `customerCode` 校验授权客户；多客户共用同一仓码时是否有风险
-- [ ] **非 `CHANGE_STATUS` / 非 GOOD-DAMAGE**：当前忽略并成功；产品是否要求告警/记日志可查询
-- [ ] **过期自动良转不良**：业务告知写「对接《调整反馈》接口」；确认是否全部走本 OpenAPI，还是另有回调
-- [ ] **金蝶/下游是否需同步**：落《仓位移动》并审核后，是否还要推金蝶或其它系统（本期未做）
-- [ ] **冒烟用例**：用 `/open/api/getMD5/aiyaChangeAttribute` 造签名，对测试仓打一笔 GOOD→DAMAGE 再 DAMAGE→GOOD，核对仓位移动单 + 即时库存
+- [ ] **【高优】爱亚侧回调是否已就绪**：确认 `glink.change.feed.back.url`（或对等）已指向 `POST /webhook/receive/aiyaChangeAttribute`
+- [ ] **【高优】真实推送样例**：要一份真实 `CHANGE_STATUS` + `GOOD↔DAMAGE` 的请求体
+- [ ] **【高优】空仓位 + 即时库存**：联调验证审核后可用/不良品数量是否正确增减
+- [x] **不良品出库数量校验**：已补（2026-07-27）
+- [x] **仓/SKU 映射失败策略**：抛错 → MetaResponse 失败（2026-07-27）
+- [x] **并发幂等**：`@DistributeLocker` + 先查后写（2026-07-27）
+- [x] **入口协议**：改为 DMP Webhook 裸报文 + MetaResponse（2026-07-27）；不再走 `AiyaOpenApi`
+- [ ] **对方鉴权（上线阻断）**：`AiyaChangeAttributeWebhookHandler#verify` 当前为空；上线前必须确认签名/IP 白名单并实现，禁止长期仅靠网关免登白名单
+- [ ] **过期自动良转不良**：是否全部走本回调
+- [ ] **金蝶/下游是否需同步**：本期未做
+- [ ] **冒烟用例**：Postman 直推裸 body 到 webhook，核对仓位移动 + 即时库存
 
 ### 本期明确不做（调整单）
 
 - 批次号 / 生产日期 / 失效日期 / 原产国类转移（`CHANGE_BATCHNO` 等）
 - `invType` 冻结量转移（`CHANGE_HOLD_QTY`）
-- 爱亚裸 `MetaResponse` 兼容层、DMP Webhook 入口
+- OpenAPI 外壳验签入口（对方无法按我方 `requestExample` 传参）
 - 主动轮询爱亚转移单查询 API（契约不存在）
 
 ---
@@ -257,7 +354,7 @@ DMP定时「爱亚退货入库」
   5. **不改**数臣生成退货入库单/预入库单的现有代码；DMP 任务/convert 类名已在库中建好，补 mapping + MQ output 即可。
   6. 误仿 WEGO 的 `returnorder.queryPage` / `AiyaReturnOrderResp` 无用，已从 SDK 删除。
 
-- **调整单入口协议（2026-07-23，用户确认）**：爱亚/EDI 按数大臣 OpenAPI 协议调用（套外壳 + `method=aiyaChangeAttribute` + `data`），响应认 `ApiResult`；不做爱亚原 `changeAttribute4Edi` 裸 body / `MetaResponse` 兼容。
+- **调整单入口协议（2026-07-27，用户确认）**：对方无法按我方 OpenAPI `requestExample` 传参；改为 DMP `POST /webhook/receive/aiyaChangeAttribute`，请求体对齐 `changeAttribute4Edi` 裸 JSON，响应 `MetaResponse`。已删除 `AiyaOpenApi#aiyaChangeAttribute`。
 
 - **出库单创建/修改请求字段清单（2026-07-21，依据用户提供的爱亚开放平台接口文档截图，比方案文档翻译稿权威）**：
   - **顶层必填**：`customerCode`（SDK 注入）、`orderNumber`、`warehouseCode`、`orderTime`（格式 `yyyy-MM-dd'T'HH:mm:ssZ`，截图示例 `+0800`）、`shippingInstructions`、`shipTo`、`items[]`（`shipFrom` 官方截图曾列入必填，见下条联调纠正）。

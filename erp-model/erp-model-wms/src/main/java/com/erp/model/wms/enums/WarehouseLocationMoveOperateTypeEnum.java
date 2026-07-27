@@ -11,7 +11,11 @@ public enum WarehouseLocationMoveOperateTypeEnum implements EnumMessage {
     FULL_BOX_TRANSFER("fullBoxTransfer", "整箱移位"),
     UNBOX_TRANSFER("unboxTransfer", "拆箱移位"),
     PICKING_TRANSFER("pickingTransfer", "拣货移位"),
-    SELF_BUILT_TRANSFER("selfBuiltTransfer", "自建移位");
+    SELF_BUILT_TRANSFER("selfBuiltTransfer", "自建移位"),
+    /**
+     * 海外仓库存状态转化（如爱亚良品↔不良品），仅改库存状态、仓位可同为空仓位。
+     */
+    OVERSEAS_STOCK_STATUS_CONVERT("overseasStockStatusConvert", "海外仓库存状态转化");
 
     /**
      * 类型
