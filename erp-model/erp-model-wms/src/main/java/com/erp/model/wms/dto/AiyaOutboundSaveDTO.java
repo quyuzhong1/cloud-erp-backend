@@ -23,10 +23,10 @@ import java.util.List;
  *     <li>{@code orderNumber} 为<strong>必填</strong>唯一键（客户交易物流订单号），对应三方仓发货单号；
  *         方案文档把「指定物流单号」也叫 orderNumber 属于误译，官方对应
  *         {@link ShippingInstructions#trackingNumber}；</li>
- *     <li>收件/物流/寄件字段分别嵌套在 {@code shipTo}/{@code shippingInstructions}/{@code shipFrom}，
- *         不是方案文档里的扁平结构；</li>
- *     <li>{@code shipFrom} 官方标必填；其中 {@code name}/{@code company} 须<strong>至少填一个</strong>；
- *         {@code shipTo.district} 官方为可选（方案文档标必填，按官方）。</li>
+ *     <li>收件/物流字段嵌套在 {@code shipTo}/{@code shippingInstructions}；
+ *         {@code shipFrom} 官方文档曾标必填，但 2026-07-24 联调确认<strong>可不传</strong>，故 Handler 不下发；
+ *         DTO 仍保留 {@link ShipFrom} 结构供可选透传；</li>
+ *     <li>{@code shipTo.district} 官方为可选（方案文档标必填，按官方）。</li>
  * </ul>
  */
 @Data
@@ -84,7 +84,9 @@ public class AiyaOutboundSaveDTO implements Serializable {
     private List<Item> items;
 
     /**
-     * 寄件人信息（必填）。方案文档：默认取海外仓库维度寄件地址。
+     * 寄件人信息（可选）。官方文档曾标必填，2026-07-24 联调确认可不传；需要时再赋值。
+     * 若填写：地址类建议含 streetLine1/city/state/postalCode/countryCode；
+     * 身份类 name/company 至少填一个。
      */
     private ShipFrom shipFrom;
 

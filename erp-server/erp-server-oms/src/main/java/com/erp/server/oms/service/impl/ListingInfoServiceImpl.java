@@ -833,87 +833,84 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .filter(item -> isInactiveStatus(item.getStatus()))
                 .map(WarehouseSkuSyncDTO.SkuItemDTO::getSku)
                 .collect(Collectors.toSet());
-        if (CollectionUtils.isEmpty(inactiveSkuNoSet)) {
-            return result;
-        }
 
-        // 复用 listByAuth 把 type/authId/platformSkuNo 过滤下推到SQL
-        List<ListingInfoEntity> inactiveListings = this.listByAuth(
-                        RuleTypeEnum.WAREHOUSE.getCode(),
-                        new ArrayList<>(inactiveSkuNoSet),
-                        Collections.singletonList(dto.getAuthId())
-                ).stream()
-                .filter(li -> ListingSourceTypeEnum.THIRD.getCode().equals(li.getSourceType()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(inactiveListings)) {
-            return result;
-        }
-
-        List<ListingInfoEntity> matchedListing = inactiveListings.stream()
-                .filter(li -> ListingMatchResultEnum.TRUE.getCode().equals(li.getMatchResult()))
-                .collect(Collectors.toList());
-        // 仅「未匹配」(FALSE)；「无需匹配」(NOT) 不参与软删，避免误删用户刻意保留的数据
-        List<ListingInfoEntity> unmatchedListing = inactiveListings.stream()
-                .filter(li -> ListingMatchResultEnum.FALSE.getCode().equals(li.getMatchResult()))
-                .collect(Collectors.toList());
-
-        // 已映射且当前启用，但源端停用 -> 置为禁用；不做反向自动恢复
-        List<SkuMappingEntity> toDisableMappings = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(matchedListing)) {
-            List<String> matchedListingIds = matchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
-            List<SkuMappingEntity> enabledMappings = skuMappingService.listByListingIds(matchedListingIds).stream()
-                    .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
-                    .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
-                    .collect(Collectors.toList());
-            toDisableMappings.addAll(enabledMappings);
-        }
-
-        // 源端停用且 listing 标记为未匹配：仅删除真正的占位映射；若已有真实 productSkuId 则改走禁用，防止误删
         List<String> listingIdsToDelete = new ArrayList<>();
         List<String> mappingIdsToDelete = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(unmatchedListing)) {
-            List<String> unmatchedListingIds = unmatchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
-            List<SkuMappingEntity> warehouseMappings = skuMappingService.listByListingIds(unmatchedListingIds).stream()
-                    .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
+        List<SkuMappingEntity> toDisableMappings = new ArrayList<>();
+
+        if (CollectionUtils.isNotEmpty(inactiveSkuNoSet)) {
+            // 复用 listByAuth 把 type/authId/platformSkuNo 过滤下推到SQL
+            List<ListingInfoEntity> inactiveListings = this.listByAuth(
+                            RuleTypeEnum.WAREHOUSE.getCode(),
+                            new ArrayList<>(inactiveSkuNoSet),
+                            Collections.singletonList(dto.getAuthId())
+                    ).stream()
+                    .filter(li -> ListingSourceTypeEnum.THIRD.getCode().equals(li.getSourceType()))
                     .collect(Collectors.toList());
-            Map<String, List<SkuMappingEntity>> mappingsByListingId = warehouseMappings.stream()
-                    .collect(Collectors.groupingBy(SkuMappingEntity::getListingId));
 
-            for (ListingInfoEntity listing : unmatchedListing) {
-                List<SkuMappingEntity> mappings = mappingsByListingId.getOrDefault(listing.getId(), Collections.emptyList());
-                boolean hasRealMapping = mappings.stream().anyMatch(sm -> StringUtils.isNotBlank(sm.getProductSkuId()));
-                if (hasRealMapping) {
-                    // listing.matchResult 未及时回写为已匹配，但映射已绑定产品SKU：按禁用处理，不删
-                    mappings.stream()
-                            .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
-                            .forEach(toDisableMappings::add);
-                    continue;
+            List<ListingInfoEntity> matchedListing = inactiveListings.stream()
+                    .filter(li -> ListingMatchResultEnum.TRUE.getCode().equals(li.getMatchResult()))
+                    .collect(Collectors.toList());
+            // 仅「未匹配」(FALSE)；「无需匹配」(NOT) 不参与软删，避免误删用户刻意保留的数据
+            List<ListingInfoEntity> unmatchedListing = inactiveListings.stream()
+                    .filter(li -> ListingMatchResultEnum.FALSE.getCode().equals(li.getMatchResult()))
+                    .collect(Collectors.toList());
+
+            // 已映射且当前启用，但源端停用 -> 置为禁用；不做反向自动恢复
+            if (CollectionUtils.isNotEmpty(matchedListing)) {
+                List<String> matchedListingIds = matchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+                List<SkuMappingEntity> enabledMappings = skuMappingService.listByListingIds(matchedListingIds).stream()
+                        .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
+                        .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
+                        .collect(Collectors.toList());
+                toDisableMappings.addAll(enabledMappings);
+            }
+
+            // 源端停用且 listing 标记为未匹配：仅删除真正的占位映射；若已有真实 productSkuId 则改走禁用，防止误删
+            if (CollectionUtils.isNotEmpty(unmatchedListing)) {
+                List<String> unmatchedListingIds = unmatchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+                List<SkuMappingEntity> warehouseMappings = skuMappingService.listByListingIds(unmatchedListingIds).stream()
+                        .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
+                        .collect(Collectors.toList());
+                Map<String, List<SkuMappingEntity>> mappingsByListingId = warehouseMappings.stream()
+                        .collect(Collectors.groupingBy(SkuMappingEntity::getListingId));
+
+                for (ListingInfoEntity listing : unmatchedListing) {
+                    List<SkuMappingEntity> mappings = mappingsByListingId.getOrDefault(listing.getId(), Collections.emptyList());
+                    boolean hasRealMapping = mappings.stream().anyMatch(sm -> StringUtils.isNotBlank(sm.getProductSkuId()));
+                    if (hasRealMapping) {
+                        // listing.matchResult 未及时回写为已匹配，但映射已绑定产品SKU：按禁用处理，不删
+                        mappings.stream()
+                                .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
+                                .forEach(toDisableMappings::add);
+                        continue;
+                    }
+                    listingIdsToDelete.add(listing.getId());
+                    mappings.forEach(sm -> mappingIdsToDelete.add(sm.getId()));
                 }
-                listingIdsToDelete.add(listing.getId());
-                mappings.forEach(sm -> mappingIdsToDelete.add(sm.getId()));
             }
-        }
 
-        if (CollectionUtils.isNotEmpty(toDisableMappings)) {
-            // 同一 listing 可能同时进入匹配/未匹配兜底分支，按 id 去重后再更新
-            Map<String, SkuMappingEntity> disableMap = toDisableMappings.stream()
-                    .collect(Collectors.toMap(SkuMappingEntity::getId, Function.identity(), (a, b) -> a));
-            List<SkuMappingEntity> distinctToDisable = new ArrayList<>(disableMap.values());
-            distinctToDisable.forEach(sm -> sm.setStatus(SkuMappingStatusEnum.DISABLE));
-            CollUtil.split(distinctToDisable, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
-            result.setDisabledCount(distinctToDisable.size());
-            log.warn("[三方仓SKU同步] authId={} 映射关系置为禁用 {}条（源端已停用，需人工确认后手动重新启用）",
-                    dto.getAuthId(), distinctToDisable.size());
-        }
-
-        if (CollectionUtils.isNotEmpty(listingIdsToDelete)) {
-            if (CollectionUtils.isNotEmpty(mappingIdsToDelete)) {
-                CollUtil.split(mappingIdsToDelete, 500).forEach(batch -> skuMappingService.removeByIds(batch));
+            if (CollectionUtils.isNotEmpty(toDisableMappings)) {
+                // 同一 listing 可能同时进入匹配/未匹配兜底分支，按 id 去重后再更新
+                Map<String, SkuMappingEntity> disableMap = toDisableMappings.stream()
+                        .collect(Collectors.toMap(SkuMappingEntity::getId, Function.identity(), (a, b) -> a));
+                List<SkuMappingEntity> distinctToDisable = new ArrayList<>(disableMap.values());
+                distinctToDisable.forEach(sm -> sm.setStatus(SkuMappingStatusEnum.DISABLE));
+                CollUtil.split(distinctToDisable, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
+                result.setDisabledCount(distinctToDisable.size());
+                log.warn("[三方仓SKU同步] authId={} 映射关系置为禁用 {}条（源端已停用，需人工确认后手动重新启用）",
+                        dto.getAuthId(), distinctToDisable.size());
             }
-            CollUtil.split(listingIdsToDelete, 500).forEach(batch -> service.removeByIds(batch));
-            result.setDeletedCount(listingIdsToDelete.size());
-            log.warn("[三方仓SKU同步] authId={} 未匹配且源端已停用，软删 listing {}条",
-                    dto.getAuthId(), listingIdsToDelete.size());
+
+            if (CollectionUtils.isNotEmpty(listingIdsToDelete)) {
+                if (CollectionUtils.isNotEmpty(mappingIdsToDelete)) {
+                    CollUtil.split(mappingIdsToDelete, 500).forEach(batch -> skuMappingService.removeByIds(batch));
+                }
+                CollUtil.split(listingIdsToDelete, 500).forEach(batch -> service.removeByIds(batch));
+                result.setDeletedCount(listingIdsToDelete.size());
+                log.warn("[三方仓SKU同步] authId={} 未匹配且源端已停用，软删 listing {}条",
+                        dto.getAuthId(), listingIdsToDelete.size());
+            }
         }
 
         return result;
