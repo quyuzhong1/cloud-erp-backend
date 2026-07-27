@@ -4,8 +4,10 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -147,4 +149,14 @@ public interface PurchaseOrderFeign {
 
     @PostMapping("/feign/purchaseOrder/getPurchaseOrderByParams")
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
+    /**
+     * 添加产品数据显示
+     * @author Will
+     * @date: 2023/4/14 10:21
+     * @param dto
+     * @return ApiResult<ViewProductDTO>
+     */
+    @PostMapping(value = "/feign/purchaseOrder/viewProduct")
+    ApiResult<List<PurchaseOrderDetailDTO.ViewProductDTO>> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto);
 }

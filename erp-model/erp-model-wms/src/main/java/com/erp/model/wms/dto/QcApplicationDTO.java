@@ -107,6 +107,10 @@ public class QcApplicationDTO implements Serializable {
          * 来源编码【可排序】
          */
         private String sourceCode;
+        /**
+         * 来源类型【可排序】
+         */
+        private String sourceType;
 
         /**
          * 单据状态【可排序】

@@ -61,9 +61,6 @@
                qa.approve_status as approveStatus,
                qa.expect_qc_date as expectQcDate
         from qc_application qa
-         left join qc_notice qn on qa.id = qn.source_id and qnd.main_id = qn.id and qn.is_deleted = false
-         left join qc_info qi on qn.id = qi.source_id and qnd.id = qi.source_detail_id and qi.is_deleted = false
-         left join qc_result qr on qi.id = qr.main_id and qr.is_deleted = false
         WHERE ${params.sqlMap.default}
         and qa.is_deleted = FALSE
         <!--权限-->

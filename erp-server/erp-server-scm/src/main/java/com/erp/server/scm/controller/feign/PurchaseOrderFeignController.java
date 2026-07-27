@@ -5,6 +5,8 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
@@ -28,7 +30,7 @@ import java.util.Set;
  **/
 @RestController
 @RequestMapping("feign/purchaseOrder")
-public class PurchaseOrderFeignController {
+public class PurchaseOrderFeignController extends BaseController {
 
 
     @Resource
@@ -610,5 +612,17 @@ public class PurchaseOrderFeignController {
     @PostMapping("/getPurchaseOrderByParams")
     public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
         return purchaseOrderService.getPurchaseOrderByParams(purchaseCalcQtyParamsDTO);
+    }
+
+    /**
+     * 添加产品数据显示
+     * @author Will
+     * @date: 2023/4/14 10:21
+     * @param dto
+     * @return ApiResult<ViewProductDTO>
+     */
+    @PostMapping(value = "/viewProduct")
+    public ApiResult<List<PurchaseOrderDetailDTO.ViewProductDTO>> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        return success(purchaseOrderDetailService.viewProduct(dto));
     }
 }
