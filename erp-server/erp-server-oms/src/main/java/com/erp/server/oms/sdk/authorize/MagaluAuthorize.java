@@ -308,7 +308,17 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
 
     private String getApiBaseUrl(CfgAppClientEntity cfgAppClient) {
         Map<String, Object> extendData = cfgAppClient.getExtendData();
-        if (extendData == null || Objects.isNull(extendData.get("apiBaseUrl"))) {
+        if (extendData == null) {
+            return "https://api.magalu.com";
+        }
+        if (isProductionApiEnv(extendData)) {
+            Object productionApiBaseUrl = extendData.get("productionApiBaseUrl");
+            if (Objects.nonNull(productionApiBaseUrl) && StringUtils.isNotBlank(productionApiBaseUrl.toString())) {
+                return productionApiBaseUrl.toString();
+            }
+            return "https://api.magalu.com";
+        }
+        if (Objects.isNull(extendData.get("apiBaseUrl"))) {
             return "https://api.magalu.com";
         }
         String apiBaseUrl = extendData.get("apiBaseUrl").toString();
@@ -317,10 +327,22 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
 
     private String getChannelId(CfgAppClientEntity cfgAppClient) {
         Map<String, Object> extendData = cfgAppClient.getExtendData();
-        if (extendData == null || Objects.isNull(extendData.get("channelId"))) {
+        if (extendData == null) {
+            return "";
+        }
+        if (isProductionApiEnv(extendData)) {
+            Object productionChannelId = extendData.get("productionChannelId");
+            return Objects.isNull(productionChannelId) ? "" : productionChannelId.toString();
+        }
+        if (Objects.isNull(extendData.get("channelId"))) {
             return "";
         }
         return extendData.get("channelId").toString();
+    }
+
+    private boolean isProductionApiEnv(Map<String, Object> extendData) {
+        Object apiEnv = extendData.get("apiEnv");
+        return apiEnv != null && "production".equalsIgnoreCase(apiEnv.toString());
     }
 
     private LocalDateTime getTokenExpireTime(Integer expiresIn) {
