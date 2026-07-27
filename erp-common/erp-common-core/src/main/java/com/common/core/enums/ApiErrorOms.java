@@ -303,6 +303,10 @@ public final class ApiErrorOms {
     public static final ApiError SO_RETURN_INSTOCK_IMPORT_TASK_FAILED = new ApiError("SO_RETURN_INSTOCK_IMPORT_TASK_FAILED", 10775, "销售退货入库单导入失败");
     public static final ApiError SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE = new ApiError("SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE", 10776, "存在多个同名客户【{0}】，请人工确认");
     public static final ApiError SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED = new ApiError("SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED", 10777, "单据已创建但SKU占用状态更新失败");
+    /** 预入库-关联售后单查询：单据类型非法（非 B2B/B2C） */
+    public static final ApiError SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_INVALID = new ApiError("SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_INVALID", 10810, "单据类型参数非法");
+    /** 预入库-关联售后单查询：单据类型集合混传多个值 */
+    public static final ApiError SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_MULTI_FORBIDDEN = new ApiError("SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_MULTI_FORBIDDEN", 10811, "单据类型参数非法：关联售后单查询仅支持单一单据类型");
     public static final ApiError SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED = new ApiError("SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED", 10753, "不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试");
     public static final ApiError SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED = new ApiError("SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED", 10754, "不出库发货失败：销售订单物流信息更新失败，请刷新后重试");
     public static final ApiError SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED = new ApiError("SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED", 10755, "不出库发货失败：销售订单状态更新失败，请刷新后重试");

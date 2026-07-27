@@ -6,6 +6,16 @@ alwaysApply: false
 
 # Backend Rules
 
+## Method comments (required for new methods)
+
+- **Default: every newly added method must have a JavaDoc comment** (public / protected / private, including Service interface + Impl).
+- Comment should cover: purpose, key business rules / side effects, `@param`, `@return` (and `@throws` when throwing business exceptions).
+- Prefer meaningful Chinese/English description over empty `@param xxx` placeholders.
+- When modifying an existing method’s behavior in a non-trivial way, update its JavaDoc accordingly.
+- Trivial generated getters/setters/builders are exempt unless they contain real logic.
+
+## Layering
+
 - Follow existing layers: `controller`, `service`, `service/impl`, `mapper`, and `src/main/resources/mapper/*.xml`.
 - Put Web/API controllers under `controller/api`; put service-to-service endpoints under `controller/feign`; use `app` or `pda` only when nearby code uses those client-specific packages.
 - Controllers return `ApiResult` and should use `BaseController` helpers when applicable.

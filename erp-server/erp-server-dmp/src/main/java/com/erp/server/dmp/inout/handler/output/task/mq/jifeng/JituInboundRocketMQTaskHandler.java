@@ -96,9 +96,6 @@ public class JituInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         detailJsonList.forEach(detailJson -> {
                 List<JituInboundReturnDTO.Item> items = JSON.parseArray(detailJson, JituInboundReturnDTO.Item.class);
             for (JituInboundReturnDTO.Item item : items) {
-                    if (!item.getInventoryType().equals("ZP")) {
-                        continue;
-                    }
                     LocalDateTime operateTime = item.getOperateTime();
                     String lineNo = item.getLineNo();
                     for (JituInboundReturnDTO.Item.Batche batch : item.getBatches()) {
@@ -108,6 +105,12 @@ public class JituInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                         receiving.setReceiveQty(batch.getActualQty());
                         receiving.setReceiveTime(operateTime);
                         receiving.setThirdId(lineNo);
+                        // 库存类型 CC=不良品，ZP/空=正品；批次级优先，缺失时回退行级
+                        String inventoryType = batch.getInventoryType();
+                        if (inventoryType == null || inventoryType.isEmpty()) {
+                            inventoryType = item.getInventoryType();
+                        }
+                        receiving.setDefectiveProductFlag("CC".equalsIgnoreCase(inventoryType));
                         receivingDataList.add(receiving);
                     }
                 }

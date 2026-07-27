@@ -117,13 +117,19 @@
             and wl.warehouse_id = #{params.warehouseId}
         </if>
         <if test="params.code != null and params.code != ''">
-            and wl.code ilike concat('%', #{params.code}::text ,'%')
+            and (wl.code ilike concat('%', #{params.code}::text ,'%')
+            or wl.name ilike concat('%', #{params.code}::text ,'%'))
         </if>
         <if test="params.codeList != null and params.codeList.size() > 0">
-            and wl.code in
+            and (wl.code in
             <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+            or wl.name in
+            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            )
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code ilike concat('%', #{params.searchKeyword}::text ,'%')) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
@@ -377,13 +383,19 @@
             and wl.warehouse_id = #{params.warehouseId}
         </if>
         <if test="params.code != null and params.code != ''">
-            and wl.code ilike concat('%', #{params.code}::text ,'%')
+            and (wl.code ilike concat('%', #{params.code}::text ,'%')
+            or wl.name ilike concat('%', #{params.code}::text ,'%'))
         </if>
         <if test="params.codeList != null and params.codeList.size() > 0">
-            and wl.code in
+            and (wl.code in
             <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+            or wl.name in
+            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            )
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code ilike concat('%', #{params.searchKeyword}::text ,'%')) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
@@ -461,9 +473,9 @@
         and wa.is_deleted =FALSE
         WHERE
         wl.is_deleted = FALSE
-        AND wl.area_type != 'pickingArea'
+        AND wl.area_type != #{excludeAreaType}
         AND i.qty > 0
-        AND i.dict_inventory_status = 'usable'
+        AND i.dict_inventory_status = #{inventoryStatus}
         <if test="skuNo != null and skuNo != ''">
             AND i.sku_no = #{skuNo}
         </if>
@@ -472,6 +484,42 @@
         </if>
         ORDER BY i.qty DESC
             limit 1
+    </select>
+
+    <select id="listWareInventoryQtyBySkuNos" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$WareInventoryQtyDTO">
+        SELECT
+        DISTINCT
+        wl.ID,
+        wl.warehouse_id,
+        wl.code AS warehouseCode,
+        wl.NAME AS warehouseName,
+        wa.code as warehouseLocationCode,
+        wa.name as warehouseLocationName,
+        i.qty,
+        i.sku_id,
+        i.sku_no
+        FROM
+        warehouse_location AS wl
+        INNER JOIN inventory AS i ON wl.warehouse_id = i.warehouse_id
+        AND i.is_deleted =FALSE
+        INNER join warehouse_location as wa on wa.parent_id = wl.id
+        and i.warehouse_location = wa.code
+        and wa.is_deleted =FALSE
+        WHERE
+        wl.is_deleted = FALSE
+        AND wl.area_type != #{excludeAreaType}
+        AND i.qty > 0
+        AND i.dict_inventory_status = #{inventoryStatus}
+        <if test="warehouseId != null and warehouseId != ''">
+            AND wl.warehouse_id = #{warehouseId}
+        </if>
+        <if test="skuNos != null and skuNos.size() > 0">
+            AND i.sku_no IN
+            <foreach collection="skuNos" item="skuNo" open="(" close=")" separator=",">
+                #{skuNo}
+            </foreach>
+        </if>
+        ORDER BY i.sku_no, i.qty DESC
     </select>
 
     <select id="listByAfterSalesWarehouse" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">

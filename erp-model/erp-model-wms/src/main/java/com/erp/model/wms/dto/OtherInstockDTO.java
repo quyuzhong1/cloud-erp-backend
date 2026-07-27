@@ -171,6 +171,11 @@ public class OtherInstockDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 是否不良品（true=不良品，false=可用），默认可用
+         */
+        private Boolean defectiveProductFlag;
     }
 
     @Data

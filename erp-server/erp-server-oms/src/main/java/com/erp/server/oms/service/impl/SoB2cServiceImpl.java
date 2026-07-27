@@ -4537,7 +4537,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_PROCESSING_FORBIDDEN_CANCEL);
         }
 
-        soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
+        Boolean interceptUpdated = soB2cDeliveryInterceptFeign.updateHandleStatus(
+                Arrays.asList(entity.getId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
+        if (!Boolean.TRUE.equals(interceptUpdated)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消发货拦截失败：拦截单状态更新失败");
+        }
 
         //修改拦截打标识、冻结订单
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
@@ -6615,6 +6619,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("actualShippingCost", logisticsEntity.getActualShippingCost());
             detailMap.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
             detailMap.put("dictPlatform", soB2cEntity.getDictPlatform());
+            // 配货库规则按明细 detailMap 匹配，须同步注入开票相关状态，否则条件恒不命中
+            detailMap.put("invoiceStatus", Objects.nonNull(latestInvoice) ? latestInvoice.getStatus() : "");
+            detailMap.put("vatInvoiceStatus", CharSequenceUtil.isNotBlank(soB2cEntity.getVatInvoiceStatus()) ? soB2cEntity.getVatInvoiceStatus() : "");
+            detailMap.put("nfeInvoiceStatus", CharSequenceUtil.isNotBlank(soB2cEntity.getNfeInvoiceStatus()) ? soB2cEntity.getNfeInvoiceStatus() : "");
             detailMap.put("isHavebuyerRemark", isHavebuyerRemark);
             detailMap.put("deliveryWarehouseQty", warehouseCount);
             detailMap.put("skuTypeQty", skuTypeQty);
@@ -8926,8 +8934,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (null == logisticsEntity) {
             throw new ServiceException("物流信息为空");
         }
-        logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
-        logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+        if (dto.isForceUpdateLogisticsTrack() && CharSequenceUtil.isNotBlank(dto.getTrackNo())) {
+            // 未推送海外仓面单：仓回传跟踪号与订单不一致时覆盖物流单号+跟踪号（不清面单）
+            logisticsEntity.setCode(dto.getTrackNo());
+            logisticsEntity.setTrackNo(dto.getTrackNo());
+        } else {
+            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+        }
         soB2cLogisticsService.updateById(logisticsEntity);
         if (dto.isAddOperationLog()) {
             operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoId(), "海外仓发货");
@@ -13233,8 +13247,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 三方仓渠道映射依赖 Feign，须在事务外完成，避免长事务占用连接
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
         if (Objects.nonNull(logisticsEntity)) {
-            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
-            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            if (dto.isForceUpdateLogisticsTrack() && CharSequenceUtil.isNotBlank(dto.getTrackNo())) {
+                // 未推送海外仓面单：仓回传跟踪号与订单不一致时覆盖物流单号+跟踪号（不清面单）
+                logisticsEntity.setCode(dto.getTrackNo());
+                logisticsEntity.setTrackNo(dto.getTrackNo());
+            } else {
+                logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+                logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            }
             applyThirdWarehouseLogisticsChannel(logisticsEntity, dto);
         }
         // 经 self-injection 代理调用，使 @Transactional 生效；该方法 intentionally 不暴露在 SoB2cService 接口
