@@ -3,6 +3,7 @@ package com.erp.server.oms.helper;
 import cn.hutool.core.collection.CollUtil;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -33,8 +34,6 @@ import java.util.stream.Collectors;
 @Component
 public class WarehouseSkuReconcileHelper {
 
-    private static final String STATUS_ACTIVE = "active";
-
     @Resource
     private SkuMappingService skuMappingService;
     @Lazy
@@ -45,7 +44,8 @@ public class WarehouseSkuReconcileHelper {
      * 源端状态是否为停用：非空且非 Active（ignoreCase）；未传状态不参与启停回收。
      */
     public static boolean isInactivePlatformStatus(String platformStatus) {
-        return StringUtils.isNotBlank(platformStatus) && !STATUS_ACTIVE.equalsIgnoreCase(platformStatus);
+        return StringUtils.isNotBlank(platformStatus)
+                && !ListingInfoPlatformStatusEnum.ACTIVE.getCode().equalsIgnoreCase(platformStatus);
     }
 
     /**
