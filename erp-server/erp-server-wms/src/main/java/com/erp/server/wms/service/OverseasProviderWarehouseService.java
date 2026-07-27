@@ -33,16 +33,21 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     Boolean update(OverseasProviderDTO.UpdateDTO dto, String mainId);
 
     /**
-     * 根据仓库id查询绑定关系
-     * @Author Luo_WG
-     * @Date 2023/11/17 12:18
-     * @param warehouseId
-     * @return com.erp.model.wms.entity.OverseasProviderWarehouseEntity
+     * 根据仓库 id 查询启用中的三方仓绑定关系。
+     * <p>
+     * 同一仓库存在多条映射时，优先返回所属服务商已授权（{@code auth_status=already}）的记录，
+     * 避免历史取消授权未解绑数据抢先命中。
+     *
+     * @param warehouseId ERP 仓库 ID
+     * @return 优先的三方仓映射；无启用映射时返回 null
      **/
     OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId);
 
     /**
-     * 根据仓库id查询绑定关系(未禁用)
+     * 根据仓库 id 查询启用中的三方仓绑定关系（语义同 {@link #getByWarehouseId(String)}）。
+     *
+     * @param warehouseId ERP 仓库 ID
+     * @return 优先的三方仓映射；无启用映射时返回 null
      **/
     OverseasProviderWarehouseEntity getByWarehouseIdWithNotDisabled(String warehouseId);
 
@@ -81,10 +86,12 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList,String platform);
 
     /**
-     * 根据仓库ID信息查询海外仓平台
+     * 根据仓库 ID 查询已授权的海外仓服务商。
+     * <p>
+     * 优先取未禁用且服务商已授权的映射；若启用映射均未授权，再回退到含禁用映射的历史数据。
      *
-     * @Author Jim
-     * @Date 2023/12/05
+     * @param destWarehouseId ERP 目的仓 ID
+     * @return 已授权服务商；不存在则返回 null
      **/
     OverseasProviderEntity findPlatformByWarehouseId(String destWarehouseId);
 
@@ -93,9 +100,10 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
 
 
     /**
-     * 是否API对接仓库
-     * @param destWarehouseId
-     * @return
+     * 是否 API 对接仓库（存在启用映射且所属服务商已授权）。
+     *
+     * @param destWarehouseId ERP 目的仓 ID
+     * @return true=需走三方仓 API；false=仅本地处理
      */
     Boolean isApiWarehouse(String destWarehouseId);
 
