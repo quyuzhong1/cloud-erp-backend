@@ -139,23 +139,69 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId) {
-        return lambdaQuery()
-                .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
-                .eq(OverseasProviderWarehouseEntity::getDisabled,false)
-                .orderByAsc(OverseasProviderWarehouseEntity::getId)
-                .last("LIMIT 1")
-                .one();
+        return resolvePreferredByWarehouseId(warehouseId);
     }
 
 
     @Override
     public OverseasProviderWarehouseEntity getByWarehouseIdWithNotDisabled(String warehouseId) {
-        return lambdaQuery()
+        return resolvePreferredByWarehouseId(warehouseId);
+    }
+
+    /**
+     * 按 ERP 仓库 ID 解析启用中的三方仓映射。
+     * <p>
+     * 同一仓库可能残留多条映射（例如历史取消授权未解绑）。优先返回所属服务商
+     * {@code auth_status=already} 的映射；若均未授权则回退最早一条启用映射，兼容无 API 对接仓。
+     *
+     * @param warehouseId ERP 仓库 ID
+     * @return 优先的三方仓映射；无启用映射时返回 null
+     */
+    private OverseasProviderWarehouseEntity resolvePreferredByWarehouseId(String warehouseId) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            return null;
+        }
+        List<OverseasProviderWarehouseEntity> list = lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
                 .eq(OverseasProviderWarehouseEntity::getDisabled, false)
                 .orderByAsc(OverseasProviderWarehouseEntity::getId)
-                .last("LIMIT 1")
-                .one();
+                .list();
+        return pickPreferredProviderWarehouse(list);
+    }
+
+    /**
+     * 在多条启用映射中挑选优先项：所属海外服务商已授权（already）优先。
+     *
+     * @param list 同一 warehouseId 下未禁用的映射列表（已按 id 升序）
+     * @return 优先映射；列表为空返回 null
+     */
+    private OverseasProviderWarehouseEntity pickPreferredProviderWarehouse(List<OverseasProviderWarehouseEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return null;
+        }
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+        List<String> mainIds = list.stream()
+                .map(OverseasProviderWarehouseEntity::getMainId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return list.get(0);
+        }
+        // listByIds 受 @TableLogic 过滤，已软删的服务商不会返回
+        Set<String> alreadyAuthMainIds = overseasProviderService.listByIds(mainIds).stream()
+                .filter(p -> AuthStatusEnum.ALREADY.getCode().equals(p.getAuthStatus()))
+                .map(OverseasProviderEntity::getId)
+                .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(alreadyAuthMainIds)) {
+            return list.get(0);
+        }
+        return list.stream()
+                .filter(w -> alreadyAuthMainIds.contains(w.getMainId()))
+                .findFirst()
+                .orElse(list.get(0));
     }
 
     @Override
@@ -202,14 +248,25 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
+        // 与 getByWarehouseId 一致：优先未禁用且服务商已授权的映射，避免历史脏数据抢先命中
+        OverseasProviderWarehouseEntity preferredWarehouse = resolvePreferredByWarehouseId(warehouseId);
+        if (preferredWarehouse != null) {
+            OverseasProviderEntity preferredProvider = overseasProviderService.getById(preferredWarehouse.getMainId());
+            if (preferredProvider != null
+                    && AuthStatusEnum.ALREADY.getCode().equals(preferredProvider.getAuthStatus())) {
+                return preferredProvider;
+            }
+        }
+        // 回退：兼容映射被禁用但仍有已授权服务商的历史数据
         List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Collections.singletonList(warehouseId));
         if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
-        List<String> mainIds = entityList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
-        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByIds(mainIds);
-        overseasProviderEntityList = overseasProviderEntityList.stream().filter(v->v.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())).collect(Collectors.toList());
-        return CollectionUtils.isEmpty(overseasProviderEntityList)?null:overseasProviderEntityList.get(0);
+        List<String> mainIds = entityList.stream().map(OverseasProviderWarehouseEntity::getMainId).distinct().collect(Collectors.toList());
+        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByIds(mainIds).stream()
+                .filter(v -> AuthStatusEnum.ALREADY.getCode().equals(v.getAuthStatus()))
+                .collect(Collectors.toList());
+        return CollectionUtils.isEmpty(overseasProviderEntityList) ? null : overseasProviderEntityList.get(0);
     }
 
     @Override
@@ -316,20 +373,17 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public Boolean isApiWarehouse(String destWarehouseId) {
-        if(CharSequenceUtil.isBlank(destWarehouseId)){
+        if (CharSequenceUtil.isBlank(destWarehouseId)) {
             return false;
         }
+        // getByWarehouseId 已优先已授权服务商，避免历史取消授权映射导致误判为非 API 仓
         OverseasProviderWarehouseEntity entity = getByWarehouseId(destWarehouseId);
-        if (null == entity || entity.getDisabled()) {
+        if (null == entity || Boolean.TRUE.equals(entity.getDisabled())) {
             return false;
         }
-
         OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
-        if (null == providerEntity || !AuthStatusEnum.ALREADY.getCode().equals(providerEntity.getAuthStatus())) {
-            return false;
-        }
-
-        return true;
+        return providerEntity != null
+                && AuthStatusEnum.ALREADY.getCode().equals(providerEntity.getAuthStatus());
     }
 
     @Override
