@@ -11,6 +11,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
@@ -31,13 +32,16 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.enums.InventorySyncModeEnum;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.openapi.AiyaChangeAttributeDTO;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.OperateLogDTO;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO.PcAddDTO;
@@ -46,6 +50,7 @@ import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
@@ -87,8 +92,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -156,6 +163,19 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private AfterSalePackService afterSalePackService;
     @Resource
     private WmsMoveCartonDetailService wmsMoveCartonDetailService;
+    /** 爱亚转移单来源类型（幂等 source_type） */
+    private static final String AIYA_CHANGE_ATTRIBUTE_SOURCE_TYPE = "aiyaChangeAttribute";
+    private static final String AIYA_CHANGE_TYPE_STATUS = "CHANGE_STATUS";
+    private static final String AIYA_STATUS_GOOD = "GOOD";
+    private static final String AIYA_STATUS_DAMAGE = "DAMAGE";
+    /** 方案约定：取货/上架仓位默认空仓位 */
+    private static final String EMPTY_WAREHOUSE_LOCATION = "";
+    /** confirmDate 转单据日统一按东八区解释，避免依赖部署机器时区 */
+    private static final ZoneId AIYA_BILL_ZONE = ZoneId.of("Asia/Shanghai");
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1753,6 +1773,267 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         private String boxDisplay() {
             return String.join(",", boxDisplays);
+        }
+    }
+
+    /** 是否为爱亚良品/不良品状态码（GOOD / DAMAGE，忽略大小写） */
+    private static boolean isAiyaGoodOrDamage(String status) {
+        return AIYA_STATUS_GOOD.equalsIgnoreCase(status) || AIYA_STATUS_DAMAGE.equalsIgnoreCase(status);
+    }
+
+    /**
+     * 爱亚货物状态映射为 ERP 库存状态码。
+     *
+     * @param aiyaStatus GOOD / DAMAGE
+     * @return usable / defectiveProduct
+     */
+    private static String mapAiyaStatusToInventory(String aiyaStatus) {
+        if (AIYA_STATUS_DAMAGE.equalsIgnoreCase(CharSequenceUtil.trim(aiyaStatus))) {
+            return InventoryStatusEnum.DEFECTIVE_PRODUCT.getCode();
+        }
+        return InventoryStatusEnum.USABLE.getCode();
+    }
+
+    /**
+     * 接收爱亚库存状态转移反馈：仅处理 CHANGE_STATUS 且 GOOD↔DAMAGE，
+     * 按转移单号幂等生成已审核《仓位移动》。
+     * <p>
+     * 无外层事务：对齐 {@link #addAndApprove}，add/submit/approve 各自提交，避免事务内 Feign/流程调用。
+     */
+    @Override
+    @DistributeLocker(businessType = "aiyaChangeAttribute", keyName = "dto.changeAttributeNumber", unlockAfterTx = false)
+    public String receiveAiyaChangeAttribute(AiyaChangeAttributeDTO dto) {
+        if (dto == null) {
+            throw new ServiceException("爱亚转移单数据不能为空");
+        }
+        String changeNo = CharSequenceUtil.trim(dto.getChangeAttributeNumber());
+        String type = CharSequenceUtil.trim(dto.getType());
+        if (!AIYA_CHANGE_TYPE_STATUS.equalsIgnoreCase(type)) {
+            log.warn("爱亚转移单非库存状态转移，忽略 type={} changeAttributeNumber={}", type, changeNo);
+            return "";
+        }
+
+        WarehouseLocationMoveEntity existed = lambdaQuery()
+                .eq(WarehouseLocationMoveEntity::getSourceType, AIYA_CHANGE_ATTRIBUTE_SOURCE_TYPE)
+                .eq(WarehouseLocationMoveEntity::getSourceCode, changeNo)
+                .one();
+        if (existed != null) {
+            return resumeAiyaChangeAttributeByApproveStatus(existed, changeNo);
+        }
+
+        // CHANGE_STATUS：全有或全无，任一行非法直接失败，避免爱亚以为整单成功而 ERP 少落明细
+        List<AiyaChangeAttributeDTO.ChangeItem> validItems = new ArrayList<>();
+        if (CollUtil.isEmpty(dto.getChangeList())) {
+            throw new ServiceException(CharSequenceUtil.format(
+                    "爱亚转移单明细为空，changeAttributeNumber={}", changeNo));
+        }
+        for (AiyaChangeAttributeDTO.ChangeItem item : dto.getChangeList()) {
+            if (item == null) {
+                throw new ServiceException(CharSequenceUtil.format(
+                        "爱亚转移单存在空明细，changeAttributeNumber={}", changeNo));
+            }
+            String from = CharSequenceUtil.trim(item.getFromStatus());
+            String to = CharSequenceUtil.trim(item.getToStatus());
+            if (!isAiyaGoodOrDamage(from) || !isAiyaGoodOrDamage(to) || CharSequenceUtil.equalsIgnoreCase(from, to)) {
+                throw new ServiceException(CharSequenceUtil.format(
+                        "爱亚转移明细非法（仅支持 GOOD↔DAMAGE），changeAttributeNumber={} sku={} from={} to={} qty={}",
+                        changeNo, item.getSku(), from, to, item.getChangeQty()));
+            }
+            if (item.getChangeQty() == null || item.getChangeQty() <= 0) {
+                throw new ServiceException(CharSequenceUtil.format(
+                        "爱亚转移明细数量非法，changeAttributeNumber={} sku={} qty={}",
+                        changeNo, item.getSku(), item.getChangeQty()));
+            }
+            validItems.add(item);
+        }
+
+        String platformWarehouseCode = CharSequenceUtil.trim(dto.getWarehouseCode());
+        List<OverseasProviderWarehouseEntity> warehouseMappings =
+                overseasProviderWarehouseService.listByPlatformWarehouseCode(
+                        CollUtil.newArrayList(platformWarehouseCode), OmsPlatformEnum.AI_YA.getCode());
+        OverseasProviderWarehouseEntity warehouseMapping = CollUtil.isEmpty(warehouseMappings) ? null
+                : warehouseMappings.stream()
+                .filter(w -> CharSequenceUtil.equals(platformWarehouseCode, w.getPlatformWarehouseCode())
+                        && CharSequenceUtil.isNotBlank(w.getWarehouseId()))
+                .findFirst()
+                .orElse(null);
+        if (warehouseMapping == null) {
+            throw new ServiceException(CharSequenceUtil.format(
+                    "未找到爱亚仓库映射，warehouseCode={}", platformWarehouseCode));
+        }
+        String warehouseId = warehouseMapping.getWarehouseId();
+
+        List<String> platformSkuList = validItems.stream()
+                .map(i -> CharSequenceUtil.trim(i.getSku()))
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        // Feign 在写库前完成
+        List<SkuMappingDTO.WarehouseSkuDTO> skuMappings =
+                skuMappingFeign.listByWarehouseAndPlatformSku(warehouseId, platformSkuList);
+        Map<String, SkuMappingDTO.WarehouseSkuDTO> skuMappingByPlatformSku = new HashMap<>(16);
+        if (CollUtil.isNotEmpty(skuMappings)) {
+            for (SkuMappingDTO.WarehouseSkuDTO mapping : skuMappings) {
+                if (mapping == null || CharSequenceUtil.isBlank(mapping.getPlatformSkuNo())) {
+                    continue;
+                }
+                skuMappingByPlatformSku.putIfAbsent(CharSequenceUtil.trim(mapping.getPlatformSkuNo()), mapping);
+            }
+        }
+
+        List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>(validItems.size());
+        for (AiyaChangeAttributeDTO.ChangeItem item : validItems) {
+            String platformSku = CharSequenceUtil.trim(item.getSku());
+            SkuMappingDTO.WarehouseSkuDTO skuMapping = skuMappingByPlatformSku.get(platformSku);
+            if (skuMapping == null || CharSequenceUtil.isBlank(skuMapping.getProductSkuId())
+                    || CharSequenceUtil.isBlank(skuMapping.getProductSkuNo())) {
+                throw new ServiceException(CharSequenceUtil.format(
+                        "未找到爱亚SKU映射，warehouseCode={} sku={}", platformWarehouseCode, platformSku));
+            }
+            String fromStatus = mapAiyaStatusToInventory(item.getFromStatus());
+            String toStatus = mapAiyaStatusToInventory(item.getToStatus());
+            String remarkSuffix = AIYA_STATUS_GOOD.equalsIgnoreCase(CharSequenceUtil.trim(item.getFromStatus()))
+                    ? "爱亚海外仓良品转不良品"
+                    : "爱亚海外仓不良品转良品";
+
+            WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
+            detail.setSkuId(skuMapping.getProductSkuId());
+            detail.setSkuNo(skuMapping.getProductSkuNo());
+            detail.setOutWarehouseLocation(EMPTY_WAREHOUSE_LOCATION);
+            detail.setInWarehouseLocation(EMPTY_WAREHOUSE_LOCATION);
+            detail.setOutInventoryStatus(fromStatus);
+            detail.setInInventoryStatus(toStatus);
+            detail.setQty(item.getChangeQty());
+            detail.setWarehouseId(warehouseId);
+            detail.setRemark(changeNo + "+" + remarkSuffix);
+            detailList.add(detail);
+        }
+
+        // 同 SKU+出库状态多行汇总后再校验空仓位库存，避免行级校验通过、审核合计超库存
+        assertAggregatedEmptyLocationQty(warehouseId, detailList);
+
+        LocalDate billDate = dto.getConfirmDate() == null
+                ? LocalDate.now(AIYA_BILL_ZONE)
+                : Instant.ofEpochMilli(dto.getConfirmDate()).atZone(AIYA_BILL_ZONE).toLocalDate();
+
+        WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
+        addDTO.setWarehouseId(warehouseId);
+        addDTO.setDetailList(detailList);
+        addDTO.setPcShow(false);
+        addDTO.setSourceType(AIYA_CHANGE_ATTRIBUTE_SOURCE_TYPE);
+        addDTO.setSourceCode(changeNo);
+        addDTO.setSourceId(changeNo);
+        addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.OVERSEAS_STOCK_STATUS_CONVERT.getCode());
+        addDTO.setBillDate(billDate);
+
+        // 分步提交，对齐 addAndApprove：add / submit / approve 各自事务
+        String moveId = service.add(addDTO);
+        submitAndApproveAiyaChangeAttribute(moveId);
+        log.warn("爱亚转移单落仓位移动成功 changeAttributeNumber={} moveId={} warehouseId={} detailSize={}",
+                changeNo, moveId, warehouseId, detailList.size());
+        return moveId;
+    }
+
+    /**
+     * 幂等命中时按审核状态续跑，避免 add 成功但 submit/approve 失败后重试被当成成功却未动库存。
+     */
+    private String resumeAiyaChangeAttributeByApproveStatus(WarehouseLocationMoveEntity existed, String changeNo) {
+        ApproveStatusEnum status = existed.getApproveStatus();
+        if (ApproveStatusEnum.APPROVE.equals(status)) {
+            log.warn("爱亚转移单已审核完成，幂等返回 changeAttributeNumber={} moveId={}",
+                    changeNo, existed.getId());
+            return existed.getId();
+        }
+        if (ApproveStatusEnum.WAIT_SUBMIT.equals(status)) {
+            log.warn("爱亚转移单幂等续跑 submit+approve changeAttributeNumber={} moveId={}",
+                    changeNo, existed.getId());
+            submitAndApproveAiyaChangeAttribute(existed.getId());
+            return existed.getId();
+        }
+        if (ApproveStatusEnum.APPROVE_ING.equals(status)) {
+            log.warn("爱亚转移单幂等续跑 approve changeAttributeNumber={} moveId={}",
+                    changeNo, existed.getId());
+            service.approve(new ApproveOneDTO(existed.getId(), ApproveTypeEnum.PASS.getStatus(),
+                    "爱亚库存状态转化自动审核"));
+            return existed.getId();
+        }
+        if (ApproveStatusEnum.REJECT.equals(status)) {
+            throw new ServiceException(CharSequenceUtil.format(
+                    "爱亚转移单对应仓位移动已审核不通过，请人工处理，changeAttributeNumber={} moveId={}",
+                    changeNo, existed.getId()));
+        }
+        throw new ServiceException(CharSequenceUtil.format(
+                "爱亚转移单对应仓位移动状态异常，changeAttributeNumber={} moveId={} approveStatus={}",
+                changeNo, existed.getId(), status == null ? null : status.getStatus()));
+    }
+
+    private void submitAndApproveAiyaChangeAttribute(String moveId) {
+        service.submit(moveId);
+        service.approve(new ApproveOneDTO(moveId, ApproveTypeEnum.PASS.getStatus(), "爱亚库存状态转化自动审核"));
+    }
+
+    /**
+     * 按 (skuId, outInventoryStatus) 汇总数量后，校验空仓位可用/不良品库存是否充足。
+     */
+    private void assertAggregatedEmptyLocationQty(String warehouseId,
+                                                  List<WarehouseLocationMoveDetailDTO.AddDTO> detailList) {
+        Map<String, Integer> needQtyMap = new HashMap<>(16);
+        Map<String, String> skuNoBySkuId = new HashMap<>(16);
+        for (WarehouseLocationMoveDetailDTO.AddDTO detail : detailList) {
+            if (detail == null || detail.getQty() == null) {
+                continue;
+            }
+            String key = detail.getSkuId() + "|" + detail.getOutInventoryStatus();
+            needQtyMap.merge(key, detail.getQty(), Integer::sum);
+            skuNoBySkuId.put(detail.getSkuId(), detail.getSkuNo());
+        }
+        if (needQtyMap.isEmpty()) {
+            return;
+        }
+
+        WarehouseEntity warehouseEntity = Optional.ofNullable(warehouseService.getById(warehouseId))
+                .orElse(new WarehouseEntity());
+        List<String> skuIds = needQtyMap.keySet().stream()
+                .map(k -> k.substring(0, k.indexOf('|')))
+                .distinct()
+                .collect(Collectors.toList());
+
+        InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
+        paramDTO.setOrgId(warehouseEntity.getOrgId());
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setSkuIds(skuIds);
+        paramDTO.setWarehouseLocations(Collections.singletonList(EMPTY_WAREHOUSE_LOCATION));
+        List<InventoryDTO.PdaInventoryDTO> inventoryList = inventoryService.getInventoryByParam(paramDTO);
+        Map<String, InventoryDTO.PdaInventoryDTO> inventoryBySkuId = new HashMap<>(16);
+        if (CollUtil.isNotEmpty(inventoryList)) {
+            for (InventoryDTO.PdaInventoryDTO inv : inventoryList) {
+                if (inv == null || CharSequenceUtil.isBlank(inv.getSkuId())) {
+                    continue;
+                }
+                if (!CharSequenceUtil.equals(warehouseId, inv.getWarehouseId())) {
+                    continue;
+                }
+                inventoryBySkuId.putIfAbsent(inv.getSkuId(), inv);
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : needQtyMap.entrySet()) {
+            String[] parts = entry.getKey().split("\\|", 2);
+            String skuId = parts[0];
+            String outStatus = parts[1];
+            Integer needQty = entry.getValue();
+            String skuNo = skuNoBySkuId.getOrDefault(skuId, skuId);
+            InventoryDTO.PdaInventoryDTO inventory = inventoryBySkuId.get(skuId);
+            if (InventoryStatusEnum.USABLE.getCode().equals(outStatus)) {
+                if (inventory == null || inventory.getUsableQty() == null || needQty > inventory.getUsableQty()) {
+                    throw new ServiceException(ApiError.WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE, skuNo);
+                }
+            } else if (InventoryStatusEnum.DEFECTIVE_PRODUCT.getCode().equals(outStatus)) {
+                Integer defectiveQty = inventory == null ? null : inventory.getDefectiveProductQty();
+                if (inventory == null || defectiveQty == null || needQty > defectiveQty) {
+                    throw new ServiceException(ApiError.WH_LOCATION_MOVE_DEFECTIVE_QTY_EXCEEDS, skuNo);
+                }
+            }
         }
     }
 }
