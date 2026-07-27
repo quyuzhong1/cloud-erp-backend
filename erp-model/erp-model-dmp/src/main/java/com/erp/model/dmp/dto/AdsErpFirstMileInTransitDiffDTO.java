@@ -299,6 +299,20 @@ public class AdsErpFirstMileInTransitDiffDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+        /**
+         * 执行状态
+         */
+        private String execStatus;
+
+        /**
+         * 执行状态名称
+         */
+        private String execStatusName;
+
+        /**
+         * 完成时间
+         */
+        private LocalDateTime finishTime;
 
     }
 
