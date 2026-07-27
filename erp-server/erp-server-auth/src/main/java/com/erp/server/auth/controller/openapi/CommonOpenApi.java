@@ -52,7 +52,7 @@ public class CommonOpenApi {
     }
 
     /**
-     * WMS字典列表
+     * WMS字典列表  删除wmsDict调用方式统一使用wmsDictDropDown
      * @param key
      * @return
      */

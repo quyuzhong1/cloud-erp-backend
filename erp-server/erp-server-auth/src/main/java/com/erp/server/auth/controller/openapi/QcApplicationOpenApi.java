@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcApplicationDTO;
@@ -102,7 +103,8 @@ public class QcApplicationOpenApi {
      * 质检申请单 - 下推质检通知数据保存
      */
     @OpenApi("qcApplicationGenerateQcNotice")
-    public ApiResult<List<BatchResultDTO>> qcApplicationGenerateQcNotice(@Valid List<QcApplicationDTO.GenerateQcNoticeDTO> list) {
+    public ApiResult<List<BatchResultDTO>> qcApplicationGenerateQcNotice(
+            @Valid ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
         return qcApplicationFeign.qcApplicationGenerateQcNotice(list);
     }
 }

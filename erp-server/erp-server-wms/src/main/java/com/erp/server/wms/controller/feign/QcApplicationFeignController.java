@@ -137,12 +137,11 @@ public class QcApplicationFeignController extends BaseController {
         Map<String, QcApplicationEntity> idEntityMap = list.stream()
                 .collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : ids) {
-            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
-            if (Boolean.TRUE.equals(isSrm)) {
-                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
-            }
             BatchResultDTO submit;
             try {
+                if (Boolean.TRUE.equals(qcApplicationService.isSrmSourceData(id))) {
+                    throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+                }
                 submit = qcApplicationService.submit(id);
             } catch (Exception e) {
                 log.error("质检申请单app端提交审核失败", e);
@@ -152,7 +151,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(submit);
         }
@@ -187,7 +186,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(approveResult);
         }
@@ -211,12 +210,11 @@ public class QcApplicationFeignController extends BaseController {
         Map<String, QcApplicationEntity> idEntityMap = list.stream()
                 .collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : ids) {
-            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
-            if (Boolean.TRUE.equals(isSrm)) {
-                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
-            }
             BatchResultDTO deleteResult;
             try {
+                if (Boolean.TRUE.equals(qcApplicationService.isSrmSourceData(id))) {
+                    throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+                }
                 deleteResult = qcApplicationService.delete(id);
             } catch (Exception e) {
                 log.error("质检申请单app端删除失败", e);
@@ -226,7 +224,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(deleteResult);
         }
@@ -269,7 +267,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(result);
         }

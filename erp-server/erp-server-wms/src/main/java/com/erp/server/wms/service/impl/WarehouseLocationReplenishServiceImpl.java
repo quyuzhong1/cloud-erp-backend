@@ -410,9 +410,22 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(toWarehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
                 WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findFirst().orElse(new WarehouseLocationEntity());
                 replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
+            } else {
+                // 推荐仓位已存在：优先复用已加载的拣货区库存，避免再查库
+                String toWarehouseLocation = replenishItem.getToWarehouseLocation();
+                inventoryEntity = pickInventoryList.stream()
+                        .filter(inv -> CharSequenceUtil.equals(toWarehouseLocation, inv.getWarehouseLocation()))
+                        .findFirst()
+                        .orElse(null);
             }
 
-            replenishItem.setSuggestQty(calcDeliverStockOutSuggestQty(dto, replenishItem.getToWarehouseLocation()));
+            WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(
+                    new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
+                            .eq("sku_id", dto.getSkuId())
+                            .eq("warehouse_id", dto.getWarehouseId())
+                            .eq("warehouse_location", replenishItem.getToWarehouseLocation())
+            );
+            replenishItem.setSuggestQty(calcDeliverStockOutSuggestQty(dto, inventoryEntity, safetyInventoryEntity));
             this.save(replenishItem);
         }
 
@@ -483,7 +496,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 .eq("warehouse_id", dto.getWarehouseId())
                 .eq("sku_id", dto.getSkuId())
                 .eq("warehouse_location", toWarehouseLocation)
-                .eq("dict_inventory_status", "usable")
+                .eq("dict_inventory_status", InventoryStatusEnum.USABLE.getCode())
                 .eq("is_deleted", false)
                 .last("limit 1")
         );
