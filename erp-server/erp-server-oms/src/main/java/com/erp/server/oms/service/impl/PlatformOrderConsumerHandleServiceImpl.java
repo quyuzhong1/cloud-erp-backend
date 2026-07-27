@@ -362,12 +362,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 && (paid.equalsIgnoreCase(payStatus) || isFlag)
                 && !mainEntity.getInvalidStatus()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
-            Map<String, Object> map = soB2cService.handleMatchJson(id, detailList, new HashMap<>());
             if (isPlatformWarehouseOrder) {
-                soB2cService.platformWarehouseOrderHandle(id, map);
+                soB2cService.platformWarehouseOrderHandle(id);
             } else {
                 //拉取订单正常处理
-                soB2cService.pullOrderHandle(id, detailList, map);
+                soB2cService.pullOrderHandle(id, detailList);
             }
         }
     }
