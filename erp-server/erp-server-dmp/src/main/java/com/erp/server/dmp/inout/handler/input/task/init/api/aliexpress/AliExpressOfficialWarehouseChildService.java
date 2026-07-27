@@ -149,13 +149,23 @@ public class AliExpressOfficialWarehouseChildService {
                 if (CollUtil.isEmpty(childOrders)) {
                     throw new ServiceException("速卖通海外托管订单缺少订单详情，orderId:" + orderId);
                 }
+                List<Map<String, Object>> childOrderExtInfoList = toMapList(
+                        detail.get("child_order_ext_info_list"));
                 if (!isOfficialWarehouseShippedOrder(
                         orderId, parentOrder, detail, childOrders)) {
                     continue;
                 }
                 List<OrderItemContext> orderItems = new ArrayList<>();
-                for (Map<String, Object> childOrder : childOrders) {
-                    OrderItemContext itemContext = toOrderItemContext(orderId, childOrder);
+                for (int index = 0; index < childOrders.size(); index++) {
+                    Map<String, Object> childOrder = childOrders.get(index);
+                    Map<String, Object> childOrderExtInfo =
+                            index < childOrderExtInfoList.size()
+                                    ? childOrderExtInfoList.get(index)
+                                    : Collections.emptyMap();
+                    childOrderExtInfo = Objects.isNull(childOrderExtInfo)
+                            ? Collections.emptyMap() : childOrderExtInfo;
+                    OrderItemContext itemContext = toOrderItemContext(
+                            orderId, childOrder, childOrderExtInfo);
                     itemContext.setScItem(resolveScItem(itemContext, scItems));
                     orderItems.add(itemContext);
                 }
@@ -258,9 +268,12 @@ public class AliExpressOfficialWarehouseChildService {
      *
      * @param orderId 平台主订单号
      * @param childOrder 子订单数据
+     * @param childOrderExtInfo 子订单扩展信息
      * @return 子订单上下文
      */
-    private OrderItemContext toOrderItemContext(String orderId, Map<String, Object> childOrder) {
+    private OrderItemContext toOrderItemContext(String orderId,
+                                                Map<String, Object> childOrder,
+                                                Map<String, Object> childOrderExtInfo) {
         String childOrderId = firstNotBlank(
                 childOrder.get("child_order_id"), childOrder.get("id"));
         Integer quantity = integer(childOrder.get("product_count"));
@@ -270,7 +283,12 @@ public class AliExpressOfficialWarehouseChildService {
         return new OrderItemContext(
                 childOrderId,
                 firstNotBlank(childOrder.get("product_id"), childOrder.get("item_id")),
-                firstNotBlank(childOrder.get("sku_id"), childOrder.get("skuId")),
+                firstNotBlank(
+                        childOrder.get("sku_id"),
+                        childOrder.get("skuId"),
+                        childOrder.get("platformSkuId"),
+                        childOrderExtInfo.get("sku_id"),
+                        childOrderExtInfo.get("skuId")),
                 firstNotBlank(childOrder.get("sku_code"), childOrder.get("skuCode")),
                 quantity,
                 null);
