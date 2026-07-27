@@ -52,6 +52,33 @@
     </sql>
 
     <!-- 分页查询 -->
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.QcApplicationDTO$PdaListDTO">
+        select qa.id,
+               qa.code,
+               qa.source_id as sourceId,
+               qa.source_code as sourceCode,
+               qa.source_type as sourceType,
+               qa.approve_status as approveStatus,
+               qa.expect_qc_date as expectQcDate
+        from qc_application qa
+         left join qc_notice qn on qa.id = qn.source_id and qnd.main_id = qn.id and qn.is_deleted = false
+         left join qc_info qi on qn.id = qi.source_id and qnd.id = qi.source_detail_id and qi.is_deleted = false
+         left join qc_result qr on qi.id = qr.main_id and qr.is_deleted = false
+        WHERE ${params.sqlMap.default}
+        and qa.is_deleted = FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qa.id DESC
+    </select>
+    <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.QcApplicationDTO$ListDTO">
             select distinct
                 <include refid="Base_Column_List" />,

@@ -76,15 +76,15 @@ public class QcApplicationFeignController extends BaseController {
     /**
      * 分页列表查询（支持高级搜索）
      */
-    @PostMapping("/paging")
+    @PostMapping("/pdaPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:qcApplication:paging",
+            menuCode = "wms:qcApplication:pdaPaging",
             tableAlias = "qa"
     )
     @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
-    public ApiResult<PagingVO<QcApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
-        return success(qcApplicationService.paging(dto));
+    public ApiResult<PagingVO<QcApplicationDTO.PdaListDTO>> qcApplicationPdaPaging(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
+        return success(qcApplicationService.pdaPaging(dto));
     }
 
     /**
@@ -137,12 +137,11 @@ public class QcApplicationFeignController extends BaseController {
         Map<String, QcApplicationEntity> idEntityMap = list.stream()
                 .collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : ids) {
-            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
-            if (Boolean.TRUE.equals(isSrm)) {
-                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
-            }
             BatchResultDTO submit;
             try {
+                if (Boolean.TRUE.equals(qcApplicationService.isSrmSourceData(id))) {
+                    throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+                }
                 submit = qcApplicationService.submit(id);
             } catch (Exception e) {
                 log.error("质检申请单app端提交审核失败", e);
@@ -152,7 +151,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(submit);
         }
@@ -187,7 +186,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(approveResult);
         }
@@ -211,12 +210,11 @@ public class QcApplicationFeignController extends BaseController {
         Map<String, QcApplicationEntity> idEntityMap = list.stream()
                 .collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : ids) {
-            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
-            if (Boolean.TRUE.equals(isSrm)) {
-                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
-            }
             BatchResultDTO deleteResult;
             try {
+                if (Boolean.TRUE.equals(qcApplicationService.isSrmSourceData(id))) {
+                    throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+                }
                 deleteResult = qcApplicationService.delete(id);
             } catch (Exception e) {
                 log.error("质检申请单app端删除失败", e);
@@ -226,7 +224,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(deleteResult);
         }
@@ -247,17 +245,21 @@ public class QcApplicationFeignController extends BaseController {
     @PostMapping("/generateQcNotice")
     @LogAction(value = LogActionEnum.INSERT, desc = "质检申请单app端下推质检通知")
     public ApiResult<List<BatchResultDTO>> generateQcNotice(
-            @RequestBody @Validated ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
-        if (CollUtil.isEmpty(list)) {
+            @RequestBody @Validated QcApplicationDTO.PdaGenerateQcNoticeDTO dto) {
+        if (CollUtil.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
-        List<String> ids = list.stream().map(QcApplicationDTO.GenerateQcNoticeDTO::getId).collect(Collectors.toList());
+        List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<QcApplicationEntity> qcList = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
         Map<String, QcApplicationEntity> idEntityMap = qcList.stream()
                 .collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
-        for (QcApplicationDTO.GenerateQcNoticeDTO generateQcNoticeDTO : list.getList()) {
+        for (String id : ids) {
             BatchResultDTO result;
+            QcApplicationDTO.GenerateQcNoticeDTO generateQcNoticeDTO = new QcApplicationDTO.GenerateQcNoticeDTO();
+            generateQcNoticeDTO.setId(id);
+            generateQcNoticeDTO.setExpectQcDate(dto.getExpectQcDate());
+            generateQcNoticeDTO.setQcUserId(dto.getQcUserId());
             try {
                 result = qcApplicationService.generateQcNotice(generateQcNoticeDTO);
             } catch (Exception e) {
@@ -269,7 +271,7 @@ public class QcApplicationFeignController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(result);
         }

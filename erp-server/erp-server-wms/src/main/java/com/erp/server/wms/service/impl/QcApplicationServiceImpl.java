@@ -172,6 +172,42 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     }
 
     @Override
+    public PagingVO<QcApplicationDTO.PdaListDTO> pdaPaging(PagingDTO<QcApplicationDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<QcApplicationDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        pdaFillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void pdaFillList(List<QcApplicationDTO.PdaListDTO> records) {
+        if(CollUtil.isEmpty(records)) {
+            return;
+        }
+        List<String> ids = records.stream().map(QcApplicationDTO.PdaListDTO::getId).distinct().collect(Collectors.toList());
+        List<QcApplicationDetailEntity> detailEntityList = qcApplicationDetailService.listByMainIds(ids);
+        //获取明细中第一个供应商转成map
+        Map<String, String> supplierIdMap = CollUtil.isNotEmpty(detailEntityList) ? detailEntityList.stream().collect(Collectors.toMap(QcApplicationDetailEntity::getMainId, QcApplicationDetailEntity::getSupplierId, (oldValue, newValue) -> oldValue)) : Collections.emptyMap();
+        //获取供应商名称
+        List<String> supplierIds = supplierIdMap.values().stream().distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = CollUtil.isNotEmpty(supplierIds) ? FeignQuery.create(SupplierEntity.class).in(SupplierEntity::getId, supplierIds).list() : Collections.emptyList();
+        Map<String, String> supplierNameMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName));
+        for (QcApplicationDTO.PdaListDTO dto : records) {
+            //供应商名称
+            String supplierId = supplierIdMap.get(dto.getId());
+            if (CharSequenceUtil.isNotBlank(supplierId)) {
+                dto.setSupplierName(supplierNameMap.get(supplierId));
+            }
+            //单据状态名称
+            dto.setApproveStatusName(ApproveStatusEnum.getName(dto.getApproveStatus()));
+        }
+    }
+
+    @Override
     public List<QcApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
         QcApplicationDTO.PagingParamDTO searchParam = new QcApplicationDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());

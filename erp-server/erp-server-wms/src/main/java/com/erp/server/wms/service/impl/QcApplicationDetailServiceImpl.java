@@ -186,6 +186,14 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         return lambdaQuery().eq(QcApplicationDetailEntity::getMainId, mainId).list();
     }
 
+    @Override
+    public List<QcApplicationDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(QcApplicationDetailEntity::getMainId, mainIds).list();
+    }
+
 
     @Override
     public List<QcApplicationDetailDTO.ImportResultDTO> handleImportSuccessList(List<QcApplicationImportExcelDTO> successList, List<QcApplicationImportExcelDTO> errorList,String sourceId) {

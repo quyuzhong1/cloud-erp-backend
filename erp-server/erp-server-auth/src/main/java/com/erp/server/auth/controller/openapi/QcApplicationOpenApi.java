@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcApplicationDTO;
@@ -46,8 +47,8 @@ public class QcApplicationOpenApi {
      * 质检申请单 - 分页查询，支持高级查询，条件与 PC 端一致
      */
     @OpenApi("qcApplicationPaging")
-    public ApiResult<PagingVO<QcApplicationDTO.ListDTO>> qcApplicationPaging(@Valid PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
-        return qcApplicationFeign.qcApplicationPaging(dto);
+    public ApiResult<PagingVO<QcApplicationDTO.PdaListDTO>> qcApplicationPaging(@Valid PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
+        return qcApplicationFeign.qcApplicationPdaPaging(dto);
     }
 
     /**
@@ -102,7 +103,7 @@ public class QcApplicationOpenApi {
      * 质检申请单 - 下推质检通知数据保存
      */
     @OpenApi("qcApplicationGenerateQcNotice")
-    public ApiResult<List<BatchResultDTO>> qcApplicationGenerateQcNotice(@Valid List<QcApplicationDTO.GenerateQcNoticeDTO> list) {
-        return qcApplicationFeign.qcApplicationGenerateQcNotice(list);
+    public ApiResult<List<BatchResultDTO>> qcApplicationGenerateQcNotice(@Valid QcApplicationDTO.PdaGenerateQcNoticeDTO dto) {
+        return qcApplicationFeign.qcApplicationGenerateQcNotice(dto);
     }
 }

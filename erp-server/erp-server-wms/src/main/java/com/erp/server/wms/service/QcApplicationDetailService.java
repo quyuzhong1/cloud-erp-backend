@@ -55,6 +55,13 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
     List<QcApplicationDetailEntity> listByMainId(String mainId);
 
     /**
+     * 根据主表id查询明细列表
+     * @param mainIds
+     * @return
+     */
+    List<QcApplicationDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
      * 处理导入成功的数据
      * @author will
      * @date 2026/3/24 17:00
