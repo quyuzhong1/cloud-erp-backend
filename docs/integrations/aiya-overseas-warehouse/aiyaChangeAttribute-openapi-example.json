@@ -21,7 +21,7 @@
     ],
     "auth": {
       "gateway": "AuthPassPath 含 /webhook/receive/，免登录 JWT",
-      "businessVerify": "AiyaChangeAttributeWebhookHandler#verify 暂空实现；上线前必须与对方确认签名或 IP 白名单后补齐（上线阻断项）"
+      "businessVerify": "讨论确认不做业务鉴权；成功落单/幂等命中后 WMS 写仓位移动 operate_log（operation=爱亚Webhook接收）"
     }
   },
   "differenceFromChangeAttribute4Edi": {

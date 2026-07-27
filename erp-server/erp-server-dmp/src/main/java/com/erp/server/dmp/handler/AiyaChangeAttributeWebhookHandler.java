@@ -43,8 +43,8 @@ public class AiyaChangeAttributeWebhookHandler implements WebhookHandler {
 
     @Override
     public void verify(String data, Map<String, String> headers, String serviceFlag) {
-        // 【上线阻断项】对方契约鉴权尚未确认；当前仅依赖网关 AuthPassPath 免登白名单。
-        // 联调可先放行；上线前必须与对方确认签名/IP 白名单等方案并在此实现，禁止长期空实现上生产。
+        // 讨论结论：与同模块其它 Webhook 一致，不做业务鉴权；仅依赖网关 AuthPassPath 免登。
+        // 接口调用审计：成功落单/幂等命中后由 WMS 写入仓位移动 operate_log（operation=爱亚Webhook接收）。
     }
 
     @Override

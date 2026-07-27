@@ -22,13 +22,16 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SkuMappingStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
+import com.erp.server.oms.helper.WarehouseSkuReconcileHelper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -90,6 +93,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private FileFeign fileFeign;
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
+    @Resource
+    private WarehouseSkuReconcileHelper warehouseSkuReconcileHelper;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -185,7 +190,18 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 entity.setProductImageUrl(entity.getProductImageUrl());
             }
 
+            boolean warehouseType = RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType());
+            if (warehouseType) {
+                // 对齐 Feign sync：三方仓 listing 必须标 third，否则启停回收 Helper 会过滤掉
+                entity.setSourceType(ListingSourceTypeEnum.THIRD.getCode());
+            }
             if (null == oldEntity) {
+                // 仓库 SKU：源端停用且数大臣不存在 → 不落库（对齐对照同步规则）
+                if (warehouseType && WarehouseSkuReconcileHelper.isInactivePlatformStatus(dto.getPlatformStatus())) {
+                    log.warn("[Listing] 仓库SKU源端已停用且本地不存在，跳过新增: platform={}, authId={}, platformSkuNo={}, platformStatus={}",
+                            dto.getPlatform(), dto.getAuthId(), dto.getPlatformSkuNo(), dto.getPlatformStatus());
+                    return ApiResult.success();
+                }
                 if (!listingInfoService.save(entity)) {
                     throw new ServiceException("【listing消费】Listing 产品保存失败");
                 }
@@ -198,16 +214,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
                     skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
                 }
-                // FBT仓库类型设置为WAREHOUSE类型
-//                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())) {
-//                    skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
-//                    // FBT库存SKU拉取时不占用仓库字段，保留为空。
-//                    // 其他仓库型商品维持原有逻辑，使用authId作为关联标识。
-//                    if (StringUtils.isNotBlank(dto.getAuthId())
-//                            && !OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())) {
-//                        skuMappingEntity.setWarehouseId(dto.getAuthId());
-//                    }
-//                }
+                // 仅爱亚/WEGO：未匹配占位默认禁用，人工映射后再启用；其它仓保持构造器默认 ENABLE，避免旧仓回归
+                if (warehouseType && isDefaultDisableWarehousePlatform(dto.getPlatform())) {
+                    skuMappingEntity.setStatus(SkuMappingStatusEnum.DISABLE);
+                    skuMappingEntity.setHasMappingAll(true);
+                }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
@@ -217,7 +228,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 //若父平台skuid 不为空则更新对应的父平台sku的标识为true
                 updatePlateformParentSku(entity.getPlatformParentSpuNo());
             } else {
-                if (!oldEntity.toString().equals(entity.toString())) {
+                // ListingInfoEntity.toString 不含 platformSkuName/thirdBarcode；仓库型需显式感知名称/条码/状态变更
+                boolean needUpdate = !oldEntity.toString().equals(entity.toString())
+                        || (warehouseType && isWarehouseListingFieldChanged(oldEntity, entity, dto));
+                if (needUpdate) {
                     ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
                         // 亚马逊平台PlatformSpuNo保留历史
@@ -255,24 +269,57 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (StringUtils.isNotBlank(entity.getPlatformSkuId())) {
                         oldEntity.setPlatformSkuId(entity.getPlatformSkuId());
                     }
-                    if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                    if (warehouseType
                             && OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())
                             && StringUtils.isNotBlank(entity.getPlatformSkuNo())) {
                         oldEntity.setPlatformSkuNo(entity.getPlatformSkuNo());
                     }
+                    if (warehouseType && StringUtils.isBlank(oldEntity.getSourceType())) {
+                        oldEntity.setSourceType(ListingSourceTypeEnum.THIRD.getCode());
+                    }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                     listingInfoService.updateById(oldEntity);
-//                    if (!listingInfoService.updateById(oldEntity)) {
-//                        throw new ServiceException("Listing 产品更新失败");
-//                    }
                     //记录更新日志
                     String msg =  CharSequenceUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
                     operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);
                     //若父平台skuid 不为空则更新对应的父平台sku的标识为true
                     updatePlateformParentSku(entity.getPlatformParentSpuNo());
                 }
+                // 仓库 SKU：源端停用 → 已映射禁用 / 未匹配占位软删；Active 恢复不自动 enable
+                if (warehouseType) {
+                    warehouseSkuReconcileHelper.reconcileInactiveIfNeeded(oldEntity, dto.getPlatformStatus());
+                }
             }
         return ApiResult.success();
+    }
+
+    /**
+     * 爱亚/WEGO 新增未匹配占位默认禁用；其它三方仓保持历史 ENABLE 行为。
+     */
+    private boolean isDefaultDisableWarehousePlatform(String platform) {
+        return OmsPlatformEnum.AI_YA.getCode().equalsIgnoreCase(platform)
+                || OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(platform);
+    }
+
+    /**
+     * 仓库 listing 字段变更检测：{@link ListingInfoEntity#toString()} 未包含名称/条码，
+     * 爱亚等又不落 platformUpdateTime 时，仅改名称/条码会被 toString 判等静默跳过。
+     */
+    private boolean isWarehouseListingFieldChanged(ListingInfoEntity oldEntity, ListingInfoEntity entity,
+                                                   PlatformProductDTO dto) {
+        if (StringUtils.isNotBlank(entity.getPlatformSkuName())
+                && !StringUtils.equals(oldEntity.getPlatformSkuName(), entity.getPlatformSkuName())) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(entity.getThirdBarcode())
+                && !StringUtils.equals(oldEntity.getThirdBarcode(), entity.getThirdBarcode())) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(dto.getPlatformStatus())
+                && !StringUtils.equals(oldEntity.getPlatformStatus(), dto.getPlatformStatus())) {
+            return true;
+        }
+        return StringUtils.isBlank(oldEntity.getSourceType());
     }
 
     private void fillImlProductBarcode(PlatformProductDTO dto) {

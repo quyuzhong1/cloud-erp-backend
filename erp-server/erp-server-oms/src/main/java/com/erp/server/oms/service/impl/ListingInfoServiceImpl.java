@@ -43,6 +43,7 @@ import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
+import com.erp.server.oms.helper.WarehouseSkuReconcileHelper;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
@@ -98,12 +99,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Resource
     private SkuMappingExtendService skuMappingExtendService;
 
-    /**
-     * OMS 侧约定的三方仓 SKU"启用"状态值，与具体三方仓平台无关。
-     * 各三方仓自身状态字段的取值大小写可能不同（如爱亚 {@code AiyaSkuStatusEnum.ACTIVE} 实测为 {@code "Active"}），
-     * 判断时统一用 {@code equalsIgnoreCase} 与本常量比对，OMS 层不直接依赖任何具体三方仓 SDK 的枚举。
-     */
-    private static final String STATUS_ACTIVE = "active";
+    @Resource
+    private WarehouseSkuReconcileHelper warehouseSkuReconcileHelper;
 
     /**
      * 添加库存sku
@@ -689,6 +686,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
      * @return 本次处理统计结果（新增/禁用/删除数量）
      */
     @Override
+    @Deprecated
     @Transactional(rollbackFor = Exception.class)
     public WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WarehouseSkuSyncDTO.SyncReqDTO dto) {
         WarehouseSkuSyncDTO.ReconcileResultDTO result = new WarehouseSkuSyncDTO.ReconcileResultDTO();
@@ -723,7 +721,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         for (WarehouseSkuSyncDTO.SkuItemDTO itemDTO : itemMap.values()) {
             String latestBarcode = buildBarcode(itemDTO.getBarcode());
             ListingInfoEntity listingInfoEntity = existingMap.get(itemDTO.getSku());
-            boolean inactive = isInactiveStatus(itemDTO.getStatus());
+            boolean inactive = WarehouseSkuReconcileHelper.isInactivePlatformStatus(itemDTO.getStatus());
             if (Objects.isNull(listingInfoEntity)) {
                 // 新 SKU 且源端已停用：不落库，避免先插再删
                 if (inactive) {
@@ -828,99 +826,25 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             result.setAddedCount(toInsert.size());
         }
 
-        // 源端明确回传为非启用状态（如爱亚 Inactive）的 SKU 编号；未回传状态（如WEGO现有调用）不参与禁用/删除判断
+        // 源端明确回传为非启用状态的 SKU；未回传状态不参与禁用/删除（与旧链路消费端共用 Helper）
         Set<String> inactiveSkuNoSet = itemMap.values().stream()
-                .filter(item -> isInactiveStatus(item.getStatus()))
+                .filter(item -> WarehouseSkuReconcileHelper.isInactivePlatformStatus(item.getStatus()))
                 .map(WarehouseSkuSyncDTO.SkuItemDTO::getSku)
                 .collect(Collectors.toSet());
 
-        List<String> listingIdsToDelete = new ArrayList<>();
-        List<String> mappingIdsToDelete = new ArrayList<>();
-        List<SkuMappingEntity> toDisableMappings = new ArrayList<>();
-
         if (CollectionUtils.isNotEmpty(inactiveSkuNoSet)) {
-            // 复用 listByAuth 把 type/authId/platformSkuNo 过滤下推到SQL
             List<ListingInfoEntity> inactiveListings = this.listByAuth(
-                            RuleTypeEnum.WAREHOUSE.getCode(),
-                            new ArrayList<>(inactiveSkuNoSet),
-                            Collections.singletonList(dto.getAuthId())
-                    ).stream()
-                    .filter(li -> ListingSourceTypeEnum.THIRD.getCode().equals(li.getSourceType()))
-                    .collect(Collectors.toList());
-
-            List<ListingInfoEntity> matchedListing = inactiveListings.stream()
-                    .filter(li -> ListingMatchResultEnum.TRUE.getCode().equals(li.getMatchResult()))
-                    .collect(Collectors.toList());
-            // 仅「未匹配」(FALSE)；「无需匹配」(NOT) 不参与软删，避免误删用户刻意保留的数据
-            List<ListingInfoEntity> unmatchedListing = inactiveListings.stream()
-                    .filter(li -> ListingMatchResultEnum.FALSE.getCode().equals(li.getMatchResult()))
-                    .collect(Collectors.toList());
-
-            // 已映射且当前启用，但源端停用 -> 置为禁用；不做反向自动恢复
-            if (CollectionUtils.isNotEmpty(matchedListing)) {
-                List<String> matchedListingIds = matchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
-                List<SkuMappingEntity> enabledMappings = skuMappingService.listByListingIds(matchedListingIds).stream()
-                        .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
-                        .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
-                        .collect(Collectors.toList());
-                toDisableMappings.addAll(enabledMappings);
-            }
-
-            // 源端停用且 listing 标记为未匹配：仅删除真正的占位映射；若已有真实 productSkuId 则改走禁用，防止误删
-            if (CollectionUtils.isNotEmpty(unmatchedListing)) {
-                List<String> unmatchedListingIds = unmatchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
-                List<SkuMappingEntity> warehouseMappings = skuMappingService.listByListingIds(unmatchedListingIds).stream()
-                        .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
-                        .collect(Collectors.toList());
-                Map<String, List<SkuMappingEntity>> mappingsByListingId = warehouseMappings.stream()
-                        .collect(Collectors.groupingBy(SkuMappingEntity::getListingId));
-
-                for (ListingInfoEntity listing : unmatchedListing) {
-                    List<SkuMappingEntity> mappings = mappingsByListingId.getOrDefault(listing.getId(), Collections.emptyList());
-                    boolean hasRealMapping = mappings.stream().anyMatch(sm -> StringUtils.isNotBlank(sm.getProductSkuId()));
-                    if (hasRealMapping) {
-                        // listing.matchResult 未及时回写为已匹配，但映射已绑定产品SKU：按禁用处理，不删
-                        mappings.stream()
-                                .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
-                                .forEach(toDisableMappings::add);
-                        continue;
-                    }
-                    listingIdsToDelete.add(listing.getId());
-                    mappings.forEach(sm -> mappingIdsToDelete.add(sm.getId()));
-                }
-            }
-
-            if (CollectionUtils.isNotEmpty(toDisableMappings)) {
-                // 同一 listing 可能同时进入匹配/未匹配兜底分支，按 id 去重后再更新
-                Map<String, SkuMappingEntity> disableMap = toDisableMappings.stream()
-                        .collect(Collectors.toMap(SkuMappingEntity::getId, Function.identity(), (a, b) -> a));
-                List<SkuMappingEntity> distinctToDisable = new ArrayList<>(disableMap.values());
-                distinctToDisable.forEach(sm -> sm.setStatus(SkuMappingStatusEnum.DISABLE));
-                CollUtil.split(distinctToDisable, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
-                result.setDisabledCount(distinctToDisable.size());
-                log.warn("[三方仓SKU同步] authId={} 映射关系置为禁用 {}条（源端已停用，需人工确认后手动重新启用）",
-                        dto.getAuthId(), distinctToDisable.size());
-            }
-
-            if (CollectionUtils.isNotEmpty(listingIdsToDelete)) {
-                if (CollectionUtils.isNotEmpty(mappingIdsToDelete)) {
-                    CollUtil.split(mappingIdsToDelete, 500).forEach(batch -> skuMappingService.removeByIds(batch));
-                }
-                CollUtil.split(listingIdsToDelete, 500).forEach(batch -> service.removeByIds(batch));
-                result.setDeletedCount(listingIdsToDelete.size());
-                log.warn("[三方仓SKU同步] authId={} 未匹配且源端已停用，软删 listing {}条",
-                        dto.getAuthId(), listingIdsToDelete.size());
-            }
+                    RuleTypeEnum.WAREHOUSE.getCode(),
+                    new ArrayList<>(inactiveSkuNoSet),
+                    Collections.singletonList(dto.getAuthId())
+            );
+            WarehouseSkuReconcileHelper.ReconcileCounts counts =
+                    warehouseSkuReconcileHelper.reconcileInactiveListings(inactiveListings);
+            result.setDisabledCount(counts.getDisabledCount());
+            result.setDeletedCount(counts.getDeletedCount());
         }
 
         return result;
-    }
-
-    /**
-     * 判断源端状态是否为停用：明确回传了非空且非 active 的状态才视为停用；未传 status 不参与停用分支。
-     */
-    private boolean isInactiveStatus(String status) {
-        return StringUtils.isNotBlank(status) && !STATUS_ACTIVE.equalsIgnoreCase(status);
     }
 
     /**

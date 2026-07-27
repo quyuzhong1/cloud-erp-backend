@@ -263,7 +263,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             return Collections.emptyMap();
         }
         // 同一订单多种异常时取最新一条
-        errorList.sort(Comparator.comparing(SoB2cErrorEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+        // nullsLast 包住 reverseOrder：时间倒序且 createTime 为空的排最后，避免 .reversed() 把 nullsLast 反成 nullsFirst
+        errorList.sort(Comparator.comparing(SoB2cErrorEntity::getCreateTime,
+                Comparator.nullsLast(Comparator.reverseOrder())));
         Map<String, String> errorMap = new HashMap<>(errorList.size());
         for (SoB2cErrorEntity errorEntity : errorList) {
             if (CharSequenceUtil.isBlank(errorEntity.getMainId()) || CharSequenceUtil.isBlank(errorEntity.getMessage())) {
