@@ -45,6 +45,8 @@ import java.util.Objects;
 public class MagaluService {
 
     private static final String DEFAULT_API_BASE_URL = "https://api.magalu.com";
+    private static final String SANDBOX_API_BASE_URL = "https://api-sandbox.magalu.com";
+    private static final String SANDBOX_CHANNEL_ID = "5f62650a-0039-4d65-9b96-266d498c03bd";
     private static final String TOKEN_PATH = "/oauth/token";
     private static final String SKU_LIST_PATH = "/seller/v1/portfolios/skus";
     private static final String ORDER_LIST_PATH = "/seller/v1/orders";
@@ -94,9 +96,8 @@ public class MagaluService {
         Object tokenObj = redisUtil.get(tokenKey);
         if (tokenObj instanceof MagaluShopInfoDTO) {
             MagaluShopInfoDTO shopInfoDTO = (MagaluShopInfoDTO) tokenObj;
-            if (StringUtils.isBlank(shopInfoDTO.getApiBaseUrl())) {
-                shopInfoDTO.setApiBaseUrl(DEFAULT_API_BASE_URL);
-            }
+            mergeLatestCfg(shopInfoDTO);
+            refreshAccessTokenFromDb(shopId, shopInfoDTO);
             return shopInfoDTO;
         }
 
@@ -147,6 +148,7 @@ public class MagaluService {
         params.put("_offset", offset);
 
         String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
+        assertApiSuccess(response, "查询SKU列表");
         return parseSkuList(response);
     }
 
@@ -422,7 +424,17 @@ public class MagaluService {
 
     private String getApiBaseUrl(CfgAppClientEntity cfgAppClient) {
         Map<String, Object> extendData = cfgAppClient.getExtendData();
-        if (extendData == null || Objects.isNull(extendData.get("apiBaseUrl"))) {
+        if (extendData == null) {
+            return DEFAULT_API_BASE_URL;
+        }
+        if (isProductionApiEnv(extendData)) {
+            Object productionApiBaseUrl = extendData.get("productionApiBaseUrl");
+            if (Objects.nonNull(productionApiBaseUrl) && StringUtils.isNotBlank(productionApiBaseUrl.toString())) {
+                return productionApiBaseUrl.toString();
+            }
+            return DEFAULT_API_BASE_URL;
+        }
+        if (Objects.isNull(extendData.get("apiBaseUrl"))) {
             return DEFAULT_API_BASE_URL;
         }
         String apiBaseUrl = extendData.get("apiBaseUrl").toString();
@@ -431,10 +443,77 @@ public class MagaluService {
 
     private String getChannelId(CfgAppClientEntity cfgAppClient) {
         Map<String, Object> extendData = cfgAppClient.getExtendData();
-        if (extendData == null || Objects.isNull(extendData.get("channelId"))) {
+        if (extendData == null) {
+            return "";
+        }
+        if (isProductionApiEnv(extendData)) {
+            Object productionChannelId = extendData.get("productionChannelId");
+            return Objects.isNull(productionChannelId) ? "" : productionChannelId.toString();
+        }
+        if (Objects.isNull(extendData.get("channelId"))) {
             return "";
         }
         return extendData.get("channelId").toString();
+    }
+
+    private boolean isProductionApiEnv(Map<String, Object> extendData) {
+        Object apiEnv = extendData.get("apiEnv");
+        return apiEnv != null && "production".equalsIgnoreCase(apiEnv.toString());
+    }
+
+    private void mergeLatestCfg(MagaluShopInfoDTO shopInfoDTO) {
+        CfgAppClientEntity cfgAppClient = getCfgAppClient();
+        shopInfoDTO.setClientId(cfgAppClient.getClientId());
+        shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
+        shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
+        shopInfoDTO.setApiBaseUrl(getApiBaseUrl(cfgAppClient));
+        shopInfoDTO.setChannelId(getChannelId(cfgAppClient));
+        shopInfoDTO.setRedirectUrl(cfgAppClient.getRedirectUrl());
+    }
+
+    private void refreshAccessTokenFromDb(String shopId, MagaluShopInfoDTO shopInfoDTO) {
+        ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);
+        if (Objects.isNull(shopAuth)) {
+            return;
+        }
+        shopInfoDTO.setAccessToken(shopAuth.getAccessToken());
+        shopInfoDTO.setRefreshToken(shopAuth.getRefreshToken());
+    }
+
+    private void assertApiSuccess(String response, String action) {
+        if (StringUtils.isBlank(response)) {
+            return;
+        }
+        JSONObject jsonObject = JSON.parseObject(response);
+        if (jsonObject == null) {
+            return;
+        }
+        if (jsonObject.containsKey("errorCode") || "FORBIDDEN".equals(jsonObject.getString("slug"))) {
+            String message = jsonObject.getString("userMessage");
+            if (StringUtils.isBlank(message)) {
+                message = jsonObject.getString("message");
+            }
+            if (StringUtils.isBlank(message)) {
+                message = jsonObject.getString("developerMessage");
+            }
+            throw new ServiceException("Magalu" + action + "失败:" + message);
+        }
+    }
+
+    private String resolveChannelIdForHeader(MagaluShopInfoDTO shopInfoDTO) {
+        String channelId = shopInfoDTO.getChannelId();
+        if (StringUtils.isBlank(channelId)) {
+            return "";
+        }
+        if (!isSandboxApiBaseUrl(getApiBaseUrl(shopInfoDTO)) && SANDBOX_CHANNEL_ID.equals(channelId)) {
+            log.warn("Magalu生产环境不应使用Sandbox channelId, shopId={}", shopInfoDTO.getId());
+            return "";
+        }
+        return channelId;
+    }
+
+    private boolean isSandboxApiBaseUrl(String apiBaseUrl) {
+        return StringUtils.isNotBlank(apiBaseUrl) && StringUtils.contains(apiBaseUrl, "api-sandbox.magalu.com");
     }
 
     private String getApiBaseUrl(MagaluShopInfoDTO shopInfoDTO) {
@@ -449,8 +528,9 @@ public class MagaluService {
         if (StringUtils.isNotBlank(tenantId)) {
             headerMap.put("X-Tenant-Id", tenantId);
         }
-        if (StringUtils.isNotBlank(shopInfoDTO.getChannelId())) {
-            headerMap.put("X-Channel-Id", shopInfoDTO.getChannelId());
+        String channelId = resolveChannelIdForHeader(shopInfoDTO);
+        if (StringUtils.isNotBlank(channelId)) {
+            headerMap.put("X-Channel-Id", channelId);
         }
         return headerMap;
     }
