@@ -10,6 +10,8 @@
 |-----------|------|
 | `爱亚海外仓对接方案文档.md` | 产品对接方案正文（含截图引用） |
 | `图片和附件/` | 方案文档中的图片资源 |
+| `sql/` | 各模块 DMP 落库脚本（映射 / output 等） |
+| `sql/aiya_return_inbound_dmp_mapping.sql` | **退货入库**：字段映射 + 明细唯一键修正 + MQ output |
 | `README.md` | 本说明 + 跨会话待确认事项 |
 
 ## 使用约定
@@ -45,6 +47,78 @@
 | 2026-07-21 | 依据用户提供的爱亚开放平台「创建/修改出库单」接口文档截图（图1-4 顶层、图5 `shippingInstructions`、图6 `shipTo`、图7 实际为顶层后续可选字段而非 items 子字段、图8 `shipFrom`）收敛建单报文：新增 `AiyaOutboundSaveDTO`；`AiyaOpenApiService.save2cOrder` 改为接强类型 DTO；完善 `AiyaOpenApiServiceManualTest.save2cOrderTest`。字段收敛原则：官方必填全留 + 方案文档有映射的可选字段保留；官方非必填且方案未映射的（udf*/代收货款/保价/托盘等）一律不进 DTO。关键纠正见下方「已确认结论」 |
 | 2026-07-22 | 完成「尾程-出库单对接」核心链路（建单/截单/查询 + DMP 定时同步），用户明确同意 `shipFrom` 用占位常量、「汉化管理」错误码翻译与「超量发货」本次不做。改动清单：① `AiyaEnums.OrderStatusEnum` 由 WEGO 数字状态码占位改为方案文档字母码 A/B/C/D 映射 `SoB2cBillStatusEnum`；② `AiyaOutboundResp` 由 WEGO 嵌套分页结构改为扁平 `{success,code,message,resultList[]}`；③ `AiyaOpenApiService.search2cOrder`/`query2cOrderPage`（原指向同一 serviceType）合并为 `query2cOrder`，`intercept2cOrder` 入参由 `no` 改为 `orderNumber`；④ `AiyaHandlerServiceImpl` 实现 `createOutboundBill`/`cancelOutboundBill`/`queryOutboundBill`，`orderNumber` 直取 `referenceNo` 做幂等键（不需要 WEGO 那套"订单已存在"反查兜底），截单按 `TongYouHandlerServiceImpl` 三态范式处理；⑤ 新增 DMP 三件套 `AiyaOutboundInitHandler`/`AiyaOutBoundDmpHandler`/`AiyaOutboundRocketMQTaskHandler`，结构对齐 WEGO 出库单同步链路；⑥ `AiyaOpenApiServiceManualTest` 用 `query2cOrderTest`/`intercept2cOrderTest` 替换原 `search2cOrderTest`/`query2cOrderPageTest`。以上均为**按当前理解实现，尚未有真实接口响应样例验证**，详见下方「待产品确认」新增/保留项 |
 | 2026-07-23 | 完成「调整单/库存状态转化」对接（文档 6.3.5）：爱亚按数大臣 OpenAPI 协议推送（`method=aiyaChangeAttribute`），auth `AiyaOpenApi` → WMS `receiveAiyaChangeAttribute` 幂等落已审核《仓位移动》。仅处理 `CHANGE_STATUS` + `GOOD↔DAMAGE`；仓/SKU 走爱亚仓库映射与 SKU 映射；双侧空仓位；操作类型 `overseasStockStatusConvert`。详见下方「调整单相关」与「已确认结论」 |
+| 2026-07-24 | 完成「退货入库单对接」（文档 6.3.4）DMP 拉取链路：按用户确认口径用 `GLINK_BATCH_QUERY_ASN_NOTIFY`（`asnType=RETURN`）拉取，过滤 `status=Fulfilled` + `putawayStage=COMPLETED`，时间窗与头程一致用 `receiveTime`；明细取 `asnLineItems.putawayedQuantity` + `skuStatus`。新增 `AiyaReturnInstockInitHandler` / `AiyaReturnInstockDmpHandler` / `AiyaReturnInstockDetailDmpHandler` / `AiyaReturnInstockRocketMQTaskHandler`；**不改**数臣生成退货入库单/预入库单的现有代码。删除误仿 WEGO 的骨架 `AiyaReturnOrderResp` / `queryReturnOrderPage` / `RETURN_ORDER_QUERY_PAGE` 及对应 `ApiError`。test 库已有 `dmp_cfg_input`（爱亚退货入库）及 convert 指向上述 Handler，但 mapping/output 为空，脚本见 `sql/aiya_return_inbound_dmp_mapping.sql`。详见下方「退货入库相关」与「已确认结论」 |
+| 2026-07-24 | 尾程出库单联调确认并落文档：① 建单幂等重复提交返回 `success=true, message="Order already exist."`，Handler 当成功、无需反查；② 截单首次成功 / 重复截单 `This order has been cancelled!` 均当成功；③ `success=false` 直接 `failure` 透传爱亚原文，去掉「已出库」关键词与 `INTERCEPTING` 猜测分支；④ `intercept2cOrder` 入参为 `orderNumbers[]`；⑤ **`shipFrom` 可不传**（官方曾标必填，实测不填可建单），去掉占位常量，Handler 默认不下发 |
+
+## 退货入库相关（2026-07-24）
+
+### 总流程（对齐 WEGO，数臣生成复用现有逻辑）
+
+```text
+DMP定时「爱亚退货入库」
+  → AiyaReturnInstockInitHandler（batchQueryAsn asnType=RETURN + receiveTime）
+  → 过滤 Fulfilled + COMPLETED，归一化 asnLineItems
+  → Mongo → AiyaReturnInstockDmpHandler / DetailDmpHandler
+  → dmp_third_return_inbound(+detail)
+  → AiyaReturnInstockRocketMQTaskHandler
+  → 现有海外仓退货入库/预入库消费（不改数臣生成代码）
+```
+
+### 已实现代码入口
+
+| 环节 | 类 |
+|------|-----|
+| Init 拉取 | `AiyaReturnInstockInitHandler` |
+| 主表 DMP | `AiyaReturnInstockDmpHandler`（`putawayTime`→`putAwayTime`，强制海外仓类型） |
+| 明细 DMP | `AiyaReturnInstockDetailDmpHandler`（`skuStatus=DAMAGE`→`defectiveProductFlag=true`） |
+| MQ 推送 | `AiyaReturnInstockRocketMQTaskHandler`（组装 `PlatformReturnInstockDTO`） |
+| SDK | 复用 `AiyaOpenApiService.batchQueryAsn` + `AiyaInboundResp`（**不用**已删除的 returnorder 骨架） |
+
+### 字段映射（Init 归一化 → DMP）
+
+| Mongo / 爱亚字段 | DMP 列 | 说明 |
+|------------------|--------|------|
+| `asnNumber` | `platform_return_order_no` | 第三方退货单号，幂等键 |
+| `refNumber` | `order_reference_no` | 参考单号（下游判退货入库 vs 预入库） |
+| `trackingNumber` | `return_logistic_code` | 退货物流单号 |
+| `warehouseCode` | `warehouse_code` | 仓库编码 |
+| `authId` | `auth_id` | 授权 ID |
+| `status` | `status` | 单据状态原文 |
+| `putawayTime` | `put_away_time` | Handler 解析，非 mapping |
+| `sku` | `product_sku` | 明细 |
+| `putawayedQuantity` | `must_qty` / `receive_qty` / `real_qty` | 上架量 |
+| `thirdDetailId` | `third_detail_id` | `{asnNumber}_{lineNo}_{GOOD\|DAMAGE}` |
+| `skuStatus` | → `defectiveProductFlag` | 无 mapping，DetailHandler 转换 |
+
+固定值（convert `fixed_value_json` 已有）：`sourcePlatform=aiya`，`warehousePlatformType=overseasWarehouse`。
+
+### DMP 配置状态（test）
+
+| 配置 | 状态 |
+|------|------|
+| `dmp_cfg_input` 爱亚退货入库 `2076940293432694212` | 已有 |
+| convert：Init/主表/明细 Handler 类名 | 已有 |
+| `dmp_cfg_input_detail` normal/history 任务 | 已有（有效） |
+| `dmp_cfg_input_convert_mapping` | **缺** → 执行 SQL |
+| 明细 `unique_field_name` | 原 `mainId,productSku,realQty` 有良/不良冲突风险 → SQL 改为 `mainId,thirdDetailId` |
+| `dmp_cfg_output` `AiyaReturnInstockRocketMQTaskHandler` | **缺** → 执行 SQL（`type_id` 与 WEGO 退货同为 `1895034764931390862`） |
+
+**落库脚本**：[`sql/aiya_return_inbound_dmp_mapping.sql`](sql/aiya_return_inbound_dmp_mapping.sql)（需在 erp-dmp 库执行，代码仓库不自动跑）。
+
+### 本期明确不做（退货入库）
+
+- 不改数臣《退货入库单》/《预入库单》生成逻辑（参考单号关联、客户/组织回填等走现有海外仓消费）
+- 不做数臣创建退货单再推爱亚（文档明确本期只拉已上架退货）
+- 不使用 / 已删除 `returnorder.queryPage` 骨架
+
+### 待联调 / 待配置（退货入库）
+
+- [ ] **【高优】在 test/uat 执行** `sql/aiya_return_inbound_dmp_mapping.sql`（mapping + unique_field + output）
+- [ ] **【高优】真实 RETURN 样例**：`Fulfilled`+`COMPLETED` 单据，核对 `asnLineItems` 是否按 GOOD/DAMAGE 拆行、`putawayedQuantity`/`putawayTime`/`refNumber` 是否有值
+- [ ] 跑一次「爱亚退货入库」任务：核对 `dmp_third_return_inbound` 落库 + MQ 推送 + 下游生成退货入库/预入库
+- [ ] 无参考单号 / 多平台订单号等边界：确认仍走现有预入库/告警逻辑（代码未改下游）
+
+---
 
 ## 调整单相关（2026-07-23）
 
@@ -158,13 +232,13 @@
 
 - [x] **【高优】出库单相关接口的真实 serviceType 标识**：代码里已改为 `GLINK_CREATE_ORDER_NOTIFY`（建单）/`GLINK_QUERY_ORDER_NOTIFY`（查询，合并后的 `query2cOrder` 仍用此常量）/`GLINK_CANCEL_ORDER_NOTIFY`（截单），仍需联调确认是否即为网关真实值。
 - [x] **【已确认】建单成功响应不回传独立出库单号（2026-07-22 联调）**：真实响应为 `{"success":true,"code":"SUCCESS","message":null,"data":null}`，`data` 为空；`AiyaHandlerServiceImpl.createOutboundBill` 已用下发的 `orderNumber`（=`referenceNo`）作为 `shippingOrderNo` 回写，无需改代码。
-- [ ] **建单幂等行为（联调）**：唯一键字段已确认为 `orderNumber`（见已确认结论），`AiyaHandlerServiceImpl.createOutboundBill` 已按此假设实现（不再需要类似 WEGO 的"订单已存在"反查兜底）；仍需联调确认**重复提交同一 `orderNumber`** 的真实行为（报错拒绝 / upsert / 产生重复单）。
+- [x] **【已确认】建单幂等行为（2026-07-24 联调）**：重复提交同一 `orderNumber` 返回 `{"success":true,"code":"SUCCESS","message":"Order already exist.","data":null}`。与 WEGO（`success=false, errorCode=2000` 需反查）不同，爱亚直接 `success=true`，Handler 按成功回写 `shippingOrderNo=orderNumber` 即可，无需反查兜底。注意：这是「已存在当成功」，不是内容 upsert。
 - [x] **【已纠正】查询接口入参按方案文档落地（2026-07-22）**：强类型 `AiyaOutboundQueryDTO`；必填 `warehouseCode`，可选 `shippingTimeFrom`/`shippingTimeTo`/`page`/`pageSize`。方案文档写的 `pageNum` 有误，真实网关字段为 `page`（与 SKU/库存/入库一致），SDK 已按 `page` 下发。发运时间是 `shippingTime*`，不是建单的 `orderTime`，也不是入库/退货的 `putawayCompletedTime*`。
 - [x] **【已补充】查询增加 `createdTimeFrom`/`createdTimeTo`（2026-07-23）**：`shippingTime*` 只能查到已发货单；DMP Init / Handler 反查改为按创建时间窗口拉取（对齐 WEGO `orderDate*`），`shippingTime*` 仍保留为可选过滤。
-- [ ] **截单接口 `intercept2cOrder` 的真实响应结构与失败判定**：`AiyaHandlerServiceImpl.cancelOutboundBill` 当前用「消息含"已出库"关键词」判定拦截失败（`INTERCEPTION_FAILED`），其余场景一律归为拦截中（`INTERCEPTING`），均为推测实现，需联调后按真实错误码/文案修正。
-- [ ] **取消/拦截为异步流程**：需确认「4、爱亚出库单查询」定时轮询（即新增的 `AiyaOutboundInitHandler`）是否就是唯一的拦截结果确认渠道，以及 `ThirdWarehouseCancelResultEnum.INTERCEPTING` 三态在 ERP 侧如何最终收敛（当前设计：由 DMP 轮询按订单最新状态字母码收敛，与通邮一致，未新增机制）；`ThirdWarehouseCancelOutboundReq.confirmInterceptResult` 全仓库未见实际调用方。
-- [ ] **`shipFrom` ERP 数据源**：请求字段约束已确认（见已确认结论）；本次在 `AiyaHandlerServiceImpl` 用写死的占位常量（`SHIP_FROM_PLACEHOLDER_*`），仍需产品确认仓库 Entity/维度表是否要新增寄件人字段，确认后替换占位常量为真实数据源。
-- [ ] **`shippingLabelSource` 三态 vs 现有配置二态**：AIYA 需要 ATTACHMENT/API/WMS_GEN，ERP「是否推海外仓面单」（`isPushLabel`）是二态，当前按 `isPushLabel && 有labelUrl` → ATTACHMENT，否则 → API 简单映射，`WMS_GEN` 第三态本次未使用，需确认是否有业务场景需要它。
+- [x] **【已确认】截单接口响应判定（2026-07-24 联调）**：首次成功 `success=true, message=null`；重复截单 `success=true, message="This order has been cancelled!"` 按幂等成功（`INTERCEPTION_SUCCESSFUL`）。`success=false` 不区分错误码，直接 `failure` 透传爱亚 `message`/`code` 原文（不再猜「已出库」/`INTERCEPTING`）。
+- [ ] **取消/拦截业务异步流程（方案文档仍写异步）**：方案文档写取消后先「拦截中」、靠定时查询收敛；当前 Handler 截单接口侧已改为同步判定（成功/幂等成功 / `failure` 原文），不再在取消接口返回 `INTERCEPTING`。DMP `AiyaOutboundInitHandler` 仍负责日常状态同步（含取消后状态 B）。`ThirdWarehouseCancelOutboundReq.confirmInterceptResult` 全仓库未见实际调用方，是否还要二次确认拦截结果待产品定。
+- [x] **【已确认】`shipFrom` 可不传（2026-07-24 联调）**：官方文档曾标必填，实测不填也能建单成功。`AiyaHandlerServiceImpl` / ManualTest 默认不下发；DTO 仍保留 `ShipFrom` 嵌套类便于按需透传。不再需要 ERP 寄件人数据源/占位常量。
+- [x] **【已确认】`shippingLabelSource` 只用二态（方案文档已写清）**：爱亚接口枚举虽有 ATTACHMENT/API/**WMS_GEN** 三值，但方案文档业务映射只有两档——①「是否推海外仓面单=是」→ ATTACHMENT（附图 + 运单号/渠道）；②「=否」→ API（海外仓面单，物流渠道非必填）。**没有**映射到 WMS_GEN，ERP `isPushLabel` 二态与方案一致即可，无需第三态。
 - [x] **【已确认】出库单查询响应为扁平结构（2026-07-22 联调）**：顶层 `{success, code, message, total, orderInfoList:[]}`，列表字段是 `orderInfoList`（不是同族仓库/承运商接口的 `resultList`）；`total` 失败时可为 null，成功分页是否回填待再确认。
 - [ ] **单据状态字母码 A/B/C/D 的完整语义**：`AiyaEnums.OrderStatusEnum` 已改为方案文档字母码（A-已出库/B-已取消/C-库存不足/D-锁住），但"D-锁住"具体语义（被谁锁、是否会自动解锁）未展开，且不排除还有未列出的状态码，需联调确认。
 - [ ] **DMP 任务与字段映射配置**：新增的 `AiyaOutboundInitHandler`（Input）/`AiyaOutBoundDmpHandler`（Convert）/`AiyaOutboundRocketMQTaskHandler`（Output）均需在数据库配置表里注册；建议字段映射：`orderNumber→order_code`/`reference_no`、`warehouseCode→warehouse_code`、`orderStatus→order_status`、`trackingNumber→tracking_no`、`actualLogistic→carrier_name`、`shippingTime→date_shipping`（Convert 侧也会解析 shippingTime）。需要找运维/产品在环境里配置。
@@ -175,15 +249,23 @@
 
 （确认后从上面移到这里，写清结论与确认人/日期）
 
+- **退货入库拉取口径（2026-07-24，用户确认）**：
+  1. 接口用已有 `batchQueryAsn`（`GLINK_BATCH_QUERY_ASN_NOTIFY`），固定 `asnType=RETURN`；响应结构对齐桌面样例 `asnInfoList` / `AiyaInboundResp`。
+  2. 「完全上架」过滤：`asnType=RETURN` + `putawayStage=COMPLETED` + `status=Fulfilled`。
+  3. 时间窗与头程入库一致：`receiveTimeFrom`/`receiveTimeTo`（整天边界）。
+  4. 明细数量/良不良：按方案文档取 `asnLineItems.putawayedQuantity` + `skuStatus`（GOOD→可用，DAMAGE→不良），**不**用头程入库那套 PV 上架流水。
+  5. **不改**数臣生成退货入库单/预入库单的现有代码；DMP 任务/convert 类名已在库中建好，补 mapping + MQ output 即可。
+  6. 误仿 WEGO 的 `returnorder.queryPage` / `AiyaReturnOrderResp` 无用，已从 SDK 删除。
+
 - **调整单入口协议（2026-07-23，用户确认）**：爱亚/EDI 按数大臣 OpenAPI 协议调用（套外壳 + `method=aiyaChangeAttribute` + `data`），响应认 `ApiResult`；不做爱亚原 `changeAttribute4Edi` 裸 body / `MetaResponse` 兼容。
 
 - **出库单创建/修改请求字段清单（2026-07-21，依据用户提供的爱亚开放平台接口文档截图，比方案文档翻译稿权威）**：
-  - **顶层必填**：`customerCode`（SDK 注入）、`orderNumber`、`warehouseCode`、`orderTime`（格式 `yyyy-MM-dd'T'HH:mm:ssZ`，截图示例 `+0800`）、`shippingInstructions`、`shipTo`、`items[]`、`shipFrom`。
+  - **顶层必填**：`customerCode`（SDK 注入）、`orderNumber`、`warehouseCode`、`orderTime`（格式 `yyyy-MM-dd'T'HH:mm:ssZ`，截图示例 `+0800`）、`shippingInstructions`、`shipTo`、`items[]`（`shipFrom` 官方截图曾列入必填，见下条联调纠正）。
   - **顶层可选且方案文档有映射、已纳入 DTO**：`extOrderNumber`、`salesChannel`、`storeNumber`、`files[]`（ATTACHMENT 面单时用）。
   - **顶层可选且方案未映射、已从 DTO 剔除**：`poNumber`、`notes`、`signatureService`、`cashOnDelivery`、`freightCollect`、`collectingPaymentAmount`、`shippingRate`、`totalAmount`、`declaringValueAmount`、`orderType`、`currencyCode`、`latestShipDate`、`extUserId`、`isCb`、`documentType`、`invoiceList`、`externalPackageNumList`、`orderTagList`、`addedServices`、`startShipDate`、`originalOrderTime`、`supplier`、`udf5`~`udf15`、`cartonization`、`palletInfoList`、`isSpecifyBatch`、`addressType`、`platformOriginTrackingVos`、`doNumber`、`storeName`、`shippingType`、`priority`、`pickupCode`。
   - **`shippingInstructions` 必填子字段**：`carrier`、`carrierService`（默认 STD）、`shippingLabelSource`（ATTACHMENT/API/WMS_GEN）；可选且方案有映射：`trackingNumber`（方案文档误称为顶层 orderNumber 的「指定物流单号」）。官方另有 `carrierBillingType`/`shippingNotes`/`carrierAccount`/`serviceLevel`/`actualLogistic` 等可选未纳入。
   - **`shipTo` 必填子字段**：`name`、`mobileNumber`、`streetLine1`、`city`、`state`、`postalCode`、`countryCode`；可选且方案有映射：`email`、`streetLine2`、`district`（**官方为否**，方案文档标必填，按官方）。
-  - **`shipFrom`（2026-07-21 用户补充确认）**：地址类必填 `streetLine1`/`city`/`state`/`postalCode`/`countryCode`；身份类 **`name`/`company` 必须至少填一个**（可同时填）。已写入 `AiyaOutboundSaveDTO.ShipFrom`。
+  - **`shipFrom`（2026-07-24 联调纠正）**：官方曾标必填，实测**可不传**仍建单成功；Handler/ManualTest 默认不下发；DTO 保留 `ShipFrom` 供可选透传。若填写：地址类 streetLine1/city/state/postalCode/countryCode；身份类 name/company 至少填一个。
   - **`files[]`（2026-07-21 用户补充确认）**：顶层可选；一旦下发条目则该条 **`fileType` 必填**，取值：`Shipping Label`（面单）/`Commercial Invoice`（发票）/`Bill of Lading`（提货单）/`Product Label`（商品标签）/`Carton Label`（箱贴）/`Packing List`（装箱单）/`Pallet Label`（板贴）/`Other`（其它）；另含 `fileName`/`fileUrl`。常量已落于 `AiyaOutboundSaveDTO.FileItem`，ManualTest ATTACHMENT 场景已按此传参。
   - **`items[]`（2026-07-21）**：方案文档映射为 `sku`/`quantity`；官方「图7」实为顶层后续可选字段而非 items 子字段展开，故明细子字段以方案文档为准落地，DTO 仅保留这两项。若后续补到官方 items 展开截图再核对是否有 lineNo 等额外必填。
   - 代码：`AiyaOutboundSaveDTO` + `AiyaOpenApiService.save2cOrder(DTO)` + `AiyaOpenApiServiceManualTest.save2cOrderTest`。
@@ -216,15 +298,18 @@
   - DB 变更 `ALTER TABLE sku_mapping ADD COLUMN status varchar NOT NULL DEFAULT 'enable'` 需走仓库外流程手动执行。
   - **前端联调**：列表需展示/筛选 `status`；同步新增的未匹配多为禁用；映射成功后应变启用；规则 d 禁用后「启动」按钮是否置灰由产品/前端定。
 - **人工启用/禁用库存SKU映射接口（2026-07-20）**：仿照 `/wms/warehouse-area/updateStatus`，在 `SkuMappingController` 新增 `POST /skuMaping/updateStatus`。请求体 `SkuMappingDTO.UpdateStatusDTO`（`ids` + `status`）；Service 按条校验「仅 `WAREHOUSE` 类型可改」、状态未变则记成功跳过、变更则写 `ModuleTypeEnum.SKU_MAPPING` 操作日志并 `updateBatchById`；返回 `List<BatchResultDTO>`，全部成功才 HTTP success。不加 `@DataPermission`（与同 Controller 的 `updateWarehouseSku`/`delete` 一致）。前端交互不在本次范围。
-- **尾程-出库单核心链路已按当前理解实现（2026-07-22，用户明确同意 `shipFrom` 占位常量方案 + 「汉化管理」「超量发货」本次不做，待联调核实，非真正确认）**：
-  - **建单幂等键**：`orderNumber` 直接取 ERP `referenceNo`（发货单号），不加时间戳后缀；AIYA 官方文档"客户系统保证唯一"，与 WEGO 需要反查兜底不同。
+- **尾程-出库单核心链路（2026-07-22 起实现，2026-07-24 联调纠正 `shipFrom`/建单幂等/截单判定；「汉化管理」「超量发货」本次不做）**：
+  - **建单幂等键**：`orderNumber` 直接取 ERP `referenceNo`（发货单号），不加时间戳后缀。
   - **建单成功响应（2026-07-22 联调确认）**：真实样例 `{"success":true,"code":"SUCCESS","message":null,"data":null}`，不回传独立出库单号；ERP 侧以建单时下发的 `orderNumber` 作为 `shippingOrderNo` 回写，后续查询/取消均以此号为 key。
+  - **建单幂等（2026-07-24 联调确认）**：重复提交同一 `orderNumber` 返回 `success=true, message="Order already exist."`（非失败）；Handler 识别后打 warn 日志，仍按成功回写 `shippingOrderNo`。与 WEGO `errorCode=2000`+反查路径不同，爱亚**不需要**反查兜底。不是内容 upsert。
+  - **`shipFrom`（2026-07-24 联调确认）**：可不传；Handler 默认不下发，无需 ERP 寄件人数据源/占位常量。
   - **状态枚举**：`AiyaEnums.OrderStatusEnum` 改为字母码 `A`(已出库→SHIPPED)/`B`(已取消→DISUSE)/`C`(库存不足→EXCEPTION)/`D`(锁住→EXCEPTION)，替换掉此前照抄 WEGO 的数字状态码占位。
   - **查询入参（2026-07-23）**：`AiyaOutboundQueryDTO` 支持 `createdTimeFrom`/`createdTimeTo`（主窗口）+ 可选 `shippingTime*`/`page`/`pageSize`。`AiyaOutboundInitHandler` / Handler `queryOutboundBill` 按创建时间窗口拉，对齐 WEGO `orderDate*`，避免 `shippingTime*` 漏未发货单。
   - **响应结构（2026-07-22 联调确认）**：扁平 `{success, code, message, total, orderInfoList:[OutboundOrderDTO]}`；明细按文档映射 `orderNumber`/`shippingTime`/`actualLogistic`/`trackingNumber`/`sku`+`qty`；单据状态字段名文档未给出，暂用 `orderStatus`。
   - **`safeResponseLog`（2026-07-22）**：改为读取爱亚字段 `code`/`message`（此前误用 WEGO 的 `errorCode`/`errorMsg`，失败日志会打成 null）。
   - **SDK 方法**：`query2cOrder(AiyaOutboundQueryDTO.QueryReqDTO)`；`intercept2cOrder` 入参为 `orderNumbers[]`（字符串集合，对齐方案文档与入库取消 `asnNumbers[]`）。
-  - **`AiyaHandlerServiceImpl`**：`createOutboundBill` 按 `isPushLabel`+`labelUrl` 二态映射 `shippingLabelSource`；`shipFrom` 用占位常量；`cancelOutboundBill` 三态范式；`queryOutboundBill` 因文档不支持按单号精确查，改为近 7 天发运窗口扫授权下仓库后本地按 `orderNumber` 过滤。
+  - **截单响应判定（2026-07-24 联调确认）**：首次成功 `success=true, message=null`；重复截单 `success=true, message="This order has been cancelled!"` → `INTERCEPTION_SUCCESSFUL`（幂等）；`success=false` → `failure` 透传爱亚 `message`/`code` 原文（不再做「已出库」/`INTERCEPTING` 猜测分支）。
+  - **`AiyaHandlerServiceImpl`**：`createOutboundBill` 按 `isPushLabel`+`labelUrl` 二态映射 `shippingLabelSource`，不下发 `shipFrom`；`cancelOutboundBill` 成功侧幂等、失败侧原文；`queryOutboundBill` 近 7 天创建窗口扫仓库后本地按 `orderNumber` 过滤。
   - **DMP 三件套**：`AiyaOutboundInitHandler`（按仓库 + `createdTimeFrom`/`createdTimeTo` 窗口分页拉取）、`AiyaOutBoundDmpHandler`（`shippingTime`→`dateShipping`）、`AiyaOutboundRocketMQTaskHandler`（按 `AiyaEnums.OrderStatusEnum` 映射后推送）。
   - 本次不做「汉化管理」错误码翻译、「超量发货」处理流程，均留待后续单独排期。
   - 涉及新增 `ApiError`：`WH_AIYA_SDK_OUTBOUND_QUERY_NO_RESPONSE`/`WH_AIYA_SDK_OUTBOUND_QUERY_FAILED`/`WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED`/`WH_AIYA_OUTBOUND_CODE_REQUIRED`/`WH_AIYA_OUTBOUND_DETAIL_EMPTY`（`ApiErrorWms` 11250~11254）。
