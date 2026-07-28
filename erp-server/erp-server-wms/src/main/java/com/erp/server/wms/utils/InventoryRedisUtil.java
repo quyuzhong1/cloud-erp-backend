@@ -13,6 +13,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -22,8 +23,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.AbstractRedisUtil;
 import com.common.business.utils.StringUtil;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
+import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +36,12 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	
 	public static String splitSign = "&&";
 	public static String atSign = "@@";
+
+	/** 仓位库存不足错误模板：当前库存占位符 */
+	public static final String LOCATION_ERROR_CURRENT_PLACEHOLDER = "ss1ss";
+
+	/** 仓位库存不足错误模板：缺少数占位符（与未分配错误的 ssvss 区分） */
+	public static final String LOCATION_ERROR_SHORTAGE_PLACEHOLDER = "sslss";
 
 	private static RedisSerializer stringRedisSerializer = new StringRedisSerializer();
 	
@@ -89,13 +98,32 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		String opName = inventoryRedisOpEnum.getName();
 		String logMsg = StringUtil.appendLogMsg("InventoryRedisUtil的execute操作：" + opName , args);
     	log.info("{}开始" , logMsg);
+		// try.lua 存在两种失败通道：① redis.error_reply -> RedisSystemException（未分配等业务失败，不重试）；
+		// ② JSON {success:false,sleep}（仓位库存不足/重算中，可重试）。排查时需区分异常类型与 lua 原始返回值。
 		int i = 0;
 		boolean success = false;
 		String errormsg = "";
 		boolean isRetry = false;
 		String execute = "";
 		while(i < 3) {
-			execute = (String) inventoryRedisTemplate.execute(InventoryRedisOpEnum.getDefaultRedisScript(inventoryRedisOpEnum), stringRedisSerializer, stringRedisSerializer, Arrays.asList(), args);
+			try {
+				execute = (String) inventoryRedisTemplate.execute(InventoryRedisOpEnum.getDefaultRedisScript(inventoryRedisOpEnum), stringRedisSerializer, stringRedisSerializer, Arrays.asList(), args);
+			} catch (DataAccessException redisEx) {
+				if (isLuaScriptBusinessError(redisEx)) {
+					throwLuaBusinessException(opName, redisEx);
+				}
+				log.warn("库存redis操作{}基础设施异常，准备重试 attempt={}/3", opName, i + 1, redisEx);
+				if (i >= 2) {
+					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+				}
+				try {
+					Thread.sleep(1000L);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				i++;
+				continue;
+			}
 			log.warn("库存redis操作{}，入参{}，lua结果：{}" , opName , args ,execute);
 			long sleep = 0L;
 			if(StringUtils.isNotBlank(execute)) {
@@ -130,5 +158,58 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		}
     	log.info("{}结束" , logMsg);
 	}
-	
+
+	/**
+	 * 解析 Lua {@code redis.error_reply} 并转为业务异常。
+	 * <p>
+	 * 约定：{@code biz_error} 以 {@link VirtualInventoryUnallocCheckHelper#UNALLOC_LUA_ERROR_PREFIX} 开头时映射
+	 * {@link ApiError#VM_CHECK_OUT_VIRTUAL_INVENTORY}；其它 {@code biz_error} 暂用默认 code，扩展时按前缀增映射。
+	 * 仓位库存不足等可重试场景仍走 JSON {@code {success:false}}，不经本方法。
+	 * </p>
+	 *
+	 * @param opName  Redis 操作名
+	 * @param redisEx Spring Redis 访问异常
+	 */
+	private void throwLuaBusinessException(String opName, Exception redisEx) {
+		String luaErr = extractLuaErrorMessage(redisEx);
+		log.error("库存redis操作{} Lua业务失败：{}", opName, luaErr, redisEx);
+		if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(luaErr)) {
+			throw new ServiceException(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY.getCode(),
+					VirtualInventoryUnallocCheckHelper.stripUnallocLuaErrorPrefix(luaErr));
+		}
+		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED.getCode(),
+				StringUtils.defaultIfBlank(luaErr, ApiError.WAREHOUSE_INVENTORY_FAILED.getMsg()));
+	}
+
+	/**
+	 * 判断 Redis 异常是否来自 Lua {@code redis.error_reply}（业务失败，不可重试）。
+	 *
+	 * @param redisEx Spring Redis 访问异常
+	 * @return {@code true} 表示 Lua 脚本主动返回的业务错误
+	 */
+	private static boolean isLuaScriptBusinessError(Exception redisEx) {
+		String raw = redisEx.getMessage();
+		if (StringUtils.isBlank(raw)) {
+			return false;
+		}
+		if (raw.contains("ERR ")) {
+			return true;
+		}
+		return VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(raw);
+	}
+
+	/**
+	 * 从 Spring Redis 异常消息中提取 Lua {@code error_reply} 正文。
+	 *
+	 * @param redisEx Spring Redis 访问异常
+	 * @return 去掉 {@code ERR } 前缀后的 Lua 错误文案
+	 */
+	private static String extractLuaErrorMessage(Exception redisEx) {
+		String luaErr = redisEx.getMessage();
+		if (luaErr != null && luaErr.contains("ERR ")) {
+			return luaErr.substring(luaErr.indexOf("ERR ") + 4);
+		}
+		return luaErr;
+	}
+
 }

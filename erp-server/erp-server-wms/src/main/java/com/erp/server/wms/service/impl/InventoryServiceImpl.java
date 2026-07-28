@@ -1396,6 +1396,24 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
+    public List<InventoryDTO.RedisInventoryReturnDTO> listRedisInventoryMeta(InventoryDTO.RedisInventoryParamDTO dto) {
+        List<InventoryEntity> inventoryList = listInventory(dto.getSkuIdList(), dto.getWarehouseIdList(),
+                dto.getInventoryStatusList(), dto.getWarehouseLocationIdList());
+        if (CollUtil.isEmpty(inventoryList)) {
+            return Collections.emptyList();
+        }
+        List<InventoryDTO.RedisInventoryReturnDTO> resultList = new ArrayList<>();
+        for (InventoryEntity inventoryEntity : inventoryList) {
+            InventoryDTO.RedisInventoryReturnDTO returnDTO = new InventoryDTO.RedisInventoryReturnDTO();
+            BeanUtils.copyProperties(inventoryEntity, returnDTO);
+            returnDTO.setInventoryId(inventoryEntity.getId());
+            returnDTO.setInventoryStatus(inventoryEntity.getDictInventoryStatus());
+            resultList.add(returnDTO);
+        }
+        return resultList;
+    }
+
+    @Override
     public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.InventoryParamDTO dto) {
         if (CollUtil.isEmpty(dto.getWarehouseIdList())){
             return Collections.emptyList();

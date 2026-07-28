@@ -4,7 +4,9 @@ package com.erp.server.wms.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +40,8 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
@@ -45,13 +49,16 @@ import com.erp.model.wms.entity.InventoryTransactionEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter;
+import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
 import com.erp.server.wms.mapper.InventoryTransactionMapper;
 import com.erp.server.wms.service.InventoryHisService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTradingService;
 import com.erp.server.wms.service.InventoryTransactionService;
 import com.erp.server.wms.service.TransactionFlowService;
+import com.erp.server.wms.service.VirtualInventoryService;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 
 import cn.hutool.core.bean.BeanUtil;
@@ -80,6 +87,8 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private InventoryRedisUtil inventoryRedisUtil;
     @Autowired
     private TransactionFlowService transactionFlowService;
+    @Autowired
+    private VirtualInventoryService virtualInventoryService;
     @Resource
     private MQProducerService mqProducerService;
     @Resource
@@ -329,21 +338,20 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		if(transactionFlowEntityList.size() != flowIds.size()) {
 			ServiceException.runError("库存流水缺少");
 		}
-		String transactionId = "";
-		String transactionType = "";
-		boolean inGlobalTransaction = RootContext.inGlobalTransaction();
-		if(inGlobalTransaction) {
-			transactionId = RootContext.getXID().replace(":", "_");
-			transactionType = "global";
-		}else {
-			transactionId = TraceContext.traceId();
-			if(StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
-				transactionId = transactionFlowEntityList.get(0).getId();
-			}
-			transactionType = "local";
-		}
+		String transactionId = resolveRedisTransactionIdFromList(transactionList);
+		String transactionType = RootContext.inGlobalTransaction() ? "global" : "local";
 		
-		this.tryRedis(transactionId , transactionList);
+		try {
+			this.tryRedis(transactionId , transactionList);
+		} catch (Exception e) {
+			log.warn("tryRedis失败，尝试回滚redis预占 transactionId={}", transactionId, e);
+			try {
+				this.rollbackRedis(transactionId);
+			} catch (Exception rollbackEx) {
+				log.error("tryRedis失败后回滚redis异常 transactionId={}", transactionId, rollbackEx);
+			}
+			throw e;
+		}
 		
 		List<InventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
 		for(TransactionFlowEntity transactionFlowEntity : transactionFlowEntityList) {
@@ -398,20 +406,117 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()
                             , transactionDTO.getInventoryStatusName()
-                            , "ss1ss"
+                            , InventoryRedisUtil.LOCATION_ERROR_CURRENT_PLACEHOLDER
                             , totalQty
-                            , "ss2ss"));
+                            , InventoryRedisUtil.LOCATION_ERROR_SHORTAGE_PLACEHOLDER));
     			}
     			transactionRedisParam.add(sb.toString());
     		}
     	}
-    	if(CollUtil.isNotEmpty(transactionRedisParam)) {
+    	List<VirtualInventoryUnallocCheckHelper.UnallocTryItem> unallocTryItems = buildUnallocTryItems(transactionList);
+    	String unallocParams = unallocTryItems.stream()
+    			.map(VirtualInventoryUnallocCheckHelper.UnallocTryItem::toTryParam)
+    			.collect(Collectors.joining(InventoryRedisUtil.splitSign));
+    	if(CollUtil.isNotEmpty(unallocTryItems)) {
+    		log.warn("tryRedis未分配预占参数 transactionId={}, items={}", transactionId, unallocTryItems.size());
+    		VirtualInventoryUnallocCheckHelper.assertUnallocTryRequiresInventoryParams(unallocTryItems, transactionRedisParam);
+    	}
+    	if(CollUtil.isNotEmpty(transactionRedisParam) || CharSequenceUtil.isNotBlank(unallocParams)) {
+    		String inventoryParams = CollUtil.isEmpty(transactionRedisParam) ? ""
+    				: transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign));
     		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
-					transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+					inventoryParams,
+					CharSequenceUtil.blankToDefault(unallocParams, ""));
     	}
     	log.info("{}结束" , logMsg);
+    }
+
+    /**
+     * 为 Redis TRY 阶段组装仓+SKU 未分配预占项：实体库存与虚拟已分配均读 Redis，与扣减同源。
+     * <p>
+     * entityQty 在 try.lua 内按 {@code inventoryId} 列表读取 {@code inventory:current} 基量汇总（不含 TRY 在途段）；
+     * virtualQty 在 EVAL 前单次读取写入 ARGV（虚拟 Redis 分实例，见 {@link VirtualInventoryUnallocCheckHelper} 说明）；
+     * 同仓+SKU 并发由 reserve 预占兜底。
+     * </p>
+     *
+     * @param transactionList 本次库存交易明细
+     * @return 需原子预占的仓+SKU 列表；无白名单出库时返回空列表
+     */
+    private List<VirtualInventoryUnallocCheckHelper.UnallocTryItem> buildUnallocTryItems(List<InventoryTransactionDTO> transactionList) {
+    	List<InventoryTransactionDTO> checkList = VirtualInventoryUnallocCheckHelper.filterNeedUnallocCheck(transactionList);
+    	if (CollUtil.isEmpty(checkList)) {
+    		return Collections.emptyList();
+    	}
+    	Map<String, List<InventoryTransactionDTO>> grouped = VirtualInventoryUnallocCheckHelper.groupByWarehouseSku(checkList);
+    	List<String> warehouseIdList = checkList.stream().map(InventoryTransactionDTO::getWarehouseId).distinct().collect(Collectors.toList());
+    	List<String> skuIdList = checkList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
+
+    	VirtualInventoryDTO.RedisVirtualInventoryParamDTO virtualParam = new VirtualInventoryDTO.RedisVirtualInventoryParamDTO();
+    	virtualParam.setWarehouseIdList(warehouseIdList);
+    	virtualParam.setSkuIdList(skuIdList);
+    	List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> virtualInventoryList =
+    			virtualInventoryService.getRedisVirtualInventory(virtualParam);
+
+    	InventoryDTO.RedisInventoryParamDTO entityParam = new InventoryDTO.RedisInventoryParamDTO();
+    	entityParam.setWarehouseIdList(warehouseIdList);
+    	entityParam.setSkuIdList(skuIdList);
+    	entityParam.setInventoryStatusList(Arrays.asList(
+    			InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
+    	List<InventoryDTO.RedisInventoryReturnDTO> entityInventoryList = inventoryService.listRedisInventoryMeta(entityParam);
+
+    	List<VirtualInventoryUnallocCheckHelper.UnallocTryItem> result = new ArrayList<>();
+    	for (Map.Entry<String, List<InventoryTransactionDTO>> entry : grouped.entrySet()) {
+    		List<InventoryTransactionDTO> value = entry.getValue();
+    		InventoryTransactionDTO first = value.get(0);
+    		String skuId = first.getSkuId();
+    		String warehouseId = first.getWarehouseId();
+    		int outboundQty = VirtualInventoryUnallocCheckHelper.sumOutboundQty(value);
+    		int virtualQty = VirtualInventoryUnallocCheckHelper.sumVirtualQty(virtualInventoryList, warehouseId, skuId);
+    		if (virtualQty <= 0) {
+    			continue;
+    		}
+    		List<String> inventoryIdList = entityInventoryList.stream()
+    				.filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
+    						&& CharSequenceUtil.equals(obj.getSkuId(), skuId))
+    				.map(InventoryDTO.RedisInventoryReturnDTO::getInventoryId)
+    				.filter(CharSequenceUtil::isNotBlank)
+    				.distinct()
+    				.collect(Collectors.toList());
+    		result.add(new VirtualInventoryUnallocCheckHelper.UnallocTryItem(
+    				warehouseId, skuId, first.getSkuNo(), first.getWarehouseName(),
+    				outboundQty, virtualQty, inventoryIdList));
+    	}
+    	return result;
+    }
+
+    @Override
+    public String resolveRedisTransactionIdFromList(List<InventoryTransactionDTO> transactionList) {
+    	return resolveRedisTransactionId(VirtualInventoryUnallocCheckHelper.resolveFallbackFlowId(transactionList));
+    }
+
+    @Override
+    public String resolveRedisTransactionId(String fallbackFlowId) {
+    	if (RootContext.inGlobalTransaction()) {
+    		return RootContext.getXID().replace(":", "_");
+    	}
+    	String transactionId = TraceContext.traceId();
+    	if (StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
+    		return StringUtils.defaultString(fallbackFlowId, "");
+    	}
+    	return transactionId;
+    }
+
+    @Override
+    public int getUnallocPendingReserveQty(String warehouseId, String skuId, String excludeTransactionId) {
+    	String reserveKey = InventoryRedisOpKeyEnum.getWhSkuKey(
+    			InventoryRedisOpKeyEnum.WHSKU_UNALLOC_RESERVE, warehouseId, skuId);
+    	Object reserveValue = inventoryRedisUtil.get(reserveKey);
+    	if (reserveValue == null) {
+    		return 0;
+    	}
+    	return VirtualInventoryUnallocCheckHelper.sumPendingReserve(reserveValue.toString(), excludeTransactionId);
     }
     
 	@Override
@@ -428,7 +533,10 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		}
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
 		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
-				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, "")
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.WHSKU_UNALLOC_RESERVE, "")
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.WHSKU_ENTITY, "")
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.WHSKU_VIRTUAL, ""));
 		if(toDoHis) {
 			transactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(InventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
 		}
@@ -449,7 +557,10 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		}
 		InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
 		inventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
-				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, "")
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.WHSKU_UNALLOC_RESERVE, "")
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.WHSKU_ENTITY, "")
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.WHSKU_VIRTUAL, ""));
 		log.info("{}结束" , logMsg);
 	}
 	
@@ -730,6 +841,28 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			lastInventoryId = transactionFlowEntityList.get(transactionFlowEntityList.size() - 1).getInventoryId();
     	}
     	return redisCheckInventoryList;
+	}
+
+	@Override
+	public Integer getRedisBaseQtyByInventory(String inventoryId) {
+		if (StringUtils.isBlank(inventoryId)) {
+			throw new ServiceException("库存id不能为空");
+		}
+		Object redisQtyObj = inventoryRedisUtil.get(
+				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
+		if (redisQtyObj == null) {
+			return 0;
+		}
+		String[] split = redisQtyObj.toString().split(InventoryRedisUtil.splitSign);
+		if (split.length == 0 || StringUtils.isBlank(split[0])) {
+			return 0;
+		}
+		try {
+			return Integer.parseInt(split[0].trim());
+		} catch (NumberFormatException e) {
+			log.warn("Redis current 基量解析失败 inventoryId={} base={}", inventoryId, split[0]);
+			return 0;
+		}
 	}
 
 	@Override

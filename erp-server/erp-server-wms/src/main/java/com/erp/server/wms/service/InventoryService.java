@@ -405,6 +405,14 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryDTO.RedisInventoryReturnDTO> getRedisInventory(InventoryDTO.RedisInventoryParamDTO dto);
 
     /**
+     * 按条件查询实体库存元数据（仓、SKU、inventoryId 等），不读 Redis current，供未分配校验避免重复 GET。
+     *
+     * @param dto 仓库、SKU、库存状态等筛选条件
+     * @return 不含 Redis 数量的库存元数据列表
+     */
+    List<InventoryDTO.RedisInventoryReturnDTO> listRedisInventoryMeta(InventoryDTO.RedisInventoryParamDTO dto);
+
+    /**
      * 根据条件查询仓库库存信息
      * @param dto
      * @return
