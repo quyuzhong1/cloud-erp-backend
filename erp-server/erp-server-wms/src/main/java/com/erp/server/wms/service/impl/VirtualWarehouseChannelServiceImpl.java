@@ -512,14 +512,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     }
 
     /**
-     * 根据关联id和平台查询
-     *
-     * @param platformDTO
-     * @return VirtualWarehouseChannelEntity
-     * @author will
-     * @date 2024/6/12 12:34
-     */
-    /**
      * 校验已绑定的渠道不能重复绑定
      *
      * @param curChannelEntitieList
