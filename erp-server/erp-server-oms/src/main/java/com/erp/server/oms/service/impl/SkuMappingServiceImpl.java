@@ -1865,19 +1865,23 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(), "仅支持库存SKU映射关系变更状态"));
                 continue;
             }
-            if (dto.getStatus().equals(entity.getStatus())) {
-                resultDTOList.add(BatchResultDTO.success(id, entity.getProductSkuNo()));
-                continue;
-            }
-            // 源端已停用/废弃的仓库 SKU：禁止人工启用（对齐对照同步规则 d，需源端恢复 Active 后再启用）
+            // 启用仓库映射：先校验源端 listing 存在且未停用（须在「状态未变」短路之前，避免已 enable 脏数据被判成功）
             if (SkuMappingStatusEnum.ENABLE.equals(dto.getStatus())) {
                 ListingInfoEntity listing = listingMap.get(entity.getListingId());
-                if (listing != null
-                        && WarehouseSkuReconcileHelper.isInactivePlatformStatus(listing.getPlatformStatus())) {
+                if (listing == null) {
+                    resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(),
+                            "未找到仓库SKU源端信息，不允许启用映射关系"));
+                    continue;
+                }
+                if (WarehouseSkuReconcileHelper.isInactivePlatformStatus(listing.getPlatformStatus())) {
                     resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(),
                             "仓库SKU源端已停用/废弃，不允许启用映射关系"));
                     continue;
                 }
+            }
+            if (Objects.equals(dto.getStatus(), entity.getStatus())) {
+                resultDTOList.add(BatchResultDTO.success(id, entity.getProductSkuNo()));
+                continue;
             }
             String beforeName = SkuMappingStatusEnum.getName(Objects.isNull(entity.getStatus()) ? SkuMappingStatusEnum.ENABLE.getCode() : entity.getStatus().getCode());
             entity.setStatus(dto.getStatus());
