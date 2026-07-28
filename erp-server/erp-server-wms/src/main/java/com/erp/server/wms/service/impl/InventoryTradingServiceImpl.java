@@ -75,6 +75,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     @Resource
     private InventoryRedisUtil inventoryRedisUtil;
 
+    @Resource
+    private InventoryTransactionService inventoryTransactionService;
+
 
     @Override
     @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus",unlockAfterTx = false)
@@ -133,12 +136,11 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param approveType     审批类型
      */
     private void executePgUnallocInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
-        List<InventoryTransactionDTO> unallocCheckList = VirtualInventoryUnallocCheckHelper.filterNeedUnallocCheck(transactionList);
         RedissonMultiLock unallocLock = null;
         boolean unlockInFinally = false;
         try {
-            if (CollUtil.isNotEmpty(unallocCheckList)) {
-                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(unallocCheckList);
+            if (CollUtil.isNotEmpty(VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList))) {
+                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
                 unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
                 if (unallocLock == null) {
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
@@ -359,9 +361,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * 校验虚拟仓库存（PostgreSQL 路径预检）。
      * <p>
      * 指定虚拟仓时校验该虚拟仓已分配量；未指定时校验实体仓未分配。
-     * 与 Redis 路径共用 {@link VirtualInventoryUnallocCheckHelper} 白名单；实体/虚拟均读 PostgreSQL，
-     * 不扣 Redis {@code reserve} 在途预占（该 key 仅 Redis TRY 路径写入）。并发由 {@link #doTransactionList}
-     * 的 {@code whsku:unalloc:lock} 按仓+SKU 串行校验与扣减。
+     * 与 Redis 路径共用 {@link VirtualInventoryUnallocCheckHelper} 白名单；实体/虚拟均读 PostgreSQL。
+     * PG 预检同时扣减 Redis {@code reserve} 在途预占，与 Redis TRY 路径共用 {@code whsku:unalloc:lock} 串行。
      * </p>
      *
      * @param transactionList 库存交易列表
@@ -370,56 +371,69 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         if (CollectionUtils.isEmpty(transactionList)) {
             return;
         }
-        List<InventoryTransactionDTO> checkTransactionList = VirtualInventoryUnallocCheckHelper.filterNeedUnallocCheck(transactionList);
-        if (CollectionUtils.isEmpty(checkTransactionList)) {
+        List<InventoryTransactionDTO> virtualWarehouseCheckList =
+                VirtualInventoryUnallocCheckHelper.filterNeedVirtualWarehouseCheck(transactionList);
+        List<InventoryTransactionDTO> entityUnallocCheckList =
+                VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList);
+        if (CollectionUtils.isEmpty(virtualWarehouseCheckList) && CollectionUtils.isEmpty(entityUnallocCheckList)) {
             return;
         }
-        List<String> warehouseIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<String> skuIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<InventoryTransactionDTO> allCheckList = new ArrayList<>();
+        allCheckList.addAll(virtualWarehouseCheckList);
+        allCheckList.addAll(entityUnallocCheckList);
+        List<String> warehouseIdList = allCheckList.stream().map(InventoryTransactionDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = allCheckList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
 
         List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = virtualInventoryService.listInventoryQtyByWarehouseId(warehouseIdList, skuIdList);
 
         InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
         dto.setWarehouseIdList(warehouseIdList);
         dto.setSkuIdList(skuIdList);
-        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
-        Map<String, List<InventoryTransactionDTO>> map = VirtualInventoryUnallocCheckHelper.groupByWarehouseSku(checkTransactionList);
-        for (Map.Entry<String, List<InventoryTransactionDTO>> entry : map.entrySet()) {
+        for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
+                VirtualInventoryUnallocCheckHelper.groupByWarehouseSkuVirtualWarehouse(virtualWarehouseCheckList).entrySet()) {
+            List<InventoryTransactionDTO> value = entry.getValue();
+            InventoryTransactionDTO first = value.get(0);
+            String skuId = first.getSkuId();
+            String warehouseId = first.getWarehouseId();
+            String virtualWarehouseId = first.getVirtualWarehouseId();
+            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
+                            && CharSequenceUtil.equals(obj.getSkuId(), skuId)
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), virtualWarehouseId))
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            log.warn("虚拟仓预检(PG) 实体仓【{}】虚拟仓库【{}】SKU【{}】已分配【{}】出库存【{}】",
+                    first.getWarehouseName(), first.getVirtualWarehouseName(), first.getSkuNo(), virtualQty, qty);
+            if (Math.abs(qty) > virtualQty) {
+                ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_WAREHOUSE_INVENTORY, first.getSkuNo(), first.getWarehouseName(),
+                        first.getVirtualWarehouseName(), virtualQty, Math.abs(qty), Math.abs(qty) - virtualQty);
+            }
+        }
+
+        for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
+                VirtualInventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).entrySet()) {
             List<InventoryTransactionDTO> value = entry.getValue();
             String skuId = value.get(0).getSkuId();
             String warehouseId = value.get(0).getWarehouseId();
-            String virtualWarehouseId = value.get(0).getVirtualWarehouseId();
+            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
+                            && CharSequenceUtil.equals(obj.getSkuId(), skuId))
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (MathUtil.compareTo(virtualQty, MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
+            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
+                            && CharSequenceUtil.equals(obj.getSkuId(), skuId))
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+            int pendingReserve = inventoryTransactionService.getUnallocPendingReserveQty(warehouseId, skuId, null, null);
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (CharSequenceUtil.isNotBlank(virtualWarehouseId)) {
-                Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
-                                && CharSequenceUtil.equals(obj.getSkuId(), skuId)
-                                && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), virtualWarehouseId))
-                        .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-                log.warn("虚拟仓预检(PG) 实体仓【{}】虚拟仓库【{}】SKU【{}】已分配【{}】出库存【{}】",
-                        value.get(0).getWarehouseName(), value.get(0).getVirtualWarehouseName(), value.get(0).getSkuNo(), virtualQty, qty);
-                if (Math.abs(qty) > virtualQty) {
-                    ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_WAREHOUSE_INVENTORY, value.get(0).getSkuNo(), value.get(0).getWarehouseName(),
-                            value.get(0).getVirtualWarehouseName(), virtualQty, Math.abs(qty), Math.abs(qty) - virtualQty);
-                }
-            } else {
-                Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
-                                && CharSequenceUtil.equals(obj.getSkuId(), skuId))
-                        .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (MathUtil.compareTo(virtualQty, MathUtil.ZERO) == MathUtil.ZERO) {
-                    continue;
-                }
-                Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
-                                && CharSequenceUtil.equals(obj.getSkuId(), skuId))
-                        .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
-                int allowedUnalloc = realInventoryTotal - virtualQty;
-                log.warn("未分配预检(PG) 仓库【{}】SKU【{}】已分配【{}】实体【{}】",
-                        value.get(0).getWarehouseName(), value.get(0).getSkuNo(), virtualQty, realInventoryTotal);
-                if (Math.abs(qty) > allowedUnalloc) {
-                    ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY, value.get(0).getSkuNo(), value.get(0).getWarehouseName(),
-                            virtualQty, Math.max(allowedUnalloc, 0));
-                }
+            int allowedUnalloc = realInventoryTotal - virtualQty - pendingReserve;
+            log.warn("未分配预检(PG) 仓库【{}】SKU【{}】已分配【{}】实体【{}】Redis在途预占【{}】",
+                    value.get(0).getWarehouseName(), value.get(0).getSkuNo(), virtualQty, realInventoryTotal, pendingReserve);
+            if (Math.abs(qty) > allowedUnalloc) {
+                ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY, value.get(0).getSkuNo(), value.get(0).getWarehouseName(),
+                        virtualQty, Math.max(allowedUnalloc, 0));
             }
         }
     }
