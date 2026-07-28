@@ -7550,6 +7550,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
 
+        // 与 view 一致：补齐币种切换计算所需的订单汇率/币种/店铺等参数，避免 isCny 切换时金额被按 null 汇率算成 0
+        dto.setShippingFee(soB2cEntity.getShippingFee());
+        dto.setShopId(soB2cEntity.getShopId());
+        dto.setExchangeRate(soB2cEntity.getExchangeRate());
+        dto.setCurrency(soB2cEntity.getCurrency());
         dto.setSoB2cEntity(soB2cEntity);
         dto.setSoB2cLogisticsEntity(logisticsEntity);
         dto.setSoB2cFinanceEntity(soB2cFinanceEntity);
