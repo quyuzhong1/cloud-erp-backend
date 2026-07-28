@@ -14,10 +14,8 @@ import java.util.List;
  * <p>
  * 顶层结构（2026-07-22 联调确认）：
  * {@code {success, code, message, total, orderInfoList:[]}}。
- * 明细字段按《爱亚海外仓对接方案文档》6.3.3 响应映射表落地：
- * {@code orderNumber}/{@code shippingTime}/{@code sku}+{@code qty}/{@code actualLogistic}/
- * {@code trackingNumber}；单据状态字母码 A/B/C/D 的爱亚字段名文档未给出，暂用 {@code orderStatus}，
- * 待成功样例再核对。
+ * 明细状态字段以爱亚开放平台文档为准：{@code status}，枚举 {@code VALID}/{@code HELD}/{@code CANCELLED}
+ * （方案文档字母码 A/B/C/D 为业务处理说明，不是网关真实字段名/取值）。
  */
 @Data
 @AllArgsConstructor
@@ -72,12 +70,12 @@ public class AiyaOutboundResp implements Serializable {
         private String warehouseCode;
 
         /**
-         * 单据状态字母码：A-已出库/B-已取消/C-库存不足/D-锁住。
+         * 订单状态（官方字段名 {@code status}）：{@code VALID}/{@code HELD}/{@code CANCELLED}。
          * <p>
-         * TODO：方案文档响应映射表未给出爱亚侧字段名，暂用 {@code orderStatus}，待成功样例核对。
+         * 兼容历史误用字段名 {@code orderStatus}。拦截收敛看 {@code CANCELLED}。
          */
-        @JSONField(name = "orderStatus")
-        private String orderStatus;
+        @JSONField(name = "status", alternateNames = {"orderStatus"})
+        private String status;
 
         /**
          * 发运时间（文档字段 {@code shippingTime}，格式 {@code yyyy-MM-dd HH:mm:ss}），
@@ -87,10 +85,16 @@ public class AiyaOutboundResp implements Serializable {
         private String shippingTime;
 
         /**
-         * 实际物流 / 物流渠道（文档字段 {@code actualLogistic}）
+         * 实际物流 / 物流渠道（文档字段 {@code actualLogistic}；官方亦可能回 {@code carrier}）
          */
-        @JSONField(name = "actualLogistic")
+        @JSONField(name = "actualLogistic", alternateNames = {"carrier"})
         private String actualLogistic;
+
+        /**
+         * 承运商服务（官方可选字段 {@code carrierService}）
+         */
+        @JSONField(name = "carrierService")
+        private String carrierService;
 
         /**
          * 运单号 / 物流跟踪号

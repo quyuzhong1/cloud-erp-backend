@@ -707,14 +707,21 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED);
         }
 
-        boolean hasPlatformLabel = CharSequenceUtil.isNotBlank(req.getLabelUrl())
-                && Boolean.TRUE.equals(req.getIsPushLabel());
+        // 是否推海外仓面单=是 → ATTACHMENT，须同时下发 trackingNumber + files（面单 URL，对齐 WEGO fileName/fileUrl）
         AiyaOutboundSaveDTO.ShippingInstructions.ShippingInstructionsBuilder instructionsBuilder =
                 AiyaOutboundSaveDTO.ShippingInstructions.builder()
                         .carrier(carrier)
                         .carrierService(carrierService);
         List<AiyaOutboundSaveDTO.FileItem> files = null;
-        if (hasPlatformLabel) {
+        if (Boolean.TRUE.equals(req.getIsPushLabel())) {
+            if (CharSequenceUtil.isBlank(req.getLabelUrl())) {
+                log.warn("{}推海外仓面单但 labelUrl 为空, referenceNo={}", getPlatForm().getName(), req.getReferenceNo());
+                throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_LABEL_REQUIRED);
+            }
+            if (CharSequenceUtil.isBlank(req.getTrackingNo())) {
+                log.warn("{}推海外仓面单但物流单号为空, referenceNo={}", getPlatForm().getName(), req.getReferenceNo());
+                throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_TRACKING_REQUIRED);
+            }
             instructionsBuilder.shippingLabelSource(SHIPPING_LABEL_SOURCE_ATTACHMENT)
                     .trackingNumber(req.getTrackingNo());
             files = Collections.singletonList(AiyaOutboundSaveDTO.FileItem.builder()
