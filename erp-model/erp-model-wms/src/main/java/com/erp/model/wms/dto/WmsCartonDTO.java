@@ -424,6 +424,10 @@ public class WmsCartonDTO {
          * sku*qty
          */
         private List<String> skuList;
+        /**
+         * 拼接sku
+         */
+        private String skuListStr;
     }
 
     @Data

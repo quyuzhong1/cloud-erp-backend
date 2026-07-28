@@ -16,6 +16,11 @@ import java.math.BigDecimal;
 public class PlatformDeliveryDetailDTO {
 
     /**
+     * ERP销售订单明细ID
+     */
+    private String soDetailId;
+
+    /**
      * skuId
      */
     private String skuId;

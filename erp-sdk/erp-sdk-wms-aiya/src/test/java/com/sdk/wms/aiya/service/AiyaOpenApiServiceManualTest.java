@@ -257,10 +257,10 @@ public class AiyaOpenApiServiceManualTest {
 
         AiyaOutboundSaveDTO request = AiyaOutboundSaveDTO.builder()
                 // 必填：客户交易物流订单号=三方仓发货单号，客户侧保证唯一；修改时传同一号即可幂等 upsert
-                .orderNumber("WFHD-AIYA-TEST-202607280001")
+                .orderNumber("WFHD-AIYA-TEST-202607280004")
                 .warehouseCode(TEST_WAREHOUSE_CODE)
                 // 可选：客户销售平台编号（平台订单号等）
-                .extOrderNumber("PLATFORM-ORDER-TEST-002")
+                .extOrderNumber("PLATFORM-ORDER-TEST-004")
                 .orderTime(orderTime)
                 // 可选：方案文档映射销售平台 / 店铺
                 .salesChannel("Amazon")
@@ -268,7 +268,8 @@ public class AiyaOpenApiServiceManualTest {
                 .shippingInstructions(AiyaOutboundSaveDTO.ShippingInstructions.builder()
                         // 必填：承运商；API 取号时仍须传（可用物流渠道映射名）；无特殊要求 carrierService=STD
                         .carrier("SPX STANDARD")
-                        .carrierService("【ID-本土】SPX STANDARD-REGULER (CASHLESS)")
+//                        .carrierService("【ID-本土】SPX STANDARD-REGULER (CASHLESS)")
+                        .carrierService("STD")
                         // 必填：API=海外仓向快递取号；ATTACHMENT=平台自带面单；WMS_GEN=仓内模板生成
 //                        .shippingLabelSource("API")
                         .shippingLabelSource("ATTACHMENT")
@@ -312,8 +313,9 @@ public class AiyaOpenApiServiceManualTest {
      * （可覆盖已提交未发货）；可选 {@code shippingTime*}/{@code page}/{@code pageSize}
      * （DTO 字段名仍为 pageNum，序列化到网关时写 page）。
      * <p>
-     * 重点核对：成功时 {@code orderInfoList} 明细字段（{@code orderNumber}/{@code shippingTime}/
-     * {@code trackingNumber}/{@code actualLogistic}/{@code orderStatus} 等）。
+     * 重点核对：成功时 {@code orderInfoList} 明细是否含官方 {@code status}
+     * （{@code VALID}/{@code HELD}/{@code CANCELLED}）、{@code shippingTime}/{@code trackingNumber} 等。
+     * 若控制台只见少数字段，先看 SDK 日志里的原始 response，再核对 DTO 是否漏映射。
      */
     @Test
     public void query2cOrderTest() {
@@ -329,6 +331,8 @@ public class AiyaOpenApiServiceManualTest {
                 .build();
         List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(req);
         System.out.println(JSONUtil.toJsonStr(response));
+        // 拦截收敛：看 status 是否为 CANCELLED
+        response.forEach(o -> System.out.println(o.getOrderNumber() + " status=" + o.getStatus()));
     }
 
     /**
@@ -338,7 +342,7 @@ public class AiyaOpenApiServiceManualTest {
      */
     @Test
     public void intercept2cOrderTest() {
-        List<String> orderNumbers = Collections.singletonList("WFHD-AIYA-TEST-202607220002");
+        List<String> orderNumbers = Collections.singletonList("WFHD-AIYA-TEST-202607280004");
         JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumbers);
         System.out.println(JSONUtil.toJsonStr(response));
         //response={"success":true,"code":"SUCCESS","message":null,"data":null}

@@ -81,6 +81,10 @@ public class QcApplicationDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+         /**
+          * 模糊搜索
+          */
+         private String searchKey;
 
      }
     /**

@@ -135,8 +135,21 @@ public interface SoOutstockConverter {
             @Mapping(target = "planQty", source = "qty"),
             @Mapping(target = "actualQty", source = "qty"),
             @Mapping(target = "sourceDetailId", source = "platformSkuNo"),
-            @Mapping(target = "soDetailId", source = "platformSkuNo"),
+            @Mapping(target = "soDetailId", expression = "java(resolveSoDetailId(deliveryDetailDTO))"),
             @Mapping(target = "platformDetailId", source = "platformSkuNo"),
     })
     SoOutstockDetailDTO.AddDTO platformDetailToOutDetail(PlatformDeliveryDetailDTO deliveryDetailDTO);
+
+    /**
+     * 优先使用调用方已解析的ERP销售订单明细ID，未提供时保持原平台SKU兼容逻辑。
+     *
+     * @param deliveryDetailDTO 平台发货明细
+     * @return 销售订单明细关联值
+     */
+    default String resolveSoDetailId(PlatformDeliveryDetailDTO deliveryDetailDTO) {
+        String soDetailId = deliveryDetailDTO.getSoDetailId();
+        return soDetailId == null || soDetailId.trim().isEmpty()
+                ? deliveryDetailDTO.getPlatformSkuNo()
+                : soDetailId;
+    }
 }

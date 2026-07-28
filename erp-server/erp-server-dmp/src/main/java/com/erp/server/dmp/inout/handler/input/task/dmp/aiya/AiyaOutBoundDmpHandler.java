@@ -22,13 +22,13 @@ import java.util.TreeMap;
  * <p>
  * 承接 {@link AiyaOutboundInitHandler} 写入 mongo 的
  * {@code com.sdk.wms.aiya.dto.response.AiyaOutboundResp.OutboundOrderDTO} 原始数据，
- * 与 WEGO 不同的是本类原始数据已是扁平结构（orderNumber/warehouseCode/orderStatus/trackingNumber
+ * 与 WEGO 不同的是本类原始数据已是扁平结构（orderNumber/warehouseCode/status/trackingNumber
  * 等均为顶层标量字段），大部分字段可直接由 {@code dmp_cfg_input_convert} 数据库字段映射完成，
  * 无需本类介入；本类仅做以下无法由字段映射直接表达的后处理：
  * <ol>
  *   <li>{@code shippingTime}（文档发运时间，格式 {@code yyyy-MM-dd HH:mm:ss}）
  *       → {@code dateShipping}（{@link LocalDateTime}）；</li>
- *   <li>{@code orderStatus} → 统一转 String，兼容 mongo 中可能非 String 存储；</li>
+ *   <li>{@code status}（官方 VALID/HELD/CANCELLED；兼容历史 {@code orderStatus}）→ 统一转 String；</li>
  *   <li>固定写入 {@code warehousePlatformType} = {@code overseasWarehouse}；</li>
  *   <li>固定写入 {@code orderType} = {@code B2C}。</li>
  * </ol>
@@ -45,7 +45,9 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 
     private static final String MONGO_KEY_ORDER_NUMBER = "orderNumber";
     private static final String MONGO_KEY_SHIPPING_TIME = "shippingTime";
-    private static final String MONGO_KEY_ORDER_STATUS = "orderStatus";
+    /** 官方字段 status；兼容历史误写 orderStatus */
+    private static final String MONGO_KEY_STATUS = "status";
+    private static final String MONGO_KEY_ORDER_STATUS_LEGACY = "orderStatus";
 
     private static final String DMP_KEY_DATE_SHIPPING = "dateShipping";
     private static final String DMP_KEY_ORDER_STATUS = "orderStatus";
@@ -68,8 +70,11 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 
             Object orderNumber = mongoData.get(MONGO_KEY_ORDER_NUMBER);
             LocalDateTime dateShipping = resolveDateTime(mongoData.get(MONGO_KEY_SHIPPING_TIME), orderNumber);
-            String orderStatus = mongoData.get(MONGO_KEY_ORDER_STATUS) != null
-                    ? String.valueOf(mongoData.get(MONGO_KEY_ORDER_STATUS)) : null;
+            Object statusRaw = mongoData.get(MONGO_KEY_STATUS);
+            if (statusRaw == null) {
+                statusRaw = mongoData.get(MONGO_KEY_ORDER_STATUS_LEGACY);
+            }
+            String orderStatus = statusRaw != null ? String.valueOf(statusRaw) : null;
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 if (dateShipping != null) {

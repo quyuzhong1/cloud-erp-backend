@@ -778,16 +778,19 @@ public class TmsDeclareBillDTO implements Serializable {
          * 运费
          */
         private BigDecimal shippingFee;
+        private String shippingFeeStr;
 
         /**
          * 保费
          */
         private BigDecimal insuranceFee;
+        private String insuranceFeeStr;
 
         /**
          * 杂费
          */
         private BigDecimal otherFee;
+        private String otherFeeStr;
 
         /**
          * 数量
