@@ -98,4 +98,12 @@ public class KingdeeFeignController extends BaseController {
         return success(kingdeeOperatorRefPostService.listInfo(dto));
     }
 
+    /**
+     * 业务员列表
+     */
+    @PostMapping("/listUser")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto) {
+        return success(kingdeeOperatorRefPostService.listUser(dto));
+    }
+
 }

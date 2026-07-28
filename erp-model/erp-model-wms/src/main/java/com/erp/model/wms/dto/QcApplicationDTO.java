@@ -524,7 +524,7 @@ public class QcApplicationDTO implements Serializable {
         /**
          * 质检申请ids
          */
-        @NotBlank(message = "质检申请ids不能为空")
+        @NotEmpty(message = "质检申请ids不能为空")
         private List<String> ids;
 
         /**
