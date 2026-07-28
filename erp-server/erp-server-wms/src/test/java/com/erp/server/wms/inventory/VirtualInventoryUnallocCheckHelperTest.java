@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * {@link VirtualInventoryUnallocCheckHelper} 与 try.lua 约定一致性校验。
