@@ -212,20 +212,40 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	}
 
 	/**
-	 * 从异常链中提取 Lua 业务错误正文（含 {@code ERR } 前缀后的约定前缀文案）。
+	 * 从单条异常消息中解析 Lua 业务错误正文（支持直连前缀或 {@code ERR } 前缀）。
+	 *
+	 * @param raw 异常 message
+	 * @return 约定前缀业务正文；无法识别则 null
+	 */
+	static String resolveLuaBusinessErrorBody(String raw) {
+		if (StringUtils.isBlank(raw)) {
+			return null;
+		}
+		if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(raw)
+				|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(raw)) {
+			return raw;
+		}
+		if (raw.contains("ERR ")) {
+			String body = raw.substring(raw.indexOf("ERR ") + 4);
+			if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(body)
+					|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(body)) {
+				return body;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 从异常链中提取 Lua 业务错误正文（含 {@code ERR } 前缀或直连约定前缀）。
 	 *
 	 * @param ex Spring/Redis 异常
 	 * @return 业务错误正文；非约定 Lua 业务错误则返回 null
 	 */
-	private static String resolveLuaBusinessErrorMessage(Throwable ex) {
+	static String resolveLuaBusinessErrorMessage(Throwable ex) {
 		while (ex != null) {
-			String raw = ex.getMessage();
-			if (StringUtils.isNotBlank(raw) && raw.contains("ERR ")) {
-				String body = raw.substring(raw.indexOf("ERR ") + 4);
-				if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(body)
-						|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(body)) {
-					return body;
-				}
+			String body = resolveLuaBusinessErrorBody(ex.getMessage());
+			if (StringUtils.isNotBlank(body)) {
+				return body;
 			}
 			ex = ex.getCause();
 		}

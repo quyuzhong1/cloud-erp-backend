@@ -180,7 +180,7 @@ local function base_current_qty(currentvalue)
         if d == 0 then
             local baseQty = strict_nonneg_int(cv);
             if baseQty == nil then
-                return 0;
+                return nil;
             end
             return baseQty;
         end
@@ -191,17 +191,21 @@ end
 
 local function sum_entity_from_inventory_ids(inventoryIds, currentPrefix)
     if inventoryIds == nil or inventoryIds == '' then
-        return 0;
+        return 0, nil;
     end
     local total = 0;
     for inventoryId in string.gmatch(inventoryIds, '([^,]+)') do
         if inventoryId ~= nil and inventoryId ~= '' then
             local currentkey = (currentPrefix .. inventoryId);
             local currentvalue = redis.call('get', currentkey);
-            total = total + base_current_qty(currentvalue);
+            local baseQty = base_current_qty(currentvalue);
+            if baseQty == nil then
+                return nil, currentkey;
+            end
+            total = total + baseQty;
         end
     end
-    return total;
+    return total, nil;
 end
 
 if operationId == nil or operationId == '' then
@@ -231,7 +235,10 @@ if unallocParams ~= nil and unallocParams ~= '' then
         if virtualQty > 0 and (inventoryIds == nil or inventoryIds == '') then
             return biz_error('未分配校验缺少实体inventoryId列表');
         end
-        local entityQty = sum_entity_from_inventory_ids(inventoryIds, current);
+        local entityQty, illegalEntityKey = sum_entity_from_inventory_ids(inventoryIds, current);
+        if illegalEntityKey ~= nil then
+            return biz_error('实体库存基量非法 key=' .. illegalEntityKey);
+        end
         local reserveValue = redis.call('get', reserveKey);
         local existingQty = find_reserve_for_operation(reserveValue, transaction, operationId);
         if existingQty ~= nil then
@@ -322,7 +329,11 @@ if params ~= nil and params ~= '' then
                     currentqty = baseQty;
                 else
                     local segTxn, segOpId, segQty = parse_try_segment(cv);
-                    if segTxn == transaction and segQty ~= nil then
+                    if segTxn == nil or segQty == nil then
+                        return biz_error('即时库存TRY片段非法 key=' .. currentkey);
+                    end
+                    -- 负向在途段计入全部事务；正向在途段仅计入本事务（与 hotfix 前 try.lua 一致）
+                    if segQty < 0 or segTxn == transaction then
                         currentqty = currentqty + segQty;
                     end
                 end

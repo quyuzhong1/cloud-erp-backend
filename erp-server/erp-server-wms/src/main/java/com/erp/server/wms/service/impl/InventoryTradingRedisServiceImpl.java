@@ -91,7 +91,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             }
             // 排序
             transactionList = this.sortInventoryTransactionList(transactionList);
-            //校验虚拟仓库存（预检计入全部在途预占，含同事务内其它批次）
+            //校验虚拟仓库存（预检计入在途预占，排除本批 operation 以支持 TRY 重试幂等）
             this.checkVirtualInventoryList(transactionList);
             // 4-检查每日库存是否充足
 //            this.checkInventoryHisList(transactionList);
@@ -316,6 +316,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * 校验虚拟仓库存（Redis 路径预检，实体基量与 try.lua 同源；在途仅扣 reserve 一次）。
      * <p>
      * 最终并发放行以 {@code try.lua} 仓+SKU 未分配原子预占为准；此处用于提前失败、减少无效 TRY。
+     * 预检 pending 排除本批 {@code operationId}，仍计入同事务内其它批次的在途预占。
      * </p>
      *
      * @param transactionList 库存交易列表
@@ -324,6 +325,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         if (CollectionUtils.isEmpty(transactionList)) {
             return;
         }
+        String excludeTransactionId = inventoryTransactionService.resolveRedisTransactionIdFromList(transactionList);
+        String excludeOperationId = VirtualInventoryUnallocCheckHelper.resolveTryOperationId(transactionList);
         List<InventoryTransactionDTO> checkTransactionList = VirtualInventoryUnallocCheckHelper.filterNeedUnallocCheck(transactionList);
         if (CollectionUtils.isEmpty(checkTransactionList)) {
             return;
@@ -355,7 +358,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
                     redisEntityInventoryList, warehouseId, skuId);
             int realInventoryTotal = VirtualInventoryUnallocCheckHelper.sumEntityBaseQty(
                     inventoryIds, inventoryTransactionService::getRedisBaseQtyByInventory);
-            int pendingReserve = inventoryTransactionService.getUnallocPendingReserveQty(warehouseId, skuId, null, null);
+            int pendingReserve = inventoryTransactionService.getUnallocPendingReserveQty(
+                    warehouseId, skuId, excludeTransactionId, excludeOperationId);
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             int allowedUnalloc = realInventoryTotal - virtualQty - pendingReserve;
             log.warn("未分配预检 仓库【{}】SKU【{}】已分配【{}】Redis实体【{}】在途预占【{}】", value.get(0).getWarehouseName(), value.get(0).getSkuNo(), virtualQty, realInventoryTotal, pendingReserve);
