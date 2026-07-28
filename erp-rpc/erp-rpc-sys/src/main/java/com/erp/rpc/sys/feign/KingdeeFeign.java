@@ -51,4 +51,10 @@ public interface KingdeeFeign {
      */
     @PostMapping("/feign/kingdee/listKingdeeUser")
     public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listKingdeeUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
+
+    /**
+     * 业务员列表
+     */
+    @PostMapping("/feign/kingdee/listUser")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto);
 }

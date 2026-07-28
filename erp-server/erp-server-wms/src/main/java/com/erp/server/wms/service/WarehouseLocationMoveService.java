@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.openapi.AiyaChangeAttributeDTO;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
@@ -303,4 +304,13 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
      * @param skuByNo     SKU 信息，key 为 skuNo
      */
     void saveMoveCartonDetails(String moveId, String targetCode, List<AfterSalePackDTO.ViewDTO> boxInfoList, Map<String, SkuVO> skuByNo);
+
+    /**
+     * 接收爱亚库存状态转移反馈：仅处理 CHANGE_STATUS 且 GOOD↔DAMAGE，
+     * 按转移单号幂等生成已审核《仓位移动》。
+     *
+     * @param dto 爱亚转移单业务数据
+     * @return 仓位移动主单 id；非本期类型返回空串；已存在返回原单 id
+     */
+    String receiveAiyaChangeAttribute(AiyaChangeAttributeDTO dto);
 }

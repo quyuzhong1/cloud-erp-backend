@@ -17,8 +17,9 @@ import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
+import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveDetailMapper;
 import com.erp.server.wms.service.*;
@@ -129,16 +130,28 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             warehouseIds.add(warehouseId);
         }
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdsAndCodeList(warehouseIds,new ArrayList<>());
+        boolean overseasStatusConvert = WarehouseLocationMoveOperateTypeEnum.OVERSEAS_STOCK_STATUS_CONVERT.getCode()
+                .equals(warehouseLocationMoveEntity.getOperateType());
         for (WarehouseLocationMoveDetailEntity detailEntity : list) {
             InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
             paramDTO.setOrgId(warehouseEntity.getOrgId());
             paramDTO.setWarehouseId(warehouseId);
             paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
-            if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
-                    || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
+            detailEntity.setInInventoryStatus(Optional.ofNullable(detailEntity.getInInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
+            detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
+            boolean sameLocation = (ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
+                    || CharSequenceUtil.equals(detailEntity.getInWarehouseLocation(), detailEntity.getOutWarehouseLocation());
+            // 海外仓库存状态转化允许同仓位（含双侧空仓位），仅改库存状态
+            if (sameLocation && !(overseasStatusConvert
+                    && !CharSequenceUtil.equals(detailEntity.getOutInventoryStatus(), detailEntity.getInInventoryStatus()))) {
                 throw new ServiceException(ApiError.WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN);
             }
-            paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
+            // 海外状态转化双侧空仓位时，显式按空仓位过滤，避免把全仓库存加总导致校验虚高
+            if (overseasStatusConvert && CharSequenceUtil.isBlank(detailEntity.getOutWarehouseLocation())) {
+                paramDTO.setWarehouseLocations(Collections.singletonList(""));
+            } else {
+                paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
+            }
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
             InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
@@ -158,26 +171,38 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                         throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                     }
                 }
+                if (InventoryStatusEnum.DEFECTIVE_PRODUCT.getCode().equals(detailEntity.getOutInventoryStatus())) {
+                    Integer defectiveQty = inventoryByParam == null ? null : inventoryByParam.getDefectiveProductQty();
+                    if (ObjectUtil.isEmpty(inventoryByParam) || defectiveQty == null || detailEntity.getQty() > defectiveQty) {
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_DEFECTIVE_QTY_EXCEEDS, detailEntity.getSkuNo());
+                    }
+                }
             }
-            //校验仓位是否存在
-            WarehouseLocationEntity inLocationEntity = warehouseLocationEntityList.stream()
-                    .filter(req -> req.getWarehouseId().equals(warehouseId)
-                            && (req.getCode().equals(detailEntity.getInWarehouseLocation()) || req.getName().equals(detailEntity.getInWarehouseLocation()) ))
-                    .findFirst().orElse(null);
-            if(Objects.isNull(inLocationEntity)){
-                throw new ServiceException("上架仓位{}不存在",detailEntity.getInWarehouseLocation());
+            if (!overseasStatusConvert || CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation())) {
+                //校验仓位是否存在
+                WarehouseLocationEntity inLocationEntity = warehouseLocationEntityList.stream()
+                        .filter(req -> req.getWarehouseId().equals(warehouseId)
+                                && (req.getCode().equals(detailEntity.getInWarehouseLocation()) || req.getName().equals(detailEntity.getInWarehouseLocation()) ))
+                        .findFirst().orElse(null);
+                if(Objects.isNull(inLocationEntity)){
+                    throw new ServiceException("上架仓位{}不存在",detailEntity.getInWarehouseLocation());
+                }
+                detailEntity.setInWarehouseLocation(inLocationEntity.getCode());
+            } else {
+                detailEntity.setInWarehouseLocation(CharSequenceUtil.nullToEmpty(detailEntity.getInWarehouseLocation()));
             }
-            detailEntity.setInWarehouseLocation(inLocationEntity.getCode());
-            WarehouseLocationEntity outLocationEntity = warehouseLocationEntityList.stream()
-                    .filter(req -> req.getWarehouseId().equals(warehouseId)
-                            && (req.getCode().equals(detailEntity.getOutWarehouseLocation()) || req.getName().equals(detailEntity.getOutWarehouseLocation()) ))
-                    .findFirst().orElse(null);
-            if(Objects.isNull(outLocationEntity)){
-                throw new ServiceException("取货仓位{}不存在",detailEntity.getInWarehouseLocation());
+            if (!overseasStatusConvert || CharSequenceUtil.isNotBlank(detailEntity.getOutWarehouseLocation())) {
+                WarehouseLocationEntity outLocationEntity = warehouseLocationEntityList.stream()
+                        .filter(req -> req.getWarehouseId().equals(warehouseId)
+                                && (req.getCode().equals(detailEntity.getOutWarehouseLocation()) || req.getName().equals(detailEntity.getOutWarehouseLocation()) ))
+                        .findFirst().orElse(null);
+                if(Objects.isNull(outLocationEntity)){
+                    throw new ServiceException("取货仓位{}不存在",detailEntity.getOutWarehouseLocation());
+                }
+                detailEntity.setOutWarehouseLocation(outLocationEntity.getCode());
+            } else {
+                detailEntity.setOutWarehouseLocation(CharSequenceUtil.nullToEmpty(detailEntity.getOutWarehouseLocation()));
             }
-            detailEntity.setOutWarehouseLocation(outLocationEntity.getCode());
-            detailEntity.setInInventoryStatus(Optional.ofNullable(detailEntity.getInInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
-            detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setMainId(warehouseLocationMoveEntity.getId());
             if (CharSequenceUtil.isNotBlank(warehouseId)){
                 detailEntity.setWarehouseId(warehouseId);

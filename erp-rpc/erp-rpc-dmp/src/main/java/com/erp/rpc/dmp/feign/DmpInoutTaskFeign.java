@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @FeignClient(name = "erp-dmp" , contextId = "DmpInoutTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpInoutTaskFeign {
@@ -99,10 +98,4 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("/feign/inout/doEtlTask")
     ApiResult<List<BatchResultDTO>> doEtlTask(@RequestBody DmpCfgEtlDTO.DoTaskDTO dto);
-
-    /**
-     * Magalu 沙箱造单（测试联调）
-     */
-    @PostMapping("feign/inout/magalu/createSandboxOrder")
-    ApiResult<Map<String, Object>> createMagaluSandboxOrder(@RequestBody Map<String, String> request);
 }

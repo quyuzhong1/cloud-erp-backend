@@ -19,11 +19,11 @@ import org.springframework.core.annotation.AnnotationUtils;
  * 使用 CGLIB 子类代理拦截 {@code onMessage}，保留原 Bean 具体类型，避免
  * {@code @Resource SyncXxxConsumer} 等按类型注入出现 {@code BeanNotOfRequiredTypeException}。
  * <p>
- * <b>部署侧必须配置</b>（SkyWalking Java Agent 9.6.x，插件名以 agent {@code plugins/} 目录为准）：
+ * <b>部署侧必须配置</b>（SkyWalking Java Agent 9.6.x；排除名以插件 jar 内 {@code skywalking-plugin.def} 左侧为准）：
  * <pre>
- * -Dplugin.exclude_plugins=rocketmq-4.x-plugin
+ * -Dplugin.exclude_plugins=rocketMQ-4.x
  * </pre>
- * 或环境变量 {@code SW_EXCLUDE_PLUGINS=rocketmq-4.x-plugin}。
+ * 或环境变量 {@code SW_EXCLUDE_PLUGINS=rocketMQ-4.x}（注意大小写，不是 {@code rocketmq-4.x-plugin}）。
  * 否则 Agent 会在进入 {@code onMessage} 前解析消息中的 SW8 上下文，即便使用 EntrySpan 也会继承上游 TraceId。
  * <p>
  * 启用后发送侧也不再注入 SW8，HTTP/Feign 与 MQ 消费在 SkyWalking UI 中不再自动串联；如需人工关联可在消息体中携带业务 traceId。

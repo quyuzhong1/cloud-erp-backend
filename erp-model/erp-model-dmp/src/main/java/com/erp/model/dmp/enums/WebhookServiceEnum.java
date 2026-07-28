@@ -18,6 +18,7 @@ public enum WebhookServiceEnum {
     JI_TU_OUTBOUND("jituOutbound", "jituOutbound", "极兔出库单"),
     QIMEN_CALL_BACK("qimenCallback", "qimenCallback", "奇门回调"),
     SHOPEE("shopee", "shopee", "虾皮"),
+    AIYA_CHANGE_ATTRIBUTE("aiyaChangeAttribute", "aiyaChangeAttribute", "爱亚转移单反馈"),
     ;
 
     private String code;

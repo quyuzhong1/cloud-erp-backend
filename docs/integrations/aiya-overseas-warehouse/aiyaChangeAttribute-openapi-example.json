@@ -1,0 +1,99 @@
+{
+  "documentTitle": "唯迹 Webhook - 爱亚库存状态转移（调整单）接口说明",
+  "version": "2.0",
+  "status": "active",
+  "deprecatedNote": "v1.0 OpenAPI（/open/api/service + method=aiyaChangeAttribute）已废弃；对方无法按 OpenAPI 外壳传参。请以本文件与 aiyaChangeAttribute-postman-test.md 为准。",
+  "overview": [
+    "本接口用于接收爱亚仓「库存状态转移」确认结果，在唯迹生成已审核《仓位移动》单据。",
+    "请求体与爱亚 changeAttribute4Edi 业务 JSON 一致（裸 body，无 method/sign/data 外壳）。",
+    "响应为 MetaResponse（success/code/message/data），不是 ApiResult。"
+  ],
+  "endpoint": {
+    "method": "POST",
+    "path": "/webhook/receive/aiyaChangeAttribute",
+    "contentType": "application/json",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "required": true,
+        "description": "application/json"
+      }
+    ],
+    "auth": {
+      "gateway": "AuthPassPath 含 /webhook/receive/，免登录 JWT",
+      "businessVerify": "讨论确认不做业务鉴权；成功落单/幂等命中后 WMS 写仓位移动 operate_log（operation=爱亚Webhook接收）"
+    }
+  },
+  "differenceFromChangeAttribute4Edi": {
+    "unchanged": "业务字段结构与 changeAttribute4Edi 请求体一致",
+    "changed": [
+      "回调 URL 配到唯迹 /webhook/receive/aiyaChangeAttribute（不是爱亚内部路径 /api/xingng/feedback/changeAttribute4Edi）",
+      "响应仍按 MetaResponse 判断 success === true"
+    ]
+  },
+  "processingScope": {
+    "consumedFields": [
+      "customerCode",
+      "warehouseCode",
+      "changeAttributeNumber",
+      "confirmDate",
+      "type（仅处理 CHANGE_STATUS）",
+      "changeList[].sku",
+      "changeList[].changeQty",
+      "changeList[].fromStatus / toStatus（仅处理 GOOD↔DAMAGE）"
+    ],
+    "ignoredFields": "其余字段可继续传递，服务端忽略",
+    "idempotency": "source_type=aiyaChangeAttribute + source_code=changeAttributeNumber；分布式锁 + 先查后写（不加 DB 唯一索引，已知取舍）"
+  },
+  "requestExample": {
+    "partnerId": "PARTNER001",
+    "customerCode": "CUST001",
+    "warehouseCode": "WH001",
+    "changeAttributeNumber": "CA202506140001",
+    "confirmDate": 1752470400000,
+    "type": "CHANGE_STATUS",
+    "changeList": [
+      {
+        "sku": "SKU-001",
+        "changeQty": 10,
+        "unit": "EA",
+        "invType": "CHANGE_AVAILABLE_QTY",
+        "fromStatus": "GOOD",
+        "toStatus": "DAMAGE"
+      }
+    ]
+  },
+  "responseExamples": {
+    "success": {
+      "success": true,
+      "code": "SUCCESS",
+      "message": null,
+      "data": "2079487193754226690"
+    },
+    "idempotent": {
+      "success": true,
+      "code": "SUCCESS",
+      "message": null,
+      "data": "2079487193754226690"
+    },
+    "ignoredNonChangeStatus": {
+      "success": true,
+      "code": "SUCCESS",
+      "message": null,
+      "data": ""
+    },
+    "invalidData": {
+      "success": false,
+      "code": "INVALID_DATA",
+      "message": "changeAttributeNumber不能为空",
+      "data": null
+    },
+    "businessFail": {
+      "success": false,
+      "code": "INVALID_OPERATION",
+      "message": "未找到爱亚仓库映射，warehouseCode=WH001",
+      "data": null
+    }
+  },
+  "postmanImportCurl": "见 aiyaChangeAttribute-postman-test.md 第 2 节"
+}

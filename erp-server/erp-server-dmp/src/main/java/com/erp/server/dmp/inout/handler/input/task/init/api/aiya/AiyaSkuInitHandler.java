@@ -25,8 +25,8 @@ import java.util.List;
  * <p>
  * 分页调用爱亚 {@code GLINK_QUERY_ITEM_NOTIFY}（商品注册/查询）接口，将 SKU 明细写入
  * DMP Init 阶段，后续由
- * {@code com.erp.server.dmp.inout.handler.input.task.dmp.aiya.AiyaSkuOmsSyncDmpHandler} 消费，
- * 推送至 OMS 未匹配 SKU 对照表。
+ * {@code com.erp.server.dmp.inout.handler.input.task.dmp.aiya.AiyaSkuInfoDmpHandler} 落入
+ * {@code dmp_product_info}/{@code dmp_sku_info}，再经 Product Output MQ 推送到 OMS listing 消费端。
  * <p>
  * 注意：该接口响应结构为 {@code {code, message, success, itemList:[...]}}，与仓库/库存等接口的
  * {@code {success, result:...}} 结构不同，不能复用 {@link AbstractAiyaInitHandler#extractPageResult}，

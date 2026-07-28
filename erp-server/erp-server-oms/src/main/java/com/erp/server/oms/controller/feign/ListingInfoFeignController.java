@@ -112,7 +112,9 @@ public class ListingInfoFeignController extends BaseController {
      *
      * @param dto 三方仓 SKU 同步参数
      * @return 本次处理统计结果（新增/禁用数量）
+     * @deprecated 见 {@link com.erp.rpc.oms.feign.OmsListingInfoFeign#syncWarehouseNotMatchSku}；爱亚/WEGO 已改旧链路
      */
+    @Deprecated
     @PostMapping("/syncWarehouseNotMatchSku")
     public WarehouseSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WarehouseSkuSyncDTO.SyncReqDTO dto) {
         return listingInfoService.syncWarehouseNotMatchSku(dto);

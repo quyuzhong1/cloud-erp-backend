@@ -3704,11 +3704,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             receiverInfo.setCountryCode3(CollUtil.isNotEmpty(countryEntityList) ? countryEntityList.get(0).getAlpha3() : "");
         }
         //地址2/地址3分行处理：需要将secondAddress/fullAddress分开传递的仓库平台
+        // 爱亚：streetLine1←地址1、streetLine2←地址2、district←街道详细地址(fullAddress→address3)
         if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+         ||PlatformDictEnum.AIYA.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
 
@@ -3807,6 +3809,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(channelEntity.getCode());
         createOutboundReq.setShippingMethodName(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getCnName());
         createOutboundReq.setShippingMethodId(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getPlatformChannelId());
+        // 爱亚出库 carrier 取销售渠道供应商编码（查询承运商接口 carrier → supplierCode）
+        createOutboundReq.setSupplierCode(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getSupplierCode());
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
         createOutboundReq.setIsApiSignName(channelEntity.getIsApiSign() ? "是" : "否");
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());
@@ -8907,7 +8911,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Async
-    public Boolean platformWarehouseOrderHandle(String id, Map<String, Object> map) {
+    public Boolean platformWarehouseOrderHandle(String id) {
         SoB2cEntity entity = this.getById(id);
         isExist(entity);
         //明细信息
@@ -9180,12 +9184,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @create 2023-12-18 14:54
      */
     @Override
-    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList) {
         SoB2cDTO.RuleResultDTO ruleResultDTO = soB2cService.orderRule(id);
         Boolean isMatch = ruleResultDTO.getIsRuleMatch();
         Boolean isPass = ruleResultDTO.getIsPass();
         if (isMatch && isPass) {
-            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, detailList, map);
+            // orderRule 内可能自动审核并在 AfterAudit 节点开票，handleRule 传入的 map 已过期
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, detailList, new HashMap<>());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);

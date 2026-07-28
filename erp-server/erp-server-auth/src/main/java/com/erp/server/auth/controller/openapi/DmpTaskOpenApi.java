@@ -1,6 +1,5 @@
 package com.erp.server.auth.controller.openapi;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,14 +47,5 @@ public class DmpTaskOpenApi {
     public ApiResult<Boolean> createInputTaskTask(@RequestBody DmpInoutDTO.CreateInputDTO createDTOList){
         log.warn("DmpTaskOpenApi createInputTaskTask receive param:{}", createDTOList);
         return ApiResult.success(dmpInoutTaskFeign.doInputTask(Collections.singletonList(createDTOList)));
-    }
-
-    /**
-     * Magalu 沙箱造单
-     */
-    @OpenApi("createMagaluSandboxOrder")
-    public ApiResult<java.util.Map<String, Object>> createMagaluSandboxOrder(@RequestBody java.util.Map<String, String> request) {
-        log.warn("DmpTaskOpenApi createMagaluSandboxOrder receive param:{}", request);
-        return dmpInoutTaskFeign.createMagaluSandboxOrder(request);
     }
 }

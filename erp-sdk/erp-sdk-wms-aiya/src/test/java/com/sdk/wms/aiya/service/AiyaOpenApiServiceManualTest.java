@@ -126,13 +126,38 @@ public class AiyaOpenApiServiceManualTest {
         //    一条），这将影响 DMP 去重唯一键设计，详见 README「待产品确认」。
     }
 
+    /**
+     * 查询承运商（{@code GLINK_QUERY_CARRIER_NOTIFY}，SDK 方法 {@link AiyaOpenApiService#queryTransport}）。
+     * <p>
+     * 业务入参（写入 bizData）：
+     * <ul>
+     *     <li>{@code customerCode}：必填，由 SDK {@code doQuery} 注入，本方法无需再塞入 bizParams</li>
+     *     <li>{@code warehouseCode}：必填，生产账号须用测试专属仓 {@link #TEST_WAREHOUSE_CODE}</li>
+     *     <li>{@code needActualLogistics}：可选，是否展示实际物流</li>
+     * </ul>
+     * 重点核对响应：
+     * <ul>
+     *     <li>顶层 {@code success}/{@code code}/{@code message}/{@code resultList}</li>
+     *     <li>{@code resultList[]}：{@code carrier}/{@code carrierDescription}/{@code carrierType}/
+     *         {@code logisticsProvider}/{@code needAddedService}/{@code actualLogistics}/
+     *         {@code carrierServiceList}</li>
+     *     <li>{@code carrierServiceList[]}：{@code carrierService}/{@code carrierServiceDescription}</li>
+     * </ul>
+     * 本方法仅联调打印，不修改业务代码；可选参数开关放在方法内局部变量，按需改 true/false。
+     */
     @Test
     public void queryTransportTest() {
+        // 是否展示实际物流（文档可选字段 needActualLogistics）；联调时可改为 true 核对 actualLogistics
+        boolean needActualLogistics = false;
+
         Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填
         bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
+        bizParams.put("needActualLogistics", needActualLogistics);
+
         JSONObject response = aiyaOpenApiService.queryTransport(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, bizParams);
         System.out.println(JSONUtil.toJsonStr(response));
+        // 成功样例重点看 resultList 是否按仓返回承运商及 carrierServiceList；
+        // 若 needActualLogistics=true，再核对 actualLogistics 是否有值
     }
 
     // ===================== 入库单相关 =====================
@@ -154,42 +179,24 @@ public class AiyaOpenApiServiceManualTest {
      */
     @Test
     public void saveInorderTest() {
-        // asnNumber = ERP 入库单号，创建/修改幂等键；建议带时间戳避免与正式单据冲突
-        String asnNumber = "ASN-AIYA-TEST-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String refNumber = "FHD-AIYA-TEST-001";
-        String markCode = refNumber + "-1";
+        String asnNumber = "ASN-AIYA-RTN-REF-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
         AiyaInboundSaveDTO request = AiyaInboundSaveDTO.builder()
                 .asnNumber(asnNumber)
                 .warehouseCode(TEST_WAREHOUSE_CODE)
-                // 可选：对应《海外仓入库单》头程发货单号
-                .extAsnNumber(refNumber)
-                .refNumber(refNumber)
-                .referenceNumber(refNumber)
-                // SUPPLIER_RECEIPT=供应商入库（头程自发）；也可试 CONTAINER/RETURN/RELABEL
                 .asnType("RETURN")
-                .trackingNumber("TRACK-AIYA-TEST-001")
-                .warehouseNotes("ManualTest create ASN")
-                .expectedReceiptDate(LocalDateTime.now().plusDays(7).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                // 参考单号三选一即可（都能命中同一售后/订单）：
+                // OD202607161111 / XSDS260716000006 / THD260717000002
+                .refNumber("OD202607161111")
+                .referenceNumber("OD202607161111")
+                // 测参考单号时运单号必须空，否则会先走运单分支
+                .trackingNumber(null)
                 .itemLineQty(1)
-                .cartonQty("1")
-                .markList(Collections.singletonList(
-                        AiyaInboundSaveDTO.MarkList.builder()
-                                .markCode(markCode)
-                                .length(new BigDecimal("30.00"))
-                                .width(new BigDecimal("20.00"))
-                                .height(new BigDecimal("15.00"))
-                                .weight(new BigDecimal("1.50"))
-                                .lengthUnit("CM")
-                                .weightUnit("KG")
-                                .build()))
                 .asnLineItems(Collections.singletonList(
-                        // TODO：换成测试仓库真实已映射且可入库的平台 SKU
                         AiyaInboundSaveDTO.AsnLineItem.builder()
                                 .lineNo("1")
-                                .sku("test1602")
+                                .sku("test2717")   // → ERP 2028
                                 .quantity(1)
-                                .markCode(markCode)
                                 .skuStatus("GOOD")
                                 .build()))
                 .build();
@@ -250,18 +257,18 @@ public class AiyaOpenApiServiceManualTest {
 
         AiyaOutboundSaveDTO request = AiyaOutboundSaveDTO.builder()
                 // 必填：客户交易物流订单号=三方仓发货单号，客户侧保证唯一；修改时传同一号即可幂等 upsert
-                .orderNumber("WFHD-AIYA-TEST-202607220002")
+                .orderNumber("WFHD-AIYA-TEST-202607280001")
                 .warehouseCode(TEST_WAREHOUSE_CODE)
                 // 可选：客户销售平台编号（平台订单号等）
-//                .extOrderNumber("PLATFORM-ORDER-TEST-001")
+                .extOrderNumber("PLATFORM-ORDER-TEST-002")
                 .orderTime(orderTime)
                 // 可选：方案文档映射销售平台 / 店铺
                 .salesChannel("Amazon")
                 .storeNumber("TEST-SHOP")
                 .shippingInstructions(AiyaOutboundSaveDTO.ShippingInstructions.builder()
                         // 必填：承运商；API 取号时仍须传（可用物流渠道映射名）；无特殊要求 carrierService=STD
-                        .carrier("顺风")
-                        .carrierService("STD")
+                        .carrier("SPX STANDARD")
+                        .carrierService("【ID-本土】SPX STANDARD-REGULER (CASHLESS)")
                         // 必填：API=海外仓向快递取号；ATTACHMENT=平台自带面单；WMS_GEN=仓内模板生成
 //                        .shippingLabelSource("API")
                         .shippingLabelSource("ATTACHMENT")
@@ -284,17 +291,7 @@ public class AiyaOpenApiServiceManualTest {
                 .items(Collections.singletonList(
                         // TODO：换成测试仓库真实已映射且有库存的平台 SKU
                         AiyaOutboundSaveDTO.Item.builder().sku("test1602").quantity(1).build()))
-                .shipFrom(AiyaOutboundSaveDTO.ShipFrom.builder()
-                        // name / company 必须至少填一个（可同时填）
-                        .name("张三")
-                        // .company("Test Company Ltd")
-                        // 方案文档：默认取海外仓库维度寄件地址；联调先手填测试仓地址
-                        .streetLine1("Warehouse Road 1")
-                        .city("Shenzhen")
-                        .state("Guangdong")
-                        .postalCode("518000")
-                        .countryCode("CN")
-                        .build())
+                // shipFrom：2026-07-24 联调确认可不传
                 // ATTACHMENT 时必须下发 files，且有且仅有一个 Shipping Label 附件；
                 // 一旦下发 FileItem，fileType 必填（取值见 AiyaOutboundSaveDTO.FileItem 常量）
                 .files(Collections.singletonList(AiyaOutboundSaveDTO.FileItem.builder()
@@ -344,6 +341,8 @@ public class AiyaOpenApiServiceManualTest {
         List<String> orderNumbers = Collections.singletonList("WFHD-AIYA-TEST-202607220002");
         JSONObject response = aiyaOpenApiService.intercept2cOrder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, orderNumbers);
         System.out.println(JSONUtil.toJsonStr(response));
+        //response={"success":true,"code":"SUCCESS","message":null,"data":null}
+        //response={"success":true,"code":"SUCCESS","message":"This order has been cancelled!","data":null}
     }
 
 }

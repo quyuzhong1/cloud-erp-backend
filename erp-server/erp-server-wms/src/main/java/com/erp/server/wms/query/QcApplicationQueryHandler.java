@@ -25,6 +25,18 @@ public class QcApplicationQueryHandler extends AbstractQueryHandler {
                 return " qnd.qc_status "+ compareCodeSplicingValueSql +" ";
             }
         }
+        if ("qad.sku_no".equals(field)) {
+            return " exists (select 1 from wms_qc_application_detail qad where qad.is_deleted = false and qad.main_id = qa.id and " + field + " " + compareCodeSplicingValueSql + ")";
+        }
+        if ("qad.supplier_id".equals(field)) {
+            return " exists (select 1 from wms_qc_application_detail qad where qad.is_deleted = false and qad.main_id = qa.id and " + field + " " + compareCodeSplicingValueSql + ")";
+        }
+        if ("pd.name".equals(field)) {
+            return " exists (select 1 from qc_application_detail qad left join product_detail pd on pd.id = qad.sku_id where pd.is_deleted = false and qad.main_id = qa.id and " + field + " " + compareCodeSplicingValueSql + ")";
+        }
+        if ("qn.plan_qc_date".equals(field)) {
+            return " exists (select 1 from qc_application_detail qad left join qc_notice qn on qn.source_id = qa.id where qn.is_deleted = false and qad.main_id = qa.id and " + field + " " + compareCodeSplicingValueSql + ")";
+        }
         return null;
     }
 

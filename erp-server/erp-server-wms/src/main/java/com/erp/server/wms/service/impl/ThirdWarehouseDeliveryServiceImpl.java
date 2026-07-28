@@ -232,6 +232,50 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         return new PagingVO<>(pageData);
     }
 
+    /**
+     * 组装三方仓发货单列表异常原因：优先取最新的提交发货失败/三方仓出库异常文案。
+     * <p>
+     * 创建三方仓出库单失败时 OMS 写入 {@code submitDelivery}；出库后状态异常写入 {@code thirdWarehouseOutException}。
+     * 原先仅查后者，导致提交发货失败时 {@code abnormalProblemReason} 为空。
+     * </p>
+     *
+     * @param soIds 销售订单 id 列表
+     * @return soId -> 异常原因
+     */
+    private Map<String, String> buildAbnormalProblemReasonMap(List<String> soIds) {
+        if (CollUtil.isEmpty(soIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoB2cErrorEntity> errorList = new ArrayList<>();
+        SoB2cErrorDTO.MainIdsDTO mainIdsDTO = new SoB2cErrorDTO.MainIdsDTO();
+        mainIdsDTO.setMainIds(soIds);
+        mainIdsDTO.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+        List<SoB2cErrorEntity> submitDeliveryErrors = soB2cFeign.getByMainIdsAndType(mainIdsDTO);
+        if (CollUtil.isNotEmpty(submitDeliveryErrors)) {
+            errorList.addAll(submitDeliveryErrors);
+        }
+        mainIdsDTO.setType(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
+        List<SoB2cErrorEntity> thirdWarehouseErrors = soB2cFeign.getByMainIdsAndType(mainIdsDTO);
+        if (CollUtil.isNotEmpty(thirdWarehouseErrors)) {
+            errorList.addAll(thirdWarehouseErrors);
+        }
+        if (CollUtil.isEmpty(errorList)) {
+            return Collections.emptyMap();
+        }
+        // 同一订单多种异常时取最新一条
+        // nullsLast 包住 reverseOrder：时间倒序且 createTime 为空的排最后，避免 .reversed() 把 nullsLast 反成 nullsFirst
+        errorList.sort(Comparator.comparing(SoB2cErrorEntity::getCreateTime,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        Map<String, String> errorMap = new HashMap<>(errorList.size());
+        for (SoB2cErrorEntity errorEntity : errorList) {
+            if (CharSequenceUtil.isBlank(errorEntity.getMainId()) || CharSequenceUtil.isBlank(errorEntity.getMessage())) {
+                continue;
+            }
+            errorMap.putIfAbsent(errorEntity.getMainId(), errorEntity.getMessage());
+        }
+        return errorMap;
+    }
+
     private void fillList(List<ThirdWarehouseDeliveryDTO.PagingViewDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -244,13 +288,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntityList = CollectionUtil.isEmpty(warehouseIds)?new ArrayList<>():warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
         Map<String, String> warehouseMap = CollUtil.isNotEmpty(warehouseEntityList) ? warehouseEntityList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName)) : Collections.emptyMap();
-        //批量查询订单异常信息
+        //批量查询订单异常信息（提交发货失败 submitDelivery + 三方仓出库异常 thirdWarehouseOutException）
         List<String> soIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        SoB2cErrorDTO.MainIdsDTO mainIdsDTO = new SoB2cErrorDTO.MainIdsDTO();
-        mainIdsDTO.setMainIds(soIds);
-        mainIdsDTO.setType(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
-        List<SoB2cErrorEntity> soB2cErrorEntityList = CollUtil.isEmpty(soIds) ? Collections.emptyList() : soB2cFeign.getByMainIdsAndType(mainIdsDTO);
-        Map<String, String> errorMap = CollUtil.isNotEmpty(soB2cErrorEntityList) ? soB2cErrorEntityList.stream().collect(Collectors.toMap(SoB2cErrorEntity::getMainId, SoB2cErrorEntity::getMessage)) : Collections.emptyMap();
+        Map<String, String> errorMap = buildAbnormalProblemReasonMap(soIds);
         //批量查询订单信息
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         Map<String, SoB2cEntity> soB2cEntityMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity())) : Collections.emptyMap();

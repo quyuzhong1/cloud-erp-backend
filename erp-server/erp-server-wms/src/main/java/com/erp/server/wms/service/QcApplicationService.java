@@ -49,6 +49,13 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
     PagingVO<QcApplicationDTO.ListDTO> paging(PagingDTO<QcApplicationDTO.PagingParamDTO> pagingParamDTO);
 
     /**
+     * pda分页列表查询
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<QcApplicationDTO.PdaListDTO> pdaPaging(PagingDTO<QcApplicationDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
     * 状态统计
     * @author will
     * @date: 2026-03-20
@@ -56,6 +63,13 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
     * @return List<QcApplicationDTO.TabListDTO>>
     */
     List<QcApplicationDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 飞书pda接口
+     * @param dto
+     * @return
+     */
+    List<QcApplicationDTO.TabListDTO> pdaTabList(PermissionsDTO dto);
 
     /**
     * 详情
