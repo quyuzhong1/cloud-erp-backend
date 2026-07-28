@@ -157,7 +157,10 @@ public class AiyaOutboundSaveDTO implements Serializable {
         private String streetLine2;
 
         /**
-         * 收件人区/县（可选；官方截图为否，方案文档标必填，以官方为准）。
+         * 收件人区/县（可选）。
+         * <p>
+         * 本项目爱亚出库约定：映射 ERP「街道详细地址」({@code full_address} → {@code address3})，
+         * 不使用 ERP 区县 {@code district_name}。
          */
         private String district;
 

@@ -132,11 +132,6 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final DateTimeFormatter ORDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
 
     /**
-     * 承运商服务等级：官方文档"无特殊要求填 STD"，本项目暂无更细的服务等级映射数据源，固定传 STD。
-     */
-    private static final String DEFAULT_CARRIER_SERVICE = "STD";
-
-    /**
      * 发货标签来源：{@code ATTACHMENT}（平台自带面单，随单下发 trackingNumber+files）。
      */
     private static final String SHIPPING_LABEL_SOURCE_ATTACHMENT = "ATTACHMENT";
@@ -551,11 +546,13 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     /**
      * 取消（截单）AIYA 2C 出库单（{@code GLINK_CANCEL_ORDER_NOTIFY}）。
      * <p>
-     * 2026-07-24 联调确认：
+     * 对齐方案文档 6.3.3「3、订单拦截」：爱亚取消接口为<strong>异步</strong>——
+     * 受理成功后先标「拦截中」，最终成功/失败由 DMP 定时查询出库单状态（字母码 B=已取消 等）收敛。
      * <ul>
-     *     <li>首次截单成功：{@code success=true, code=SUCCESS, message=null, data=null} → {@code INTERCEPTION_SUCCESSFUL}；</li>
-     *     <li>重复截单（已取消）：{@code success=true, message="This order has been cancelled!"} → 同样视为成功（幂等）；</li>
-     *     <li>{@code success=false}：不区分错误码，直接 {@code failure} 透传爱亚 {@code message}/{@code code} 原文。</li>
+     *     <li>首次受理成功：{@code success=true, message=null} → {@code INTERCEPTING}（文档 step1）；</li>
+     *     <li>重复截单且已取消：{@code success=true, message="This order has been cancelled!"}
+     *         → {@code INTERCEPTION_SUCCESSFUL}（终态已达成，幂等）；</li>
+     *     <li>{@code success=false}：同步失败，{@code failure} 透传爱亚 {@code message}/{@code code} 原文。</li>
      * </ul>
      */
     @Override
@@ -569,11 +566,16 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 Collections.singletonList(cancelOutboundReq.getOrderCode()));
         log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (isSuccess(resp)) {
+            // 爱亚已取消：终态已到，直接拦截成功（幂等），无需再走「拦截中」
             if (isOrderAlreadyCancelledSuccess(resp)) {
-                log.warn("{}截单返回[This order has been cancelled]（幂等重试，非失败），orderNumber={}",
+                log.warn("{}截单返回[This order has been cancelled]（已取消，按拦截成功），orderNumber={}",
                         getPlatForm().getName(), cancelOutboundReq.getOrderCode());
+                return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
             }
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+            // 取消接口异步受理 → 先拦截中，靠定时查单（状态 B）收敛为拦截成功
+            log.warn("{}截单已受理，按文档返回拦截中，等待 DMP 查单收敛, orderNumber={}",
+                    getPlatForm().getName(), cancelOutboundReq.getOrderCode());
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
         }
         String errMsg = buildErrorMessage(resp);
         log.warn("{}截单失败，orderNumber={}, msg={}", getPlatForm().getName(), cancelOutboundReq.getOrderCode(), errMsg);
@@ -668,12 +670,17 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * 字段映射说明：
      * <ul>
      *     <li>{@code orderNumber} = {@code referenceNo}（ERP 发货单号，直接做幂等键）；</li>
-     *     <li>{@code shippingInstructions.carrier} 取 {@code shippingMethodName}，{@code carrierService}
-     *         固定 {@value #DEFAULT_CARRIER_SERVICE}；{@code shippingLabelSource} 按 {@code isPushLabel}+
-     *         {@code labelUrl} 二态映射：有面单 → {@code ATTACHMENT}（连带 trackingNumber+files 传面单），
+     *     <li>{@code shippingInstructions.carrier} 取 {@code supplierCode}（对齐查询承运商接口
+     *         {@code resultList[].carrier}，经销售渠道同步落库）；</li>
+     *     <li>{@code shippingInstructions.carrierService} 优先 {@code shippingMethodId}，
+     *         为空回退 {@code shippingMethodName}（对齐 {@code carrierServiceList[].carrierService}）；</li>
+     *     <li>{@code shippingLabelSource} 按 {@code isPushLabel}+{@code labelUrl} 二态映射：
+     *         有面单 → {@code ATTACHMENT}（连带 trackingNumber+files 传面单），
      *         否则 → {@code API}（爱亚枚举另有 {@code WMS_GEN}，方案文档未映射，不下发）；</li>
-     *     <li>{@code shipTo} 取 {@code receiverInfo}（address1→streetLine1、address2→streetLine2、
-     *         district、city、province→state、zipCode→postalCode、countryCode）；</li>
+     *     <li>{@code shipTo} 地址映射：{@code address1→streetLine1}（必填，ERP 收货地址1）、
+     *         {@code address2→streetLine2}（ERP 收货地址2）、
+     *         {@code address3→district}（ERP 街道详细地址）；其余 city/province→state/
+     *         zipCode→postalCode/countryCode 照旧；</li>
      *     <li>{@code items[]} 按 {@code productSku} 聚合数量，防重复 SKU 行；</li>
      *     <li>{@code shipFrom} 不下发（2026-07-24 联调确认可不传）。</li>
      * </ul>
@@ -684,14 +691,28 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_DETAIL_EMPTY);
         }
 
+        String carrier = req.getSupplierCode();
+        String carrierService = CharSequenceUtil.blankToDefault(req.getShippingMethodId(), req.getShippingMethodName());
+        if (CharSequenceUtil.hasBlank(carrier, carrierService)) {
+            log.warn("{}出库承运商或承运商服务为空, referenceNo={}, supplierCode={}, shippingMethodId={}, shippingMethodName={}",
+                    getPlatForm().getName(), req.getReferenceNo(), req.getSupplierCode(),
+                    req.getShippingMethodId(), req.getShippingMethodName());
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_CARRIER_REQUIRED);
+        }
+
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
+        String streetLine1 = receiver != null ? receiver.getAddress1() : null;
+        if (CharSequenceUtil.isBlank(streetLine1)) {
+            log.warn("{}出库收件地址1为空, referenceNo={}", getPlatForm().getName(), req.getReferenceNo());
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED);
+        }
 
         boolean hasPlatformLabel = CharSequenceUtil.isNotBlank(req.getLabelUrl())
                 && Boolean.TRUE.equals(req.getIsPushLabel());
         AiyaOutboundSaveDTO.ShippingInstructions.ShippingInstructionsBuilder instructionsBuilder =
                 AiyaOutboundSaveDTO.ShippingInstructions.builder()
-                        .carrier(req.getShippingMethodName())
-                        .carrierService(DEFAULT_CARRIER_SERVICE);
+                        .carrier(carrier)
+                        .carrierService(carrierService);
         List<AiyaOutboundSaveDTO.FileItem> files = null;
         if (hasPlatformLabel) {
             instructionsBuilder.shippingLabelSource(SHIPPING_LABEL_SOURCE_ATTACHMENT)
@@ -734,16 +755,17 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .storeNumber(req.getShopName())
                 .shippingInstructions(instructionsBuilder.build())
                 .shipTo(AiyaOutboundSaveDTO.ShipTo.builder()
-                        .name(receiver != null ? receiver.getName() : null)
-                        .mobileNumber(receiver != null ? receiver.getPhone() : null)
-                        .email(receiver != null ? receiver.getEmail() : null)
-                        .streetLine1(receiver != null ? receiver.getAddress1() : null)
-                        .streetLine2(receiver != null ? receiver.getAddress2() : null)
-                        .district(receiver != null ? receiver.getDistrict() : null)
-                        .city(receiver != null ? receiver.getCity() : null)
-                        .state(receiver != null ? receiver.getProvince() : null)
-                        .postalCode(receiver != null ? receiver.getZipCode() : null)
-                        .countryCode(receiver != null ? receiver.getCountryCode() : null)
+                        .name(receiver.getName())
+                        .mobileNumber(receiver.getPhone())
+                        .email(receiver.getEmail())
+                        .streetLine1(streetLine1)
+                        .streetLine2(CharSequenceUtil.isBlank(receiver.getAddress2()) ? null : receiver.getAddress2())
+                        // 爱亚地址3落在 district：ERP 街道详细地址（address3），非 ERP 区县 districtName
+                        .district(CharSequenceUtil.isBlank(receiver.getAddress3()) ? null : receiver.getAddress3())
+                        .city(receiver.getCity())
+                        .state(receiver.getProvince())
+                        .postalCode(receiver.getZipCode())
+                        .countryCode(receiver.getCountryCode())
                         .build())
                 .items(items)
                 .files(files)

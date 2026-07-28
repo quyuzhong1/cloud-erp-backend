@@ -96,23 +96,13 @@
             where
                 <include refid="Platform_Match_Where"/>
             order by
-                <!-- 可空参数用动态 SQL；otherwise 用 (0) 常量表达式，避免 PG 把裸 0 当成 ORDER BY 列序号 -->
-                <choose>
-                    <when test="platformDTO.relationId != null and platformDTO.relationId != ''">
-                        case when vwc.relation_id = #{platformDTO.relationId} then 0 else 1 end
-                    </when>
-                    <otherwise>
-                        (0)
-                    </otherwise>
-                </choose>,
-                <choose>
-                    <when test="platformDTO.partitionId != null and platformDTO.partitionId != ''">
-                        case when vwcpr.partition_id = #{platformDTO.partitionId} then 0 else 1 end
-                    </when>
-                    <otherwise>
-                        (0)
-                    </otherwise>
-                </choose>,
+                <!-- 仅非空时追加精确匹配排序；勿写裸数字/常量 0，PG 会当成列序号 -->
+                <if test="platformDTO.relationId != null and platformDTO.relationId != ''">
+                    case when vwc.relation_id = #{platformDTO.relationId} then 0 else 1 end,
+                </if>
+                <if test="platformDTO.partitionId != null and platformDTO.partitionId != ''">
+                    case when vwcpr.partition_id = #{platformDTO.partitionId} then 0 else 1 end,
+                </if>
                 vwc.id
             limit 1
         )

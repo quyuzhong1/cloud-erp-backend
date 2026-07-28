@@ -3704,11 +3704,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             receiverInfo.setCountryCode3(CollUtil.isNotEmpty(countryEntityList) ? countryEntityList.get(0).getAlpha3() : "");
         }
         //地址2/地址3分行处理：需要将secondAddress/fullAddress分开传递的仓库平台
+        // 爱亚：streetLine1←地址1、streetLine2←地址2、district←街道详细地址(fullAddress→address3)
         if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+         ||PlatformDictEnum.AIYA.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
 
@@ -3807,6 +3809,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(channelEntity.getCode());
         createOutboundReq.setShippingMethodName(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getCnName());
         createOutboundReq.setShippingMethodId(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getPlatformChannelId());
+        // 爱亚出库 carrier 取销售渠道供应商编码（查询承运商接口 carrier → supplierCode）
+        createOutboundReq.setSupplierCode(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getSupplierCode());
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
         createOutboundReq.setIsApiSignName(channelEntity.getIsApiSign() ? "是" : "否");
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());
@@ -7743,6 +7747,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
 
+        // 与 view 一致：补齐币种切换计算所需的订单汇率/币种/店铺等参数，避免 isCny 切换时金额被按 null 汇率算成 0
+        dto.setShippingFee(soB2cEntity.getShippingFee());
+        dto.setShopId(soB2cEntity.getShopId());
+        dto.setExchangeRate(soB2cEntity.getExchangeRate());
+        dto.setCurrency(soB2cEntity.getCurrency());
         dto.setSoB2cEntity(soB2cEntity);
         dto.setSoB2cLogisticsEntity(logisticsEntity);
         dto.setSoB2cFinanceEntity(soB2cFinanceEntity);

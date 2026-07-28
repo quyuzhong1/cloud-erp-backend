@@ -79,6 +79,7 @@ import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemImage;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaries;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaryByMarketplace;
+import com.erp.server.oms.helper.WarehouseSkuReconcileHelper;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
@@ -1853,6 +1854,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         Map<String, SkuMappingEntity> entityMap = entityList.stream()
                 .collect(Collectors.toMap(SkuMappingEntity::getId, Function.identity(), (a, b) -> a));
 
+        // 启用时需校验源端 platform_status；批量预加载 listing，避免循环 getById
+        Map<String, ListingInfoEntity> listingMap = Collections.emptyMap();
+        if (SkuMappingStatusEnum.ENABLE.equals(dto.getStatus()) && CollectionUtils.isNotEmpty(entityList)) {
+            List<String> listingIds = entityList.stream()
+                    .filter(e -> RuleTypeEnum.WAREHOUSE.equals(e.getType()))
+                    .map(SkuMappingEntity::getListingId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(listingIds)) {
+                listingMap = listingInfoService.listByIds(listingIds).stream()
+                        .collect(Collectors.toMap(ListingInfoEntity::getId, Function.identity(), (a, b) -> a));
+            }
+        }
+
         List<BatchResultDTO> resultDTOList = new ArrayList<>(dto.getIds().size());
         List<SkuMappingEntity> toUpdate = new ArrayList<>();
         for (String id : dto.getIds()) {
@@ -1865,7 +1881,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(), "仅支持库存SKU映射关系变更状态"));
                 continue;
             }
-            if (dto.getStatus().equals(entity.getStatus())) {
+            // 启用仓库映射：先校验源端 listing 存在且未停用（须在「状态未变」短路之前，避免已 enable 脏数据被判成功）
+            if (SkuMappingStatusEnum.ENABLE.equals(dto.getStatus())) {
+                ListingInfoEntity listing = listingMap.get(entity.getListingId());
+                if (listing == null) {
+                    resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(),
+                            "未找到仓库SKU源端信息，不允许启用映射关系"));
+                    continue;
+                }
+                if (WarehouseSkuReconcileHelper.isInactivePlatformStatus(listing.getPlatformStatus())) {
+                    resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(),
+                            "仓库SKU源端已停用/废弃，不允许启用映射关系"));
+                    continue;
+                }
+            }
+            if (Objects.equals(dto.getStatus(), entity.getStatus())) {
                 resultDTOList.add(BatchResultDTO.success(id, entity.getProductSkuNo()));
                 continue;
             }

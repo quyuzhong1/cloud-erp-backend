@@ -2698,10 +2698,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         checkName(customerId, newName);
         entity.setName(newName);
         updateById(entity);
-        // 已审核或已推送金蝶：同步客户名称到金蝶
+        // 已审核或已推送金蝶：走 operateApprove（金蝶侧反审核→更新→提交→审核）
         if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())
                 || StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
-            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_UPDATE.getCode());
+            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
