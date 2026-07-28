@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
@@ -26,6 +27,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -72,7 +74,6 @@ import com.erp.server.wms.convert.PackingConverter;
 import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.PackingTaskMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -2444,26 +2445,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public String getOutBoxNoBase64(String outBoxNo) {
-        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
-        getOneDTO.setName(FileTemplateConstant.PACKING_TASK);
-        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
-        getOneDTO.setSourceType(SourceTypeEnum.PACKING_TASK.getCode());
-        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-        //获取fastdfs文件
-        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
-        if (inputStream == null) {
-            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
-            return null;
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("outBoxNo", outBoxNo);
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(outBoxNo));
-        String base = Base64.getEncoder().encodeToString(bytes);
-        return "data:application/pdf;base64," + base;
-    }
-
-    @Override
     public WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId) {
         WmsCartonEntity cartonEntity = wmsCartonService.getById(cartonId);
         if (Objects.isNull(cartonEntity)){
@@ -2474,6 +2455,299 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         return buildPrintInfo(cartonEntity,packingTaskEntity);
+    }
+
+    /**
+     * 按装箱任务批量打印外箱条码并合并为单个 PDF
+     * <p>任务状态须为装箱中或已装箱；取任务下已完成且箱号有效的箱子，模板只拉取一次后按箱号升序批量生成 PDF，再合并上传</p>
+     *
+     * @param taskId 装箱任务 id
+     * @return 合并后的 PDF FastDFS URL
+     */
+    @Override
+    public String getPrintBarCodeByTaskId(String taskId) {
+        if (CharSequenceUtil.isBlank(taskId)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "装箱任务id");
+        }
+        PackingTaskEntity packingTaskEntity = this.getById(taskId);
+        if (ObjectUtils.isEmpty(packingTaskEntity)) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
+        }
+        String packingStatus = packingTaskEntity.getPackingStatus();
+        if (!PackingTaskStatusEnum.PACKING.getCode().equals(packingStatus)
+                && !PackingTaskStatusEnum.PACKED.getCode().equals(packingStatus)) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_STATUS_FORBIDDEN);
+        }
+        List<WmsCartonEntity> allCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
+        List<WmsCartonEntity> printableCartons = allCartonEntityList.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> PackingTaskStatusEnum.COMPLETED.getCode().equals(e.getPackingStatus()))
+                .filter(e -> Objects.nonNull(e.getBoxNo()) && e.getBoxNo() > 0)
+                .sorted(Comparator.comparing(WmsCartonEntity::getBoxNo))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(printableCartons)) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_CARTON_EMPTY);
+        }
+        List<WmsCartonDTO.PrintDTO> printDTOList = buildBatchPrintBarCodeInfo(packingTaskEntity, printableCartons);
+        // jrxml 在运行时用当前 Jasper 版本编译一次，避免 Studio 编译的 .jasper 类名不兼容
+        net.sf.jasperreports.engine.JasperReport jasperReport = JasperHelperUtil.loadReport(loadPackingTaskJasperTemplateBytes());
+        List<byte[]> pdfBytesList = new ArrayList<>(printDTOList.size());
+        for (WmsCartonDTO.PrintDTO printDTO : printDTOList) {
+            try {
+                pdfBytesList.add(exportOutBoxNoPdfBytes(jasperReport, printDTO));
+            } catch (ServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("生成外箱条码PDF失败, sourceCode={}", printDTO.getSourceCode(), e);
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_PDF_GENERATE_FAILED, printDTO.getSourceCode());
+            }
+        }
+        try {
+            byte[] merged = PdfUtil.mergePdfFiles(pdfBytesList);
+            return FastDFSClientUtil.uploadFile(merged, "packing-barcode-" + taskId + ".pdf", null);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("合并或上传外箱条码PDF失败, taskId={}", taskId, e);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_PDF_MERGE_FAILED);
+        }
+    }
+
+    /**
+     * 批量构建任务下各箱打印条码信息（不复用 buildPrintInfo）
+     * <p>
+     * 与单箱打印差异：{@code sourceCode} 赋值为外箱号 {@code 关联单号-箱号}（与 outBoxNo 一致）。
+     * 性能：任务级店铺/国家/负责人只查一次；SKU 明细按箱 id 批量查询；装箱员箱序号在内存中计算。
+     * </p>
+     *
+     * @param packingTaskEntity 装箱任务
+     * @param printableCartons  待打印箱子（已完成且箱号有效，已按箱号排序）；序号按装箱员维度在此集合内按箱号排序后计算
+     * @return 打印 DTO 列表（顺序与 printableCartons 一致）
+     */
+    private List<WmsCartonDTO.PrintDTO> buildBatchPrintBarCodeInfo(PackingTaskEntity packingTaskEntity,
+                                                                  List<WmsCartonEntity> printableCartons) {
+        List<String> cartonIds = printableCartons.stream().map(WmsCartonEntity::getId).collect(Collectors.toList());
+        Map<String, List<WmsCartonDetailEntity>> detailMap = wmsCartonDetailService.listByMainIds(cartonIds).stream()
+                .collect(Collectors.groupingBy(WmsCartonDetailEntity::getMainId));
+
+        // 序号仅统计已完成且箱号有效的箱子，并按箱号排序后计算
+        Map<String, List<WmsCartonEntity>> completedCartonsByPackingUser = printableCartons.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(
+                        e -> CharSequenceUtil.nullToEmpty(e.getPackingUserId()),
+                        LinkedHashMap::new,
+                        Collectors.collectingAndThen(Collectors.toList(), list -> {
+                            list.sort(Comparator.comparing(WmsCartonEntity::getBoxNo));
+                            return list;
+                        })));
+
+        WmsCartonDTO.PrintDTO sharedInfo = resolveTaskPrintSharedInfo(packingTaskEntity);
+
+        List<WmsCartonDTO.PrintDTO> printDTOList = new ArrayList<>(printableCartons.size());
+        for (WmsCartonEntity cartonEntity : printableCartons) {
+            String outBoxNo = packingTaskEntity.getSourceCode() + "-" + cartonEntity.getBoxNo();
+            List<WmsCartonDetailEntity> detailEntityList = detailMap.getOrDefault(cartonEntity.getId(), Collections.emptyList());
+            List<String> skuList = detailEntityList.stream()
+                    .map(e -> e.getSkuNo() + "*" + e.getPackQty())
+                    .collect(Collectors.toList());
+
+            Integer index = null;
+            List<WmsCartonEntity> userCartons = completedCartonsByPackingUser.getOrDefault(
+                    CharSequenceUtil.nullToEmpty(cartonEntity.getPackingUserId()), Collections.emptyList());
+            for (int i = 0; i < userCartons.size(); i++) {
+                if (Objects.equals(cartonEntity.getBoxNo(), userCartons.get(i).getBoxNo())) {
+                    index = i + 1;
+                    break;
+                }
+            }
+
+            printDTOList.add(WmsCartonDTO.PrintDTO.builder()
+                    .boxNo(cartonEntity.getBoxNo())
+                    .cartonId(cartonEntity.getId())
+                    .sourceCode(outBoxNo)
+                    .sourceId(packingTaskEntity.getSourceId())
+                    .taskId(packingTaskEntity.getId())
+                    .packingUserName(cartonEntity.getPackingUserName())
+                    .index(index)
+                    .skuList(skuList)
+                    .shopId(sharedInfo.getShopId())
+                    .shopName(sharedInfo.getShopName())
+                    .countryId(sharedInfo.getCountryId())
+                    .countryName(sharedInfo.getCountryName())
+                    .chargeId(sharedInfo.getChargeId())
+                    .chargeName(sharedInfo.getChargeName())
+                    .build());
+        }
+        return printDTOList;
+    }
+
+    /**
+     * 解析装箱任务级打印共享信息（负责人/店铺/国家），同一任务只查询一次
+     * <p>字段取值逻辑参考 {@link #buildPrintInfo}，但不包含箱维度字段</p>
+     *
+     * @param packingTaskEntity 装箱任务
+     * @return 仅填充了任务级字段的 PrintDTO
+     */
+    private WmsCartonDTO.PrintDTO resolveTaskPrintSharedInfo(PackingTaskEntity packingTaskEntity) {
+        WmsCartonDTO.PrintDTO sharedInfo = new WmsCartonDTO.PrintDTO();
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTaskEntity.getSourceId());
+        RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
+        if (Objects.nonNull(soDeliveryNoticeEntity)) {
+            sharedInfo.setChargeId(soDeliveryNoticeEntity.getCreateUserId());
+            sharedInfo.setChargeName(soDeliveryNoticeEntity.getCreateUserName());
+        } else if (Objects.nonNull(requisitionApplication)) {
+            sharedInfo.setChargeId(requisitionApplication.getCreateUserId());
+            sharedInfo.setChargeName(requisitionApplication.getCreateUserName());
+        }
+
+        if (PickingSourceTypeEnum.B2B.getCode().equals(packingTaskEntity.getSourceType())) {
+            if (Objects.isNull(soDeliveryNoticeEntity) || CharSequenceUtil.isBlank(soDeliveryNoticeEntity.getSourceId())) {
+                return sharedInfo;
+            }
+            List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(soDeliveryNoticeEntity.getSourceId()));
+            if (CollectionUtils.isNotEmpty(customerDTOS)) {
+                sharedInfo.setCountryId(customerDTOS.get(0).getCountryId());
+                if (CharSequenceUtil.isNotBlank(sharedInfo.getCountryId())) {
+                    DictCountryEntity country = sysUserFeign.getCountryById(sharedInfo.getCountryId());
+                    if (Objects.nonNull(country)) {
+                        sharedInfo.setCountryName(country.getNameCn());
+                    }
+                }
+            }
+            return sharedInfo;
+        }
+
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTaskEntity.getSourceId());
+        if (Objects.nonNull(firstMileDelivery)) {
+            if (CharSequenceUtil.isBlank(firstMileDelivery.getCountryId()) && StringUtils.isNotBlank(firstMileDelivery.getDestWarehouseId())) {
+                WarehouseEntity warehouseEntity = warehouseService.getById(firstMileDelivery.getDestWarehouseId());
+                if (Objects.nonNull(warehouseEntity) && StringUtils.isNotBlank(warehouseEntity.getCountry())) {
+                    sharedInfo.setCountryId(warehouseEntity.getCountry());
+                    DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
+                    if (Objects.nonNull(country)) {
+                        sharedInfo.setCountryName(country.getNameCn());
+                    }
+                }
+            } else {
+                sharedInfo.setCountryId(firstMileDelivery.getCountryId());
+                sharedInfo.setCountryName(firstMileDelivery.getCountryName());
+            }
+            sharedInfo.setShopId(firstMileDelivery.getShopId());
+            sharedInfo.setShopName(firstMileDelivery.getShopName());
+            if (CharSequenceUtil.isNotBlank(firstMileDelivery.getShopId())) {
+                ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(firstMileDelivery.getShopId());
+                if (Objects.nonNull(shopInfo)) {
+                    sharedInfo.setShopName(shopInfo.getName());
+                }
+            }
+            return sharedInfo;
+        }
+
+        if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId())
+                && (Objects.equals(requisitionApplication.getType(), RequisitionApplicationTypeEnum.FBA.getCode())
+                || Objects.equals(requisitionApplication.getType(), RequisitionApplicationTypeEnum.FBT.getCode())
+                || Objects.equals(requisitionApplication.getType(), RequisitionApplicationTypeEnum.AWD.getCode()))) {
+            sharedInfo.setShopId(requisitionApplication.getChannelId());
+            sharedInfo.setShopName(requisitionApplication.getChannelName());
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
+            if (Objects.nonNull(shopInfo)) {
+                sharedInfo.setCountryId(shopInfo.getDictCountryCode());
+                sharedInfo.setCountryName(shopInfo.getCountryName());
+                sharedInfo.setShopName(shopInfo.getName());
+            }
+            return sharedInfo;
+        }
+
+        if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId())
+                && Objects.equals(requisitionApplication.getType(), RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())) {
+            String countryId = "";
+            String countryName = "";
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity =
+                    overseasProviderWarehouseService.getByWarehouseId(requisitionApplication.getChannelId());
+            if (Objects.nonNull(overseasProviderWarehouseEntity)) {
+                countryId = overseasProviderWarehouseEntity.getCountry();
+                countryName = overseasProviderWarehouseEntity.getCountryName();
+            }
+            if (StringUtils.isBlank(countryName)) {
+                WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
+                if (Objects.nonNull(warehouseEntity) && StringUtils.isNotBlank(warehouseEntity.getCountry())) {
+                    countryId = warehouseEntity.getCountry();
+                    DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
+                    if (Objects.nonNull(country)) {
+                        countryName = country.getNameCn();
+                    }
+                }
+            }
+            sharedInfo.setCountryId(countryId);
+            sharedInfo.setCountryName(countryName);
+        }
+        return sharedInfo;
+    }
+
+    /**
+     * 拉取装箱任务外箱条码 Jasper 模板字节（只下载一次，供批量填充复用）
+     *
+     * @return 模板文件字节
+     */
+    private byte[] loadPackingTaskJasperTemplateBytes() {
+        // 优先 jrxml（运行时编译，规避 Studio .jasper 与运行时版本类名不兼容）；找不到再回退 jasper
+        FileTemplateEntity fileTemplateEntity = getPackingTaskFileTemplate(FileTypeEnum.JRXML.getCode());
+        if (Objects.isNull(fileTemplateEntity) || CharSequenceUtil.isBlank(fileTemplateEntity.getUrl())) {
+            fileTemplateEntity = getPackingTaskFileTemplate(FileTypeEnum.JASPER.getCode());
+        }
+        if (Objects.isNull(fileTemplateEntity) || CharSequenceUtil.isBlank(fileTemplateEntity.getUrl())) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_TEMPLATE_NOT_FOUND);
+        }
+        String templateUrl = fileTemplateEntity.getUrl();
+        InputStream inputStream = null;
+        try {
+            inputStream = FastDFSClientUtil.getInputStream(templateUrl);
+            if (inputStream == null) {
+                log.warn("获取fastdfs外箱条码模板为空, url={}", templateUrl);
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_TEMPLATE_LOAD_FAILED);
+            }
+            return IoUtil.readBytes(inputStream);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("下载外箱条码打印模板失败, url={}", templateUrl, e);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_TEMPLATE_LOAD_FAILED);
+        } finally {
+            IoUtil.close(inputStream);
+        }
+    }
+
+    /**
+     * 按文件类型查询装箱任务外箱条码模板
+     *
+     * @param fileType {@link FileTypeEnum} 编码（jrxml / jasper）
+     * @return 模板实体，不存在时可能为 null
+     */
+    private FileTemplateEntity getPackingTaskFileTemplate(String fileType) {
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.PACKING_TASK);
+        getOneDTO.setFileType(fileType);
+        getOneDTO.setSourceType(SourceTypeEnum.PACKING_TASK.getCode());
+        return fileTemplateFeign.getByFileTemplate(getOneDTO);
+    }
+
+    /**
+     * 使用已编译的 JasperReport，按 PrintDTO 字段生成单个外箱条码 PDF
+     *
+     * @param jasperReport 已加载/编译的报表
+     * @param printDTO     打印条码信息；其中 sourceCode 为外箱号（关联单号-箱号）
+     * @return 单箱 PDF 字节
+     */
+    private byte[] exportOutBoxNoPdfBytes(net.sf.jasperreports.engine.JasperReport jasperReport,
+                                          WmsCartonDTO.PrintDTO printDTO) {
+        // Jasper 模板用 String 渲染 SKU；避免在 jrxml 内对 List 做泛型处理
+        if (CollectionUtils.isNotEmpty(printDTO.getSkuList())) {
+            printDTO.setSkuListStr(String.join(",", printDTO.getSkuList()));
+        } else if (CharSequenceUtil.isBlank(printDTO.getSkuListStr())) {
+            printDTO.setSkuListStr("-");
+        }
+        Map<String, Object> map = BeanUtil.beanToMap(printDTO);
+        return JasperHelperUtil.exportToPdfStream(jasperReport, map, Collections.singletonList(printDTO));
     }
 
     /**

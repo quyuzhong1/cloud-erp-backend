@@ -237,14 +237,21 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     void updateWeightStatus(PackingTaskEntity packingTaskEntity);
 
-    String getOutBoxNoBase64(String outBoxNo);
-
     /**
      * 获取打印条码
      * @param cartonId
      * @return
      */
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
+
+    /**
+     * 按装箱任务批量打印外箱条码并合并为单个 PDF
+     * <p>任务状态须为装箱中或已装箱；取任务下已完成且箱号有效的箱子，按箱号升序生成条码 PDF 后合并上传</p>
+     *
+     * @param taskId 装箱任务 id
+     * @return 合并后的 PDF FastDFS URL
+     */
+    String getPrintBarCodeByTaskId(String taskId);
     /**
      * 要货申请单转换装箱任务实体
      * @param entity
