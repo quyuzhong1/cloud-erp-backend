@@ -20,6 +20,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
@@ -336,6 +337,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             throw new ServiceException(msg);
         }
         detailDTOList = detailDTOList.stream().filter(v -> StringUtils.isNotBlank(v.getSkuId())).collect(Collectors.toList());
+        bindOverseasManagedSoDetailIds(mainEntity, detailDTOList);
         List<String> skuIdList = detailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                 .platformDeliveryDetailDTOList(detailDTOList)
@@ -353,6 +355,43 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             aliexpressDeliveryFeign.updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO.builder().soId(mainEntity.getId()).platformDeliveryCode(deliveryDTO.getSourceCode()).isOutstock(Boolean.TRUE).build());
         }
     }
+
+    /**
+     * 为速卖通海外托管官方仓发货明细绑定ERP销售订单明细ID。
+     *
+     * <p>官方仓库存流水使用货品映射后的ERP SKU生成出库明细，该SKU可能与销售订单SKU不同。
+     * 必须先按平台SKU定位销售订单明细，避免WMS无法关联订单明细而保留零金额。</p>
+     *
+     * @param mainEntity 销售订单
+     * @param deliveryDetailList 平台发货明细
+     */
+    private void bindOverseasManagedSoDetailIds(SoB2cEntity mainEntity,
+                                                List<PlatformDeliveryDetailDTO> deliveryDetailList) {
+        if (!PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equals(mainEntity.getDictPlatform())
+                || CollectionUtils.isEmpty(deliveryDetailList)) {
+            return;
+        }
+        List<SoB2cDetailEntity> soDetailList = soB2cDetailService.listByMainId(mainEntity.getId());
+        for (PlatformDeliveryDetailDTO deliveryDetail : deliveryDetailList) {
+            List<SoB2cDetailEntity> candidates = soDetailList.stream()
+                    .filter(detail -> StringUtils.isNotBlank(deliveryDetail.getPlatformSkuId())
+                            && deliveryDetail.getPlatformSkuId().equals(detail.getPlatformSkuId()))
+                    .collect(Collectors.toList());
+            if (candidates.size() != 1) {
+                candidates = soDetailList.stream()
+                        .filter(detail -> StringUtils.isNotBlank(deliveryDetail.getPlatformSkuNo())
+                                && deliveryDetail.getPlatformSkuNo().equalsIgnoreCase(detail.getPlatformSkuNo()))
+                        .collect(Collectors.toList());
+            }
+            if (candidates.size() != 1) {
+                throw new ServiceException(CharSequenceUtil.format(
+                        "速卖通海外托管发货明细无法唯一匹配销售订单明细，销售单号:{}，平台SKU ID:{}，平台SKU:{}",
+                        mainEntity.getCode(), deliveryDetail.getPlatformSkuId(), deliveryDetail.getPlatformSkuNo()));
+            }
+            deliveryDetail.setSoDetailId(candidates.get(0).getId());
+        }
+    }
+
     /**
      * 转换新中台刷新订单请求参数
      */
