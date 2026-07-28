@@ -3807,6 +3807,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(channelEntity.getCode());
         createOutboundReq.setShippingMethodName(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getCnName());
         createOutboundReq.setShippingMethodId(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getPlatformChannelId());
+        // 爱亚出库 carrier 取销售渠道供应商编码（查询承运商接口 carrier → supplierCode）
+        createOutboundReq.setSupplierCode(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getSupplierCode());
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
         createOutboundReq.setIsApiSignName(channelEntity.getIsApiSign() ? "是" : "否");
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());

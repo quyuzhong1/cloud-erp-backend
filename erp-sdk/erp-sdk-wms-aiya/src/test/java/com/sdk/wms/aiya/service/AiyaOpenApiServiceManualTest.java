@@ -126,13 +126,38 @@ public class AiyaOpenApiServiceManualTest {
         //    一条），这将影响 DMP 去重唯一键设计，详见 README「待产品确认」。
     }
 
+    /**
+     * 查询承运商（{@code GLINK_QUERY_CARRIER_NOTIFY}，SDK 方法 {@link AiyaOpenApiService#queryTransport}）。
+     * <p>
+     * 业务入参（写入 bizData）：
+     * <ul>
+     *     <li>{@code customerCode}：必填，由 SDK {@code doQuery} 注入，本方法无需再塞入 bizParams</li>
+     *     <li>{@code warehouseCode}：必填，生产账号须用测试专属仓 {@link #TEST_WAREHOUSE_CODE}</li>
+     *     <li>{@code needActualLogistics}：可选，是否展示实际物流</li>
+     * </ul>
+     * 重点核对响应：
+     * <ul>
+     *     <li>顶层 {@code success}/{@code code}/{@code message}/{@code resultList}</li>
+     *     <li>{@code resultList[]}：{@code carrier}/{@code carrierDescription}/{@code carrierType}/
+     *         {@code logisticsProvider}/{@code needAddedService}/{@code actualLogistics}/
+     *         {@code carrierServiceList}</li>
+     *     <li>{@code carrierServiceList[]}：{@code carrierService}/{@code carrierServiceDescription}</li>
+     * </ul>
+     * 本方法仅联调打印，不修改业务代码；可选参数开关放在方法内局部变量，按需改 true/false。
+     */
     @Test
     public void queryTransportTest() {
+        // 是否展示实际物流（文档可选字段 needActualLogistics）；联调时可改为 true 核对 actualLogistics
+        boolean needActualLogistics = false;
+
         Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填
         bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
+        bizParams.put("needActualLogistics", needActualLogistics);
+
         JSONObject response = aiyaOpenApiService.queryTransport(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, bizParams);
         System.out.println(JSONUtil.toJsonStr(response));
+        // 成功样例重点看 resultList 是否按仓返回承运商及 carrierServiceList；
+        // 若 needActualLogistics=true，再核对 actualLogistics 是否有值
     }
 
     // ===================== 入库单相关 =====================
@@ -232,18 +257,18 @@ public class AiyaOpenApiServiceManualTest {
 
         AiyaOutboundSaveDTO request = AiyaOutboundSaveDTO.builder()
                 // 必填：客户交易物流订单号=三方仓发货单号，客户侧保证唯一；修改时传同一号即可幂等 upsert
-                .orderNumber("WFHD-AIYA-TEST-202607220006")
+                .orderNumber("WFHD-AIYA-TEST-202607280001")
                 .warehouseCode(TEST_WAREHOUSE_CODE)
                 // 可选：客户销售平台编号（平台订单号等）
-                .extOrderNumber("PLATFORM-ORDER-TEST-001")
+                .extOrderNumber("PLATFORM-ORDER-TEST-002")
                 .orderTime(orderTime)
                 // 可选：方案文档映射销售平台 / 店铺
                 .salesChannel("Amazon")
                 .storeNumber("TEST-SHOP")
                 .shippingInstructions(AiyaOutboundSaveDTO.ShippingInstructions.builder()
                         // 必填：承运商；API 取号时仍须传（可用物流渠道映射名）；无特殊要求 carrierService=STD
-                        .carrier("顺风")
-                        .carrierService("STD")
+                        .carrier("SPX STANDARD")
+                        .carrierService("【ID-本土】SPX STANDARD-REGULER (CASHLESS)")
                         // 必填：API=海外仓向快递取号；ATTACHMENT=平台自带面单；WMS_GEN=仓内模板生成
 //                        .shippingLabelSource("API")
                         .shippingLabelSource("ATTACHMENT")
