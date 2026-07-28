@@ -278,6 +278,18 @@ public class PdaPackingTaskController extends BaseController {
     }
 
     /**
+     * 按装箱任务批量打印外箱条码（合并 PDF URL）
+     * <p>仅任务状态为装箱中/已装箱时，打印任务下已完成箱子的外箱条码 PDF 并合并返回</p>
+     *
+     * @param taskId 装箱任务 id
+     * @return 合并后的 PDF 文件 URL
+     */
+    @GetMapping("/getPrintBarCodeByTaskId")
+    public ApiResult<String> getPrintBarCodeByTaskId(@RequestParam("taskId") String taskId) {
+        return success(packingTaskService.getPrintBarCodeByTaskId(taskId));
+    }
+
+    /**
      * 根据外部箱号查询装箱的基础信息和产品明细
      * @param outBoxNo
      * @return

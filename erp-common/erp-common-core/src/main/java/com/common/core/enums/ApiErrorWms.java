@@ -494,6 +494,8 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_QUERY_CONVERT_FAILED", 11252, "AIYA 查询2C出库单接口响应转换失败: {0}");
     public static final ApiError WH_AIYA_OUTBOUND_CODE_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_CODE_REQUIRED", 11253, "AIYA出库单号不能为空");
     public static final ApiError WH_AIYA_OUTBOUND_DETAIL_EMPTY = new ApiError("WH_AIYA_OUTBOUND_DETAIL_EMPTY", 11254, "AIYA创建出库单明细为空");
+    public static final ApiError WH_AIYA_OUTBOUND_CARRIER_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_CARRIER_REQUIRED", 11255, "AIYA出库承运商(carrier)或承运商服务(carrierService)为空，请先同步物流渠道");
+    public static final ApiError WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED", 11256, "AIYA出库收件人地址1(streetLine1)不能为空");
     public static final ApiError WH_AFTER_SALE_PACK_INVALID_STATUS = new ApiError("WH_AFTER_SALE_PACK_INVALID_STATUS", 11255, "箱唛【{0}】已作废");
     public static final ApiError WH_AFTER_SALE_PACK_VOID_NOT_EMPTY = new ApiError("WH_AFTER_SALE_PACK_VOID_NOT_EMPTY", 11256, "箱唛【{0}】非空箱，不能作废");
     public static final ApiError WH_AFTER_SALE_PACK_VOID_IN_USE = new ApiError("WH_AFTER_SALE_PACK_VOID_IN_USE", 11257, "箱唛【{0}】已被单据使用，不能作废");

@@ -33,7 +33,13 @@ Handler 已在 `getDetailList` 写入：`spuId/spuNo/skuNo/name/status/skuId/sou
 | 爱亚 | `...mq.aiya.AiyaProductRocketMQTaskHandler` | 与现商品一致：`PLATFORM_PULL_DATA_TOPIC` + `third_system_product_tag` |
 | WEGO | `...mq.wego.WegoProductRocketMQTaskHandler` | 同上 |
 
+**必须同时有 `dmp_cfg_output_detail`（按授权 `next_level_id`）**，否则 Input 写完 `dmp_sku_info` 后不会创建 Output 任务、MQ 不推 OMS。  
+授权时 `TbTaskTypeService.addDmpOutputDetail` 会给**当时已存在**的 output 补 detail；若先插 output 后授权未再触发，需执行  
+[`sql/aiya_wego_sku_output_detail_patch.sql`](./sql/aiya_wego_sku_output_detail_patch.sql)。
+
 `platformStatus` 来自 `dmp_sku_info.status`（爱亚原文 Active/Inactive；WEGO 已在 Input 归一 1→Active、4→Inactive）。
+
+人工 `updateStatus` 启用：若 `listing_info.platform_status` 为停用（非 Active），接口拒绝。
 
 ## 4. 消费端规则（已合代码）
 
