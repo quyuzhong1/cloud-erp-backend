@@ -28,21 +28,19 @@ public class PgUnallocLockSynchronizationAdapter extends TransactionSynchronizat
         inventoryRedisUtil.unLock(lock);
     }
 
-    /**
-     * 注册事务结束后解锁；无活跃事务时立即释放。
-     *
-     * @param lock               已获取的锁，可为 null
-     * @param inventoryRedisUtil Redis 锁工具
-     */
-    public static void registerUnlockAfterTx(RedissonMultiLock lock, InventoryRedisUtil inventoryRedisUtil) {
-        if (lock == null || inventoryRedisUtil == null) {
-            return;
-        }
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new PgUnallocLockSynchronizationAdapter(lock, inventoryRedisUtil));
-        } else {
-            inventoryRedisUtil.unLock(lock);
-        }
-    }
+	/**
+	 * 注册事务结束后解锁；无活跃 Spring 事务时由调用方在 {@code try/finally} 中释放锁。
+	 *
+	 * @param lock               已获取的锁，可为 null
+	 * @param inventoryRedisUtil Redis 锁工具
+	 */
+	public static void registerUnlockAfterTx(RedissonMultiLock lock, InventoryRedisUtil inventoryRedisUtil) {
+		if (lock == null || inventoryRedisUtil == null) {
+			return;
+		}
+		if (TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(
+					new PgUnallocLockSynchronizationAdapter(lock, inventoryRedisUtil));
+		}
+	}
 }

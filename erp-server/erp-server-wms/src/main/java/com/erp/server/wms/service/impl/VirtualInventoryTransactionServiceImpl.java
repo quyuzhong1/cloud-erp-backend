@@ -25,6 +25,7 @@ import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.server.wms.config.VirtualInventoryTransactionSynchronizationAdapter;
+import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
 import com.erp.server.wms.mapper.VirtualInventoryTransactionMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryRedisUtil;
@@ -398,10 +399,14 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     		}
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam)) {
+    		String tryOperationId = VirtualInventoryUnallocCheckHelper.resolveTryOperationIdFromFlowIds(
+    				transactionList.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getId).collect(Collectors.toList()));
     		virtualInventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
-					transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+					transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)),
+					"",
+					tryOperationId);
     	}
     	log.info("{}结束" , logMsg);
     }
