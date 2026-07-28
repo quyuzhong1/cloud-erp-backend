@@ -49,7 +49,7 @@ public class kingdeeOpenApi {
     /**
      * 业务员列表 用于B2B 销售订单下拉
      */
-    @PostMapping("listKingdeeUser")
+    @OpenApi("listKingdeeUser")
     public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listKingdeeUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         return sysKingdeeFeign.listKingdeeUser(dto);
     }
