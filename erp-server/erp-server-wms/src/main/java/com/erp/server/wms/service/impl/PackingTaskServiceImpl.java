@@ -116,6 +116,10 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Slf4j
 @Service
 public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, PackingTaskEntity> implements PackingTaskService {
+
+    /** 单次批量打印外箱条码允许的最大箱数 */
+    private static final int MAX_PRINT_BARCODE_CARTON_SIZE = 200;
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -2489,6 +2493,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isEmpty(printableCartons)) {
             throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_CARTON_EMPTY);
         }
+        if (printableCartons.size() > MAX_PRINT_BARCODE_CARTON_SIZE) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_CARTON_LIMIT_EXCEEDED, MAX_PRINT_BARCODE_CARTON_SIZE);
+        }
         List<WmsCartonDTO.PrintDTO> printDTOList = buildBatchPrintBarCodeInfo(packingTaskEntity, printableCartons);
         // jrxml 在运行时用当前 Jasper 版本编译一次，避免 Studio 编译的 .jasper 类名不兼容
         net.sf.jasperreports.engine.JasperReport jasperReport = JasperHelperUtil.loadReport(loadPackingTaskJasperTemplateBytes());
@@ -2503,14 +2510,27 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_PDF_GENERATE_FAILED, printDTO.getSourceCode());
             }
         }
+        byte[] merged;
         try {
-            byte[] merged = PdfUtil.mergePdfFiles(pdfBytesList);
-            return FastDFSClientUtil.uploadFile(merged, "packing-barcode-" + taskId + ".pdf", null);
+            merged = PdfUtil.mergePdfFiles(pdfBytesList);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            log.error("合并或上传外箱条码PDF失败, taskId={}", taskId, e);
+            log.error("合并外箱条码PDF失败, taskId={}", taskId, e);
             throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_PDF_MERGE_FAILED);
+        }
+        try {
+            String url = FastDFSClientUtil.uploadFile(merged, "packing-barcode-" + taskId + ".pdf", null);
+            if (CharSequenceUtil.isBlank(url)) {
+                log.error("上传外箱条码PDF返回空地址, taskId={}", taskId);
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_PDF_UPLOAD_FAILED);
+            }
+            return url;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("上传外箱条码PDF失败, taskId={}", taskId, e);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_PRINT_PDF_UPLOAD_FAILED);
         }
     }
 
@@ -2531,8 +2551,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         Map<String, List<WmsCartonDetailEntity>> detailMap = wmsCartonDetailService.listByMainIds(cartonIds).stream()
                 .collect(Collectors.groupingBy(WmsCartonDetailEntity::getMainId));
 
-        // 序号仅统计已完成且箱号有效的箱子，并按箱号排序后计算
-        Map<String, List<WmsCartonEntity>> completedCartonsByPackingUser = printableCartons.stream()
+        // 按装箱员分组、组内按箱号排序后，一次性构建 cartonId -> 序号，避免逐箱扫描 O(n²)
+        Map<String, Integer> indexByCartonId = new HashMap<>();
+        printableCartons.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
                         e -> CharSequenceUtil.nullToEmpty(e.getPackingUserId()),
@@ -2540,7 +2561,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         Collectors.collectingAndThen(Collectors.toList(), list -> {
                             list.sort(Comparator.comparing(WmsCartonEntity::getBoxNo));
                             return list;
-                        })));
+                        })))
+                .forEach((userId, list) -> {
+                    for (int i = 0; i < list.size(); i++) {
+                        indexByCartonId.put(list.get(i).getId(), i + 1);
+                    }
+                });
 
         WmsCartonDTO.PrintDTO sharedInfo = resolveTaskPrintSharedInfo(packingTaskEntity);
 
@@ -2552,16 +2578,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     .map(e -> e.getSkuNo() + "*" + e.getPackQty())
                     .collect(Collectors.toList());
 
-            Integer index = null;
-            List<WmsCartonEntity> userCartons = completedCartonsByPackingUser.getOrDefault(
-                    CharSequenceUtil.nullToEmpty(cartonEntity.getPackingUserId()), Collections.emptyList());
-            for (int i = 0; i < userCartons.size(); i++) {
-                if (Objects.equals(cartonEntity.getBoxNo(), userCartons.get(i).getBoxNo())) {
-                    index = i + 1;
-                    break;
-                }
-            }
-
             printDTOList.add(WmsCartonDTO.PrintDTO.builder()
                     .boxNo(cartonEntity.getBoxNo())
                     .cartonId(cartonEntity.getId())
@@ -2569,7 +2585,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     .sourceId(packingTaskEntity.getSourceId())
                     .taskId(packingTaskEntity.getId())
                     .packingUserName(cartonEntity.getPackingUserName())
-                    .index(index)
+                    .index(indexByCartonId.get(cartonEntity.getId()))
                     .skuList(skuList)
                     .shopId(sharedInfo.getShopId())
                     .shopName(sharedInfo.getShopName())

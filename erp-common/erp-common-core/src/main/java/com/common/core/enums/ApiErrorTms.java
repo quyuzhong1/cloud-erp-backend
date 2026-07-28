@@ -92,6 +92,8 @@ public final class ApiErrorTms {
     public static final ApiError LOGISTICS_PACKING_PRINT_PDF_MERGE_FAILED = new ApiError("LOGISTICS_PACKING_PRINT_PDF_MERGE_FAILED", 13730, "合并外箱条码PDF失败");
     public static final ApiError LOGISTICS_PACKING_PRINT_TEMPLATE_NOT_FOUND = new ApiError("LOGISTICS_PACKING_PRINT_TEMPLATE_NOT_FOUND", 13731, "未找到外箱条码打印模板");
     public static final ApiError LOGISTICS_PACKING_PRINT_TEMPLATE_LOAD_FAILED = new ApiError("LOGISTICS_PACKING_PRINT_TEMPLATE_LOAD_FAILED", 13732, "获取外箱条码打印模板失败");
+    public static final ApiError LOGISTICS_PACKING_PRINT_CARTON_LIMIT_EXCEEDED = new ApiError("LOGISTICS_PACKING_PRINT_CARTON_LIMIT_EXCEEDED", 13733, "单次打印外箱条码不能超过{0}箱，请拆批打印");
+    public static final ApiError LOGISTICS_PACKING_PRINT_PDF_UPLOAD_FAILED = new ApiError("LOGISTICS_PACKING_PRINT_PDF_UPLOAD_FAILED", 13734, "上传外箱条码PDF失败");
     public static final ApiError LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL = new ApiError("LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL", 13529, "物流单【{0}】已生成，不允许删除");
     public static final ApiError LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL = new ApiError("LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL", 13530, "报关单【{0}】已生成，不允许删除");
     public static final ApiError LOGISTICS_CHANNEL_BLACKLIST = new ApiError("LOGISTICS_CHANNEL_BLACKLIST", 13531, "物流渠道【{0}】不允许发往指定地区【{1}{2}{3}{4}{5}】，请调整物流渠道");
