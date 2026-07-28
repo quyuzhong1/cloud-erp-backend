@@ -391,9 +391,9 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getVirtualWarehouseName()
                             , transactionDTO.getInventoryStatusName()
-                            , "ss1ss"
+                            , InventoryRedisUtil.LOCATION_ERROR_CURRENT_PLACEHOLDER
                             , totalQty
-                            , "ss2ss"));
+                            , InventoryRedisUtil.LOCATION_ERROR_SHORTAGE_PLACEHOLDER));
     			}
     			transactionRedisParam.add(sb.toString());
     		}

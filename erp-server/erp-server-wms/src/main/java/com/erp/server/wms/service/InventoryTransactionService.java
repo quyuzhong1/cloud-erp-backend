@@ -85,9 +85,44 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
     void queryInventoryCheckSame(Integer warnSize);
     
     /**
+     * 查询仓+SKU 未分配在途预占量（TRY 阶段写入 reserve key，不含指定事务）。
+     *
+     * @param warehouseId           仓库 ID
+     * @param skuId                 SKU ID
+     * @param excludeTransactionId  排除的事务 ID，可为空
+     * @return 其他事务已预占出库量之和
+     */
+    int getUnallocPendingReserveQty(String warehouseId, String skuId, String excludeTransactionId);
+
+    /**
+     * 解析 Redis TRY/commit/rollback 使用的事务 ID，规则与 {@link #addInventoryTransaction} 一致。
+     * <p>Seata 全局事务取 XID；否则取 TraceId；无效时回退 {@code fallbackFlowId}（通常为库存流水 ID）。</p>
+     *
+     * @param fallbackFlowId 本地 Trace 不可用时的回退流水 ID，可为空
+     * @return 事务 ID，可能为空字符串
+     */
+    String resolveRedisTransactionId(String fallbackFlowId);
+
+    /**
+     * 从已排序交易列表解析 Redis 事务 ID（预检与 tryRedis 共用，回退 id 取列表首条流水）。
+     *
+     * @param transactionList 库存交易列表（调用方应已排序）
+     * @return 事务 ID
+     */
+    String resolveRedisTransactionIdFromList(List<InventoryTransactionDTO> transactionList);
+
+    /**
      * 根据库存id获取redis可用库存
      * @param inventoryId
      * @return
      */
     Integer getRedisQtyByInventory(String inventoryId);
+
+    /**
+     * 读取 Redis {@code inventory:current} 基量（首段），不含 TRY 在途段；供未分配校验汇总实体仓数量。
+     *
+     * @param inventoryId 库存 ID
+     * @return 基量，key 不存在时返回 0
+     */
+    Integer getRedisBaseQtyByInventory(String inventoryId);
 }

@@ -892,6 +892,7 @@ public final class ApiError implements Serializable {
     public static final ApiError VM_THIRD_VIRTUAL_WAREHOUSE_BINDED = ApiErrorWms.VM_THIRD_VIRTUAL_WAREHOUSE_BINDED;
     public static final ApiError VM_NO_SYNC_INFO = ApiErrorWms.VM_NO_SYNC_INFO;
     public static final ApiError VM_CHECK_OUT_VIRTUAL_INVENTORY = ApiErrorWms.VM_CHECK_OUT_VIRTUAL_INVENTORY;
+    public static final ApiError WH_UNALLOC_LOCK_FAILED = ApiErrorWms.WH_UNALLOC_LOCK_FAILED;
     public static final ApiError VM_CHANNEL_RELATION_ERROR = ApiErrorWms.VM_CHANNEL_RELATION_ERROR;
     public static final ApiError VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR = ApiErrorWms.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR;
     public static final ApiError VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER = ApiErrorWms.VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER;
