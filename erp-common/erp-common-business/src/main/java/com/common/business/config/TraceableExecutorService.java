@@ -1,17 +1,18 @@
 package com.common.business.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.skywalking.apm.toolkit.trace.Trace;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 /**
  * 支持 SkyWalking 独立链路追踪的线程池包装器
  * 每个子线程任务都会生成全新的 TraceId（不继承父线程）
  */
+@Slf4j
 public class TraceableExecutorService implements ExecutorService {
 
     private final ExecutorService delegate;
@@ -42,8 +43,26 @@ public class TraceableExecutorService implements ExecutorService {
 
     @Override
     public void execute(Runnable command) {
-        // 包装：在子线程中通过 @Trace 方法执行
-        delegate.execute(() -> runWithNewTrace(command));
+        // 包装：在子线程中通过 @Trace 方法执行。
+        // 必须消化任务异常：队列饱和走 CallerRunsPolicy 时会在提交线程（如 XXL-JOB）直接 run，
+        // 若此处再抛出，业务失败会冒泡成调度失败告警（本应只落任务记录）。
+        delegate.execute(() -> runSafely(command));
+    }
+
+    private void runSafely(Runnable command) {
+        try {
+            runWithNewTrace(command);
+        } catch (Throwable t) {
+            log.warn("TraceableExecutorService async task failed", t);
+            Thread.UncaughtExceptionHandler handler = Thread.currentThread().getUncaughtExceptionHandler();
+            if (handler != null) {
+                try {
+                    handler.uncaughtException(Thread.currentThread(), t);
+                } catch (Throwable ignored) {
+                    // 避免 handler 再次抛出影响提交方
+                }
+            }
+        }
     }
 
     @Override
