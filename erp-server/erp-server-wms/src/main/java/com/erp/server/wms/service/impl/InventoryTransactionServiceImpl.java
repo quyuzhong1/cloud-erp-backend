@@ -420,15 +420,18 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	if(CollUtil.isNotEmpty(unallocTryItems)) {
     		log.warn("tryRedis未分配预占参数 transactionId={}, items={}", transactionId, unallocTryItems.size());
     		VirtualInventoryUnallocCheckHelper.assertUnallocTryRequiresInventoryParams(unallocTryItems, transactionRedisParam);
+    		VirtualInventoryUnallocCheckHelper.assertUnallocTryItemsHaveInventoryIds(unallocTryItems);
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam) || CharSequenceUtil.isNotBlank(unallocParams)) {
     		String inventoryParams = CollUtil.isEmpty(transactionRedisParam) ? ""
     				: transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign));
+    		String tryOperationId = VirtualInventoryUnallocCheckHelper.resolveTryOperationId(transactionList);
     		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
 					inventoryParams,
-					CharSequenceUtil.blankToDefault(unallocParams, ""));
+					CharSequenceUtil.blankToDefault(unallocParams, ""),
+					tryOperationId);
     	}
     	log.info("{}结束" , logMsg);
     }
@@ -509,14 +512,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     }
 
     @Override
-    public int getUnallocPendingReserveQty(String warehouseId, String skuId, String excludeTransactionId) {
+    public int getUnallocPendingReserveQty(String warehouseId, String skuId, String excludeTransactionId,
+                                           String excludeOperationId) {
     	String reserveKey = InventoryRedisOpKeyEnum.getWhSkuKey(
     			InventoryRedisOpKeyEnum.WHSKU_UNALLOC_RESERVE, warehouseId, skuId);
     	Object reserveValue = inventoryRedisUtil.get(reserveKey);
     	if (reserveValue == null) {
     		return 0;
     	}
-    	return VirtualInventoryUnallocCheckHelper.sumPendingReserve(reserveValue.toString(), excludeTransactionId);
+    	return VirtualInventoryUnallocCheckHelper.sumPendingReserve(reserveValue.toString(),
+    			excludeTransactionId, excludeOperationId);
     }
     
 	@Override

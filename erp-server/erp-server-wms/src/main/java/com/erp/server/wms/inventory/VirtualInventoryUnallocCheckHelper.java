@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,6 +69,12 @@ public final class VirtualInventoryUnallocCheckHelper {
     public static final String UNALLOC_LUA_ERROR_PREFIX = ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY.name() + "@@";
 
     /**
+     * 通用库存 Lua 业务失败前缀，须与 try.lua {@code inventory_lua_biz_prefix} 一致；
+     * Java 侧映射为 {@link ApiError#WAREHOUSE_INVENTORY_FAILED}。
+     */
+    public static final String INVENTORY_LUA_BIZ_ERROR_PREFIX = "INVENTORY_LUA_BIZ@@";
+
+    /**
      * try.lua 中 {@code unalloc_lua_error_prefix} 必须与 {@link #UNALLOC_LUA_ERROR_PREFIX} 保持完全一致；
      * 修改 {@link ApiError#VM_CHECK_OUT_VIRTUAL_INVENTORY} 枚举名时须同步改 Lua 脚本。
      */
@@ -76,6 +83,9 @@ public final class VirtualInventoryUnallocCheckHelper {
 
     /** PG 路径未分配仓+SKU 锁等待秒数（短等待、快速失败） */
     public static final long UNALLOC_LOCK_WAIT_SECONDS = 5L;
+
+    /** 仓+SKU 分组 key 分隔符（UUID 间拼接，避免 skuId+warehouseId 直接 concat 碰撞） */
+    public static final String WAREHOUSE_SKU_GROUP_KEY_DELIMITER = ":";
 
     private static final List<String> VIRTUAL_CHECK_SOURCE_TYPES = Collections.unmodifiableList(Arrays.asList(
             InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),
@@ -140,6 +150,19 @@ public final class VirtualInventoryUnallocCheckHelper {
     }
 
     /**
+     * 构建仓+SKU 分组 key。
+     *
+     * @param skuId       SKU ID
+     * @param warehouseId 仓库 ID
+     * @return 带分隔符的分组 key
+     */
+    public static String buildWarehouseSkuGroupKey(String skuId, String warehouseId) {
+        return CharSequenceUtil.blankToDefault(skuId, "")
+                + WAREHOUSE_SKU_GROUP_KEY_DELIMITER
+                + CharSequenceUtil.blankToDefault(warehouseId, "");
+    }
+
+    /**
      * 从交易列表中筛出需未分配校验的明细。
      *
      * @param transactionList 原始交易列表
@@ -158,13 +181,14 @@ public final class VirtualInventoryUnallocCheckHelper {
      * 按仓库+SKU 汇总出库数量（正数）。
      *
      * @param checkList 白名单过滤后的明细
-     * @return key=skuId+warehouseId，value=汇总出库量
+     * @return key=skuId:warehouseId，value=汇总出库量
      */
     public static Map<String, List<InventoryTransactionDTO>> groupByWarehouseSku(List<InventoryTransactionDTO> checkList) {
         if (checkList == null || checkList.isEmpty()) {
             return Collections.emptyMap();
         }
-        return checkList.stream().collect(Collectors.groupingBy(t -> t.getSkuId().concat(t.getWarehouseId())));
+        return checkList.stream().collect(Collectors.groupingBy(
+                t -> buildWarehouseSkuGroupKey(t.getSkuId(), t.getWarehouseId())));
     }
 
     /**
@@ -214,6 +238,44 @@ public final class VirtualInventoryUnallocCheckHelper {
     }
 
     /**
+     * 解析单次 TRY 的操作 ID：同一批流水 ID 排序后拼接，用于区分同一全局事务内的多次合法 TRY。
+     * <p>须与 try.lua ARGV[7] 一致；重试同一批时 operationId 不变，可实现幂等。</p>
+     *
+     * @param transactionList 本次 TRY 的库存流水列表
+     * @return 非空 operationId
+     */
+    public static String resolveTryOperationId(List<InventoryTransactionDTO> transactionList) {
+        if (transactionList == null || transactionList.isEmpty()) {
+            log.warn("resolveTryOperationId 库存流水列表为空");
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+        }
+        return resolveTryOperationIdFromFlowIds(
+                transactionList.stream().map(InventoryTransactionDTO::getId).collect(Collectors.toList()));
+    }
+
+    /**
+     * 由流水 ID 集合解析单次 TRY 的 operationId（排序后逗号拼接）。
+     *
+     * @param flowIds 流水 ID 列表
+     * @return 非空 operationId
+     */
+    public static String resolveTryOperationIdFromFlowIds(Collection<String> flowIds) {
+        if (flowIds == null || flowIds.isEmpty()) {
+            log.warn("resolveTryOperationIdFromFlowIds 流水 ID 为空");
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+        }
+        String operationId = flowIds.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .sorted()
+                .collect(Collectors.joining(","));
+        if (CharSequenceUtil.isBlank(operationId)) {
+            log.warn("resolveTryOperationIdFromFlowIds 无法解析 operationId");
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+        }
+        return operationId;
+    }
+
+    /**
      * 判断 Lua {@code biz_error} 文案是否为未分配校验失败（带 {@link #UNALLOC_LUA_ERROR_PREFIX}）。
      *
      * @param luaErr Lua 原始错误文案
@@ -240,6 +302,33 @@ public final class VirtualInventoryUnallocCheckHelper {
     private static final Pattern TRY_LUA_UNALLOC_PREFIX_PATTERN =
             Pattern.compile("local\\s+unalloc_lua_error_prefix\\s*=\\s*'([^']+)'");
 
+    /** try.lua 中 {@code inventory_lua_biz_prefix} 字面量匹配 */
+    private static final Pattern TRY_LUA_INVENTORY_BIZ_PREFIX_PATTERN =
+            Pattern.compile("local\\s+inventory_lua_biz_prefix\\s*=\\s*'([^']+)'");
+
+    /**
+     * 判断 Lua {@code biz_error} 文案是否为通用库存业务失败（带 {@link #INVENTORY_LUA_BIZ_ERROR_PREFIX}）。
+     *
+     * @param luaErr Lua 原始错误文案
+     * @return true 表示通用库存 Lua 业务失败
+     */
+    public static boolean isInventoryLuaBusinessError(String luaErr) {
+        return CharSequenceUtil.isNotBlank(luaErr) && luaErr.startsWith(INVENTORY_LUA_BIZ_ERROR_PREFIX);
+    }
+
+    /**
+     * 剥离通用库存 Lua 错误前缀，得到可直接展示的业务文案。
+     *
+     * @param luaErr 带前缀的 Lua 错误文案
+     * @return 去掉前缀后的消息
+     */
+    public static String stripInventoryLuaBusinessErrorPrefix(String luaErr) {
+        if (!isInventoryLuaBusinessError(luaErr)) {
+            return luaErr;
+        }
+        return luaErr.substring(INVENTORY_LUA_BIZ_ERROR_PREFIX.length());
+    }
+
     /**
      * 校验 classpath 下 {@code lua/try.lua} 的 {@code unalloc_lua_error_prefix} 与
      * {@link #UNALLOC_LUA_ERROR_PREFIX} 一致，防止 Lua/Java 双端维护漂移。
@@ -247,6 +336,27 @@ public final class VirtualInventoryUnallocCheckHelper {
      * @throws IllegalStateException 脚本缺失、未定义前缀或与 Java 常量不一致
      */
     public static void assertTryLuaUnallocPrefixSynced() {
+        assertTryLuaPrefixSynced(TRY_LUA_UNALLOC_PREFIX_PATTERN, "unalloc_lua_error_prefix", UNALLOC_LUA_ERROR_PREFIX);
+    }
+
+    /**
+     * 校验 try.lua {@code inventory_lua_biz_prefix} 与 {@link #INVENTORY_LUA_BIZ_ERROR_PREFIX} 一致。
+     *
+     * @throws IllegalStateException 脚本缺失、未定义前缀或与 Java 常量不一致
+     */
+    public static void assertTryLuaInventoryBizPrefixSynced() {
+        assertTryLuaPrefixSynced(TRY_LUA_INVENTORY_BIZ_PREFIX_PATTERN, "inventory_lua_biz_prefix",
+                INVENTORY_LUA_BIZ_ERROR_PREFIX);
+    }
+
+    /**
+     * 读取 try.lua 并校验指定前缀常量与 Java 一致。
+     *
+     * @param pattern     正则
+     * @param luaVarName  Lua 变量名（日志用）
+     * @param javaPrefix  Java 期望前缀
+     */
+    private static void assertTryLuaPrefixSynced(Pattern pattern, String luaVarName, String javaPrefix) {
         try (InputStream inputStream = VirtualInventoryUnallocCheckHelper.class.getClassLoader()
                 .getResourceAsStream("lua/try.lua")) {
             if (inputStream == null) {
@@ -259,15 +369,15 @@ public final class VirtualInventoryUnallocCheckHelper {
                 buffer.write(chunk, 0, read);
             }
             String content = buffer.toString(StandardCharsets.UTF_8.name());
-            Matcher matcher = TRY_LUA_UNALLOC_PREFIX_PATTERN.matcher(content);
+            Matcher matcher = pattern.matcher(content);
             if (!matcher.find()) {
-                throw new IllegalStateException("try.lua 中未找到 unalloc_lua_error_prefix 定义");
+                throw new IllegalStateException("try.lua 中未找到 " + luaVarName + " 定义");
             }
             String luaPrefix = matcher.group(1);
-            if (!UNALLOC_LUA_ERROR_PREFIX.equals(luaPrefix)) {
+            if (!javaPrefix.equals(luaPrefix)) {
                 throw new IllegalStateException(CharSequenceUtil.format(
-                        "try.lua unalloc_lua_error_prefix={} 与 Java UNALLOC_LUA_ERROR_PREFIX={} 不一致",
-                        luaPrefix, UNALLOC_LUA_ERROR_PREFIX));
+                        "try.lua {}={} 与 Java {}={} 不一致",
+                        luaVarName, luaPrefix, luaVarName, javaPrefix));
             }
         } catch (IOException e) {
             throw new IllegalStateException("读取 try.lua 失败", e);
@@ -288,6 +398,24 @@ public final class VirtualInventoryUnallocCheckHelper {
         if (transactionRedisParam == null || transactionRedisParam.isEmpty()) {
             log.warn("未分配TRY参数存在但仓位库存TRY为空 items={}", unallocTryItems.size());
             ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+        }
+    }
+
+    /**
+     * 校验未分配 TRY 项在 virtualQty&gt;0 时必须携带实体 inventoryId 列表，避免 Lua 静默跳过校验。
+     *
+     * @param unallocTryItems 未分配预占项
+     */
+    public static void assertUnallocTryItemsHaveInventoryIds(List<UnallocTryItem> unallocTryItems) {
+        if (unallocTryItems == null || unallocTryItems.isEmpty()) {
+            return;
+        }
+        for (UnallocTryItem item : unallocTryItems) {
+            if (item.getVirtualQty() > 0 && item.getInventoryIds().isEmpty()) {
+                log.warn("未分配TRY缺少实体inventoryId wh={}, sku={}, virtualQty={}",
+                        item.getWarehouseId(), item.getSkuId(), item.getVirtualQty());
+                ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            }
         }
     }
 
@@ -349,13 +477,18 @@ public final class VirtualInventoryUnallocCheckHelper {
     }
 
     /**
-     * 解析未分配预占 Redis 值，汇总除指定事务外的在途预占量。
+     * 解析未分配预占 Redis 值，汇总在途预占量。
+     * <p>
+     * 仅当 {@code excludeTransactionId} 与 {@code excludeOperationId} 同时非空时，才排除完全匹配的预占片段
+     * （用于同批 TRY 重试幂等）；预检场景应两者均传 {@code null}，以计入同事务内其它批次的预占。
+     * </p>
      *
-     * @param reserveValue         Redis 中 {@code whsku:unalloc:reserve} 的原始字符串
-     * @param excludeTransactionId 排除的事务 ID（当前 TRY 事务），可为空
-     * @return 其他事务已预占的出库数量之和
+     * @param reserveValue           Redis 中 {@code whsku:unalloc:reserve} 的原始字符串
+     * @param excludeTransactionId   排除的事务 ID，可为空
+     * @param excludeOperationId     排除的操作 ID，可为空
+     * @return 在途预占出库数量之和
      */
-    public static int sumPendingReserve(String reserveValue, String excludeTransactionId) {
+    public static int sumPendingReserve(String reserveValue, String excludeTransactionId, String excludeOperationId) {
         if (CharSequenceUtil.isBlank(reserveValue)) {
             return 0;
         }
@@ -365,10 +498,17 @@ public final class VirtualInventoryUnallocCheckHelper {
             String[] parts = segments[i].split(InventoryRedisUtil.atSign);
             if (parts.length >= 2) {
                 String txn = parts[0];
-                if (CharSequenceUtil.isNotBlank(excludeTransactionId) && CharSequenceUtil.equals(txn, excludeTransactionId)) {
+                String opId = parts.length >= 3 ? parts[1] : "";
+                if (CharSequenceUtil.isNotBlank(excludeTransactionId)
+                        && CharSequenceUtil.isNotBlank(excludeOperationId)
+                        && CharSequenceUtil.equals(txn, excludeTransactionId)
+                        && CharSequenceUtil.equals(opId, excludeOperationId)) {
                     continue;
                 }
-                pending += parseReserveQtySegment(parts[1]);
+                int qty = parts.length >= 3
+                        ? parseReserveQtySegment(parts[2])
+                        : parseReserveQtySegment(parts[1]);
+                pending += qty;
             }
         }
         return pending;
@@ -389,28 +529,37 @@ public final class VirtualInventoryUnallocCheckHelper {
         for (int i = 1; i < segments.length; i++) {
             String[] parts = segments[i].split(InventoryRedisUtil.atSign);
             if (parts.length >= 2 && CharSequenceUtil.equals(parts[0], transactionId)) {
-                return parseReserveQtySegment(parts[1]);
+                return parts.length >= 3
+                        ? parseReserveQtySegment(parts[2])
+                        : parseReserveQtySegment(parts[1]);
             }
         }
         return null;
     }
 
     /**
-     * 解析预占片段中的数量；脏数据时记 warn 并按 0 处理，避免预检接口 500。
+     * 解析预占片段中的数量；非法或负数时 fail-closed，避免脏数据被当作 0 高估可出库量。
      *
      * @param qtySegment Redis 预占片段中的数量字符串
-     * @return 解析后的数量，非法时返回 0
+     * @return 解析后的非负数量
      */
     private static int parseReserveQtySegment(String qtySegment) {
         if (CharSequenceUtil.isBlank(qtySegment)) {
-            return 0;
+            log.warn("未分配预占 Redis 片段数量为空");
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
         }
         try {
-            return Integer.parseInt(qtySegment.trim());
+            int qty = Integer.parseInt(qtySegment.trim());
+            if (qty < 0) {
+                log.warn("未分配预占 Redis 片段数量为负 qty={}", qtySegment);
+                ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            }
+            return qty;
         } catch (NumberFormatException e) {
             log.warn("未分配预占 Redis 片段数量解析失败 qty={}", qtySegment);
-            return 0;
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
         }
+        throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
     }
 
     /**

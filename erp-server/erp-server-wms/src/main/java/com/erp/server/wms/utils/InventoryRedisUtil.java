@@ -112,6 +112,10 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 				if (isLuaScriptBusinessError(redisEx)) {
 					throwLuaBusinessException(opName, redisEx);
 				}
+				if (isWriteOpNoRetryOnUnknownResult(inventoryRedisOpEnum)) {
+					log.error("库存redis写操作{}基础设施异常，执行结果未知，禁止重试", opName, redisEx);
+					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+				}
 				log.warn("库存redis操作{}基础设施异常，准备重试 attempt={}/3", opName, i + 1, redisEx);
 				if (i >= 2) {
 					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
@@ -160,6 +164,18 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	}
 
 	/**
+	 * 写脚本（TRY/COMMIT/ROLLBACK）在 Redis 已执行但客户端结果未知时禁止重试，避免重复扣减。
+	 *
+	 * @param inventoryRedisOpEnum 库存 Redis 操作类型
+	 * @return true 表示基础设施异常时不重试
+	 */
+	private static boolean isWriteOpNoRetryOnUnknownResult(InventoryRedisOpEnum inventoryRedisOpEnum) {
+		return inventoryRedisOpEnum == InventoryRedisOpEnum.TRY
+				|| inventoryRedisOpEnum == InventoryRedisOpEnum.COMMIT
+				|| inventoryRedisOpEnum == InventoryRedisOpEnum.ROLLBACK;
+	}
+
+	/**
 	 * 解析 Lua {@code redis.error_reply} 并转为业务异常。
 	 * <p>
 	 * 约定：{@code biz_error} 以 {@link VirtualInventoryUnallocCheckHelper#UNALLOC_LUA_ERROR_PREFIX} 开头时映射
@@ -177,39 +193,73 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			throw new ServiceException(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY.getCode(),
 					VirtualInventoryUnallocCheckHelper.stripUnallocLuaErrorPrefix(luaErr));
 		}
-		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED.getCode(),
-				StringUtils.defaultIfBlank(luaErr, ApiError.WAREHOUSE_INVENTORY_FAILED.getMsg()));
+		if (VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(luaErr)) {
+			throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED.getCode(),
+					VirtualInventoryUnallocCheckHelper.stripInventoryLuaBusinessErrorPrefix(luaErr));
+		}
+		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
 	}
 
 	/**
 	 * 判断 Redis 异常是否来自 Lua {@code redis.error_reply}（业务失败，不可重试）。
+	 * 仅识别带约定前缀的 Lua 业务错误，避免将 WRONGTYPE 等基础设施异常误判为业务失败。
 	 *
 	 * @param redisEx Spring Redis 访问异常
 	 * @return {@code true} 表示 Lua 脚本主动返回的业务错误
 	 */
 	private static boolean isLuaScriptBusinessError(Exception redisEx) {
-		String raw = redisEx.getMessage();
+		return StringUtils.isNotBlank(resolveLuaBusinessErrorMessage(redisEx));
+	}
+
+	/**
+	 * 从单条异常消息中解析 Lua 业务错误正文（支持直连前缀或 {@code ERR } 前缀）。
+	 *
+	 * @param raw 异常 message
+	 * @return 约定前缀业务正文；无法识别则 null
+	 */
+	static String resolveLuaBusinessErrorBody(String raw) {
 		if (StringUtils.isBlank(raw)) {
-			return false;
+			return null;
+		}
+		if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(raw)
+				|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(raw)) {
+			return raw;
 		}
 		if (raw.contains("ERR ")) {
-			return true;
+			String body = raw.substring(raw.indexOf("ERR ") + 4);
+			if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(body)
+					|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(body)) {
+				return body;
+			}
 		}
-		return VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(raw);
+		return null;
+	}
+
+	/**
+	 * 从异常链中提取 Lua 业务错误正文（含 {@code ERR } 前缀或直连约定前缀）。
+	 *
+	 * @param ex Spring/Redis 异常
+	 * @return 业务错误正文；非约定 Lua 业务错误则返回 null
+	 */
+	static String resolveLuaBusinessErrorMessage(Throwable ex) {
+		while (ex != null) {
+			String body = resolveLuaBusinessErrorBody(ex.getMessage());
+			if (StringUtils.isNotBlank(body)) {
+				return body;
+			}
+			ex = ex.getCause();
+		}
+		return null;
 	}
 
 	/**
 	 * 从 Spring Redis 异常消息中提取 Lua {@code error_reply} 正文。
 	 *
 	 * @param redisEx Spring Redis 访问异常
-	 * @return 去掉 {@code ERR } 前缀后的 Lua 错误文案
+	 * @return 约定 Lua 业务错误正文；无法识别时返回 null
 	 */
 	private static String extractLuaErrorMessage(Exception redisEx) {
-		String luaErr = redisEx.getMessage();
-		if (luaErr != null && luaErr.contains("ERR ")) {
-			return luaErr.substring(luaErr.indexOf("ERR ") + 4);
-		}
-		return luaErr;
+		return resolveLuaBusinessErrorMessage(redisEx);
 	}
 
 }

@@ -85,14 +85,15 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
     void queryInventoryCheckSame(Integer warnSize);
     
     /**
-     * 查询仓+SKU 未分配在途预占量（TRY 阶段写入 reserve key，不含指定事务）。
+     * 查询仓+SKU 未分配在途预占量（TRY 阶段写入 reserve key）。
      *
      * @param warehouseId           仓库 ID
      * @param skuId                 SKU ID
      * @param excludeTransactionId  排除的事务 ID，可为空
-     * @return 其他事务已预占出库量之和
+     * @param excludeOperationId    排除的操作 ID，可为空；两者均非空时才排除对应片段
+     * @return 在途预占出库量之和
      */
-    int getUnallocPendingReserveQty(String warehouseId, String skuId, String excludeTransactionId);
+    int getUnallocPendingReserveQty(String warehouseId, String skuId, String excludeTransactionId, String excludeOperationId);
 
     /**
      * 解析 Redis TRY/commit/rollback 使用的事务 ID，规则与 {@link #addInventoryTransaction} 一致。

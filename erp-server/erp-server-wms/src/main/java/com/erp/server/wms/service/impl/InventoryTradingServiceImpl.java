@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.IteratorUtils;
 import org.redisson.RedissonMultiLock;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -126,8 +127,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
 
     /**
      * PG 路径：在仓+SKU 未分配锁内执行虚拟仓预检、库存校验与 PG 扣减。
-     * <p>锁覆盖 {@link #checkVirtualInventoryList} 至 {@link #doTransaction}，并在 Spring 事务 commit/rollback 后释放；
-     * 等待 {@link VirtualInventoryUnallocCheckHelper#UNALLOC_LOCK_WAIT_SECONDS} 秒，失败快速返回 {@link ApiError#WH_UNALLOC_LOCK_FAILED}。</p>
+     * <p>有 Spring 事务时锁在 commit/rollback 后释放；无事务时由本方法 {@code try/finally} 覆盖全程。</p>
      *
      * @param transactionList 已排序的库存交易列表
      * @param approveType     审批类型
@@ -135,18 +135,29 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private void executePgUnallocInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
         List<InventoryTransactionDTO> unallocCheckList = VirtualInventoryUnallocCheckHelper.filterNeedUnallocCheck(transactionList);
         RedissonMultiLock unallocLock = null;
-        if (CollUtil.isNotEmpty(unallocCheckList)) {
-            List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(unallocCheckList);
-            unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
-            if (unallocLock == null) {
-                ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
+        boolean unlockInFinally = false;
+        try {
+            if (CollUtil.isNotEmpty(unallocCheckList)) {
+                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(unallocCheckList);
+                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
+                if (unallocLock == null) {
+                    ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
+                }
+                if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                    PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil);
+                } else {
+                    unlockInFinally = true;
+                }
             }
-            PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil);
-        }
-        this.checkVirtualInventoryList(transactionList);
-        this.checkInventoryList(transactionList);
-        for (InventoryTransactionDTO transactionDTO : transactionList) {
-            this.doTransaction(transactionDTO, approveType.equals(InventoryTradingService.APPROVE));
+            this.checkVirtualInventoryList(transactionList);
+            this.checkInventoryList(transactionList);
+            for (InventoryTransactionDTO transactionDTO : transactionList) {
+                this.doTransaction(transactionDTO, approveType.equals(InventoryTradingService.APPROVE));
+            }
+        } finally {
+            if (unlockInFinally && unallocLock != null) {
+                inventoryRedisUtil.unLock(unallocLock);
+            }
         }
     }
 
