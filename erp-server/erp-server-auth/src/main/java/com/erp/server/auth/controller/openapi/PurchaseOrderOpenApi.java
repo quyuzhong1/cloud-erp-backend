@@ -26,7 +26,7 @@ public class PurchaseOrderOpenApi {
      * @author Will
      * @date: 2023/4/14 10:21
      */
-    @PostMapping(value = "purchaseOrderViewProduct")
+    @OpenApi(value = "purchaseOrderViewProduct")
     public ApiResult<List<PurchaseOrderDetailDTO.ViewProductDTO>> viewProduct(@Valid PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
         return purchaseOrderFeign.viewProduct(dto);
     }
