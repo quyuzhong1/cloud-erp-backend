@@ -3906,9 +3906,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             byte[] bytes = fileFeign.downloadFile(logisticsLabelUrl);
             String logisticsLabelBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
-            // WEGO 仅依赖 labelUrl，uploadFile 为空实现，跳过无效调用；众包同样跳过
+            // WEGO/爱亚仅依赖 labelUrl，uploadFile 为空实现，跳过无效调用；众包同样跳过
             if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    && !isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
+                    && !isWegoProvider(overseasProviderWarehouse.getProviderCode())
+                    && !isAiyaProvider(overseasProviderWarehouse.getProviderCode())) {
                 ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
                 thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
                 thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
@@ -3940,13 +3941,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 判断该三方仓是否需要生成面单在线 URL（上传至 FastDFS 后回填 labelUrl）。
-     * WEGO / 极风 / 菜鸟 / 艾姆勒 / 通邮 通过 labelUrl 传递面单文件。
+     * WEGO / 爱亚 / 极风 / 菜鸟 / 艾姆勒 / 通邮 通过 labelUrl 传递面单文件。
      */
     private boolean needOnlineLabelUrl(String providerCode) {
         return PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(providerCode)
                 || PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(providerCode)
                 || PlatformDictEnum.IML.getCode().equalsIgnoreCase(providerCode)
                 || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.AIYA.getCode().equalsIgnoreCase(providerCode)
                 || isWegoProvider(providerCode);
     }
 
@@ -3955,6 +3957,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     private boolean isWegoProvider(String providerCode) {
         return OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(providerCode);
+    }
+
+    /**
+     * 判断是否为爱亚（百世）三方仓。爱亚与 WEGO 一样用 labelUrl 传面单，无需走 uploadFile/attachId。
+     */
+    private boolean isAiyaProvider(String providerCode) {
+        return PlatformDictEnum.AIYA.getCode().equalsIgnoreCase(providerCode)
+                || OmsPlatformEnum.AI_YA.getCode().equalsIgnoreCase(providerCode);
     }
 
     /**
