@@ -350,15 +350,11 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
 
     @Override
     public List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
-        VirtualWarehouseChannelEntity channelEntity = this.getByPlatform(platformDTO);
-        if (ObjectUtil.isEmpty(channelEntity)) {
+        if (platformDTO == null || CollUtil.isEmpty(platformDTO.getWarehouseIdList())) {
             return Collections.emptyList();
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Collections.singletonList(channelEntity.getVirtualWarehouseId()));
-        if (ObjectUtil.isEmpty(warehouseEntityList)) {
-            return Collections.emptyList();
-        }
-        return warehouseEntityList;
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = baseMapper.listRelationByPlatform(platformDTO);
+        return CollUtil.isEmpty(warehouseEntityList) ? Collections.emptyList() : warehouseEntityList;
     }
 
     @Override
@@ -523,10 +519,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      * @author will
      * @date 2024/6/12 12:34
      */
-    private VirtualWarehouseChannelEntity getByPlatform(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
-        return baseMapper.getByPlatform(platformDTO);
-    }
-
     /**
      * 校验已绑定的渠道不能重复绑定
      *

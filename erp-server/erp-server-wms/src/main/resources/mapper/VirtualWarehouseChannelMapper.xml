@@ -58,40 +58,78 @@
 --         group by vwc.dict_platform,vwc.relation_id
     </select>
 
-    <!-- 根据平台参数查询：实体仓硬匹配；店铺/分区精确匹配优先于空通配 -->
-    <select id="getByPlatform" resultType="com.erp.model.wms.entity.VirtualWarehouseChannelEntity">
+    <!-- 渠道匹配条件：平台/店铺/分区/实体仓（与 listRelationByPlatform 的 CTE 共用） -->
+    <sql id="Platform_Match_Where">
+        vwc.is_deleted = false and vw.disabled = false
+        <if test="platformDTO.dictPlatform != null and platformDTO.dictPlatform != ''">
+            and vwc.dict_platform = #{platformDTO.dictPlatform}
+        </if>
+        <if test="platformDTO.warehouseIdList != null and platformDTO.warehouseIdList.size() &gt; 0">
+            and vwr.warehouse_id in
+            <foreach collection="platformDTO.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="platformDTO.relationId != null and platformDTO.relationId != ''">
+            and (vwc.relation_id = #{platformDTO.relationId} or vwc.relation_id is null or vwc.relation_id = '')
+        </if>
+        <if test="platformDTO.relationId == null or platformDTO.relationId == ''">
+            and (vwc.relation_id is null or vwc.relation_id = '')
+        </if>
+        <if test="platformDTO.partitionId != null and platformDTO.partitionId != ''">
+            and (vwcpr.partition_id = #{platformDTO.partitionId} or vwcpr.partition_id is null or vwcpr.partition_id = '')
+        </if>
+        <if test="platformDTO.partitionId == null or platformDTO.partitionId == ''">
+            and (vwcpr.partition_id is null or vwcpr.partition_id = '')
+        </if>
+    </sql>
+
+    <!-- 一次查出命中虚拟仓与入参实体仓的关联：实体仓硬匹配；店铺/分区精确优先于空通配 -->
+    <select id="listRelationByPlatform" resultType="com.erp.model.wms.entity.VirtualWarehouseRelationEntity">
+        with matched_vw as (
+            select vwc.virtual_warehouse_id
+            from virtual_warehouse_channel vwc
+            inner join virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
+            inner join virtual_warehouse_relation vwr on vwr.virtual_warehouse_id = vwc.virtual_warehouse_id
+                and vwr.is_deleted = false
+            left join virtual_warehouse_channel_partition_ref vwcpr on vwcpr.main_id = vwc.id and vwcpr.is_deleted = false
+            where
+                <include refid="Platform_Match_Where"/>
+            order by
+                case
+                    when #{platformDTO.relationId} is not null and #{platformDTO.relationId} != ''
+                        and vwc.relation_id = #{platformDTO.relationId} then 0
+                    else 1
+                end,
+                case
+                    when #{platformDTO.partitionId} is not null and #{platformDTO.partitionId} != ''
+                        and vwcpr.partition_id = #{platformDTO.partitionId} then 0
+                    else 1
+                end,
+                vwc.id
+            limit 1
+        )
         select
-               <include refid="Base_Column_List" />
-        from  virtual_warehouse_channel vwc
-        inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
-        inner join  virtual_warehouse_relation vwr on vwr.virtual_warehouse_id = vwc.virtual_warehouse_id
-            and vwr.is_deleted = false
-        left join  virtual_warehouse_channel_partition_ref vwcpr on vwcpr.main_id = vwc.id and vwcpr.is_deleted = false
-        <where>
-            vwc.is_deleted = false and vw.disabled = false
-            <if test="platformDTO.dictPlatform != null and platformDTO.dictPlatform != ''">
-                and vwc.dict_platform = #{platformDTO.dictPlatform}
-            </if>
-            <if test="platformDTO.warehouseIdList != null and platformDTO.warehouseIdList.size() &gt; 0">
-                and vwr.warehouse_id in
-                <foreach collection="platformDTO.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                    #{warehouseId}
-                </foreach>
-            </if>
-            <if test="platformDTO.relationId != null and platformDTO.relationId != ''">
-                and (vwc.relation_id = #{platformDTO.relationId} or vwc.relation_id is null or vwc.relation_id = '')
-            </if>
-            <if test="platformDTO.relationId == null or platformDTO.relationId == ''">
-                and (vwc.relation_id is null or vwc.relation_id = '')
-            </if>
-            <if test="platformDTO.partitionId != null and platformDTO.partitionId != ''">
-                and (vwcpr.partition_id = #{platformDTO.partitionId} or vwcpr.partition_id is null or vwcpr.partition_id = '')
-            </if>
-            <if test="platformDTO.partitionId == null or platformDTO.partitionId == ''">
-                and (vwcpr.partition_id is null or vwcpr.partition_id = '')
-            </if>
-            order by vwc.id limit 1
-        </where>
+            vwr.id,
+            vwr.create_user_id,
+            vwr.create_user_name,
+            vwr.create_time,
+            vwr.update_user_id,
+            vwr.update_user_name,
+            vwr.update_time,
+            vwr.version,
+            vwr.is_deleted,
+            vwr.virtual_warehouse_id,
+            vwr.warehouse_id
+        from virtual_warehouse_relation vwr
+        inner join matched_vw mv on mv.virtual_warehouse_id = vwr.virtual_warehouse_id
+        where vwr.is_deleted = false
+        <if test="platformDTO.warehouseIdList != null and platformDTO.warehouseIdList.size() &gt; 0">
+            and vwr.warehouse_id in
+            <foreach collection="platformDTO.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
     </select>
 
 
