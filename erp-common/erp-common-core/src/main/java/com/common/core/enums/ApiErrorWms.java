@@ -493,4 +493,5 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_OUTBOUND_CODE_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_CODE_REQUIRED", 11253, "AIYA出库单号不能为空");
     public static final ApiError WH_AIYA_OUTBOUND_DETAIL_EMPTY = new ApiError("WH_AIYA_OUTBOUND_DETAIL_EMPTY", 11254, "AIYA创建出库单明细为空");
     public static final ApiError WH_AIYA_OUTBOUND_CARRIER_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_CARRIER_REQUIRED", 11255, "AIYA出库承运商(carrier)或承运商服务(carrierService)为空，请先同步物流渠道");
+    public static final ApiError WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED = new ApiError("WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED", 11256, "AIYA出库收件人地址1(streetLine1)不能为空");
 }
