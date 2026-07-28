@@ -72,6 +72,13 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 配送方式Id
      */
     private String shippingMethodId;
+
+    /**
+     * 渠道供应商编码（爱亚出库时映射为 shippingInstructions.carrier，
+     * 来自 logistics_sale_channel.supplier_code / 查询承运商接口 carrier）
+     */
+    private String supplierCode;
+
     /**
      * 配送仓库
      */

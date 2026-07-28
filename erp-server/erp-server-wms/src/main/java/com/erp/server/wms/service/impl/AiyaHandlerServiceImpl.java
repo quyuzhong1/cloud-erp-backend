@@ -132,11 +132,6 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final DateTimeFormatter ORDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
 
     /**
-     * 承运商服务等级：官方文档"无特殊要求填 STD"，本项目暂无更细的服务等级映射数据源，固定传 STD。
-     */
-    private static final String DEFAULT_CARRIER_SERVICE = "STD";
-
-    /**
      * 发货标签来源：{@code ATTACHMENT}（平台自带面单，随单下发 trackingNumber+files）。
      */
     private static final String SHIPPING_LABEL_SOURCE_ATTACHMENT = "ATTACHMENT";
@@ -668,9 +663,12 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * 字段映射说明：
      * <ul>
      *     <li>{@code orderNumber} = {@code referenceNo}（ERP 发货单号，直接做幂等键）；</li>
-     *     <li>{@code shippingInstructions.carrier} 取 {@code shippingMethodName}，{@code carrierService}
-     *         固定 {@value #DEFAULT_CARRIER_SERVICE}；{@code shippingLabelSource} 按 {@code isPushLabel}+
-     *         {@code labelUrl} 二态映射：有面单 → {@code ATTACHMENT}（连带 trackingNumber+files 传面单），
+     *     <li>{@code shippingInstructions.carrier} 取 {@code supplierCode}（对齐查询承运商接口
+     *         {@code resultList[].carrier}，经销售渠道同步落库）；</li>
+     *     <li>{@code shippingInstructions.carrierService} 优先 {@code shippingMethodId}，
+     *         为空回退 {@code shippingMethodName}（对齐 {@code carrierServiceList[].carrierService}）；</li>
+     *     <li>{@code shippingLabelSource} 按 {@code isPushLabel}+{@code labelUrl} 二态映射：
+     *         有面单 → {@code ATTACHMENT}（连带 trackingNumber+files 传面单），
      *         否则 → {@code API}（爱亚枚举另有 {@code WMS_GEN}，方案文档未映射，不下发）；</li>
      *     <li>{@code shipTo} 取 {@code receiverInfo}（address1→streetLine1、address2→streetLine2、
      *         district、city、province→state、zipCode→postalCode、countryCode）；</li>
@@ -684,14 +682,23 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_DETAIL_EMPTY);
         }
 
+        String carrier = req.getSupplierCode();
+        String carrierService = CharSequenceUtil.blankToDefault(req.getShippingMethodId(), req.getShippingMethodName());
+        if (CharSequenceUtil.hasBlank(carrier, carrierService)) {
+            log.warn("{}出库承运商或承运商服务为空, referenceNo={}, supplierCode={}, shippingMethodId={}, shippingMethodName={}",
+                    getPlatForm().getName(), req.getReferenceNo(), req.getSupplierCode(),
+                    req.getShippingMethodId(), req.getShippingMethodName());
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_CARRIER_REQUIRED);
+        }
+
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
 
         boolean hasPlatformLabel = CharSequenceUtil.isNotBlank(req.getLabelUrl())
                 && Boolean.TRUE.equals(req.getIsPushLabel());
         AiyaOutboundSaveDTO.ShippingInstructions.ShippingInstructionsBuilder instructionsBuilder =
                 AiyaOutboundSaveDTO.ShippingInstructions.builder()
-                        .carrier(req.getShippingMethodName())
-                        .carrierService(DEFAULT_CARRIER_SERVICE);
+                        .carrier(carrier)
+                        .carrierService(carrierService);
         List<AiyaOutboundSaveDTO.FileItem> files = null;
         if (hasPlatformLabel) {
             instructionsBuilder.shippingLabelSource(SHIPPING_LABEL_SOURCE_ATTACHMENT)
