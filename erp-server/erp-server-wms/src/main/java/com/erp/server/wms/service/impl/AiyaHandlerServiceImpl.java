@@ -670,8 +670,10 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      *     <li>{@code shippingLabelSource} 按 {@code isPushLabel}+{@code labelUrl} 二态映射：
      *         有面单 → {@code ATTACHMENT}（连带 trackingNumber+files 传面单），
      *         否则 → {@code API}（爱亚枚举另有 {@code WMS_GEN}，方案文档未映射，不下发）；</li>
-     *     <li>{@code shipTo} 取 {@code receiverInfo}（address1→streetLine1、address2→streetLine2、
-     *         district、city、province→state、zipCode→postalCode、countryCode）；</li>
+     *     <li>{@code shipTo} 地址映射：{@code address1→streetLine1}（必填，ERP 收货地址1）、
+     *         {@code address2→streetLine2}（ERP 收货地址2）、
+     *         {@code address3→district}（ERP 街道详细地址）；其余 city/province→state/
+     *         zipCode→postalCode/countryCode 照旧；</li>
      *     <li>{@code items[]} 按 {@code productSku} 聚合数量，防重复 SKU 行；</li>
      *     <li>{@code shipFrom} 不下发（2026-07-24 联调确认可不传）。</li>
      * </ul>
@@ -692,6 +694,11 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
 
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
+        String streetLine1 = receiver != null ? receiver.getAddress1() : null;
+        if (CharSequenceUtil.isBlank(streetLine1)) {
+            log.warn("{}出库收件地址1为空, referenceNo={}", getPlatForm().getName(), req.getReferenceNo());
+            throw new ServiceException(ApiError.WH_AIYA_OUTBOUND_ADDRESS1_REQUIRED);
+        }
 
         boolean hasPlatformLabel = CharSequenceUtil.isNotBlank(req.getLabelUrl())
                 && Boolean.TRUE.equals(req.getIsPushLabel());
@@ -741,16 +748,17 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .storeNumber(req.getShopName())
                 .shippingInstructions(instructionsBuilder.build())
                 .shipTo(AiyaOutboundSaveDTO.ShipTo.builder()
-                        .name(receiver != null ? receiver.getName() : null)
-                        .mobileNumber(receiver != null ? receiver.getPhone() : null)
-                        .email(receiver != null ? receiver.getEmail() : null)
-                        .streetLine1(receiver != null ? receiver.getAddress1() : null)
-                        .streetLine2(receiver != null ? receiver.getAddress2() : null)
-                        .district(receiver != null ? receiver.getDistrict() : null)
-                        .city(receiver != null ? receiver.getCity() : null)
-                        .state(receiver != null ? receiver.getProvince() : null)
-                        .postalCode(receiver != null ? receiver.getZipCode() : null)
-                        .countryCode(receiver != null ? receiver.getCountryCode() : null)
+                        .name(receiver.getName())
+                        .mobileNumber(receiver.getPhone())
+                        .email(receiver.getEmail())
+                        .streetLine1(streetLine1)
+                        .streetLine2(CharSequenceUtil.isBlank(receiver.getAddress2()) ? null : receiver.getAddress2())
+                        // 爱亚地址3落在 district：ERP 街道详细地址（address3），非 ERP 区县 districtName
+                        .district(CharSequenceUtil.isBlank(receiver.getAddress3()) ? null : receiver.getAddress3())
+                        .city(receiver.getCity())
+                        .state(receiver.getProvince())
+                        .postalCode(receiver.getZipCode())
+                        .countryCode(receiver.getCountryCode())
                         .build())
                 .items(items)
                 .files(files)
