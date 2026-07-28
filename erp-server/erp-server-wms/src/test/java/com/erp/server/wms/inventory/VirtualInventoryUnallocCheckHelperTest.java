@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * {@link VirtualInventoryUnallocCheckHelper} 与 try.lua 约定一致性校验。
@@ -114,6 +115,26 @@ public class VirtualInventoryUnallocCheckHelperTest {
         map.put("inv-2", 20);
         int total = VirtualInventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(Arrays.asList("inv-1", "inv-2", "inv-3"), map);
         Assert.assertEquals(30, total);
+    }
+
+    /**
+     * 指定虚拟仓明细应参与仓+SKU 共享锁，但不参与实体未分配 TRY。
+     */
+    @Test
+    public void buildUnallocLockKeysIncludesVirtualWarehouseOutbound() {
+        InventoryTransactionDTO withVirtual = new InventoryTransactionDTO();
+        withVirtual.setQty(-5);
+        withVirtual.setSkuId("sku-1");
+        withVirtual.setWarehouseId("wh-1");
+        withVirtual.setInventoryStatus(com.erp.model.wms.enums.inventory.InventoryStatusEnum.USABLE.getCode());
+        withVirtual.setSourceType(com.erp.model.wms.enums.inventory.InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        withVirtual.setVirtualWarehouseId("vw-1");
+
+        List<String> keys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(
+                Collections.singletonList(withVirtual));
+        Assert.assertEquals(1, keys.size());
+        Assert.assertTrue(keys.get(0).contains("wh-1"));
+        Assert.assertTrue(keys.get(0).contains("sku-1"));
     }
 
     /**

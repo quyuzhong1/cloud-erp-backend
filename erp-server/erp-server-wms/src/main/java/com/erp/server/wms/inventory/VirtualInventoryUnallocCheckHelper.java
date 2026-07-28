@@ -244,22 +244,37 @@ public final class VirtualInventoryUnallocCheckHelper {
     }
 
     /**
-     * 构建 PG 路径未分配并发锁 Redis key 列表（去重、保序）。
+     * 构建仓+SKU 未分配并发锁 Redis key 列表（去重、字典序）。
+     * <p>
+     * 基于 {@link #filterNeedUnallocCheck} 全量白名单出库明细生成锁 key，含指定虚拟仓出库；
+     * 与 {@link #filterNeedEntityUnallocCheck}（仅未分配 TRY）解耦，避免虚拟仓预检无锁并发穿透。
+     * </p>
      *
-     * @param checkList 需未分配校验的明细
-     * @return 仓+SKU 维度 Redisson 锁 key（字典序，避免 MultiLock 死锁）
+     * @param transactionList 原始或已过滤的交易列表
+     * @return 仓+SKU 维度 Redisson 锁 key
      */
-    public static List<String> buildUnallocLockKeys(List<InventoryTransactionDTO> checkList) {
-        if (checkList == null || checkList.isEmpty()) {
+    public static List<String> buildUnallocLockKeys(List<InventoryTransactionDTO> transactionList) {
+        List<InventoryTransactionDTO> lockScopeList = filterNeedUnallocCheck(transactionList);
+        if (lockScopeList.isEmpty()) {
             return Collections.emptyList();
         }
         Set<String> keys = new LinkedHashSet<>();
-        for (List<InventoryTransactionDTO> group : groupByWarehouseSku(filterNeedEntityUnallocCheck(checkList)).values()) {
+        for (List<InventoryTransactionDTO> group : groupByWarehouseSku(lockScopeList).values()) {
             InventoryTransactionDTO first = group.get(0);
             keys.add(InventoryRedisOpKeyEnum.getWhSkuKey(
                     InventoryRedisOpKeyEnum.WHSKU_UNALLOC_LOCK, first.getWarehouseId(), first.getSkuId()));
         }
         return keys.stream().sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * 判断本批交易是否需要获取仓+SKU 未分配共享锁（虚拟仓预检与实体未分配预检均适用）。
+     *
+     * @param transactionList 库存交易列表
+     * @return true 表示至少有一条白名单出库需预检
+     */
+    public static boolean needsUnallocSharedLock(List<InventoryTransactionDTO> transactionList) {
+        return !filterNeedUnallocCheck(transactionList).isEmpty();
     }
 
     /**
