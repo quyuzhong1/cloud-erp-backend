@@ -194,9 +194,78 @@ public class JasperHelperUtil {
 
 
     /**
+     * 加载报表模板：jrxml 用当前运行时 Jasper 版本编译；jasper 直接反序列化。
+     * <p>避免 Studio 高版本编译的 .jasper 在低版本运行时出现
+     * {@code NoClassDefFoundError: Xxx (wrong name: Xxx_hash)}。</p>
+     *
+     * @param templateBytes 模板文件字节（.jrxml 或 .jasper）
+     * @return 可填充的 JasperReport
+     */
+    public static JasperReport loadReport(byte[] templateBytes) {
+        if (templateBytes == null || templateBytes.length == 0) {
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+        try {
+            if (isJrxmlBytes(templateBytes)) {
+                return JasperCompileManager.compileReport(new ByteArrayInputStream(templateBytes));
+            }
+            return (JasperReport) JRLoader.loadObject(new ByteArrayInputStream(templateBytes));
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("加载/编译 Jasper 模板失败: {}", e.getMessage(), e);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
+    /**
+     * 判断是否为 jrxml（XML）模板字节
+     */
+    private static boolean isJrxmlBytes(byte[] bytes) {
+        int i = 0;
+        // UTF-8 BOM
+        if (bytes.length >= 3
+                && (bytes[0] & 0xFF) == 0xEF
+                && (bytes[1] & 0xFF) == 0xBB
+                && (bytes[2] & 0xFF) == 0xBF) {
+            i = 3;
+        }
+        while (i < bytes.length) {
+            byte b = bytes[i];
+            if (b == ' ' || b == '\n' || b == '\r' || b == '\t') {
+                i++;
+                continue;
+            }
+            return b == '<';
+        }
+        return false;
+    }
+
+    /**
+     * 使用已加载的 JasperReport 导出 PDF
+     *
+     * @param jasperReport 报表对象
+     * @param parameters   参数
+     * @param dataList     数据源列表
+     * @return PDF 字节
+     */
+    public static byte[] exportToPdfStream(JasperReport jasperReport, Map<String, Object> parameters, List<?> dataList) {
+        try {
+            prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
+            JasperPrint jasperPrint = JasperFillManager.fillReport(
+                    jasperReport, parameters, new ReportDataSourceDTO(dataList));
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            log.error("exportToPdfStream(JasperReport) 失败: {}", e.getMessage(), e);
+            log.warn("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
+    /**
      * 按照类型导出不同格式文件
      *
-     * @param is         jasper文件输入流
+     * @param is         jasper/jrxml 文件输入流
      * @param parameters 参数
      */
     public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters, List<?> dataList) {
@@ -232,7 +301,8 @@ public class JasperHelperUtil {
     public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters, Connection conn, Integer isCustomData, List<?> dataList) {
         JasperPrint jasperPrint = null;
         try {
-            JasperReport jasperReport = (JasperReport) JRLoader.loadObject(is);
+            byte[] templateBytes = toByteArray(is);
+            JasperReport jasperReport = loadReport(templateBytes);
             prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
 
             if (MathUtil.compareTo(isCustomData, MathUtil.ONE) == 0) {
@@ -241,11 +311,23 @@ public class JasperHelperUtil {
                 jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
             }
             return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("（按照类型导出不同格式文件）方法：exportToPdfStream " + e.getMessage());
-            log.info("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
+            log.warn("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
             throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
+    }
+
+    private static byte[] toByteArray(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[4096];
+        int n;
+        while ((n = is.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, n);
+        }
+        return buffer.toByteArray();
     }
 
     /**
