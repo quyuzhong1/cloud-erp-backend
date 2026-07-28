@@ -340,7 +340,7 @@ DMP定时「爱亚退货入库」
 - [x] **【已确认】`shippingLabelSource` 只用二态（方案文档已写清）**：爱亚接口枚举虽有 ATTACHMENT/API/**WMS_GEN** 三值，但方案文档业务映射只有两档——①「是否推海外仓面单=是」→ ATTACHMENT（附图 + 运单号/渠道）；②「=否」→ API（海外仓面单，物流渠道非必填）。**没有**映射到 WMS_GEN，ERP `isPushLabel` 二态与方案一致即可，无需第三态。
 - [x] **【已确认】出库单查询响应为扁平结构（2026-07-22 联调）**：顶层 `{success, code, message, total, orderInfoList:[]}`，列表字段是 `orderInfoList`（不是同族仓库/承运商接口的 `resultList`）；`total` 失败时可为 null，成功分页是否回填待再确认。
 - [ ] **单据状态字母码 A/B/C/D 的完整语义**：`AiyaEnums.OrderStatusEnum` 已改为方案文档字母码（A-已出库/B-已取消/C-库存不足/D-锁住），但"D-锁住"具体语义（被谁锁、是否会自动解锁）未展开，且不排除还有未列出的状态码，需联调确认。
-- [ ] **DMP 任务与字段映射配置**：新增的 `AiyaOutboundInitHandler`（Input）/`AiyaOutBoundDmpHandler`（Convert）/`AiyaOutboundRocketMQTaskHandler`（Output）均需在数据库配置表里注册；建议字段映射：`orderNumber→order_code`/`reference_no`、`warehouseCode→warehouse_code`、`orderStatus→order_status`、`trackingNumber→tracking_no`、`actualLogistic→carrier_name`、`shippingTime→date_shipping`（Convert 侧也会解析 shippingTime）。需要找运维/产品在环境里配置。
+- [x] **DMP 任务与字段映射配置**：新增的 `AiyaOutboundInitHandler`（Input）/`AiyaOutBoundDmpHandler`（Convert）/`AiyaOutboundRocketMQTaskHandler`（Output）均需在数据库配置表里注册；建议字段映射：`orderNumber→order_code`/`reference_no`、`warehouseCode→warehouse_code`、`orderStatus→order_status`、`trackingNumber→tracking_no`、`actualLogistic→carrier_name`、`shippingTime→date_shipping`（Convert 侧也会解析 shippingTime）。需要找运维/产品在环境里配置。
 - [ ] **"汉化管理"错误码翻译能力是否已有可复用实现**：本次不做，留待后续单独排期。
 - [ ] **"超量发货"处理流程**：WEGO 无对应实现，AIYA 独有新分支；本次不做，留待后续单独排期。
 
