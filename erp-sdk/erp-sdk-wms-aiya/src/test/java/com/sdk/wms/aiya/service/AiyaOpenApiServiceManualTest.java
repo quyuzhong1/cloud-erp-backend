@@ -313,8 +313,9 @@ public class AiyaOpenApiServiceManualTest {
      * （可覆盖已提交未发货）；可选 {@code shippingTime*}/{@code page}/{@code pageSize}
      * （DTO 字段名仍为 pageNum，序列化到网关时写 page）。
      * <p>
-     * 重点核对：成功时 {@code orderInfoList} 明细字段（{@code orderNumber}/{@code shippingTime}/
-     * {@code trackingNumber}/{@code actualLogistic}/{@code orderStatus} 等）。
+     * 重点核对：成功时 {@code orderInfoList} 明细是否含官方 {@code status}
+     * （{@code VALID}/{@code HELD}/{@code CANCELLED}）、{@code shippingTime}/{@code trackingNumber} 等。
+     * 若控制台只见少数字段，先看 SDK 日志里的原始 response，再核对 DTO 是否漏映射。
      */
     @Test
     public void query2cOrderTest() {
@@ -330,6 +331,8 @@ public class AiyaOpenApiServiceManualTest {
                 .build();
         List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(req);
         System.out.println(JSONUtil.toJsonStr(response));
+        // 拦截收敛：看 status 是否为 CANCELLED
+        response.forEach(o -> System.out.println(o.getOrderNumber() + " status=" + o.getStatus()));
     }
 
     /**
