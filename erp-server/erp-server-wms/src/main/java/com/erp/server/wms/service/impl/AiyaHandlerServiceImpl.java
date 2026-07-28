@@ -546,11 +546,13 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     /**
      * 取消（截单）AIYA 2C 出库单（{@code GLINK_CANCEL_ORDER_NOTIFY}）。
      * <p>
-     * 2026-07-24 联调确认：
+     * 对齐方案文档 6.3.3「3、订单拦截」：爱亚取消接口为<strong>异步</strong>——
+     * 受理成功后先标「拦截中」，最终成功/失败由 DMP 定时查询出库单状态（字母码 B=已取消 等）收敛。
      * <ul>
-     *     <li>首次截单成功：{@code success=true, code=SUCCESS, message=null, data=null} → {@code INTERCEPTION_SUCCESSFUL}；</li>
-     *     <li>重复截单（已取消）：{@code success=true, message="This order has been cancelled!"} → 同样视为成功（幂等）；</li>
-     *     <li>{@code success=false}：不区分错误码，直接 {@code failure} 透传爱亚 {@code message}/{@code code} 原文。</li>
+     *     <li>首次受理成功：{@code success=true, message=null} → {@code INTERCEPTING}（文档 step1）；</li>
+     *     <li>重复截单且已取消：{@code success=true, message="This order has been cancelled!"}
+     *         → {@code INTERCEPTION_SUCCESSFUL}（终态已达成，幂等）；</li>
+     *     <li>{@code success=false}：同步失败，{@code failure} 透传爱亚 {@code message}/{@code code} 原文。</li>
      * </ul>
      */
     @Override
@@ -564,11 +566,16 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 Collections.singletonList(cancelOutboundReq.getOrderCode()));
         log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (isSuccess(resp)) {
+            // 爱亚已取消：终态已到，直接拦截成功（幂等），无需再走「拦截中」
             if (isOrderAlreadyCancelledSuccess(resp)) {
-                log.warn("{}截单返回[This order has been cancelled]（幂等重试，非失败），orderNumber={}",
+                log.warn("{}截单返回[This order has been cancelled]（已取消，按拦截成功），orderNumber={}",
                         getPlatForm().getName(), cancelOutboundReq.getOrderCode());
+                return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
             }
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+            // 取消接口异步受理 → 先拦截中，靠定时查单（状态 B）收敛为拦截成功
+            log.warn("{}截单已受理，按文档返回拦截中，等待 DMP 查单收敛, orderNumber={}",
+                    getPlatForm().getName(), cancelOutboundReq.getOrderCode());
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
         }
         String errMsg = buildErrorMessage(resp);
         log.warn("{}截单失败，orderNumber={}, msg={}", getPlatForm().getName(), cancelOutboundReq.getOrderCode(), errMsg);
