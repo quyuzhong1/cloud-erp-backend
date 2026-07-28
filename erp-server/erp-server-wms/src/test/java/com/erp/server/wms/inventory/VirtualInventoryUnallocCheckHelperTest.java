@@ -117,6 +117,26 @@ public class VirtualInventoryUnallocCheckHelperTest {
     }
 
     /**
+     * 指定虚拟仓明细应参与仓+SKU 共享锁，但不参与实体未分配 TRY。
+     */
+    @Test
+    public void buildUnallocLockKeysIncludesVirtualWarehouseOutbound() {
+        InventoryTransactionDTO withVirtual = new InventoryTransactionDTO();
+        withVirtual.setQty(-5);
+        withVirtual.setSkuId("sku-1");
+        withVirtual.setWarehouseId("wh-1");
+        withVirtual.setInventoryStatus(com.erp.model.wms.enums.inventory.InventoryStatusEnum.USABLE.getCode());
+        withVirtual.setSourceType(com.erp.model.wms.enums.inventory.InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        withVirtual.setVirtualWarehouseId("vw-1");
+
+        List<String> keys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(
+                Collections.singletonList(withVirtual));
+        Assert.assertEquals(1, keys.size());
+        Assert.assertTrue(keys.get(0).contains("wh-1"));
+        Assert.assertTrue(keys.get(0).contains("sku-1"));
+    }
+
+    /**
      * virtualQty&gt;0 且 inventoryIds 为空时应 fail-closed。
      */
     @Test(expected = ServiceException.class)

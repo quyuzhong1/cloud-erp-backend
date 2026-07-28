@@ -129,7 +129,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         RedissonMultiLock unallocLock = null;
         boolean unlockInFinally = false;
         try {
-            if (CollUtil.isNotEmpty(VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList))) {
+            if (VirtualInventoryUnallocCheckHelper.needsUnallocSharedLock(transactionList)) {
                 List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
                 unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
                 if (unallocLock == null) {
