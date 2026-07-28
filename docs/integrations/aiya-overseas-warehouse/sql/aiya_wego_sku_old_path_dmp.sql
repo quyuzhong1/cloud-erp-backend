@@ -78,12 +78,16 @@ ON CONFLICT (id) DO UPDATE SET
     is_deleted        = false,
     update_time       = NOW();
 
--- 1.3 product mapping（原始 Mongo 字段 → dmp_product_info）
--- 先清再插，避免重复执行
+-- 1.3 product mapping（原始 Mongo 字段 → dmp_product_info；可重复执行）
+-- 软删本 convert 下非本次固定 id 的旧 mapping；固定 id 用 ON CONFLICT 恢复
 UPDATE dmp_cfg_input_convert_mapping
 SET is_deleted = true, update_time = NOW()
 WHERE main_id = '2076948134671439321'
-  AND is_deleted = false;
+  AND is_deleted = false
+  AND id NOT IN (
+      '2076948134671439101', '2076948134671439102',
+      '2076948134671439103', '2076948134671439104'
+  );
 
 INSERT INTO dmp_cfg_input_convert_mapping (
     id, main_id, original_key, convert_key, disabled,
@@ -96,7 +100,17 @@ INSERT INTO dmp_cfg_input_convert_mapping (
 ('2076948134671439102', '2076948134671439321', 'sku',    'spu_no',   false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2076948134671439103', '2076948134671439321', 'sku',    'spu_id',   false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 -- 6.2.2：产品名称 ← name（文档标必填；联调偶发无 name 时 sku 侧 Handler 用 description 兜底）
-('2076948134671439104', '2076948134671439321', 'name',   'spu_name', false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false);
+('2076948134671439104', '2076948134671439321', 'name',   'spu_name', false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false)
+ON CONFLICT (id) DO UPDATE SET
+    main_id       = EXCLUDED.main_id,
+    original_key  = EXCLUDED.original_key,
+    convert_key   = EXCLUDED.convert_key,
+    disabled      = false,
+    is_deleted    = false,
+    update_time   = NOW(),
+    update_user_id = EXCLUDED.update_user_id,
+    update_user_name = EXCLUDED.update_user_name,
+    version       = COALESCE(dmp_cfg_input_convert_mapping.version, 0) + 1;
 -- 响应 itemList 无 createdTime/updatedTime（仅请求侧有 From/To），故不映射时间字段
 
 -- 1.4 sku mapping（AiyaSkuInfoDmpHandler.getDetailList 产出键 → dmp_sku_info）
@@ -104,7 +118,11 @@ INSERT INTO dmp_cfg_input_convert_mapping (
 UPDATE dmp_cfg_input_convert_mapping
 SET is_deleted = true, update_time = NOW()
 WHERE main_id = '2076948134671439401'
-  AND is_deleted = false;
+  AND is_deleted = false
+  AND id NOT IN (
+      '2076948134671439201', '2076948134671439202',
+      '2076948134671439203', '2076948134671439204'
+  );
 
 INSERT INTO dmp_cfg_input_convert_mapping (
     id, main_id, original_key, convert_key, disabled,
@@ -114,7 +132,17 @@ INSERT INTO dmp_cfg_input_convert_mapping (
 ('2076948134671439201', '2076948134671439401', 'skuNo',  'sku_no',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2076948134671439202', '2076948134671439401', 'name',   'name',    false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2076948134671439203', '2076948134671439401', 'skuId',  'sku_id',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
-('2076948134671439204', '2076948134671439401', 'status', 'status',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false);
+('2076948134671439204', '2076948134671439401', 'status', 'status',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false)
+ON CONFLICT (id) DO UPDATE SET
+    main_id       = EXCLUDED.main_id,
+    original_key  = EXCLUDED.original_key,
+    convert_key   = EXCLUDED.convert_key,
+    disabled      = false,
+    is_deleted    = false,
+    update_time   = NOW(),
+    update_user_id = EXCLUDED.update_user_id,
+    update_user_name = EXCLUDED.update_user_name,
+    version       = COALESCE(dmp_cfg_input_convert_mapping.version, 0) + 1;
 
 -- 1.5 Output MQ（挂 sku convert，与极风/谷仓一致）
 INSERT INTO dmp_cfg_output (
@@ -232,11 +260,15 @@ ON CONFLICT (id) DO UPDATE SET
     is_deleted        = false,
     update_time       = NOW();
 
--- 2.3 product mapping
+-- 2.3 product mapping（可重复执行）
 UPDATE dmp_cfg_input_convert_mapping
 SET is_deleted = true, update_time = NOW()
 WHERE main_id = '2063000000000001013'
-  AND is_deleted = false;
+  AND is_deleted = false
+  AND id NOT IN (
+      '2063000000000001101', '2063000000000001102',
+      '2063000000000001103', '2063000000000001104'
+  );
 
 INSERT INTO dmp_cfg_input_convert_mapping (
     id, main_id, original_key, convert_key, disabled,
@@ -246,14 +278,28 @@ INSERT INTO dmp_cfg_input_convert_mapping (
 ('2063000000000001101', '2063000000000001013', 'authId', 'auth_id',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2063000000000001102', '2063000000000001013', 'sku',    'spu_no',   false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2063000000000001103', '2063000000000001013', 'sku',    'spu_id',   false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
-('2063000000000001104', '2063000000000001013', 'name',   'spu_name', false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false);
+('2063000000000001104', '2063000000000001013', 'name',   'spu_name', false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false)
+ON CONFLICT (id) DO UPDATE SET
+    main_id       = EXCLUDED.main_id,
+    original_key  = EXCLUDED.original_key,
+    convert_key   = EXCLUDED.convert_key,
+    disabled      = false,
+    is_deleted    = false,
+    update_time   = NOW(),
+    update_user_id = EXCLUDED.update_user_id,
+    update_user_name = EXCLUDED.update_user_name,
+    version       = COALESCE(dmp_cfg_input_convert_mapping.version, 0) + 1;
 -- OpenAPI 响应 list[] 无 createTime/updateTime，不映射时间
 
 -- 2.4 sku mapping（WegoSkuInfoDmpHandler：barcode[]→skuId；status 1/4→Active/Inactive）
 UPDATE dmp_cfg_input_convert_mapping
 SET is_deleted = true, update_time = NOW()
 WHERE main_id = '2063000000000001401'
-  AND is_deleted = false;
+  AND is_deleted = false
+  AND id NOT IN (
+      '2063000000000001201', '2063000000000001202',
+      '2063000000000001203', '2063000000000001204'
+  );
 
 INSERT INTO dmp_cfg_input_convert_mapping (
     id, main_id, original_key, convert_key, disabled,
@@ -263,7 +309,17 @@ INSERT INTO dmp_cfg_input_convert_mapping (
 ('2063000000000001201', '2063000000000001401', 'skuNo',  'sku_no',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2063000000000001202', '2063000000000001401', 'name',   'name',    false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
 ('2063000000000001203', '2063000000000001401', 'skuId',  'sku_id',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false),
-('2063000000000001204', '2063000000000001401', 'status', 'status',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false);
+('2063000000000001204', '2063000000000001401', 'status', 'status',  false, NOW(), NOW(), '1', 'system', '1', 'system', 0, false)
+ON CONFLICT (id) DO UPDATE SET
+    main_id       = EXCLUDED.main_id,
+    original_key  = EXCLUDED.original_key,
+    convert_key   = EXCLUDED.convert_key,
+    disabled      = false,
+    is_deleted    = false,
+    update_time   = NOW(),
+    update_user_id = EXCLUDED.update_user_id,
+    update_user_name = EXCLUDED.update_user_name,
+    version       = COALESCE(dmp_cfg_input_convert_mapping.version, 0) + 1;
 
 -- 2.5 Output MQ
 INSERT INTO dmp_cfg_output (
