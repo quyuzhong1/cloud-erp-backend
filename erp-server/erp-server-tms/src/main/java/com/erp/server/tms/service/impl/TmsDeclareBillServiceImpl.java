@@ -1569,6 +1569,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (v1, v2) -> v1));
 
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+            if (Objects.nonNull(exportDTO.getShippingFee()) && exportDTO.getShippingFee().compareTo(BigDecimal.ZERO) == 0) {
+                exportDTO.setShippingFeeStr("");
+            }else {
+                exportDTO.setShippingFeeStr(exportDTO.getShippingFee().toString());
+            }
+            if (Objects.nonNull(exportDTO.getInsuranceFee()) && exportDTO.getInsuranceFee().compareTo(BigDecimal.ZERO) == 0) {
+                exportDTO.setInsuranceFeeStr("");
+            }else {
+                exportDTO.setInsuranceFeeStr(exportDTO.getInsuranceFee().toString());
+            }
+            if (Objects.nonNull(exportDTO.getOtherFee()) && exportDTO.getOtherFee().compareTo(BigDecimal.ZERO) == 0) {
+                exportDTO.setOtherFeeStr("");
+            }else {
+                exportDTO.setOtherFeeStr(exportDTO.getOtherFee().toString());
+            }
+
             String tradingAreaName = exportCountryNameMap.getOrDefault(exportDTO.getTradingArea(), exportDTO.getTradingArea());
             String toAreaName = exportCountryNameMap.getOrDefault(exportDTO.getToArea(), exportDTO.getToArea());
             String toPortName = exportCountryNameMap.getOrDefault(exportDTO.getToPort(), exportDTO.getToPort());
@@ -1577,11 +1593,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             exportDTO.setToPortName(toPortName);
             SysAccountingCompanyEntity senderCompanyEntity = allAccountingCompanyMap.get(exportDTO.getSenderId());
             if(Objects.nonNull(senderCompanyEntity)){
-                exportDTO.setSenderCode(senderCompanyEntity.getCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+                exportDTO.setSenderCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
             }
             SysAccountingCompanyEntity receiverCompanyEntity = allAccountingCompanyMap.get(exportDTO.getReceiverId());
             if(Objects.nonNull(receiverCompanyEntity)){
-                exportDTO.setReceiverCode(receiverCompanyEntity.getCode()+"("+receiverCompanyEntity.getCompanyHsCode()+")");
+                exportDTO.setReceiverCode(receiverCompanyEntity.getUsciCode()+"("+receiverCompanyEntity.getCompanyHsCode()+")");
             }
 
             List<String> rowSourceCodes = splitCommaValues(exportDTO.getSourceCode());
