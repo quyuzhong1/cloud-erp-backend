@@ -439,6 +439,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     /**
      * 为 Redis TRY 阶段组装仓+SKU 未分配预占项：实体库存与虚拟已分配均读 Redis，与扣减同源。
      * <p>
+     * 仅包含未指定 {@code virtualWarehouseId} 的明细；指定虚拟仓出库不参与未分配 TRY。
      * entityQty 在 try.lua 内按 {@code inventoryId} 列表读取 {@code inventory:current} 基量汇总（不含 TRY 在途段）；
      * virtualQty 在 EVAL 前单次读取写入 ARGV（虚拟 Redis 分实例，见 {@link VirtualInventoryUnallocCheckHelper} 说明）；
      * 同仓+SKU 并发由 reserve 预占兜底。
@@ -448,7 +449,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
      * @return 需原子预占的仓+SKU 列表；无白名单出库时返回空列表
      */
     private List<VirtualInventoryUnallocCheckHelper.UnallocTryItem> buildUnallocTryItems(List<InventoryTransactionDTO> transactionList) {
-    	List<InventoryTransactionDTO> checkList = VirtualInventoryUnallocCheckHelper.filterNeedUnallocCheck(transactionList);
+    	List<InventoryTransactionDTO> checkList = VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList);
     	if (CollUtil.isEmpty(checkList)) {
     		return Collections.emptyList();
     	}
@@ -855,19 +856,12 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		}
 		Object redisQtyObj = inventoryRedisUtil.get(
 				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
-		if (redisQtyObj == null) {
-			return 0;
-		}
-		String[] split = redisQtyObj.toString().split(InventoryRedisUtil.splitSign);
-		if (split.length == 0 || StringUtils.isBlank(split[0])) {
-			return 0;
-		}
-		try {
-			return Integer.parseInt(split[0].trim());
-		} catch (NumberFormatException e) {
-			log.warn("Redis current 基量解析失败 inventoryId={} base={}", inventoryId, split[0]);
-			return 0;
-		}
+		return InventoryRedisUtil.parseBaseCurrentQty(redisQtyObj);
+	}
+
+	@Override
+	public Map<String, Integer> getRedisBaseQtyByInventoryBatch(Collection<String> inventoryIds) {
+		return inventoryRedisUtil.batchGetBaseQtyByInventoryIds(inventoryIds);
 	}
 
 	@Override

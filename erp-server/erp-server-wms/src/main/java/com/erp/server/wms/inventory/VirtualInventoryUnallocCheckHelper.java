@@ -178,6 +178,48 @@ public final class VirtualInventoryUnallocCheckHelper {
     }
 
     /**
+     * 筛出需「实体仓未分配」校验的明细：白名单出库且未指定虚拟仓。
+     * <p>指定 {@code virtualWarehouseId} 的明细仅做虚拟仓分配预检，不参与 {@code try.lua} 未分配 TRY。</p>
+     *
+     * @param transactionList 原始交易列表
+     * @return 需实体仓未分配校验的明细
+     */
+    public static List<InventoryTransactionDTO> filterNeedEntityUnallocCheck(List<InventoryTransactionDTO> transactionList) {
+        return filterNeedUnallocCheck(transactionList).stream()
+                .filter(t -> CharSequenceUtil.isBlank(t.getVirtualWarehouseId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 筛出需「指定虚拟仓已分配量」校验的明细。
+     *
+     * @param transactionList 原始交易列表
+     * @return 指定虚拟仓的出库明细
+     */
+    public static List<InventoryTransactionDTO> filterNeedVirtualWarehouseCheck(List<InventoryTransactionDTO> transactionList) {
+        return filterNeedUnallocCheck(transactionList).stream()
+                .filter(t -> CharSequenceUtil.isNotBlank(t.getVirtualWarehouseId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 按仓库+SKU+虚拟仓分组（指定虚拟仓预检用）。
+     *
+     * @param checkList 指定虚拟仓的校验明细
+     * @return 分组后的明细
+     */
+    public static Map<String, List<InventoryTransactionDTO>> groupByWarehouseSkuVirtualWarehouse(
+            List<InventoryTransactionDTO> checkList) {
+        if (checkList == null || checkList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return checkList.stream().collect(Collectors.groupingBy(t ->
+                buildWarehouseSkuGroupKey(t.getSkuId(), t.getWarehouseId())
+                        + WAREHOUSE_SKU_GROUP_KEY_DELIMITER
+                        + CharSequenceUtil.blankToDefault(t.getVirtualWarehouseId(), "")));
+    }
+
+    /**
      * 按仓库+SKU 汇总出库数量（正数）。
      *
      * @param checkList 白名单过滤后的明细
@@ -212,7 +254,7 @@ public final class VirtualInventoryUnallocCheckHelper {
             return Collections.emptyList();
         }
         Set<String> keys = new LinkedHashSet<>();
-        for (List<InventoryTransactionDTO> group : groupByWarehouseSku(checkList).values()) {
+        for (List<InventoryTransactionDTO> group : groupByWarehouseSku(filterNeedEntityUnallocCheck(checkList)).values()) {
             InventoryTransactionDTO first = group.get(0);
             keys.add(InventoryRedisOpKeyEnum.getWhSkuKey(
                     InventoryRedisOpKeyEnum.WHSKU_UNALLOC_LOCK, first.getWarehouseId(), first.getSkuId()));
@@ -474,6 +516,20 @@ public final class VirtualInventoryUnallocCheckHelper {
             return 0;
         }
         return inventoryIds.stream().mapToInt(baseQtyLoader).sum();
+    }
+
+    /**
+     * 从已批量加载的基量映射汇总实体库存（避免预检逐条 Redis GET）。
+     *
+     * @param inventoryIds 实体库存 ID 列表
+     * @param baseQtyMap   inventoryId → 基量
+     * @return 实体基量之和
+     */
+    public static int sumEntityBaseQtyFromMap(List<String> inventoryIds, Map<String, Integer> baseQtyMap) {
+        if (inventoryIds == null || inventoryIds.isEmpty() || baseQtyMap == null || baseQtyMap.isEmpty()) {
+            return 0;
+        }
+        return inventoryIds.stream().mapToInt(id -> baseQtyMap.getOrDefault(id, 0)).sum();
     }
 
     /**

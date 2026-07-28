@@ -83,6 +83,40 @@ public class VirtualInventoryUnallocCheckHelperTest {
     }
 
     /**
+     * 指定虚拟仓的明细不参与实体仓未分配 TRY。
+     */
+    @Test
+    public void filterNeedEntityUnallocCheckExcludesVirtualWarehouseId() {
+        InventoryTransactionDTO withVirtual = new InventoryTransactionDTO();
+        withVirtual.setQty(-1);
+        withVirtual.setInventoryStatus(com.erp.model.wms.enums.inventory.InventoryStatusEnum.USABLE.getCode());
+        withVirtual.setSourceType(com.erp.model.wms.enums.inventory.InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        withVirtual.setVirtualWarehouseId("vw-1");
+
+        InventoryTransactionDTO withoutVirtual = new InventoryTransactionDTO();
+        withoutVirtual.setQty(-1);
+        withoutVirtual.setInventoryStatus(com.erp.model.wms.enums.inventory.InventoryStatusEnum.USABLE.getCode());
+        withoutVirtual.setSourceType(com.erp.model.wms.enums.inventory.InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode());
+
+        List<InventoryTransactionDTO> entityOnly = VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(
+                Arrays.asList(withVirtual, withoutVirtual));
+        Assert.assertEquals(1, entityOnly.size());
+        Assert.assertNull(entityOnly.get(0).getVirtualWarehouseId());
+    }
+
+    /**
+     * 批量基量映射汇总应与逐条一致。
+     */
+    @Test
+    public void sumEntityBaseQtyFromMapAggregatesByInventoryId() {
+        java.util.Map<String, Integer> map = new java.util.HashMap<>();
+        map.put("inv-1", 10);
+        map.put("inv-2", 20);
+        int total = VirtualInventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(Arrays.asList("inv-1", "inv-2", "inv-3"), map);
+        Assert.assertEquals(30, total);
+    }
+
+    /**
      * virtualQty&gt;0 且 inventoryIds 为空时应 fail-closed。
      */
     @Test(expected = ServiceException.class)

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -126,4 +127,12 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
      * @return 基量，key 不存在时返回 0
      */
     Integer getRedisBaseQtyByInventory(String inventoryId);
+
+    /**
+     * 批量读取 Redis {@code inventory:current} 基量（MGET），供未分配预检一次性加载。
+     *
+     * @param inventoryIds 库存 ID 集合
+     * @return inventoryId → 基量
+     */
+    Map<String, Integer> getRedisBaseQtyByInventoryBatch(Collection<String> inventoryIds);
 }

@@ -1,7 +1,11 @@
 package com.erp.server.wms.utils;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -26,6 +30,7 @@ import com.common.business.utils.StringUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
+import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -260,6 +265,57 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	 */
 	private static String extractLuaErrorMessage(Exception redisEx) {
 		return resolveLuaBusinessErrorMessage(redisEx);
+	}
+
+	/**
+	 * 解析 {@code inventory:current} Redis 值的首段基量（不含 TRY 在途段）。
+	 *
+	 * @param redisQtyObj Redis GET 返回值
+	 * @return 基量；空或非法时返回 0
+	 */
+	public static int parseBaseCurrentQty(Object redisQtyObj) {
+		if (redisQtyObj == null) {
+			return 0;
+		}
+		String[] split = redisQtyObj.toString().split(splitSign);
+		if (split.length == 0 || StringUtils.isBlank(split[0])) {
+			return 0;
+		}
+		try {
+			return Integer.parseInt(split[0].trim());
+		} catch (NumberFormatException e) {
+			log.warn("Redis current 基量解析失败 base={}", split[0]);
+			return 0;
+		}
+	}
+
+	/**
+	 * 批量 MGET {@code inventory:current} 基量，避免预检按 inventoryId 逐条 GET。
+	 *
+	 * @param inventoryIds 库存 ID 集合
+	 * @return inventoryId → 基量
+	 */
+	public Map<String, Integer> batchGetBaseQtyByInventoryIds(Collection<String> inventoryIds) {
+		if (inventoryIds == null || inventoryIds.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		List<String> distinctIds = inventoryIds.stream()
+				.filter(StringUtils::isNotBlank)
+				.distinct()
+				.collect(Collectors.toList());
+		if (distinctIds.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		List<String> redisKeys = distinctIds.stream()
+				.map(id -> InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id))
+				.collect(Collectors.toList());
+		List<Object> values = inventoryRedisTemplate.opsForValue().multiGet(redisKeys);
+		Map<String, Integer> result = new HashMap<>(distinctIds.size());
+		for (int i = 0; i < distinctIds.size(); i++) {
+			Object val = values != null && i < values.size() ? values.get(i) : null;
+			result.put(distinctIds.get(i), parseBaseCurrentQty(val));
+		}
+		return result;
 	}
 
 }
