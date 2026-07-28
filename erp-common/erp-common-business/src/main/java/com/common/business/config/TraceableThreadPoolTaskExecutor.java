@@ -44,16 +44,27 @@ public class TraceableThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     private void runSafely(Runnable task) {
         try {
             runWithNewTrace(task);
-        } catch (Throwable t) {
-            log.warn("TraceableThreadPoolTaskExecutor async task failed", t);
-            Thread.UncaughtExceptionHandler handler = Thread.currentThread().getUncaughtExceptionHandler();
-            if (handler != null) {
-                try {
-                    handler.uncaughtException(Thread.currentThread(), t);
-                } catch (Throwable ignored) {
-                    // 避免 handler 再次抛出影响提交方
-                }
-            }
+        } catch (Exception e) {
+            // 消化业务异常，避免 CallerRunsPolicy 冒泡到 XXL-JOB 等提交线程
+            log.warn("TraceableThreadPoolTaskExecutor async task failed", e);
+            notifyUncaughtExceptionHandler(e);
+        } catch (Error e) {
+            // JVM/线程级错误不可吞掉，保留线程池默认处理（worker 异常退出并替换）
+            log.error("TraceableThreadPoolTaskExecutor async task fatal error", e);
+            notifyUncaughtExceptionHandler(e);
+            throw e;
+        }
+    }
+
+    private void notifyUncaughtExceptionHandler(Throwable t) {
+        Thread.UncaughtExceptionHandler handler = Thread.currentThread().getUncaughtExceptionHandler();
+        if (handler == null) {
+            return;
+        }
+        try {
+            handler.uncaughtException(Thread.currentThread(), t);
+        } catch (Throwable ignored) {
+            // 避免 handler 再次抛出影响提交方
         }
     }
 
