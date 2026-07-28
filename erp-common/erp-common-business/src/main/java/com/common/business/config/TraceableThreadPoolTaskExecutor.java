@@ -49,9 +49,8 @@ public class TraceableThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
             log.warn("TraceableThreadPoolTaskExecutor async task failed", e);
             notifyUncaughtExceptionHandler(e);
         } catch (Error e) {
-            // JVM/线程级错误不可吞掉，保留线程池默认处理（worker 异常退出并替换）
+            // JVM/线程级错误不可吞掉；勿手动调 UncaughtExceptionHandler，抛出后由 JVM 在线程终止时回调，避免重复告警
             log.error("TraceableThreadPoolTaskExecutor async task fatal error", e);
-            notifyUncaughtExceptionHandler(e);
             throw e;
         }
     }
