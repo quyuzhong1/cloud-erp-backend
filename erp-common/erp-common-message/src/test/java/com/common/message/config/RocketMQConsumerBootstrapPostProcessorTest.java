@@ -44,6 +44,18 @@ public class RocketMQConsumerBootstrapPostProcessorTest {
         Assert.assertTrue(registry.containsBeanDefinition(LISTENER_CONFIGURATION_BEAN));
     }
 
+    @Test
+    public void shouldSafelyDisableConsumerForMalformedValue() {
+        DefaultListableBeanFactory registry = registry();
+        RocketMQConsumerBootstrapPostProcessor postProcessor = new RocketMQConsumerBootstrapPostProcessor();
+        postProcessor.setEnvironment(new MockEnvironment().withProperty(
+                RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, "mqEnabled"));
+
+        postProcessor.postProcessBeanDefinitionRegistry(registry);
+
+        Assert.assertFalse(registry.containsBeanDefinition(LISTENER_CONFIGURATION_BEAN));
+    }
+
     private DefaultListableBeanFactory registry() {
         DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
         registry.registerBeanDefinition(LISTENER_CONFIGURATION_BEAN,

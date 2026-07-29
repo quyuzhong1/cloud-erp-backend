@@ -1,7 +1,12 @@
 package com.common.message.controller;
 
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.config.RocketMQConsumerActivationManager;
 import com.common.message.config.RocketMQConsumerDrainManager;
+import com.common.message.config.RocketMQConsumerLifecycleCoordinator;
+import com.common.message.controller.vo.RocketMQContainerStatusVO;
+import com.common.message.controller.vo.RocketMQLifecycleStatusVO;
 import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.ApplicationContext;
@@ -13,9 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,7 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/internal/rocketmq")
 @ConditionalOnWebApplication
-public class RocketMQConsumerStatusController {
+public class RocketMQConsumerStatusController extends BaseController {
 
     private final ApplicationContext applicationContext;
     private final RocketMQConsumerActivationManager activationManager;
@@ -39,98 +41,111 @@ public class RocketMQConsumerStatusController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> status(HttpServletRequest request) {
+    public ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> status(HttpServletRequest request) {
         if (!isLoopbackRequest(request)) {
-            Map<String, Object> forbidden = new LinkedHashMap<>();
-            forbidden.put("status", "FORBIDDEN");
-            forbidden.put("message", "rocketmq status only accepts loopback requests");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbidden);
+            return forbidden("rocketmq status only accepts loopback requests");
         }
 
+        return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", currentStatus());
+    }
+
+    /**
+     * Starts the irreversible RocketMQ terminal drain.
+     *
+     * @param request current HTTP request
+     * @return typed lifecycle state
+     */
+    @PostMapping("/drain")
+    public ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> drain(HttpServletRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return forbidden("rocketmq drain only accepts loopback requests");
+        }
+        try {
+            drainManager.beginDrain();
+            return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", currentStatus());
+        } catch (RuntimeException ex) {
+            RocketMQLifecycleStatusVO failed = currentStatus();
+            failed.setStatus("DRAIN_FAILED");
+            failed.setMessage(ex.getMessage());
+            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), failed);
+        }
+    }
+
+    /**
+     * Activates deferred RocketMQ listeners when this Pod owns the MQ active color.
+     *
+     * @param request current HTTP request
+     * @return typed lifecycle state
+     */
+    @PostMapping("/activate")
+    public ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> activate(HttpServletRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return forbidden("rocketmq activation only accepts loopback requests");
+        }
+        try {
+            activationManager.activate();
+            return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", currentStatus());
+        } catch (RocketMQConsumerLifecycleCoordinator.TerminalDrainStartedException ex) {
+            RocketMQLifecycleStatusVO conflict = currentStatus();
+            conflict.setStatus("TERMINAL_DRAIN_STARTED");
+            conflict.setMessage(ex.getMessage());
+            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), conflict);
+        } catch (RocketMQConsumerActivationManager.ActivationNotEligibleException ex) {
+            RocketMQLifecycleStatusVO conflict = currentStatus();
+            conflict.setStatus("NOT_ELIGIBLE");
+            conflict.setMessage(ex.getMessage());
+            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), conflict);
+        } catch (RuntimeException ex) {
+            RocketMQLifecycleStatusVO failed = currentStatus();
+            failed.setStatus("ACTIVATION_FAILED");
+            failed.setMessage(ex.getMessage());
+            return lifecycleResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    ex.getMessage(),
+                    failed);
+        }
+    }
+
+    /**
+     * Builds the current lifecycle state without changing listener state.
+     *
+     * @return current RocketMQ lifecycle status
+     */
+    private RocketMQLifecycleStatusVO currentStatus() {
         boolean enabled = activationManager.isEffectivelyEnabled();
         Map<String, DefaultRocketMQListenerContainer> containers = applicationContext.getBeansOfType(
                 DefaultRocketMQListenerContainer.class, false, false);
 
         int running = 0;
-        List<Map<String, Object>> details = new ArrayList<>();
+        RocketMQLifecycleStatusVO status = new RocketMQLifecycleStatusVO();
         for (Map.Entry<String, DefaultRocketMQListenerContainer> entry : containers.entrySet()) {
             DefaultRocketMQListenerContainer container = entry.getValue();
             if (container.isRunning()) {
                 running++;
             }
-            Map<String, Object> detail = new LinkedHashMap<>();
-            detail.put("beanName", entry.getKey());
-            detail.put("consumerGroup", container.getConsumerGroup());
-            detail.put("topic", container.getTopic());
-            detail.put("running", container.isRunning());
-            details.add(detail);
+            RocketMQContainerStatusVO detail = new RocketMQContainerStatusVO();
+            detail.setBeanName(entry.getKey());
+            detail.setConsumerGroup(container.getConsumerGroup());
+            detail.setTopic(container.getTopic());
+            detail.setRunning(container.isRunning());
+            status.getContainers().add(detail);
         }
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", resolveStatus(enabled, containers.size(), running));
-        body.put("enabled", enabled);
-        body.put("startupEnabled", activationManager.isStartupEnabled());
-        body.put("activationState", activationManager.getActivationState());
-        body.put("mqActiveColor", activationManager.getMqActiveColor());
-        body.put("localColor", activationManager.getLocalColor());
-        body.put("colorEligible", activationManager.isColorEligible());
-        body.put("drainState", drainManager.getDrainState());
-        body.put("drainTotalContainers", drainManager.getTotalContainers());
-        body.put("drainedContainers", drainManager.getDrainedContainers());
-        body.put("drainFailure", drainManager.getFailureMessage());
-        body.put("totalContainers", containers.size());
-        body.put("runningContainers", running);
-        body.put("containers", details);
-        return ResponseEntity.ok(body);
-    }
-
-    @PostMapping("/drain")
-    public ResponseEntity<Map<String, Object>> drain(HttpServletRequest request) {
-        if (!isLoopbackRequest(request)) {
-            Map<String, Object> forbidden = new LinkedHashMap<>();
-            forbidden.put("status", "FORBIDDEN");
-            forbidden.put("message", "rocketmq drain only accepts loopback requests");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbidden);
-        }
-        try {
-            drainManager.beginDrain();
-            return status(request);
-        } catch (RuntimeException ex) {
-            Map<String, Object> failed = new LinkedHashMap<>();
-            failed.put("status", "DRAIN_FAILED");
-            failed.put("message", ex.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(failed);
-        }
-    }
-
-    @PostMapping("/activate")
-    public ResponseEntity<Map<String, Object>> activate(HttpServletRequest request) {
-        if (!isLoopbackRequest(request)) {
-            Map<String, Object> forbidden = new LinkedHashMap<>();
-            forbidden.put("status", "FORBIDDEN");
-            forbidden.put("message", "rocketmq activation only accepts loopback requests");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbidden);
-        }
-        if (!"RUNNING".equals(drainManager.getDrainState())) {
-            Map<String, Object> conflict = new LinkedHashMap<>();
-            conflict.put("status", "TERMINAL_DRAIN_STARTED");
-            conflict.put("message", "rocketmq consumers cannot be activated after terminal drain starts");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(conflict);
-        }
-        try {
-            activationManager.activate();
-            return status(request);
-        } catch (RocketMQConsumerActivationManager.ActivationNotEligibleException ex) {
-            Map<String, Object> conflict = new LinkedHashMap<>();
-            conflict.put("status", "NOT_ELIGIBLE");
-            conflict.put("message", ex.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(conflict);
-        } catch (RuntimeException ex) {
-            Map<String, Object> failed = new LinkedHashMap<>();
-            failed.put("status", "ACTIVATION_FAILED");
-            failed.put("message", ex.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failed);
-        }
+        status.setStatus(resolveStatus(enabled, containers.size(), running));
+        status.setEnabled(enabled);
+        status.setStartupEnabled(activationManager.isStartupEnabled());
+        status.setActivationState(activationManager.getActivationState());
+        status.setMqActiveColor(activationManager.getMqActiveColor());
+        status.setLocalColor(activationManager.getLocalColor());
+        status.setColorEligible(activationManager.isColorEligible());
+        status.setDrainState(drainManager.getDrainState());
+        status.setDrainTotalContainers(drainManager.getTotalContainers());
+        status.setDrainedContainers(drainManager.getDrainedContainers());
+        status.setDrainFailure(drainManager.getFailureMessage());
+        status.setTotalContainers(containers.size());
+        status.setRunningContainers(running);
+        return status;
     }
 
     private String resolveStatus(boolean enabled, int total, int running) {
@@ -141,6 +156,36 @@ public class RocketMQConsumerStatusController {
             return "EMPTY";
         }
         return total == running ? "RUNNING" : "DEGRADED";
+    }
+
+    /**
+     * Builds a loopback rejection while preserving the lifecycle response schema.
+     *
+     * @param message rejection detail
+     * @return HTTP 403 response
+     */
+    private ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> forbidden(String message) {
+        RocketMQLifecycleStatusVO forbidden = new RocketMQLifecycleStatusVO();
+        forbidden.setStatus("FORBIDDEN");
+        forbidden.setMessage(message);
+        return lifecycleResponse(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.value(), message, forbidden);
+    }
+
+    /**
+     * Wraps lifecycle data in the project response protocol while retaining transport status codes.
+     *
+     * @param httpStatus transport status
+     * @param code response code
+     * @param responseMessage response message
+     * @param data lifecycle state
+     * @return wrapped response entity
+     */
+    private ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> lifecycleResponse(
+            HttpStatus httpStatus,
+            int code,
+            String responseMessage,
+            RocketMQLifecycleStatusVO data) {
+        return ResponseEntity.status(httpStatus).body(message(code, responseMessage, data));
     }
 
     private boolean isLoopbackRequest(HttpServletRequest request) {

@@ -3,18 +3,16 @@ package com.common.message.config;
 import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Terminal drain used immediately before an old blue-green Pod is removed.
@@ -32,14 +30,34 @@ public class RocketMQConsumerDrainManager {
     private static final long TERMINAL_DRAIN_WAIT_MILLIS = Long.MAX_VALUE;
 
     private final ApplicationContext applicationContext;
+    private final RocketMQConsumerLifecycleCoordinator lifecycleCoordinator;
+    private final AsyncTaskExecutor coordinatorExecutor;
+    private final AsyncTaskExecutor containerDrainExecutor;
 
     private volatile DrainState drainState = DrainState.RUNNING;
     private volatile int totalContainers;
     private volatile int drainedContainers;
     private volatile String failureMessage;
 
-    public RocketMQConsumerDrainManager(ApplicationContext applicationContext) {
+    /**
+     * Creates the terminal drain manager with bounded Spring-managed executors.
+     *
+     * @param applicationContext current application context
+     * @param lifecycleCoordinator shared activation and drain coordinator
+     * @param coordinatorExecutor drain coordination executor
+     * @param containerDrainExecutor listener container drain executor
+     */
+    public RocketMQConsumerDrainManager(
+            ApplicationContext applicationContext,
+            RocketMQConsumerLifecycleCoordinator lifecycleCoordinator,
+            @Qualifier(MessageLifecycleExecutorConfig.COORDINATOR_EXECUTOR)
+                    AsyncTaskExecutor coordinatorExecutor,
+            @Qualifier(MessageLifecycleExecutorConfig.ROCKETMQ_CONTAINER_EXECUTOR)
+                    AsyncTaskExecutor containerDrainExecutor) {
         this.applicationContext = applicationContext;
+        this.lifecycleCoordinator = lifecycleCoordinator;
+        this.coordinatorExecutor = coordinatorExecutor;
+        this.containerDrainExecutor = containerDrainExecutor;
     }
 
     public synchronized void beginDrain() {
@@ -50,9 +68,18 @@ public class RocketMQConsumerDrainManager {
             throw new IllegalStateException("RocketMQ terminal drain has failed: " + failureMessage);
         }
 
-        Map<String, DefaultRocketMQListenerContainer> containerMap = applicationContext.getBeansOfType(
-                DefaultRocketMQListenerContainer.class, false, false);
-        List<DefaultRocketMQListenerContainer> containers = new ArrayList<>(containerMap.values());
+        RocketMQConsumerLifecycleCoordinator.TerminalDrainPermit<List<DefaultRocketMQListenerContainer>> permit;
+        try {
+            permit = lifecycleCoordinator.beginTerminalDrain(this::listenerSnapshot);
+        } catch (RuntimeException | Error ex) {
+            failureMessage = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+            drainState = DrainState.FAILED;
+            throw ex;
+        }
+        if (permit == null) {
+            return;
+        }
+        List<DefaultRocketMQListenerContainer> containers = permit.getSnapshot();
         totalContainers = containers.size();
         drainedContainers = 0;
         failureMessage = null;
@@ -63,20 +90,38 @@ public class RocketMQConsumerDrainManager {
         }
 
         drainState = DrainState.DRAINING;
-        Thread coordinator = new Thread(() -> drainAll(containers), "rocketmq-terminal-drain");
-        coordinator.setDaemon(true);
-        coordinator.start();
+        try {
+            coordinatorExecutor.submit(() -> drainAll(containers));
+        } catch (RuntimeException ex) {
+            failureMessage = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+            drainState = DrainState.FAILED;
+            throw ex;
+        }
+    }
+
+    /**
+     * Captures every listener container while activation is blocked by the lifecycle coordinator.
+     *
+     * @return complete listener container snapshot
+     */
+    private List<DefaultRocketMQListenerContainer> listenerSnapshot() {
+        Map<String, DefaultRocketMQListenerContainer> containerMap = applicationContext.getBeansOfType(
+                DefaultRocketMQListenerContainer.class, false, false);
+        return new ArrayList<>(containerMap.values());
     }
 
     private void drainAll(List<DefaultRocketMQListenerContainer> containers) {
-        ExecutorService executor = Executors.newFixedThreadPool(containers.size(), new DrainThreadFactory());
         List<Future<?>> futures = new ArrayList<>();
-        for (DefaultRocketMQListenerContainer container : containers) {
-            futures.add(executor.submit(() -> drainContainer(container)));
-        }
-        executor.shutdown();
-
         String firstFailure = null;
+        for (DefaultRocketMQListenerContainer container : containers) {
+            try {
+                futures.add(containerDrainExecutor.submit(() -> drainContainer(container)));
+            } catch (RuntimeException ex) {
+                firstFailure = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                break;
+            }
+        }
+
         for (Future<?> future : futures) {
             try {
                 future.get();
@@ -138,14 +183,4 @@ public class RocketMQConsumerDrainManager {
         FAILED
     }
 
-    private static class DrainThreadFactory implements ThreadFactory {
-        private final AtomicInteger sequence = new AtomicInteger();
-
-        @Override
-        public Thread newThread(Runnable runnable) {
-            Thread thread = new Thread(runnable, "rocketmq-container-drain-" + sequence.incrementAndGet());
-            thread.setDaemon(true);
-            return thread;
-        }
-    }
 }

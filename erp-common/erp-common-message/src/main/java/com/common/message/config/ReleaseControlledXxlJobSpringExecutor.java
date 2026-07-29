@@ -9,11 +9,14 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.AsyncTaskExecutor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -34,11 +37,21 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
 
     private final AtomicBoolean executorStarted = new AtomicBoolean(false);
     private final AtomicBoolean executorDestroyed = new AtomicBoolean(false);
+    private final AsyncTaskExecutor lifecycleExecutor;
     private volatile DrainState drainState = DrainState.DISABLED;
     private volatile String drainFailure;
     private volatile boolean registryRemovalRequested;
-    private volatile Thread drainThread;
+    private volatile Future<?> drainFuture;
     private Environment environment;
+
+    /**
+     * Creates an executor whose terminal drain runs on a Spring-managed lifecycle executor.
+     *
+     * @param lifecycleExecutor bounded lifecycle executor
+     */
+    public ReleaseControlledXxlJobSpringExecutor(AsyncTaskExecutor lifecycleExecutor) {
+        this.lifecycleExecutor = lifecycleExecutor;
+    }
 
     @Override
     public void setEnvironment(Environment environment) {
@@ -140,10 +153,13 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         executorDestroyed.set(true);
         drainState = DrainState.DRAINING;
         drainFailure = null;
-        Thread coordinator = new Thread(this::drainExecutor, "xxl-job-terminal-drain");
-        coordinator.setDaemon(true);
-        drainThread = coordinator;
-        coordinator.start();
+        try {
+            drainFuture = lifecycleExecutor.submit(this::drainExecutor);
+        } catch (RuntimeException ex) {
+            drainFailure = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+            drainState = DrainState.FAILED;
+            throw ex;
+        }
     }
 
     private void drainExecutor() {
@@ -151,7 +167,7 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
             stopAcceptingTriggersAndUnregister();
             waitForAcceptedJobs();
             // At this point the official destroy path only interrupts idle JobThreads.
-            super.destroy();
+            destroyExecutorAfterDrain();
             drainState = DrainState.DRAINED;
             log.info(">>>>>>>>>>> xxl-job executor unregistered and drained without interrupting an active job.");
         } catch (Throwable ex) {
@@ -161,7 +177,12 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         }
     }
 
-    private void stopAcceptingTriggersAndUnregister() throws Exception {
+    /**
+     * Stops the embedded trigger server and waits for its registry thread to exit.
+     *
+     * @throws Exception when the XXL-JOB 2.3.0 private contract cannot be accessed or stopped
+     */
+    protected void stopAcceptingTriggersAndUnregister() throws Exception {
         Field embedServerField = XxlJobExecutor.class.getDeclaredField("embedServer");
         embedServerField.setAccessible(true);
         Object embedServer = embedServerField.get(this);
@@ -192,7 +213,12 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         }
     }
 
-    private void waitForAcceptedJobs() throws Exception {
+    /**
+     * Waits until accepted jobs remain idle for five consecutive checks.
+     *
+     * @throws Exception when job thread state cannot be inspected
+     */
+    protected void waitForAcceptedJobs() throws Exception {
         int consecutiveIdleChecks = 0;
         // Allow already accepted Netty tasks to enqueue before declaring the executor idle.
         while (consecutiveIdleChecks < 5) {
@@ -205,6 +231,13 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
                 Thread.sleep(1000L);
             }
         }
+    }
+
+    /**
+     * Invokes the official executor destroy path only after accepted jobs are idle.
+     */
+    protected void destroyExecutorAfterDrain() {
+        super.destroy();
     }
 
     @SuppressWarnings("unchecked")
@@ -245,15 +278,17 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     }
 
     private void awaitDrainCompletion() {
-        Thread coordinator = drainThread;
-        if (coordinator == null) {
+        Future<?> future = drainFuture;
+        if (future == null) {
             return;
         }
         try {
-            coordinator.join();
+            future.get();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             log.warn(">>>>>>>>>>> interrupted while waiting for XXL-JOB terminal drain.");
+        } catch (ExecutionException ex) {
+            log.warn(">>>>>>>>>>> XXL-JOB terminal drain coordinator completed exceptionally.", ex.getCause());
         }
     }
 

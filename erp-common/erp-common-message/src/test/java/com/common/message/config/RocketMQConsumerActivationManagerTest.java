@@ -64,6 +64,21 @@ public class RocketMQConsumerActivationManagerTest {
         }
     }
 
+    @Test
+    public void shouldTreatMalformedStartupSwitchAsDeferredWithoutConversionFailure() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        MockEnvironment environment = deferredEnvironment("green", "green")
+                .withProperty(RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, "mqEnabled");
+
+        RocketMQConsumerActivationManager manager = new RocketMQConsumerActivationManager(
+                context, environment, () -> Assert.fail("registrar must not run during construction"));
+
+        Assert.assertFalse(manager.isStartupEnabled());
+        Assert.assertEquals("DEFERRED", manager.getActivationState());
+        context.close();
+    }
+
     private MockEnvironment deferredEnvironment(String mqActiveColor, String localColor) {
         return new MockEnvironment()
                 .withProperty(RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, "false")

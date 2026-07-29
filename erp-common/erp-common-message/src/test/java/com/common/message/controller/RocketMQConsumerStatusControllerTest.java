@@ -1,7 +1,9 @@
 package com.common.message.controller;
 
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.config.RocketMQConsumerActivationManager;
 import com.common.message.config.RocketMQConsumerDrainManager;
+import com.common.message.controller.vo.RocketMQLifecycleStatusVO;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.support.GenericApplicationContext;
@@ -10,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.mockito.Mockito;
-
-import java.util.Map;
 
 public class RocketMQConsumerStatusControllerTest {
 
@@ -28,11 +28,11 @@ public class RocketMQConsumerStatusControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("127.0.0.1");
 
-        ResponseEntity<Map<String, Object>> response = controller.status(request);
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.status(request);
 
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assert.assertEquals("DISABLED", response.getBody().get("status"));
-        Assert.assertEquals(0, response.getBody().get("totalContainers"));
+        Assert.assertEquals("DISABLED", response.getBody().getData().getStatus());
+        Assert.assertEquals(0, response.getBody().getData().getTotalContainers());
         context.close();
     }
 
@@ -47,7 +47,7 @@ public class RocketMQConsumerStatusControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("172.16.100.10");
 
-        ResponseEntity<Map<String, Object>> response = controller.status(request);
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.status(request);
 
         Assert.assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         context.close();
@@ -65,10 +65,10 @@ public class RocketMQConsumerStatusControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("127.0.0.1");
 
-        ResponseEntity<Map<String, Object>> response = controller.drain(request);
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.drain(request);
 
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assert.assertEquals("DRAINING", response.getBody().get("drainState"));
+        Assert.assertEquals("DRAINING", response.getBody().getData().getDrainState());
         Mockito.verify(drainManager).beginDrain();
         context.close();
     }

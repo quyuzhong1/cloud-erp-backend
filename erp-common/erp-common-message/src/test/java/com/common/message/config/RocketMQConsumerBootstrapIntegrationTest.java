@@ -9,11 +9,13 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
 import org.junit.Test;
+import org.springframework.context.ApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.core.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +34,19 @@ public class RocketMQConsumerBootstrapIntegrationTest {
             assertThat(context).hasSingleBean(TestListener.class);
             assertThat(context).doesNotHaveBean(ListenerContainerConfiguration.class);
             assertThat(context).doesNotHaveBean(DefaultRocketMQListenerContainer.class);
+            assertThat(context.getBean(RocketMQConsumerActivationManager.class).getActivationState())
+                    .isEqualTo("DEFERRED");
+        });
+    }
+
+    @Test
+    public void malformedConsumerSwitchDoesNotFailApplicationStartup() {
+        contextRunner.withPropertyValues("erp.mq.consumer.enabled=mqEnabled").run(context -> {
+            assertThat(context).hasNotFailed();
+            assertThat(context).doesNotHaveBean(ListenerContainerConfiguration.class);
+            assertThat(context).doesNotHaveBean(DefaultRocketMQListenerContainer.class);
+            assertThat(context.getBean(RocketMQConsumerActivationManager.class).getActivationState())
+                    .isEqualTo("DEFERRED");
         });
     }
 
@@ -52,6 +67,14 @@ public class RocketMQConsumerBootstrapIntegrationTest {
         @Bean
         public TestListener testListener() {
             return new TestListener();
+        }
+
+        @Bean
+        public RocketMQConsumerActivationManager activationManager(ApplicationContext applicationContext,
+                                                                   Environment environment) {
+            return new RocketMQConsumerActivationManager(applicationContext, environment, () -> {
+                // Registration is intentionally deferred in this bootstrap-only test.
+            });
         }
     }
 

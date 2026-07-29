@@ -32,16 +32,27 @@ public class RocketMQConsumerActivationManager {
     private final ApplicationContext applicationContext;
     private final Environment environment;
     private final ListenerRegistrar listenerRegistrar;
+    private final RocketMQConsumerLifecycleCoordinator lifecycleCoordinator;
     private final boolean startupEnabled;
 
     private volatile ActivationState activationState;
     private volatile String failureMessage;
 
+    /**
+     * Creates the production activation manager backed by RocketMQ's listener registrar.
+     *
+     * @param applicationContext current application context
+     * @param environment Spring environment
+     * @param messageConverter RocketMQ message converter
+     * @param rocketMQProperties RocketMQ client properties
+     * @param lifecycleCoordinator shared activation and drain coordinator
+     */
     @Autowired
     public RocketMQConsumerActivationManager(ApplicationContext applicationContext,
                                              Environment environment,
                                              RocketMQMessageConverter messageConverter,
-                                             RocketMQProperties rocketMQProperties) {
+                                             RocketMQProperties rocketMQProperties,
+                                             RocketMQConsumerLifecycleCoordinator lifecycleCoordinator) {
         this(applicationContext, environment, () -> {
             if (!(environment instanceof StandardEnvironment)) {
                 throw new IllegalStateException("Spring Environment is not a StandardEnvironment");
@@ -50,17 +61,24 @@ public class RocketMQConsumerActivationManager {
                     messageConverter, (StandardEnvironment) environment, rocketMQProperties);
             configuration.setApplicationContext(applicationContext);
             configuration.afterSingletonsInstantiated();
-        });
+        }, lifecycleCoordinator);
     }
 
     RocketMQConsumerActivationManager(ApplicationContext applicationContext,
                                       Environment environment,
                                       ListenerRegistrar listenerRegistrar) {
+        this(applicationContext, environment, listenerRegistrar, new RocketMQConsumerLifecycleCoordinator());
+    }
+
+    RocketMQConsumerActivationManager(ApplicationContext applicationContext,
+                                      Environment environment,
+                                      ListenerRegistrar listenerRegistrar,
+                                      RocketMQConsumerLifecycleCoordinator lifecycleCoordinator) {
         this.applicationContext = applicationContext;
         this.environment = environment;
         this.listenerRegistrar = listenerRegistrar;
-        this.startupEnabled = environment.getProperty(
-                RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, Boolean.class, Boolean.TRUE);
+        this.lifecycleCoordinator = lifecycleCoordinator;
+        this.startupEnabled = RocketMQConsumerEnabledResolver.isEnabled(environment);
         this.activationState = startupEnabled ? ActivationState.NATIVE : ActivationState.DEFERRED;
     }
 
@@ -68,11 +86,23 @@ public class RocketMQConsumerActivationManager {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public void activateOnApplicationReadyWhenColorIsActive() {
         if (!startupEnabled && isColorEligible()) {
-            activate();
+            try {
+                activate();
+            } catch (RocketMQConsumerLifecycleCoordinator.TerminalDrainStartedException ex) {
+                // A terminal drain won the race; ApplicationReady must not fail the whole application.
+                LOGGER.warn("Skip RocketMQ ApplicationReady activation because terminal drain has started");
+            }
         }
     }
 
-    public synchronized void activate() {
+    public void activate() {
+        lifecycleCoordinator.runActivation(this::activateUnderLifecycleLock);
+    }
+
+    /**
+     * Registers all deferred listeners while the shared lifecycle lock remains held.
+     */
+    private synchronized void activateUnderLifecycleLock() {
         if (startupEnabled || activationState == ActivationState.ACTIVE) {
             return;
         }
