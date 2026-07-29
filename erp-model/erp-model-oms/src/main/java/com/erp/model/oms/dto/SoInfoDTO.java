@@ -1176,13 +1176,6 @@ public class SoInfoDTO implements Serializable {
          * 收款单信息
          */
         private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
-
-        /**
-         * 指定创建人（可选）。未传则走 MetaObjectHandler 自动填充；
-         * 展会订单审核生成 B2B 等场景可传入业务创建人，避免新增后再二次回写。
-         */
-        private String createUserId;
-        private String createUserName;
     }
 
 

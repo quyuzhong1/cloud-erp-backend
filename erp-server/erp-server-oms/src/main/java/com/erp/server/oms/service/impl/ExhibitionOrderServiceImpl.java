@@ -1215,9 +1215,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         }
 
         addDTO.setDetailList(addDTOS);
-        // 创建人随 add 一次性写入（收款单可选销售订单依赖创建人），避免新增成功后二次回写失败留下脏单
-        addDTO.setCreateUserId(entity.getCreateUserId());
-        addDTO.setCreateUserName(entity.getCreateUserName());
 
         //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();

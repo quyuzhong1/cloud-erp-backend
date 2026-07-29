@@ -398,14 +398,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
-            // insertFill 可能写入系统用户；业务指定创建人时同事务内覆盖，避免调用方二次回写
-            if (StringUtils.isNotBlank(dto.getCreateUserId())) {
-                addEntity.setCreateUserId(dto.getCreateUserId());
-                addEntity.setCreateUserName(StringUtils.defaultString(dto.getCreateUserName()));
-                if (!this.updateById(addEntity)) {
-                    throw new ServiceException("回写销售订单创建人失败，请重试");
-                }
-            }
             // 此处调整为明细的币制取主单的币制
             if (StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
