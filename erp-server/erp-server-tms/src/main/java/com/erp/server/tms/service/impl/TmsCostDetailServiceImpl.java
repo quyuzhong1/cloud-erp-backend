@@ -377,12 +377,14 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
             //费用名称
             entity.setCostName(costMap.get(entity.getCfgCostId()));
-            //主表id
+            // 按费用项+类型+币种匹配旧明细，避免同费用多币种互相覆盖
             TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
                     && CharSequenceUtil.equals(entity.getType(), obj.getType())
+                    && CharSequenceUtil.equals(CharSequenceUtil.blankToDefault(obj.getCurrency(), ""), costCurrency)
             ).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());
+                oldDetailList.remove(oldDetailEntity);
             }
             //操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
@@ -528,7 +530,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
     /**
-     * 批量查询旧数据并转换为map，key为cfgCostId_type，value为费用明细实体
+     * 批量查询旧数据并转换为map，key为cfgCostId_type_currency，value为费用明细实体
      */
     private Map<String, Map<String, TmsCostDetailEntity>> buildOldDetailMap(Set<String> mainIds, List<String> cfgCostIdList) {
         if (CollectionUtils.isEmpty(cfgCostIdList) || CollectionUtils.isEmpty(mainIds)) {
@@ -540,8 +542,10 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .list();
         Map<String, Map<String, TmsCostDetailEntity>> oldDetailMap = new HashMap<>();
         for (TmsCostDetailEntity entity : oldDetailList) {
+            String key = entity.getCfgCostId() + "_" + entity.getType() + "_"
+                    + CharSequenceUtil.blankToDefault(entity.getCurrency(), "");
             oldDetailMap.computeIfAbsent(entity.getMainId(), k -> new HashMap<>())
-                    .put(entity.getCfgCostId() + "_" + entity.getType(), entity);
+                    .put(key, entity);
         }
         return oldDetailMap;
     }
@@ -571,9 +575,11 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             fillLocalCurrencyFields(entity);
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
             entity.setCostName(costNameMap.get(entity.getCfgCostId()));
-            TmsCostDetailEntity oldDetailEntity = oldDetailMap.get(entity.getCfgCostId() + "_" + entity.getType());
+            String oldKey = entity.getCfgCostId() + "_" + entity.getType() + "_" + costCurrency;
+            TmsCostDetailEntity oldDetailEntity = oldDetailMap.get(oldKey);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());
+                oldDetailMap.remove(oldKey);
             }
             if (StringUtils.isNotBlank(entity.getId())) {
                 String value = entity.getCostName() + "】,费用值【" + entity.getCostValue() + "】，币别【" + entity.getCurrency();
