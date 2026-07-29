@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,9 @@ import java.util.TreeMap;
  * 等均为顶层标量字段），大部分字段可直接由 {@code dmp_cfg_input_convert} 数据库字段映射完成，
  * 无需本类介入；本类仅做以下无法由字段映射直接表达的后处理：
  * <ol>
- *   <li>{@code shippingTime}（文档发运时间，格式 {@code yyyy-MM-dd HH:mm:ss}）
+ *   <li>{@code shippingTime}（发运时间；方案文档标注格式 {@code yyyy-MM-dd HH:mm:ss}，但 2026-07-29
+ *       联调真实报文确认网关实际下发 {@code yyyy-MM-dd'T'HH:mm:ssZ}，如 {@code 2026-07-29T09:57:33+0800}，
+ *       与 {@code orderTime} 同格式；解析时两种格式均兼容，避免该字段静默丢失）
  *       → {@code dateShipping}（{@link LocalDateTime}）；</li>
  *   <li>{@code status}（官方 VALID/HELD/CANCELLED；兼容历史 {@code orderStatus}）→ 统一转 String；</li>
  *   <li>{@code status=VALID} 时联合 {@code stage} 二次确认：仅 {@code stage=SHIPPED}（2026-07-29
@@ -47,6 +50,8 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    /** 网关真实下发格式（2026-07-29 联调确认），与 orderTime 一致，见 AiyaHandlerServiceImpl#ORDER_TIME_FORMATTER */
+    private static final DateTimeFormatter OFFSET_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
 
     private static final String MONGO_KEY_ORDER_NUMBER = "orderNumber";
     private static final String MONGO_KEY_SHIPPING_TIME = "shippingTime";
@@ -107,8 +112,9 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     }
 
     /**
-     * 解析发运时间字符串为 {@link LocalDateTime}，依次尝试 {@code yyyy-MM-dd HH:mm:ss}
-     * （文档 {@code shippingTime} 格式）/ {@code yyyy-MM-dd}（取当日 00:00:00）。
+     * 解析发运时间字符串为 {@link LocalDateTime}，依次尝试 {@code yyyy-MM-dd'T'HH:mm:ssZ}
+     * （2026-07-29 联调确认的网关真实格式，如 {@code 2026-07-29T09:57:33+0800}）/
+     * {@code yyyy-MM-dd HH:mm:ss}（方案文档标注格式，兼容保留）/ {@code yyyy-MM-dd}（取当日 00:00:00）。
      */
     private LocalDateTime resolveDateTime(Object value, Object bizNo) {
         if (value == null) {
@@ -117,6 +123,11 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
         String str = value.toString().trim();
         if (StringUtils.isBlank(str)) {
             return null;
+        }
+        try {
+            return OffsetDateTime.parse(str, OFFSET_DATETIME_FORMATTER).toLocalDateTime();
+        } catch (Exception ignore) {
+            // ignore and try "yyyy-MM-dd HH:mm:ss"
         }
         try {
             return LocalDateTime.parse(str, DATETIME_FORMATTER);
