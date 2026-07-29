@@ -148,6 +148,11 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      */
     private static final String WEGO_INTERCEPT_IDEMPOTENT_KEYWORD = "操作成功";
 
+    /**
+     * 截单前查询出库单最大尝试次数（含首次）
+     */
+    private static final int CANCEL_SEARCH_MAX_RETRY = 3;
+
     @Resource
     private WegoOpenApiService wegoOpenApiService;
 
@@ -612,16 +617,27 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         String[] auth = resolveAccessTokenAndSecret();
         String accessToken = auth[0];
         String secret = auth[1];
+        String orderNo = cancelOutboundReq.getOrderCode();
 
-        WegoOutboundResp.OutboundOrderDTO currentOrder = null;
+        // 截单前必须拿到目标单精确状态，再决定 errorHandle / intercept；
+        // 查询异常或未命中时禁止降级普通截单，避免异常单误走 2c.order.intercept。
+        WegoOutboundResp.OutboundOrderDTO currentOrder;
         try {
-            currentOrder = searchOutboundByNo(accessToken, secret, cancelOutboundReq.getOrderCode());
+            currentOrder = searchOutboundByNoWithRetry(accessToken, secret, orderNo);
         } catch (Exception e) {
-            log.warn("{}截单前查询出库单失败，降级普通截单, orderNo={}",
-                    getPlatForm().getName(), cancelOutboundReq.getOrderCode(), e);
+            log.warn("{}截单前查询出库单失败（已重试），返回可重试失败, orderNo={}",
+                    getPlatForm().getName(), orderNo, e);
+            return failure("WEGO截单前查询出库单失败，请稍后重试");
         }
-        String orderStatus = currentOrder == null || currentOrder.getOrderStatus() == null
-                ? null : String.valueOf(currentOrder.getOrderStatus());
+        if (currentOrder == null) {
+            log.warn("{}截单前未查询到目标出库单, orderNo={}", getPlatForm().getName(), orderNo);
+            return failure("WEGO未查询到出库单（" + orderNo + "），无法确定状态，请稍后重试");
+        }
+        if (currentOrder.getOrderStatus() == null) {
+            log.warn("{}截单前出库单状态为空, orderNo={}", getPlatForm().getName(), orderNo);
+            return failure("WEGO出库单状态为空，无法确定取消方式，请稍后重试");
+        }
+        String orderStatus = String.valueOf(currentOrder.getOrderStatus());
 
         // 已取消：幂等成功
         if (WegoEnums.OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
@@ -636,10 +652,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         // 提交失败 / 出库异常：走异常出库取消接口
         if (isExceptionOutboundStatus(orderStatus)) {
-            return cancelExceptionOutbound(accessToken, secret, cancelOutboundReq.getOrderCode());
+            return cancelExceptionOutbound(accessToken, secret, orderNo);
         }
 
-        // 其余状态或查不到状态：普通截单
+        // 已明确为非异常态：普通截单
         return cancelNormalOutbound(cancelOutboundReq);
     }
 
@@ -695,9 +711,9 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     /**
      * 取消受理后按出库单最新状态确认拦截结果。
      *
-     * @param accessToken        WEGO accessToken
-     * @param secret             WEGO secret
-     * @param orderNo            WEGO 出库单号
+     * @param accessToken         WEGO accessToken
+     * @param secret              WEGO secret
+     * @param orderNo             WEGO 出库单号
      * @param defaultIntercepting 回查失败或状态未决时是否按「拦截中」处理
      * @return 拦截成功 / 拦截中 / 拦截失败
      */
@@ -711,7 +727,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if (defaultIntercepting) {
                 return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
             }
-            return failure("WEGO取消后回查出库单异常：" + e.getMessage());
+            return failure("WEGO取消后回查出库单失败，请稍后重试");
         }
         if (order == null || order.getOrderStatus() == null) {
             return defaultIntercepting
@@ -731,12 +747,39 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /**
-     * 按 WEGO 出库单号精确查询单条出库单。
+     * 截单前查询出库单，失败时有限次重试。
      *
      * @param accessToken WEGO accessToken
      * @param secret      WEGO secret
      * @param orderNo     WEGO 出库单号
-     * @return 出库单；未查到返回 null
+     * @return 精确匹配的出库单；接口成功但无匹配时返回 null
+     * @throws Exception 重试耗尽后仍查询失败
+     */
+    private WegoOutboundResp.OutboundOrderDTO searchOutboundByNoWithRetry(String accessToken, String secret,
+                                                                          String orderNo) throws Exception {
+        Exception last = null;
+        for (int attempt = 1; attempt <= CANCEL_SEARCH_MAX_RETRY; attempt++) {
+            try {
+                return searchOutboundByNo(accessToken, secret, orderNo);
+            } catch (Exception e) {
+                last = e;
+                log.warn("{}截单前查询出库单第{}次失败, orderNo={}",
+                        getPlatForm().getName(), attempt, orderNo, e);
+            }
+        }
+        throw last;
+    }
+
+    /**
+     * 按 WEGO 出库单号精确查询单条出库单。
+     * <p>
+     * 仅返回 {@code no} 完全匹配的记录；列表为空或无精确匹配时返回 {@code null}，
+     * 禁止回退 {@code list.get(0)}，避免用其他订单状态做截单路由。
+     *
+     * @param accessToken WEGO accessToken
+     * @param secret      WEGO secret
+     * @param orderNo     WEGO 出库单号
+     * @return 出库单；未精确命中返回 null
      */
     private WegoOutboundResp.OutboundOrderDTO searchOutboundByNo(String accessToken, String secret, String orderNo) {
         WegoOutboundSearchDTO.SearchReqDTO searchReq = WegoOutboundSearchDTO.SearchReqDTO.builder()
@@ -749,9 +792,9 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return null;
         }
         return list.stream()
-                .filter(o -> orderNo.equals(o.getNo()))
+                .filter(o -> o != null && orderNo.equals(o.getNo()))
                 .findFirst()
-                .orElse(list.get(0));
+                .orElse(null);
     }
 
     /**

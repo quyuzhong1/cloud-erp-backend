@@ -338,7 +338,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         }
                     }
 
-                    // WEGO：拦截中轮询确认失败（出库单已发货）——清拦截标识、关闭待处理拦截单，再走已发货流程
+                    // WEGO：拦截中 → 确认拦截失败。
+                    // 前置条件：本段位于外层 ENUM_SHIPPED（dto.orderStatus=shipped）内，
+                    // 仅当 DMP 回传已发货/已签收（WEGO 10/11 均映射为 shipped）时才会进入；
+                    // 提交失败/出库异常等 exception 态走下方 ENUM_EXCEPTION 分支，不会命中此处。
+                    // 内层仅判断「是否处于拦截中」（销售单 isIntercept 或三方发货单 INTERCEPTING），
+                    // 与后方 isSignShipped（是否平台标发）无关，勿将标发开关误当作已发货条件。
                     if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
                             && (Boolean.TRUE.equals(mainEntity.getIsIntercept())
                             || (Objects.nonNull(thirdWarehouseDeliveryEntity)
