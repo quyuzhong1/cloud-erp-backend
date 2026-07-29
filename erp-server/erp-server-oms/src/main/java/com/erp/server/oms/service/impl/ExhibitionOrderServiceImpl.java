@@ -95,6 +95,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -1214,6 +1215,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         }
 
         addDTO.setDetailList(addDTOS);
+        // 创建人随 add 一次性写入（收款单可选销售订单依赖创建人），避免新增成功后二次回写失败留下脏单
+        addDTO.setCreateUserId(entity.getCreateUserId());
+        addDTO.setCreateUserName(entity.getCreateUserName());
 
         //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
@@ -1221,20 +1225,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String soId;
         try {
             soId = soInfoService.add(addDTO);
-            // 创建人与展会订单创建人保持一致（收款单可选销售订单依赖创建人）；走 updateById + @Version，避免无版本条件覆盖
-            if (StringUtils.isNotBlank(soId) && StringUtils.isNotBlank(entity.getCreateUserId())) {
-                SoInfoEntity soInfo = soInfoService.getById(soId);
-                if (soInfo != null) {
-                    soInfo.setCreateUserId(entity.getCreateUserId());
-                    soInfo.setCreateUserName(entity.getCreateUserName());
-                    if (!soInfoService.updateById(soInfo)) {
-                        throw new ServiceException("回写销售订单创建人失败，请重试");
-                    }
-                }
-            }
         }catch (Exception e) {
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
+            // catch 后正常 return 不会触发回滚，需显式标记，避免「审核失败但销售订单已落库」
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return mqResponseDTO;
         }finally {
             //恢复系统标识

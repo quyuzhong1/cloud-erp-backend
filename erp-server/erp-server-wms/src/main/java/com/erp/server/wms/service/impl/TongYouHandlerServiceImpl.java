@@ -208,8 +208,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName() + "创建B2B出库单请求:{}", JSONUtil.toJsonStr(hbOutboundReq));
         TongYouBaseResp<TongYouOutboundResp> tongYouBaseResp = tongYouService.createHbOutboundBill(hbOutboundReq);
         log.warn(getPlatForm().getName() + "创建B2B出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
+        if (tongYouBaseResp == null) {
+            return failure("通邮创建出库单未收到有效响应");
+        }
         if (!isSuccess(tongYouBaseResp.getError())) {
-            return failure(tongYouBaseResp.getContent());
+            return failure(CharSequenceUtil.blankToDefault(tongYouBaseResp.getContent(), "通邮创建出库单失败"));
         }
         return success(createOutboundReq.getReferenceNo());
     }
@@ -266,8 +269,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"取消出库单请求:{}", JSONUtil.toJsonStr(cancelOutboundReq));
         TongYouCancelOutboundResp tongYouBaseResp = tongYouService.cancelOutboundBill(cancelOutboundReq);
         log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
+        if (tongYouBaseResp == null) {
+            return failure("通邮取消出库单未收到有效响应");
+        }
         if(!isSuccess(tongYouBaseResp.getError())){
-            return failure(tongYouBaseResp.getContent());
+            return failure(CharSequenceUtil.blankToDefault(tongYouBaseResp.getContent(), "通邮取消出库单失败"));
         }
         return resolveCancelOutboundResult(cancelOutboundReq, tongYouBaseResp);
 

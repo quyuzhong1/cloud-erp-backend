@@ -162,12 +162,13 @@ public class TongYouService {
         log.warn("通邮 createHbOutboundBill request:{}", maskTokenJson(jsonString));
         ThirdWarehouseContext.setRequestJson(maskTokenJson(jsonString));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, jsonString, headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        // 空报文不走解析抛异常链路，直接返回明确失败，便于 Handler 转业务失败而非 NPE/系统重试
         if (ObjectUtil.isEmpty(bodyStr)) {
             log.warn("通邮 createHbOutboundBill empty response, url={}", getPreUrl() + path);
+            return TongYouBaseResp.error("通邮创建出库单未收到有效响应");
         }
-        TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
-        ThirdWarehouseContext.setResponseJson(bodyStr);
-        return respDto;
+        return TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
     }
 
     /**
