@@ -597,6 +597,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         //旧负责人
         String oldChargeId = shopInfo.getChargeId();
+        String oldShopName = shopInfo.getName();
         shopInfo.setName(dto.getName());
         String salesOrgId = dto.getSalesOrgId();
         //负责人
@@ -642,6 +643,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
+        }
+        // 店铺改名同步关联客户名称并推送金蝶
+        if (!CharSequenceUtil.equals(oldShopName, dto.getName())) {
+            customerInfoService.syncNameFromShopAndPushKingdee(shopInfo.getCustomerId(), dto.getName());
         }
 
         //负责人变更则更新物流单店铺负责人
@@ -739,6 +744,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         checkInternalShopName(dto.getName(), dto.getId());
         //旧负责人
         String oldChargeId = shopInfo.getChargeId();
+        String oldShopName = shopInfo.getName();
         shopInfo.setName(dto.getName());
         String salesOrgId = dto.getSalesOrgId();
         //负责人
@@ -766,6 +772,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
+        }
+        if (!CharSequenceUtil.equals(oldShopName, dto.getName())) {
+            customerInfoService.syncNameFromShopAndPushKingdee(shopInfo.getCustomerId(), dto.getName());
         }
 
         //负责人变更则更新物流单店铺负责人
