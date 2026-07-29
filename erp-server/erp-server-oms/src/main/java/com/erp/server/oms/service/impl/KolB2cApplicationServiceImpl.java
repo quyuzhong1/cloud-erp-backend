@@ -1466,8 +1466,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                         .eq(KolSubB2cApplicationEntity::getId, entity.getId())
                         .update();
             }
-            kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2c(entity.getId());
         }
+        // 批量汇总回写发货状态/跟踪号，避免逐单 refresh 的 N+1
+        kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2cBatch(sourceIds);
     }
 
     /**

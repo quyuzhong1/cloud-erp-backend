@@ -130,10 +130,15 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
         boolean tongYouWarehouse = PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderEntity.getCode());
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = tongYouWarehouse
-                ? wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()))
-                : wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()),
-                B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode());
+        // 非通邮：订单附件需兼容历史 type=ModuleTypeEnum.B2B_THIRD_DELIVERY(157)
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()));
+        if (!tongYouWarehouse) {
+            String newType = B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode();
+            String legacyType = ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode();
+            attachmentList = CollUtil.isEmpty(attachmentList) ? Collections.emptyList() : attachmentList.stream()
+                    .filter(item -> newType.equals(item.getType()) || legacyType.equals(item.getType()))
+                    .collect(Collectors.toList());
+        }
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
         if (tongYouWarehouse) {
             fillTongYouOutboundReq(req, entity, attachmentList);

@@ -8750,6 +8750,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isEmpty(ids)) {
             return Boolean.FALSE;
         }
+        // 先更新 B2C 订单状态，再汇总回写 KOL（refresh 依赖库中最新 billStatus；同事务内可见未提交变更）
         Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, ids)
                 .set(StrUtil.isNotBlank(status), SoB2cEntity::getBillStatus, status)
                 .set(Objects.nonNull(isManualDelivery), SoB2cEntity::getIsManualDelivery, isManualDelivery)
@@ -8757,13 +8758,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StrUtil.isBlank(status)) {
             return updateResult;
         }
-        // 与 updateSoB2cStatusAndDeliveryTime 一致：同事务回写 KOL 拆分单发货状态（如手动标发回待发货）
-        listByIds(ids).stream()
+        // 与 updateSoB2cStatusAndDeliveryTime 一致：状态更新成功后同事务批量回写 KOL 拆分单发货状态
+        List<String> kolSubIds = listByIds(ids).stream()
                 .filter(e -> SourceTypeEnum.KOL_B2C_APPLICATION.getCode().equals(e.getSourceType()))
                 .map(SoB2cEntity::getSourceId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
-                .forEach(kolSubB2cApplicationService::refreshDeliveryAndTrackBySoB2c);
+                .collect(Collectors.toList());
+        kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2cBatch(kolSubIds);
         String statusName = SoB2cBillStatusEnum.getName(status);
         String msg = "销售订单状态变更为:" + statusName;
         for (String id : ids) {
@@ -8801,13 +8803,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 回写 KOL 拆分单须与上面更新同一事务/连接：WMS 发货在 GlobalTransactional 下调用本 Feign 时，
         // 若此处无本地事务，refresh 会新开连接读不到未提交的 bill_status，导致发货状态仍停在待发货。
-        List<SoB2cEntity> soB2cEntities = listByIds(deliveryTimeDTO.getSoB2cIds()).stream()
+        // 顺序：先更新 B2C 状态/发货时间，再批量 refresh（依赖最新 billStatus）。
+        List<String> kolSubIds = listByIds(deliveryTimeDTO.getSoB2cIds()).stream()
                 .filter(e -> SourceTypeEnum.KOL_B2C_APPLICATION.getCode().equals(e.getSourceType()))
+                .map(SoB2cEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
                 .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(soB2cEntities)) {
-            soB2cEntities.stream().map(SoB2cEntity::getSourceId).filter(StringUtils::isNotBlank).distinct()
-                    .forEach(kolSubB2cApplicationService::refreshDeliveryAndTrackBySoB2c);
-        }
+        kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2cBatch(kolSubIds);
 
         String statusName = SoB2cBillStatusEnum.getName(deliveryTimeDTO.getStatus());
         String msg = "销售订单状态变更为:" + statusName;
