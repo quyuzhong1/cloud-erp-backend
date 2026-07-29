@@ -293,7 +293,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 			String billAmount = dto.getBillAmount();
 			if(billAmount != null) {
-				dto.setBillAmount(df4.format(MathUtil.scaleToSix(new BigDecimal(billAmount).multiply(refund))));
+				dto.setBillAmount(df6.format(MathUtil.scaleToSix(new BigDecimal(billAmount).multiply(refund))));
 			}
 			String allocatedAmount = dto.getAllocatedAmount();
 			if(allocatedAmount != null) {

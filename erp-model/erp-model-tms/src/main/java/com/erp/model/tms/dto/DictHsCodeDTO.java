@@ -196,7 +196,7 @@ public class DictHsCodeDTO implements Serializable {
         @NotNull(message = "出口退税率 (%)不能为空")
         @Min(value = 0, message = "出口退税率 (%)不能为负数")
         @Max(value = 100, message = "出口退税率 (%)不能超过100")
-        @Digits(integer = 18, fraction = 6, message = "出口退税率 (%)整数位不能超过3位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "出口退税率(%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exportRebateRate;
 
         /**

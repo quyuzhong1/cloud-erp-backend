@@ -72,7 +72,7 @@ public class PurchaseChangeDetailDTO implements Serializable {
         /**
          * 新含税单价
          */
-        @Digits(integer = 18, fraction = 6,message = "新含税单价最大16字符，小数位不能大于6个字符")
+        @Digits(integer = 18, fraction = 6,message = "新含税单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal price;
 
         /**
