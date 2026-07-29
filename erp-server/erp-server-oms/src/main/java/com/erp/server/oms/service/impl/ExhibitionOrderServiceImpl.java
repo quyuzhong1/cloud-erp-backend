@@ -1227,7 +1227,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soId = soInfoService.add(addDTO);
         }catch (Exception e) {
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             // catch 后正常 return 不会触发回滚，需显式标记，避免「审核失败但销售订单已落库」
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return mqResponseDTO;
@@ -1246,7 +1246,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
         }catch (Exception e) {
             log.error("B2B订单提交异常，soId: {}", soId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             return mqResponseDTO;
         }finally {
             //恢复系统标识
@@ -1263,7 +1263,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soInfoService.approve(baseApproveParamDTO,soInfoEntity);
         }catch (Exception e) {
             log.error("B2B订单审批通过异常，soId: {}", soId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             return mqResponseDTO;
         }finally {
             //恢复系统标识
