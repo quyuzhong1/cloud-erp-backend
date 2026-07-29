@@ -19,6 +19,7 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.sdk.wms.wego.dto.response.WegoOutboundResp;
+import com.sdk.wms.wego.enums.WegoEnums;
 import com.sdk.wms.wego.service.WegoOpenApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -592,29 +593,194 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return failure("WEGO暂不支持创建B2B出库单");
     }
 
+    /**
+     * 取消/截单 WEGO 2C 出库单。
+     * <p>
+     * 按出库单当前状态分流：
+     * <ul>
+     *     <li>提交失败 / 出库异常：调用 {@code 2c.order.errorHandle} 异常出库取消，
+     *         再按查询结果返回成功 / 拦截中 / 失败（对齐异步确认流程）；</li>
+     *     <li>已取消：幂等成功；已出库/已签收：拦截失败；</li>
+     *     <li>其余状态：沿用 {@code 2c.order.intercept} 普通截单。</li>
+     * </ul>
+     */
     @Override
     protected ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         if (CharSequenceUtil.isBlank(cancelOutboundReq.getOrderCode())) {
             throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_CODE_REQUIRED);
         }
+        String[] auth = resolveAccessTokenAndSecret();
+        String accessToken = auth[0];
+        String secret = auth[1];
+
+        WegoOutboundResp.OutboundOrderDTO currentOrder = null;
+        try {
+            currentOrder = searchOutboundByNo(accessToken, secret, cancelOutboundReq.getOrderCode());
+        } catch (Exception e) {
+            log.warn("{}截单前查询出库单失败，降级普通截单, orderNo={}",
+                    getPlatForm().getName(), cancelOutboundReq.getOrderCode(), e);
+        }
+        String orderStatus = currentOrder == null || currentOrder.getOrderStatus() == null
+                ? null : String.valueOf(currentOrder.getOrderStatus());
+
+        // 已取消：幂等成功
+        if (WegoEnums.OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        // 已出库/已签收：无法线上拦截
+        if (WegoEnums.OrderStatusEnum.SHIPPED.getCode().equals(orderStatus)
+                || WegoEnums.OrderStatusEnum.SIGNED.getCode().equals(orderStatus)) {
+            return ApiResult.success("出库单已发货/已签收，无法线上拦截",
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+
+        // 提交失败 / 出库异常：走异常出库取消接口
+        if (isExceptionOutboundStatus(orderStatus)) {
+            return cancelExceptionOutbound(accessToken, secret, cancelOutboundReq.getOrderCode());
+        }
+
+        // 其余状态或查不到状态：普通截单
+        return cancelNormalOutbound(cancelOutboundReq);
+    }
+
+    /**
+     * 调用 {@code 2c.order.errorHandle} 取消异常态出库单，并按回查结果确认拦截终态。
+     *
+     * @param accessToken WEGO accessToken
+     * @param secret      WEGO secret
+     * @param orderNo     WEGO 出库单号
+     * @return 拦截成功 / 拦截中 / 拦截失败
+     */
+    private ApiResult<String> cancelExceptionOutbound(String accessToken, String secret, String orderNo) {
+        WegoOutboundErrorHandleDTO.ErrorHandleReqDTO request = WegoOutboundErrorHandleDTO.ErrorHandleReqDTO.builder()
+                .accessToken(accessToken)
+                .secret(secret)
+                .no(orderNo)
+                .build();
+        log.warn("{}异常出库取消请求:{}", getPlatForm().getName(), toLogSafeJson(request));
+        JSONObject resp = wegoOpenApiService.errorHandle2cOrder(request);
+        log.warn("{}异常出库取消结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+
+        if (!isSuccess(resp) && !isInterceptAlreadySuccessful(resp)) {
+            return failure(buildErrorMessage(resp));
+        }
+        // 取消接口受理后回查确认：已取消=成功，已出库=失败，仍异常/处理中=拦截中（待 DMP 轮询裁决）
+        return resolveCancelResultByQuery(accessToken, secret, orderNo, true);
+    }
+
+    /**
+     * 调用 {@code 2c.order.intercept} 普通截单（非异常态）。
+     *
+     * @param cancelOutboundReq 取消请求
+     * @return 拦截成功或失败
+     */
+    private ApiResult<String> cancelNormalOutbound(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         WegoOutboundInterceptDTO.InterceptReqDTO request = buildInterceptDto(cancelOutboundReq);
         log.warn("{}截单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.intercept2cOrder(request);
         log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
-        // Case B：WEGO 正常拦截成功（success=true）
         if (isSuccess(resp)) {
             return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
         }
-        // Case A：订单已在 WEGO 侧截单/取消，重复截单属于幂等成功，透传 WEGO 说明供上层展示
         if (isInterceptAlreadySuccessful(resp)) {
             String wegoMsg = CharSequenceUtil.blankToDefault(resp.getString(RESP_FIELD_ERROR_MSG), "WEGO订单已取消");
-            log.info("{}截单幂等命中，视为拦截成功, orderNo={}, wegoMsg={}",
+            log.warn("{}截单幂等命中，视为拦截成功, orderNo={}, wegoMsg={}",
                     getPlatForm().getName(), cancelOutboundReq.getOrderCode(), wegoMsg);
             return ApiResult.success("WEGO订单已截单/取消，视为拦截成功（" + wegoMsg + "）",
                     ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
         }
-        // Case C：其他错误，透传 WEGO 原始错误信息
         return failure(buildErrorMessage(resp));
+    }
+
+    /**
+     * 取消受理后按出库单最新状态确认拦截结果。
+     *
+     * @param accessToken        WEGO accessToken
+     * @param secret             WEGO secret
+     * @param orderNo            WEGO 出库单号
+     * @param defaultIntercepting 回查失败或状态未决时是否按「拦截中」处理
+     * @return 拦截成功 / 拦截中 / 拦截失败
+     */
+    private ApiResult<String> resolveCancelResultByQuery(String accessToken, String secret,
+                                                         String orderNo, boolean defaultIntercepting) {
+        WegoOutboundResp.OutboundOrderDTO order;
+        try {
+            order = searchOutboundByNo(accessToken, secret, orderNo);
+        } catch (Exception e) {
+            log.warn("{}取消后回查出库单异常, orderNo={}", getPlatForm().getName(), orderNo, e);
+            if (defaultIntercepting) {
+                return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
+            }
+            return failure("WEGO取消后回查出库单异常：" + e.getMessage());
+        }
+        if (order == null || order.getOrderStatus() == null) {
+            return defaultIntercepting
+                    ? success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode())
+                    : failure("WEGO取消后未查询到出库单");
+        }
+        String status = String.valueOf(order.getOrderStatus());
+        if (WegoEnums.OrderStatusEnum.CANCELLED.getCode().equals(status)) {
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        if (WegoEnums.OrderStatusEnum.SHIPPED.getCode().equals(status)
+                || WegoEnums.OrderStatusEnum.SIGNED.getCode().equals(status)) {
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        // 仍为提交失败/出库异常或其他处理中状态：等待 DMP 轮询确认
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
+    }
+
+    /**
+     * 按 WEGO 出库单号精确查询单条出库单。
+     *
+     * @param accessToken WEGO accessToken
+     * @param secret      WEGO secret
+     * @param orderNo     WEGO 出库单号
+     * @return 出库单；未查到返回 null
+     */
+    private WegoOutboundResp.OutboundOrderDTO searchOutboundByNo(String accessToken, String secret, String orderNo) {
+        WegoOutboundSearchDTO.SearchReqDTO searchReq = WegoOutboundSearchDTO.SearchReqDTO.builder()
+                .accessToken(accessToken)
+                .secret(secret)
+                .noList(Collections.singletonList(orderNo))
+                .build();
+        List<WegoOutboundResp.OutboundOrderDTO> list = wegoOpenApiService.search2cOrder(searchReq);
+        if (CollUtil.isEmpty(list)) {
+            return null;
+        }
+        return list.stream()
+                .filter(o -> orderNo.equals(o.getNo()))
+                .findFirst()
+                .orElse(list.get(0));
+    }
+
+    /**
+     * 是否为需走 {@code 2c.order.errorHandle} 的异常出库状态（提交失败 / 出库异常）。
+     *
+     * @param orderStatus WEGO orderStatus 字符串
+     * @return true=异常态
+     */
+    private boolean isExceptionOutboundStatus(String orderStatus) {
+        return WegoEnums.OrderStatusEnum.SUBMIT_FAIL.getCode().equals(orderStatus)
+                || WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION.getCode().equals(orderStatus);
+    }
+
+    /**
+     * 从上下文解析 WEGO accessToken / secret。
+     *
+     * @return [accessToken, secret]
+     */
+    private String[] resolveAccessTokenAndSecret() {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
+        if (authMap == null || authMap.isEmpty()) {
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
+        }
+        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
+        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
+        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
+        }
+        return new String[]{accessToken, secret};
     }
 
     @Override
@@ -852,18 +1018,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * 构造 WEGO {@code 2c.order.intercept} 截单请求 DTO。
      */
     private WegoOutboundInterceptDTO.InterceptReqDTO buildInterceptDto(ThirdWarehouseCancelOutboundReq cancelReq) {
-        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
-        if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
-        }
-        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
-        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
-        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
-        }
+        String[] auth = resolveAccessTokenAndSecret();
         return WegoOutboundInterceptDTO.InterceptReqDTO.builder()
-                .accessToken(accessToken)
-                .secret(secret)
+                .accessToken(auth[0])
+                .secret(auth[1])
                 .no(cancelReq.getOrderCode())
                 .build();
     }

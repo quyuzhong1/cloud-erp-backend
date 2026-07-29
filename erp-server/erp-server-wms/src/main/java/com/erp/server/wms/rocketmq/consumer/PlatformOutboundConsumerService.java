@@ -40,6 +40,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -52,7 +53,6 @@ import com.sdk.wms.antu.dto.request.AntuGetOutboundRefReq;
 import com.sdk.wms.antu.dto.response.AntuOutboundResp;
 import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.service.AntuService;
-import com.sdk.wms.wego.enums.WegoEnums;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -108,6 +108,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     @Resource
     private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
+
+    @Resource
+    private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
@@ -335,6 +338,22 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         }
                     }
 
+                    // WEGO：拦截中轮询确认失败（出库单已发货）——清拦截标识、关闭待处理拦截单，再走已发货流程
+                    if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                            && (Boolean.TRUE.equals(mainEntity.getIsIntercept())
+                            || (Objects.nonNull(thirdWarehouseDeliveryEntity)
+                            && SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus()
+                            .equals(thirdWarehouseDeliveryEntity.getStatus())))) {
+                        operateLogService.addModuleOperateLog(
+                                "三方仓拦截失败，出库单已发货，异常信息："
+                                        + CharSequenceUtil.blankToDefault(dto.getAbnormalProblemReason(), ""),
+                                ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "拦截失败");
+                        mainEntity.setIsIntercept(false);
+                        mainEntity.setIsFrozen(false);
+                        soB2cFeign.updateStatus(mainEntity);
+                        confirmWegoInterceptBills(mainEntity.getId(), false, "出库单已发货，拦截失败");
+                    }
+
                     if (isSignShipped) {
                         // 明细的存在没有标发的情况触发
                         List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
@@ -382,22 +401,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             ""
                     );
                     soB2cFeign.addSoB2cError(addError);
-                    // WEGO 出库单"出库异常"（WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION，状态码13）需人工至WEGO后台手动取消，
-                    // 与"提交失败"（状态码1）区分处理，二者在ERP侧都会映射为同一个 exception 状态，需依赖 thirdOrderStatus 区分来源
-                    boolean isWegoOutboundException = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
-                            && WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION.getName().equals(dto.getThirdOrderStatus());
-                    if (isWegoOutboundException) {
-                        // WEGO 出库异常：三方仓发货单保持"待处理"、销售订单保持"待发货"，不做自动截单/状态变更，
-                        // 需人工至 WEGO 海外仓后台确认包裹/库存是否可找到后手动取消，只有 WEGO 后台才能真正取消出库异常单
-                        operateLogService.addModuleOperateLog("三方仓出库异常，需人工至WEGO后台确认后手动取消，异常信息：" + dto.getAbnormalProblemReason(),
-                                ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "出库异常");
-                    } else {
-                        //异步取消海外仓订单（拦截确认成功后会将销售订单更新为配货中；
-                        //若为WEGO"提交失败"场景，同样在拦截确认成功后才将三方仓发货单更新为取消发货，避免与异步结果时序不一致）
-                        ThirdWarehouseDeliveryEntity wegoDeliveryEntity = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
-                                ? thirdWarehouseDeliveryEntity : null;
-                        asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason(), wegoDeliveryEntity);
-                    }
+                    // WEGO：提交失败(1)/出库异常(13) 统一走自动截单；
+                    // Handler 内会按状态调用 2c.order.errorHandle，并按回查结果返回成功/拦截中/失败；
+                    // 拦截中时由后续 DMP 出库轮询（已取消/已出库）确认终态。其他海外仓逻辑不变。
+                    ThirdWarehouseDeliveryEntity wegoDeliveryEntity = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                            ? thirdWarehouseDeliveryEntity : null;
+                    asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason(), wegoDeliveryEntity);
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
                     if (mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())) {
@@ -424,6 +433,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
 
                             thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                        }
+                        // WEGO：异步截单轮询确认成功——关闭待处理拦截单
+                        if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())) {
+                            confirmWegoInterceptBills(mainEntity.getId(), true, "出库单已取消，拦截成功");
                         }
                     }
                 }
@@ -1379,5 +1392,38 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         warnMsgInfo.setKeyInfo(CharSequenceUtil.isBlank(msg) ? "" : msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
+    }
+
+    /**
+     * 确认 WEGO 待处理拦截单终态（仅 WEGO 异步截单轮询确认使用，不影响其他海外仓）。
+     *
+     * @param soId    销售订单 ID
+     * @param success true=拦截成功，false=拦截失败
+     * @param remark  处理备注
+     */
+    private void confirmWegoInterceptBills(String soId, boolean success, String remark) {
+        if (CharSequenceUtil.isBlank(soId)) {
+            return;
+        }
+        List<SoB2cDeliveryInterceptEntity> interceptList = soB2cDeliveryInterceptService.listBySourceIds(
+                Collections.singletonList(soId));
+        if (CollUtil.isEmpty(interceptList)) {
+            return;
+        }
+        for (SoB2cDeliveryInterceptEntity intercept : interceptList) {
+            if (!SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus().equals(intercept.getHandleStatus())) {
+                continue;
+            }
+            try {
+                if (success) {
+                    soB2cDeliveryInterceptService.apiHandleSuccess(intercept.getId(), remark);
+                } else {
+                    soB2cDeliveryInterceptService.apiHandleFailure(intercept.getId(), remark);
+                }
+            } catch (Exception e) {
+                log.warn("WEGO拦截单终态确认失败, interceptId={}, soId={}, success={}",
+                        intercept.getId(), soId, success, e);
+            }
+        }
     }
 }

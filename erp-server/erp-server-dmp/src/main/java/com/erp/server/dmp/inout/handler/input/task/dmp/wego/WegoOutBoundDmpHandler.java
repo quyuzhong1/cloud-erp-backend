@@ -31,6 +31,7 @@ import java.util.TreeMap;
  *   <li>{@code logisticsList[0].trackingNum} → {@code trackingNo}，取第一条非空物流跟踪号；</li>
  *   <li>{@code orderStatus}（mongo 中为 Integer）→ {@code orderStatus}（String），
  *       与 {@link com.sdk.wms.wego.enums.WegoEnums.OrderStatusEnum} 状态码保持一致；</li>
+ *   <li>{@code errorMessage} → {@code abnormalProblemReason}（提交失败/出库异常原因）；</li>
  *   <li>{@code createTime} → {@code platformCreateTime}；</li>
  *   <li>固定写入 {@code warehousePlatformType} = {@code overseasWarehouse}，防止接口 raw 字段污染路由分支；</li>
  *   <li>固定写入 {@code orderType} = {@code B2C}，标记订单类型。</li>
@@ -52,6 +53,7 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final String MONGO_KEY_LOGISTICS_LIST = "logisticsList";
     private static final String MONGO_KEY_TRACKING_NUM = "trackingNum";
     private static final String MONGO_KEY_ORDER_STATUS = "orderStatus";
+    private static final String MONGO_KEY_ERROR_MESSAGE = "errorMessage";
 
     private static final String DMP_KEY_DATE_SHIPPING = "dateShipping";
     private static final String DMP_KEY_TRACKING_NO = "trackingNo";
@@ -59,6 +61,7 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final String DMP_KEY_WAREHOUSE_PLATFORM_TYPE = "warehousePlatformType";
     private static final String DMP_KEY_ORDER_STATUS = "orderStatus";
     private static final String DMP_KEY_ORDER_TYPE = "orderType";
+    private static final String DMP_KEY_ABNORMAL_PROBLEM_REASON = "abnormalProblemReason";
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -80,6 +83,8 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
             String trackingNo = resolveTrackingNo(mongoData.get(MONGO_KEY_LOGISTICS_LIST));
             String orderStatus = mongoData.get(MONGO_KEY_ORDER_STATUS) != null
                     ? String.valueOf(mongoData.get(MONGO_KEY_ORDER_STATUS)) : null;
+            String errorMessage = mongoData.get(MONGO_KEY_ERROR_MESSAGE) != null
+                    ? String.valueOf(mongoData.get(MONGO_KEY_ERROR_MESSAGE)) : null;
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 if (dateShipping != null) {
@@ -93,6 +98,10 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
                 if (StringUtils.isNotBlank(orderStatus)) {
                     dmpDataMap.put(DMP_KEY_ORDER_STATUS, orderStatus);
+                }
+                // 提交失败/出库异常时 WEGO 回填 errorMessage，映射为异常原因供下游截单日志使用
+                if (StringUtils.isNotBlank(errorMessage)) {
+                    dmpDataMap.put(DMP_KEY_ABNORMAL_PROBLEM_REASON, errorMessage);
                 }
                 dmpDataMap.put(DMP_KEY_WAREHOUSE_PLATFORM_TYPE, WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode());
                 dmpDataMap.put(DMP_KEY_ORDER_TYPE, OrderTypeEnum.B2C.getCode());

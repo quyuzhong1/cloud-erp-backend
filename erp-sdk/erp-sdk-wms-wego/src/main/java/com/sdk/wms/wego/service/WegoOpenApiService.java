@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.WegoInOrderCancelDTO;
 import com.erp.model.wms.dto.WegoInOrderQueryPageDTO;
 import com.erp.model.wms.dto.WegoInOrderSaveDTO;
 import com.erp.model.wms.dto.WegoInventoryQueryDTO;
+import com.erp.model.wms.dto.WegoOutboundErrorHandleDTO;
 import com.erp.model.wms.dto.WegoOutboundInterceptDTO;
 import com.erp.model.wms.dto.WegoOutboundQueryPageDTO;
 import com.erp.model.wms.dto.WegoOutboundSaveDTO;
@@ -392,6 +393,21 @@ public class WegoOpenApiService {
         Map<String, Object> bizParams = new HashMap<>();
         bizParams.put("no", dto.getNo());
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TWO_C_ORDER_INTERCEPT, bizParams, "截单2C出库单");
+    }
+
+    /**
+     * 调用 WEGO 2c.order.errorHandle 取消「出库异常 / 提交失败」等异常态 2C 出库单。
+     * <p>
+     * 官方约束：仅异常态出库单可调用；取消后订单锁定并扣减总库存，如需继续发货须重新建单。
+     * 调用成功返回 {@code success=true}；失败返回 {@code success=false}。
+     *
+     * @param dto 异常出库取消请求，仅需 WEGO 出库单号 {@code no}
+     * @return WEGO 接口原始响应（含 success / errorCode / errorMsg / serverTime）
+     */
+    public JSONObject errorHandle2cOrder(@Valid WegoOutboundErrorHandleDTO.ErrorHandleReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("no", dto.getNo());
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TWO_C_ORDER_ERROR_HANDLE, bizParams, "异常出库取消2C出库单");
     }
 
     /**

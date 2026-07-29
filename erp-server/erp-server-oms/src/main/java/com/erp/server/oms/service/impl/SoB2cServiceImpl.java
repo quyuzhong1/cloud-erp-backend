@@ -4490,6 +4490,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setHandleTime(LocalDateTime.now());
                 soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity), Collections.singletonList(logisticsEntity), false);
                 soB2cDeliveryInterceptFeign.add(addDTO);
+            } else if (isThirdWarehouseInterceptingResult(resultDTO)
+                    && platformEnum == LogisticsPlatformEnum.WEGO) {
+                // WEGO 异常出库取消为异步确认：拦截单保持待处理，终态由出库状态轮询（已取消/已发货）确认
+                addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus());
+                soB2cDeliveryInterceptFeign.add(addDTO);
             } else if (!isThirdWarehouseInterceptingResult(resultDTO)) {
                 fillApiInterceptFailure(addDTO, resultDTO.getMsg());
                 soB2cDeliveryInterceptFeign.add(addDTO);

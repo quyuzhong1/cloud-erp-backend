@@ -364,7 +364,11 @@ public class AsyncServiceImpl implements AsyncService {
                         }
                     }
                 }
-            }else{
+            } else if (CharSequenceUtil.contains(batchResultDTO.getMsg(), "发起拦截中")) {
+                // 截单已受理、等待三方仓异步确认（如 WEGO errorHandle 后回查仍为异常态）；
+                // 销售单已打拦截中、三方发货单已置拦截中，终态由后续出库状态轮询确认
+                operateLogDTO.setContent("三方仓出库异常，已发起自动截单等待确认,异常信息：" + abnormalProblemReason);
+            } else {
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败,异常信息："+ abnormalProblemReason);
             }
             soB2cFeign.addModuleOperateLog(operateLogDTO);
