@@ -17,10 +17,15 @@ import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.config.PgUnallocLockSynchronizationAdapter;
+import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.IteratorUtils;
+import org.redisson.RedissonMultiLock;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -49,6 +54,9 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
     @Resource
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
+    @Resource
+    private InventoryRedisUtil inventoryRedisUtil;
+
 
     @Override
     @DistributeLocker(businessType = VirtualInventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.virtualWarehouseId,transactionList.inventoryStatus",unlockAfterTx = false)
@@ -59,8 +67,52 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
             log.warn("虚拟仓库存交易列表为空！");
             return;
         }
+        RedissonMultiLock unallocLock = null;
+        boolean unlockInFinally = false;
         // 计时器-开始
         Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            if (VirtualInventoryUnallocCheckHelper.needsUnallocSharedLockForVirtualStock(transactionList)) {
+                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeysForVirtualStock(transactionList);
+                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
+                if (unallocLock == null) {
+                    ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
+                }
+                if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                    PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil);
+                } else {
+                    unlockInFinally = true;
+                }
+            }
+            this.executeVirtualInventoryTransactionList(transactionList, approveType, stopwatch);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("虚拟仓库存交易失败", e);
+            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
+        } finally {
+            if (unlockInFinally && unallocLock != null) {
+                inventoryRedisUtil.unLock(unallocLock);
+            }
+            stopwatch.stop();
+            // 计时器-结束
+            if(stopwatch.elapsed(TimeUnit.SECONDS) > 30) {
+                log.warn("单据编号：{}，虚拟仓库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            }
+        }
+    }
+
+    /**
+     * 在仓+SKU 未分配共享锁（若需要）内执行虚拟仓库存交易主体逻辑。
+     *
+     * @param transactionList 已过滤 ignore 的交易列表
+     * @param approveType     审批类型
+     * @param stopwatch       耗时统计
+     */
+    private void executeVirtualInventoryTransactionList(
+            List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList,
+            String approveType,
+            Stopwatch stopwatch) {
         try {
             // 2、排序
             transactionList = this.sortVirtualInventoryTransactionList(transactionList);
@@ -87,12 +139,6 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
         } catch (Exception e) {
             log.error("虚拟仓库存交易失败", e);
             throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
-        } finally {
-            stopwatch.stop();
-            // 计时器-结束
-            if(stopwatch.elapsed(TimeUnit.SECONDS) > 30) {
-                log.warn("单据编号：{}，虚拟仓库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            }
         }
     }
 
