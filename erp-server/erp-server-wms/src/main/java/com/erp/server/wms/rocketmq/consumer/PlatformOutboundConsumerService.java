@@ -1318,6 +1318,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             if(CollectionUtils.isNotEmpty(thirdWarehouseDeliveryDetailEntityList)){
                 LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
                 List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Arrays.asList(mainEntity.getId()));
+                // 爱亚侧SKU(platformSkuNo) -> 实际发货数量，一次性构建供下面按SKU O(1)查表比较超发，
+                // 不在明细循环里发起新的查询/远程调用
+                Map<String, Integer> platformSkuActualQtyMap = buildPlatformSkuActualQtyMap(dto);
                 for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntityList) {
                     //表示有啊
                     SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
@@ -1328,8 +1331,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getId().equals(thirdWarehouseDeliveryDetailEntity.getSoDetailId())).findFirst().orElse(new SoB2cDetailEntity());
                     addDTO.setSourceDetailId(thirdWarehouseDeliveryDetailEntity.getId());
                     addDTO.setSoDetailId(soB2cDetailEntity.getId());
-                    addDTO.setPlanQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
-                    addDTO.setActualQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
+                    Integer deliveryQty = thirdWarehouseDeliveryDetailEntity.getDeliveryQty();
+                    addDTO.setPlanQty(deliveryQty);
+                    addDTO.setActualQty(detectOverShipActualQty(mainEntity, thirdWarehouseDeliveryDetailEntity, platformSkuActualQtyMap, deliveryQty, dto));
                     addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
                     if(StringUtils.isNotBlank(warehouseId)){
                         addDTO.setWarehouseId(warehouseId);
@@ -1362,6 +1366,72 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
             }
         }
+    }
+
+    /**
+     * 按爱亚侧 SKU（{@link PlatformOutboundDTO.Item#getProductSku()}，与建单时下发给三方仓的 sku
+     * 同口径，等价 {@link ThirdWarehouseDeliveryDetailEntity#getPlatformSkuNo()}，<b>不是</b> ERP
+     * 自身 skuNo）构建"实际发货数量"查找表，一次构建，供 {@link #detectOverShipActualQty} 按 SKU
+     * O(1) 比较，避免在明细循环里重复解析。
+     *
+     * @param dto 平台出库单DTO（{@code items} 目前仅爱亚出库单会填充，其他平台为空属正常场景）
+     * @return 爱亚侧SKU -> 实际发货数量；dto.items 为空时返回空表
+     */
+    private Map<String, Integer> buildPlatformSkuActualQtyMap(PlatformOutboundDTO dto) {
+        List<PlatformOutboundDTO.Item> items = dto.getItems();
+        if (CollectionUtils.isEmpty(items)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> platformSkuActualQtyMap = new HashMap<>(items.size());
+        for (PlatformOutboundDTO.Item item : items) {
+            if (item == null || StringUtils.isBlank(item.getProductSku()) || item.getActualQty() == null) {
+                continue;
+            }
+            platformSkuActualQtyMap.merge(item.getProductSku(), item.getActualQty(), Integer::sum);
+        }
+        return platformSkuActualQtyMap;
+    }
+
+    /**
+     * 超发（超量发货）判定：按 {@code platformSkuNo}（爱亚侧SKU，与 {@code platformSkuActualQtyMap}
+     * 同口径，见 {@link #buildPlatformSkuActualQtyMap}）比较三方仓实际发货数量与《三方仓发货单》应发
+     * 数量（{@code deliveryQty}）。若实际数量大于应发数量，登记一条"三方仓超发"异常订单（仅提示，
+     * 不阻断销售出库单自动生成/审核），并返回实际数量供该行按实发数量生成出库单明细；否则维持现状，
+     * 返回应发数量。
+     *
+     * @param mainEntity                   B2C销售订单主表
+     * @param thirdWarehouseDeliveryDetail 三方仓发货单明细（含应发数量、爱亚侧SKU）
+     * @param platformSkuActualQtyMap      爱亚侧SKU -> 实际发货数量查找表
+     * @param deliveryQty                  应发数量
+     * @param dto                          平台出库单DTO，异常登记时用于记录原始报文
+     * @return 该明细行应写入销售出库单的实际数量
+     */
+    private Integer detectOverShipActualQty(SoB2cEntity mainEntity,
+                                             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetail,
+                                             Map<String, Integer> platformSkuActualQtyMap,
+                                             Integer deliveryQty,
+                                             PlatformOutboundDTO dto) {
+        String platformSkuNo = thirdWarehouseDeliveryDetail.getPlatformSkuNo();
+        if (StringUtils.isBlank(platformSkuNo) || platformSkuActualQtyMap == null || platformSkuActualQtyMap.isEmpty()) {
+            return deliveryQty;
+        }
+        Integer actualQty = platformSkuActualQtyMap.get(platformSkuNo);
+        if (actualQty == null || deliveryQty == null || actualQty <= deliveryQty) {
+            return deliveryQty;
+        }
+        String message = StrUtil.format("三方仓超发：SKU【{}】（ERP SKU【{}】）应发数量{}，三方仓实际发货数量{}",
+                platformSkuNo, thirdWarehouseDeliveryDetail.getSkuNo(), deliveryQty, actualQty);
+        log.warn("销售订单{} {}", mainEntity.getCode(), message);
+        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                mainEntity.getId(),
+                SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OVER_SHIP.getCode(),
+                JSONUtil.toJsonStr(dto),
+                message,
+                JSONUtil.toJsonStr(dto),
+                thirdWarehouseDeliveryDetail.getId()
+        );
+        soB2cFeign.addSoB2cError(addError);
+        return actualQty;
     }
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {

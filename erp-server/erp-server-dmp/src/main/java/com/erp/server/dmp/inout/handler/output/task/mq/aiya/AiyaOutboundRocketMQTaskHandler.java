@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.handler.output.task.mq.aiya;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -11,6 +13,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
 import com.sdk.wms.aiya.enums.AiyaEnums;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,11 @@ import java.util.*;
  * 非本类硬编码），由 PlatformOutboundConsumerService 统一消费处理。
  * <p>
  * 结构与 {@code WegoOutboundRocketMQTaskHandler} 完全等价，仅状态枚举来源不同。
+ * <p>
+ * 另外把 {@code detail_list_json} 解析为 {@code items}（含实际发货数量），供
+ * {@code PlatformOutboundConsumerService} 做超发判定，见 {@link #convertItems}。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class AiyaOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
@@ -80,7 +87,60 @@ public class AiyaOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         dto.setOrderStatus(erpOrderStatus);
         dto.setThirdOrderStatus(AiyaEnums.OrderStatusEnum.getName(orderStatus));
         dto.setTrackNo(entity.getTrackingNo());
+        dto.setItems(convertItems(entity.getDetailListJson(), entity.getOrderCode()));
         return dto;
+    }
+
+    /**
+     * 解析 {@code detail_list_json}（爱亚 {@code items} 原样透传，见 {@code AiyaOutBoundDmpHandler}）
+     * 为 {@link PlatformOutboundDTO.Item} 列表，供下游 {@code PlatformOutboundConsumerService} 做
+     * 超发（实际数量 &gt; 应发数量）判定。
+     * <p>
+     * {@code productSku} 取自爱亚 {@code items[].sku}，是<b>爱亚侧 SKU</b>（建单时下发给爱亚的
+     * {@code sku} 原样透传，非 ERP 自身 SKU），下游比对时必须用同口径的
+     * {@code ThirdWarehouseDeliveryDetailEntity#platformSkuNo}，不能用 {@code skuNo}。
+     * 数量字段优先取官方字段名 {@code quantity}，兼容历史字段名 {@code qty}。
+     *
+     * @param detailListJson dmp_third_outbound.detail_list_json 原文
+     * @param orderCode      爱亚出库单号，仅用于日志定位
+     * @return 出库明细列表；解析失败或为空时返回空列表，不中断整体推送
+     */
+    private List<PlatformOutboundDTO.Item> convertItems(String detailListJson, String orderCode) {
+        if (StringUtils.isBlank(detailListJson)) {
+            return Collections.emptyList();
+        }
+        try {
+            JSONArray jsonArray = JSON.parseArray(detailListJson);
+            if (CollUtil.isEmpty(jsonArray)) {
+                return Collections.emptyList();
+            }
+            List<PlatformOutboundDTO.Item> items = new ArrayList<>();
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject row = jsonArray.getJSONObject(i);
+                if (row == null) {
+                    continue;
+                }
+                String sku = row.getString("sku");
+                if (StringUtils.isBlank(sku)) {
+                    log.warn("[AIYA出库] 出库明细sku缺失，跳过该行, orderCode={}, row={}", orderCode, row);
+                    continue;
+                }
+                Integer qty = row.getInteger("quantity");
+                if (qty == null) {
+                    qty = row.getInteger("qty");
+                }
+                if (qty == null) {
+                    log.warn("[AIYA出库] 出库明细数量缺失，跳过该行, orderCode={}, sku={}", orderCode, sku);
+                    continue;
+                }
+                items.add(new PlatformOutboundDTO.Item(sku, qty));
+            }
+            return items;
+        } catch (Exception e) {
+            log.error("[AIYA出库] 解析出库明细 detail_list_json 异常, orderCode={}, detailListJson={}",
+                    orderCode, detailListJson, e);
+            return Collections.emptyList();
+        }
     }
 
     @Override

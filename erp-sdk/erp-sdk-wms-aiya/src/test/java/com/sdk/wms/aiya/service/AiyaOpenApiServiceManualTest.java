@@ -257,24 +257,24 @@ public class AiyaOpenApiServiceManualTest {
 
         AiyaOutboundSaveDTO request = AiyaOutboundSaveDTO.builder()
                 // 必填：客户交易物流订单号=三方仓发货单号，客户侧保证唯一；修改时传同一号即可幂等 upsert
-                .orderNumber("WFHD-AIYA-TEST-202607280004")
+                .orderNumber("WFHD-AIYA-TEST-202607290004")
                 .warehouseCode(TEST_WAREHOUSE_CODE)
                 // 可选：客户销售平台编号（平台订单号等）
-                .extOrderNumber("PLATFORM-ORDER-TEST-004")
+                .extOrderNumber("PLATFORM-ORDER-TEST-006")
                 .orderTime(orderTime)
                 // 可选：方案文档映射销售平台 / 店铺
                 .salesChannel("Amazon")
                 .storeNumber("TEST-SHOP")
                 .shippingInstructions(AiyaOutboundSaveDTO.ShippingInstructions.builder()
                         // 必填：承运商；API 取号时仍须传（可用物流渠道映射名）；无特殊要求 carrierService=STD
-                        .carrier("SPX STANDARD")
+                        .carrier("【ID-本土】SPX STANDARD-REGULER (CASHLESS)")
 //                        .carrierService("【ID-本土】SPX STANDARD-REGULER (CASHLESS)")
                         .carrierService("STD")
                         // 必填：API=海外仓向快递取号；ATTACHMENT=平台自带面单；WMS_GEN=仓内模板生成
-//                        .shippingLabelSource("API")
-                        .shippingLabelSource("ATTACHMENT")
+                        .shippingLabelSource("API")
+//                        .shippingLabelSource("ATTACHMENT")
                         // ATTACHMENT 时必填运单号；API 模式可不传
-                        .trackingNumber("1Z999AA10123456784")
+//                        .trackingNumber("1Z999AA10123456784")
                         .build())
                 .shipTo(AiyaOutboundSaveDTO.ShipTo.builder()
                         .name("Test Receiver")
@@ -291,7 +291,7 @@ public class AiyaOpenApiServiceManualTest {
                         .build())
                 .items(Collections.singletonList(
                         // TODO：换成测试仓库真实已映射且有库存的平台 SKU
-                        AiyaOutboundSaveDTO.Item.builder().sku("2635A").quantity(1).build()))
+                        AiyaOutboundSaveDTO.Item.builder().sku("2635A").quantity(10000).build()))
                 // shipFrom：2026-07-24 联调确认可不传
                 // ATTACHMENT 时必须下发 files，且有且仅有一个 Shipping Label 附件；
                 // 一旦下发 FileItem，fileType 必填（取值见 AiyaOutboundSaveDTO.FileItem 常量）
