@@ -27,11 +27,19 @@ public final class TongYouB2bOperationResolver {
     }
 
     public static boolean isRelabel(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return Boolean.TRUE.equals(resolveYesNo(findPushOperationDesc(createOutboundReq, WarehouseOperationTypeEnum.IS_RELABEL.getCode())));
+        return Boolean.TRUE.equals(resolveRelabel(createOutboundReq));
     }
 
     public static boolean isMixedPacking(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return Boolean.TRUE.equals(resolveYesNo(findPushOperationDesc(createOutboundReq, WarehouseOperationTypeEnum.IS_MIXED_PACKING.getCode())));
+        return Boolean.TRUE.equals(resolveMixedPacking(createOutboundReq));
+    }
+
+    public static Boolean resolveRelabel(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return resolveYesNo(findPushOperationDesc(createOutboundReq, WarehouseOperationTypeEnum.IS_RELABEL.getCode()));
+    }
+
+    public static Boolean resolveMixedPacking(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return resolveYesNo(findPushOperationDesc(createOutboundReq, WarehouseOperationTypeEnum.IS_MIXED_PACKING.getCode()));
     }
 
     public static void validateRequiredOperations(List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> operationList) {
@@ -39,6 +47,18 @@ public final class TongYouB2bOperationResolver {
             throw new ServiceException("操作指令【是否换标】不能为空，取值仅支持「是」或「否」");
         }
         if (resolveMixedPacking(operationList) == null) {
+            throw new ServiceException("操作指令【是否混装】不能为空，取值仅支持「是」或「否」");
+        }
+    }
+
+    /**
+     * 推送通邮前校验：缺失或非法值不得静默按「否」推送。
+     */
+    public static void validateRequiredOperations(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        if (resolveRelabel(createOutboundReq) == null) {
+            throw new ServiceException("操作指令【是否换标】不能为空，取值仅支持「是」或「否」");
+        }
+        if (resolveMixedPacking(createOutboundReq) == null) {
             throw new ServiceException("操作指令【是否混装】不能为空，取值仅支持「是」或「否」");
         }
     }
