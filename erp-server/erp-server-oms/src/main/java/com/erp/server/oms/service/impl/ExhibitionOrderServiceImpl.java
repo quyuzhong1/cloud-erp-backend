@@ -197,12 +197,15 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ExhibitionOrderDTO.AddDTO addDTO) {
-        // 新增时：未传收款账号则带出客户默认收款账号；人为传入则不覆盖
+        // 新增时：未传收款账号则带出客户默认收款账号；人为传入则不覆盖（DTO 不再 @NotBlank，以便本分支可执行）
         if (StringUtils.isBlank(addDTO.getReceiveAccount()) && StringUtils.isNotBlank(addDTO.getCustomerId())) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(addDTO.getCustomerId());
             if (customerInfo != null && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
                 addDTO.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
             }
+        }
+        if (StringUtils.isBlank(addDTO.getReceiveAccount())) {
+            throw new ServiceException("收款账号不能为空");
         }
 
         ExhibitionOrderEntity exhibitionOrderEntity = new ExhibitionOrderEntity();

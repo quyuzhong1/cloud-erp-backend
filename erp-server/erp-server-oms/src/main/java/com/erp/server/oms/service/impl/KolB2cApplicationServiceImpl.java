@@ -1454,18 +1454,20 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
                 .in(SoB2cEntity::getSourceId, sourceIds)
                 .list();
+        List<KolSubB2cApplicationEntity> toUpdate = new ArrayList<>();
         for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream()
                     .filter(e -> e.getSourceId().equals(entity.getId()) && !Boolean.TRUE.equals(e.getInvalidStatus()))
                     .findFirst()
                     .orElse(null);
             if (Objects.nonNull(soB2cEntity)) {
-                kolSubB2cApplicationService.lambdaUpdate()
-                        .set(KolSubB2cApplicationEntity::getPlatformSoCode, soB2cEntity.getCode())
-                        .set(KolSubB2cApplicationEntity::getPlatformOrderCode, soB2cEntity.getCode())
-                        .eq(KolSubB2cApplicationEntity::getId, entity.getId())
-                        .update();
+                entity.setPlatformSoCode(soB2cEntity.getCode());
+                entity.setPlatformOrderCode(soB2cEntity.getCode());
+                toUpdate.add(entity);
             }
+        }
+        if (CollUtil.isNotEmpty(toUpdate)) {
+            kolSubB2cApplicationService.updateBatchById(toUpdate);
         }
         // 批量汇总回写发货状态/跟踪号，避免逐单 refresh 的 N+1
         kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2cBatch(sourceIds);

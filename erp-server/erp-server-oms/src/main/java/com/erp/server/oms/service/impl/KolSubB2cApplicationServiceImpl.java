@@ -412,13 +412,11 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
                 ? KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode()
                 : KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode();
 
-        return lambdaUpdate()
-                .set(KolSubB2cApplicationEntity::getDeliveryStatus, deliveryStatus)
-                .set(KolSubB2cApplicationEntity::getTrackNo, trackNo)
-                .set(KolSubB2cApplicationEntity::getOrderStatus, orderStatus)
-                .eq(KolSubB2cApplicationEntity::getId, subEntity.getId())
-                .eq(KolSubB2cApplicationEntity::getVersion, subEntity.getVersion())
-                .update();
+        // 走 updateById + @Version：WHERE version=? 且成功后原子递增，避免 lambdaUpdate 仅 eq version 却不推进版本
+        subEntity.setDeliveryStatus(deliveryStatus);
+        subEntity.setTrackNo(trackNo);
+        subEntity.setOrderStatus(orderStatus);
+        return updateById(subEntity);
     }
 
 }
