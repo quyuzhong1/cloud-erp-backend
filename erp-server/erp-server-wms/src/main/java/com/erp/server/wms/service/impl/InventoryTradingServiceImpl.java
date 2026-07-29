@@ -26,7 +26,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.config.PgUnallocLockSynchronizationAdapter;
-import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.google.common.base.Stopwatch;
@@ -139,9 +139,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         RedissonMultiLock unallocLock = null;
         boolean unlockInFinally = false;
         try {
-            if (VirtualInventoryUnallocCheckHelper.needsUnallocSharedLock(transactionList)) {
-                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
-                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
+            if (InventoryUnallocCheckHelper.needsUnallocSharedLock(transactionList)) {
+                List<String> unallocLockKeys = InventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
+                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, InventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
                 if (unallocLock == null) {
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
                 }
@@ -361,7 +361,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * 校验虚拟仓库存（PostgreSQL 路径预检）。
      * <p>
      * 指定虚拟仓时校验该虚拟仓已分配量；未指定时校验实体仓未分配。
-     * 与 Redis 路径共用 {@link VirtualInventoryUnallocCheckHelper} 白名单；实体/虚拟均读 PostgreSQL。
+     * 与 Redis 路径共用 {@link InventoryUnallocCheckHelper} 白名单；实体/虚拟均读 PostgreSQL。
      * PG 预检同时扣减 Redis {@code reserve} 在途预占，与 Redis TRY 路径共用 {@code whsku:unalloc:lock} 串行。
      * </p>
      *
@@ -372,9 +372,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             return;
         }
         List<InventoryTransactionDTO> virtualWarehouseCheckList =
-                VirtualInventoryUnallocCheckHelper.filterNeedVirtualWarehouseCheck(transactionList);
+                InventoryUnallocCheckHelper.filterNeedVirtualWarehouseCheck(transactionList);
         List<InventoryTransactionDTO> entityUnallocCheckList =
-                VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList);
+                InventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList);
         if (CollectionUtils.isEmpty(virtualWarehouseCheckList) && CollectionUtils.isEmpty(entityUnallocCheckList)) {
             return;
         }
@@ -393,7 +393,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
         for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
-                VirtualInventoryUnallocCheckHelper.groupByWarehouseSkuVirtualWarehouse(virtualWarehouseCheckList).entrySet()) {
+                InventoryUnallocCheckHelper.groupByWarehouseSkuVirtualWarehouse(virtualWarehouseCheckList).entrySet()) {
             List<InventoryTransactionDTO> value = entry.getValue();
             InventoryTransactionDTO first = value.get(0);
             String skuId = first.getSkuId();
@@ -413,7 +413,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         }
 
         for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
-                VirtualInventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).entrySet()) {
+                InventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).entrySet()) {
             List<InventoryTransactionDTO> value = entry.getValue();
             String skuId = value.get(0).getSkuId();
             String warehouseId = value.get(0).getWarehouseId();

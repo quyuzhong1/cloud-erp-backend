@@ -1,4 +1,4 @@
-package com.erp.server.wms.inventory;
+package com.erp.server.wms.util;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Slf4j
-public final class VirtualInventoryUnallocCheckHelper {
+public final class InventoryUnallocCheckHelper {
 
     /** Redis 事务集合中未分配预占成员前缀，commit/rollback 脚本据此识别 */
     public static final String UNALLOC_TRANSACTION_MEMBER_PREFIX = "unalloc@@";
@@ -105,7 +105,7 @@ public final class VirtualInventoryUnallocCheckHelper {
             InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()
     ));
 
-    private VirtualInventoryUnallocCheckHelper() {
+    private InventoryUnallocCheckHelper() {
     }
 
     /**
@@ -174,7 +174,7 @@ public final class VirtualInventoryUnallocCheckHelper {
             return Collections.emptyList();
         }
         return transactionList.stream()
-                .filter(VirtualInventoryUnallocCheckHelper::needUnallocCheck)
+                .filter(InventoryUnallocCheckHelper::needUnallocCheck)
                 .collect(Collectors.toList());
     }
 
@@ -455,7 +455,7 @@ public final class VirtualInventoryUnallocCheckHelper {
      * @param javaPrefix  Java 期望前缀
      */
     private static void assertTryLuaPrefixSynced(Pattern pattern, String luaVarName, String javaPrefix) {
-        try (InputStream inputStream = VirtualInventoryUnallocCheckHelper.class.getClassLoader()
+        try (InputStream inputStream = InventoryUnallocCheckHelper.class.getClassLoader()
                 .getResourceAsStream("lua/try.lua")) {
             if (inputStream == null) {
                 throw new IllegalStateException("classpath 下未找到 lua/try.lua");

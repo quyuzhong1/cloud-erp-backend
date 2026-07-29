@@ -10,7 +10,7 @@ local operationId = ARGV[7];
 local unallocMarkerPrefix = 'unalloc@@';
 local transactionrediskey = (transactionkey .. transaction);
 
--- 须与 Java VirtualInventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX 完全一致
+-- 须与 Java InventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX 完全一致
 local unalloc_lua_error_prefix = 'VM_CHECK_OUT_VIRTUAL_INVENTORY@@';
 -- 须与 Java InventoryRedisUtil.INVENTORY_LUA_BIZ_ERROR_PREFIX 完全一致
 local inventory_lua_biz_prefix = 'INVENTORY_LUA_BIZ@@';
@@ -362,13 +362,7 @@ if #unallocWritePlans > 0 and (params == nil or params == '') then
     return biz_error('未分配预占缺少仓位库存参数');
 end
 
-for _, plan in ipairs(unallocWritePlans) do
-    redis.call('set', plan[4], tostring(plan[5]));
-    redis.call('set', plan[6], tostring(plan[7]));
-    redis.call('set', plan[1], plan[2]);
-    redis.call('SADD', transactionrediskey, plan[3]);
-end
-
+-- Phase 2: 审计快照（只读，不写 Redis）
 local beforetransactions = transactionrediskey .. '==';
 local beforetransactionsvalue = redis.call('SMEMBERS', transactionrediskey);
 local indexbeforetransactions = 0;
@@ -394,14 +388,25 @@ for _, newc in ipairs(newcurrentvaluearr) do
     else
         beforeinventorys = beforeinventorys .. ',,' .. newc[2] .. '==' .. beforeinv;
     end
-    redis.call('SADD', transactionrediskey, newc[1]);
-    redis.call('set', newc[2], newc[3]);
     if newcurrentvaluearrindex == 0 then
         afterinventorys = afterinventorys .. newc[2] .. '==' .. newc[3];
     else
         afterinventorys = afterinventorys .. ',,' .. newc[2] .. '==' .. newc[3];
     end
     newcurrentvaluearrindex = newcurrentvaluearrindex + 1;
+end
+
+-- Phase 3: 校验全部通过后统一写入（仓位 + 未分配）
+for _, newc in ipairs(newcurrentvaluearr) do
+    redis.call('SADD', transactionrediskey, newc[1]);
+    redis.call('set', newc[2], newc[3]);
+end
+
+for _, plan in ipairs(unallocWritePlans) do
+    redis.call('set', plan[4], tostring(plan[5]));
+    redis.call('set', plan[6], tostring(plan[7]));
+    redis.call('set', plan[1], plan[2]);
+    redis.call('SADD', transactionrediskey, plan[3]);
 end
 
 local aftertransactions = transactionrediskey .. '==';

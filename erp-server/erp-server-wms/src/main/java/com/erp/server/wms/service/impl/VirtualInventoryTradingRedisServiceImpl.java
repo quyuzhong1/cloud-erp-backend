@@ -17,7 +17,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.config.PgUnallocLockSynchronizationAdapter;
-import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
@@ -72,9 +72,9 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
         // 计时器-开始
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
-            if (VirtualInventoryUnallocCheckHelper.needsUnallocSharedLockForVirtualStock(transactionList)) {
-                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeysForVirtualStock(transactionList);
-                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
+            if (InventoryUnallocCheckHelper.needsUnallocSharedLockForVirtualStock(transactionList)) {
+                List<String> unallocLockKeys = InventoryUnallocCheckHelper.buildUnallocLockKeysForVirtualStock(transactionList);
+                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, InventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
                 if (unallocLock == null) {
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
                 }

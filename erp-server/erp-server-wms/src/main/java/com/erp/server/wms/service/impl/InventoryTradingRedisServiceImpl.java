@@ -22,7 +22,7 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.config.PgUnallocLockSynchronizationAdapter;
-import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.google.common.base.Stopwatch;
@@ -129,9 +129,9 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         RedissonMultiLock unallocLock = null;
         boolean unlockInFinally = false;
         try {
-            if (VirtualInventoryUnallocCheckHelper.needsUnallocSharedLock(transactionList)) {
-                List<String> unallocLockKeys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
-                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, VirtualInventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
+            if (InventoryUnallocCheckHelper.needsUnallocSharedLock(transactionList)) {
+                List<String> unallocLockKeys = InventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
+                unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, InventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
                 if (unallocLock == null) {
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
                 }
@@ -141,7 +141,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
                     unlockInFinally = true;
                 }
             }
-            //校验虚拟仓库存（预检计入在途预占，排除本批 operation 以支持 TRY 重试幂等）
+            //校验虚拟仓库存（预检计入全部在途预占；TRY 阶段再按流水 ID 解析 operationId）
             this.checkVirtualInventoryList(transactionList);
             // 4-检查每日库存是否充足
 //            this.checkInventoryHisList(transactionList);
@@ -354,7 +354,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * <p>
      * 指定虚拟仓时校验该虚拟仓已分配量；未指定时校验实体仓未分配（含在途预占）。
      * 最终并发放行以 {@code try.lua} 仓+SKU 未分配原子预占为准；此处用于提前失败、减少无效 TRY。
-     * 预检 pending 不排除本批（流水 ID 尚未生成，与 PG 路径及 {@link VirtualInventoryUnallocCheckHelper#sumPendingReserve} 约定一致），
+     * 预检 pending 不排除本批（流水 ID 尚未生成，与 PG 路径及 {@link InventoryUnallocCheckHelper#sumPendingReserve} 约定一致），
      * 计入全部在途预占；TRY 阶段再按流水 ID 解析 {@code operationId} 做幂等排除。
      * </p>
      *
@@ -368,9 +368,9 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         String excludeTransactionId = null;
         String excludeOperationId = null;
         List<InventoryTransactionDTO> virtualWarehouseCheckList =
-                VirtualInventoryUnallocCheckHelper.filterNeedVirtualWarehouseCheck(transactionList);
+                InventoryUnallocCheckHelper.filterNeedVirtualWarehouseCheck(transactionList);
         List<InventoryTransactionDTO> entityUnallocCheckList =
-                VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList);
+                InventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(transactionList);
         if (CollectionUtils.isEmpty(virtualWarehouseCheckList) && CollectionUtils.isEmpty(entityUnallocCheckList)) {
             return;
         }
@@ -392,7 +392,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         List<InventoryDTO.RedisInventoryReturnDTO> redisEntityInventoryList = inventoryService.listRedisInventoryMeta(entityParam);
 
         for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
-                VirtualInventoryUnallocCheckHelper.groupByWarehouseSkuVirtualWarehouse(virtualWarehouseCheckList).entrySet()) {
+                InventoryUnallocCheckHelper.groupByWarehouseSkuVirtualWarehouse(virtualWarehouseCheckList).entrySet()) {
             List<InventoryTransactionDTO> value = entry.getValue();
             InventoryTransactionDTO first = value.get(0);
             String skuId = first.getSkuId();
@@ -416,24 +416,24 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         }
         Set<String> entityInventoryIds = new LinkedHashSet<>();
         for (List<InventoryTransactionDTO> group :
-                VirtualInventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).values()) {
-            entityInventoryIds.addAll(VirtualInventoryUnallocCheckHelper.filterInventoryIdsByWarehouseSku(
+                InventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).values()) {
+            entityInventoryIds.addAll(InventoryUnallocCheckHelper.filterInventoryIdsByWarehouseSku(
                     redisEntityInventoryList, group.get(0).getWarehouseId(), group.get(0).getSkuId()));
         }
         Map<String, Integer> baseQtyMap = inventoryTransactionService.getRedisBaseQtyByInventoryBatch(entityInventoryIds);
 
         for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
-                VirtualInventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).entrySet()) {
+                InventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).entrySet()) {
             List<InventoryTransactionDTO> value = entry.getValue();
             String skuId = value.get(0).getSkuId();
             String warehouseId = value.get(0).getWarehouseId();
-            Integer virtualQty = VirtualInventoryUnallocCheckHelper.sumVirtualQty(redisVirtualInventoryList, warehouseId, skuId);
+            Integer virtualQty = InventoryUnallocCheckHelper.sumVirtualQty(redisVirtualInventoryList, warehouseId, skuId);
             if (MathUtil.compareTo(virtualQty, MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
-            List<String> inventoryIds = VirtualInventoryUnallocCheckHelper.filterInventoryIdsByWarehouseSku(
+            List<String> inventoryIds = InventoryUnallocCheckHelper.filterInventoryIdsByWarehouseSku(
                     redisEntityInventoryList, warehouseId, skuId);
-            int realInventoryTotal = VirtualInventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(inventoryIds, baseQtyMap);
+            int realInventoryTotal = InventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(inventoryIds, baseQtyMap);
             int pendingReserve = inventoryTransactionService.getUnallocPendingReserveQty(
                     warehouseId, skuId, excludeTransactionId, excludeOperationId);
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);

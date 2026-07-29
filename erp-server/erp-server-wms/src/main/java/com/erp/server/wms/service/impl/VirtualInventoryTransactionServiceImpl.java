@@ -25,7 +25,7 @@ import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.server.wms.config.VirtualInventoryTransactionSynchronizationAdapter;
-import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.mapper.VirtualInventoryTransactionMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryRedisUtil;
@@ -335,7 +335,17 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
 			transactionType = "local";
 		}
 		
-		this.tryRedis(transactionId , transactionList);
+		try {
+			this.tryRedis(transactionId , transactionList);
+		} catch (Exception e) {
+			log.warn("虚拟仓tryRedis失败，尝试回滚redis预占 transactionId={}", transactionId, e);
+			try {
+				this.rollbackRedis(transactionId);
+			} catch (Exception rollbackEx) {
+				log.error("虚拟仓tryRedis失败后回滚redis异常 transactionId={}", transactionId, rollbackEx);
+			}
+			throw e;
+		}
 		
 		List<VirtualInventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
 		for(VirtualTransFlowEntity transactionFlowEntity : transactionFlowEntityList) {
@@ -399,7 +409,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     		}
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam)) {
-    		String tryOperationId = VirtualInventoryUnallocCheckHelper.resolveTryOperationIdFromFlowIds(
+    		String tryOperationId = InventoryUnallocCheckHelper.resolveTryOperationIdFromFlowIds(
     				transactionList.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getId).collect(Collectors.toList()));
     		virtualInventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
 					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
