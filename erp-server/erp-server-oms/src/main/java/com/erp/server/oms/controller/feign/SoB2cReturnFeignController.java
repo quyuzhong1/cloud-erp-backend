@@ -39,6 +39,26 @@ public class SoB2cReturnFeignController {
     }
 
     /**
+     * 根据退货物流单号查询B2C销售退货单（可能多条，按创建时间倒序）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cReturnEntity>
+     **/
+    @PostMapping("/listByReturnLogisticCode")
+    public List<SoB2cReturnEntity> listByReturnLogisticCode(@RequestBody String returnLogisticCode) {
+        return soB2cReturnService.listByReturnLogisticCode(returnLogisticCode);
+    }
+
+    /**
+     * 按平台订单号/平台退货单号/销售单号/退货单号中任一字段匹配参考单号（一次查询，字段间为 OR 关系）
+     * @param referenceNo 参考单号
+     * @return 命中的退货单列表
+     */
+    @PostMapping("/listByAnyReferenceNo")
+    public List<SoB2cReturnEntity> listByAnyReferenceNo(@RequestBody String referenceNo) {
+        return soB2cReturnService.listByAnyReferenceNo(referenceNo);
+    }
+
+    /**
      * 根据id查询详情表信息
      * @Author Luo_WG
      * @Date 2023/5/15 18:17
@@ -87,6 +107,15 @@ public class SoB2cReturnFeignController {
     @PostMapping("/updateBatch")
     void updateBatch(@RequestBody List<SoB2cReturnEntity> list){
         soB2cReturnService.updateBatchById(list);
+    }
+
+    /**
+     * WEGO 退货入库：用参考单号一次命中 so_b2c_return，
+     * 按 code / platform_return_no / platform_order_no / so_code OR 匹配，返回优先级最高的首条记录。
+     */
+    @GetMapping("/findFirstByReferenceNo")
+    public SoB2cReturnEntity findFirstByReferenceNo(@RequestParam("referenceNo") String referenceNo) {
+        return soB2cReturnService.findFirstByReferenceNo(referenceNo);
     }
 
 }

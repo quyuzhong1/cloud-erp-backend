@@ -23,6 +23,9 @@
         <result column="warehouse_name" property="warehouseName" />
         <result column="warehouse_location" property="warehouseLocation" />
         <result column="remark" property="remark" />
+        <result column="source_detail_id" property="sourceDetailId" />
+        <result column="prestock_detail_id" property="prestockDetailId" />
+        <result column="defective_product_flag" property="defectiveProductFlag" />
     </resultMap>
 
 </mapper>

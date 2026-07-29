@@ -7,7 +7,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -23,7 +22,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
@@ -304,7 +302,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean delete(List<String> ids) {
         List<SoB2cReturnEntity> soB2cReturnEntityList = this.listByIds(ids);
         List<String> autoAddList = soB2cReturnEntityList.stream().filter(v->v.getSourceType().equals(SoB2cReturnSourceTypeEnum.AUTO_ADD.code)).map(v->v.getCode()).collect(Collectors.toList());
@@ -372,6 +369,30 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             return null;
         }
         return lambdaQuery().eq(SoB2cReturnEntity::getPlatformReturnNo,platformReturnNo).last("limit 1").one();
+    }
+
+    @Override
+    public List<SoB2cReturnEntity> listByReturnLogisticCode(String returnLogisticCode) {
+        if (StringUtils.isBlank(returnLogisticCode)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .eq(SoB2cReturnEntity::getReturnLogisticCode, returnLogisticCode)
+                .orderByDesc(SoB2cReturnEntity::getCreateTime)
+                .list();
+    }
+
+    @Override
+    public List<SoB2cReturnEntity> listByAnyReferenceNo(String referenceNo) {
+        if (StringUtils.isBlank(referenceNo)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .and(w -> w.eq(SoB2cReturnEntity::getPlatformOrderNo, referenceNo)
+                        .or().eq(SoB2cReturnEntity::getPlatformReturnNo, referenceNo)
+                        .or().eq(SoB2cReturnEntity::getSoCode, referenceNo)
+                        .or().eq(SoB2cReturnEntity::getCode, referenceNo))
+                .list();
     }
 
     @Override
@@ -470,22 +491,29 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<String> soIds = list.stream().map(SoDetailDTO.AddDetailView::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cReturnDetailEntity> soReturnDetailEntities = soB2cReturnDetailService.listByMainIds(Collections.singletonList(dto.getId()));
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
-        List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(list.get(MathUtil.ZERO).getWarehouseId());
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        //从wms 获取到sku 的即时库存信息，WMS接口要求仓库必传，仓库为空时跳过查询，库存默认0
+        String warehouseId = list.get(MathUtil.ZERO).getWarehouseId();
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = new ArrayList<>();
+        if (StringUtils.isNotBlank(warehouseId)) {
+            InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+            paramDTO.setSkuIds(skuIdList);
+            paramDTO.setWarehouseId(warehouseId);
+            paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        }
         //获取退货单id
         List<String> returnMainIds = list.stream().map(SoDetailDTO.AddDetailView::getMainId).distinct().collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(returnMainIds);
+        //剩余应退货数量：应退数量(mustQty) - 历史已入库实退数量(realQty)累计，实退数量来自退货入库单明细（按退货单明细id关联，跨单据累计）
+        List<String> returnDetailIds = list.stream().map(SoDetailDTO.AddDetailView::getId).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockFeign.listDetailBySoReturnDetailIds(returnDetailIds);
         List<String> orgIds = list.stream().map(SoDetailDTO.AddDetailView::getInventoryOrgId).collect(Collectors.toList());
 
-        List<String> warehouseIdList = list.stream().map(SoDetailDTO.AddDetailView::getWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        List<String> warehouseIdList = list.stream().map(SoDetailDTO.AddDetailView::getWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? wmsTaskFeign.listWarehouseByIds(warehouseIdList) : Collections.emptyList();
 
         //组织列表
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
@@ -513,6 +541,13 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             addDetailView.setReceiveQty(receiveQty);
             addDetailView.setMustQty(returnQty);
+            // 剩余应退货数量 = 应退数量(returnQty) - 历史已入库实退数量(realQty)累计。
+            // 口径说明（勿与关联售后列表 SQL 强行改成同一公式后要求「详情也必须 max(0,…)」）：
+            // - 本接口为售后单「新增/编辑明细视图」展示：保留原始差值，历史超入时可为负，便于运营识别超额入库；
+            // - 关联售后候选列表（SoReturnLinkAfterSaleQueryHandler）使用 GREATEST(return_qty-instock,0) 且过滤 >0，
+            //   那是「还能再关联/再入库」的筛选口径，与本展示字段场景不同，不是同一入口的计算 bug。
+            Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDetailView.setRemainMustQty(returnQty - realQty);
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
         }
@@ -521,7 +556,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO submit(SoB2cReturnEntity entity, Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -571,7 +605,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(SoB2cReturnEntity entity, ApproveOneDTO dto) {
         //判断是否是审核中的状态
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
@@ -645,7 +678,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO disApprove(SoB2cReturnEntity entity) {
         //已审核支持反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
@@ -663,7 +695,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(SoB2cReturnEntity entity) {
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -782,7 +813,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(ApiResult.error(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
         Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
@@ -830,6 +861,13 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
                 pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
             }
             pagingViewDTO.setInstockQty(instockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId()) && v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum));
+            //剩余应退货数量 = 退货数量 - 全部有效入库实退（与 listAddDetailView / WMS 口径一致，含待审/草稿；instockQty 仍仅展示已审核）
+            Integer returnQty = pagingViewDTO.getReturnQty() != null ? pagingViewDTO.getReturnQty() : MathUtil.ZERO;
+            Integer allInstockRealQty = instockDetailEntityList.stream()
+                    .filter(v -> pagingViewDTO.getSkuId().equals(v.getSkuId()))
+                    .map(SoReturnInstockDetailEntity::getRealQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            pagingViewDTO.setRemainMustQty(returnQty - allInstockRealQty);
             if(CollectionUtils.isNotEmpty(instockDetailEntityList)){
                 pagingViewDTO.setSysInstockTime(instockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
             }
@@ -851,5 +889,14 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     */
     private void handleData(SoB2cReturnEntity soB2cReturnEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public SoB2cReturnEntity findFirstByReferenceNo(String referenceNo) {
+        // 空参不下发SQL：referenceNo为空时OR多字段匹配无意义，且防止误匹配某些字段为空字符串的历史脏数据
+        if (StringUtils.isBlank(referenceNo)) {
+            return null;
+        }
+        return baseMapper.findFirstByReferenceNo(referenceNo);
     }
 }

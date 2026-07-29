@@ -53,6 +53,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.ShipableStatusEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -939,39 +940,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> fieldList = CollectionUtils.isEmpty(params.getAdvanceQueryDTOList()) ? new ArrayList<>() :  params.getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
         params.setFieldList(fieldList);
 
-        //是否虚拟仓缺货
-        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
-        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualOutStock".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualScarce".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        if(Objects.nonNull(isVirtualOutStock) || Objects.nonNull(isOutStock)){
-            //查询全部数据，过滤出有缺货
-            Page query = new Page(1,Integer.MAX_VALUE,false);
-            IPage pageData = baseMapper.paging(query, params);
-            List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
-            if (CollectionUtils.isEmpty(list)) {
-                return new PagingVO<>(pageData);
-            }
-            fillPagingDb(list);
-            if(Objects.nonNull(isVirtualOutStock)){
-                list = list.stream().filter(v -> v.getIsVirtualScarce()!= null && v.getIsVirtualScarce().equals(isVirtualOutStock)).collect(Collectors.toList());
-            }
-            if(Objects.nonNull(isOutStock)){
-                list = list.stream().filter(v -> v.getIsScarce()!= null && v.getIsScarce().equals(isOutStock)).collect(Collectors.toList());
-            }
-            Page result = new Page(dto.getCurrPage(), dto.getPageSize(),list.size());
-            list = com.common.business.utils.CollectionUtils.paginateList(list,dto.getPageSize(),dto.getCurrPage());
-            result.setRecords(list);
-            return new PagingVO<>(result);
-        }else {
-            Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-            IPage pageData = baseMapper.paging(query, params);
-            List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
-            if (CollectionUtils.isEmpty(list)) {
-                return new PagingVO<>(pageData);
-            }
-            fillPagingDb(list);
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -1039,7 +1015,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = soIdList.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_INFO.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
@@ -1083,6 +1059,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //销售出库单列表
         List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
+        //可发货状态(无虚拟仓)所需：按明细维度预聚合发货通知箱数，避免循环内重复全表扫描
+        Map<String, Integer> noticeBoxQtyByDetailId = soDeliveryNoticeDetailList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(e -> ObjectUtil.defaultIfNull(e.getDeliveryQty(), MathUtil.ZERO))));
+        //B2B三方仓已发货箱数（排除已取消发货）按明细维度预聚合
+        Map<String, Integer> b2bNoticeBoxQtyByDetailId = b2bThirdDeliveryDetailList.stream()
+                .filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()))
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSoDetailId()))
+                .collect(Collectors.groupingBy(B2bThirdDeliveryDetailEntity::getSoDetailId,
+                        Collectors.summingInt(e -> ObjectUtil.defaultIfNull(e.getBoxQty(), MathUtil.ZERO))));
         for (SoInfoDTO.PagingViewDTO item : list) {
             BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(b.getId(), item.getReceiveAccount())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
@@ -1131,6 +1118,36 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setWarehouseName(matchedWarehouse.map(WarehouseEntity::getName).orElse(""));
             item.setWarehouseManageType(matchedWarehouse.map(WarehouseEntity::getWarehouseManageType).orElse(""));
 
+            //可发货状态：按是否有虚拟仓区分判定口径
+            Integer saleBoxQty = ObjectUtil.defaultIfNull(item.getBoxQty(), MathUtil.ZERO);
+            Integer shipableStatus;
+            if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
+                //有虚拟仓：沿用原逻辑，依据锁定数量(冻结数量)与销售数量(发货箱数)关系判定
+                Integer lockQty = ObjectUtil.defaultIfNull(item.getFrozenQty(), MathUtil.ZERO);
+                if (lockQty <= MathUtil.ZERO) {
+                    shipableStatus = ShipableStatusEnum.NONE.getCode();
+                } else if (lockQty >= saleBoxQty) {
+                    shipableStatus = ShipableStatusEnum.ALL.getCode();
+                } else {
+                    shipableStatus = ShipableStatusEnum.PART.getCode();
+                }
+            } else {
+                //无虚拟仓：可发数量 = 销售数量(发货箱数) - 发货通知数量(普通发货通知箱数 + B2B三方仓已发货箱数)
+                //数量已在循环外按明细维度预聚合，此处 O(1) 取值
+                Integer noticeBoxQty = noticeBoxQtyByDetailId.getOrDefault(item.getDetailId(), MathUtil.ZERO);
+                Integer b2bNoticeBoxQty = b2bNoticeBoxQtyByDetailId.getOrDefault(item.getDetailId(), MathUtil.ZERO);
+                int shipableQty = saleBoxQty - (noticeBoxQty + b2bNoticeBoxQty);
+                if (shipableQty <= MathUtil.ZERO) {
+                    shipableStatus = ShipableStatusEnum.NONE.getCode();
+                } else if (shipableQty >= saleBoxQty) {
+                    shipableStatus = ShipableStatusEnum.ALL.getCode();
+                } else {
+                    shipableStatus = ShipableStatusEnum.PART.getCode();
+                }
+            }
+            item.setShipableStatus(shipableStatus);
+            item.setShipableStatusName(ShipableStatusEnum.getName(shipableStatus));
+
             //存在虚拟仓库则判断是否缺货
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
 
@@ -1151,7 +1168,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 handleVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty+b2bBoxQty);
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
-                item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
                 item.setVirtualScarceQty(ObjectUtil.isEmpty(virtuaParamScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : virtuaParamScarceDTO.getVirtualScarceQty());
             }
             //申请数量
@@ -1229,8 +1245,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
 
-            //缺货标识
-            item.setIsScarce(scarceQty > 0);
             /**
              * 已出库数量
              * 新增时默认为0
@@ -1307,7 +1321,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             if (ignoreInventorySkuIds.contains(deliverySkuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", deliverySkuId, item.getDeliverySkuNo());
-                item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
         }
@@ -1768,7 +1781,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
@@ -1885,7 +1897,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO disApprove(SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList) {
         List<String> ids = Arrays.asList(entity.getId());
         List<SoInfoEntity> list = Arrays.asList(entity);
@@ -2010,7 +2021,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "dto.ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
         List<String> ids = dto.getIds();
         List<SoInfoEntity> list = this.listByIds(ids);
@@ -2047,7 +2057,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public List<BatchResultDTO>  deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -2139,7 +2148,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -2621,34 +2629,63 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuList = listSkuProductByIds(skuIdList);
         List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
         List<String> sodIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
+        List<String> soIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
+        Map<String, String> virtualWarehouseIdBySoId = CollectionUtils.isEmpty(soIdList) ? Collections.emptyMap()
+                : this.listByIds(soIdList).stream()
+                .filter(so -> CharSequenceUtil.isNotBlank(so.getVirtualWarehouseId()))
+                .collect(Collectors.toMap(SoInfoEntity::getId, SoInfoEntity::getVirtualWarehouseId, (a, b) -> a));
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKey(DictBasicTypeEnum.SKU_NO.getType());
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
-            view.setDeliveryQty(view.getSalesQty() - view.getAlreadyDeliveryQty());
+            // 锁定数量（已锁库存）
+            Integer frozenQty = ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO);
+            // 销售数量
+            Integer salesQty = ObjectUtil.defaultIfNull(view.getSalesQty(), MathUtil.ZERO);
             view.setPlanDeliveryDate(view.getRequireDate());
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
-            if(view.getDeliveryQty()>0){
-                resultList.add(view);
-            }
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
+            Integer effectiveNoticeQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
-                Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-                effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
-                view.setEffectiveNoticeQty(effectiveNoticeQty);
+                effectiveNoticeQty = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-
+            // view不会为空，perBoxQty也不会为空，不存在空指针问题
+            effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
+            view.setEffectiveNoticeQty(effectiveNoticeQty);
+            // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+            view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
+            boolean hasVirtualWarehouse = StringUtils.isNotBlank(virtualWarehouseIdBySoId.get(view.getSoId()));
+            // 有虚拟仓：发货数量默认填充锁定数量；无虚拟仓：发货数量默认填充可发数量（销售数量 - 发货通知数量）
+            if (hasVirtualWarehouse) {
+                view.setDeliveryQty(frozenQty);
+            } else {
+                view.setDeliveryQty(Math.max(MathUtil.ZERO, salesQty - effectiveNoticeQty));
+            }
+            // 有虚拟仓：锁定数量≤0 默认移除；无虚拟仓：销售数量-发货通知数量≤0 默认移除（sku=yf01 除外，照常返回）
+            boolean isSpecialSku = CollectionUtils.isNotEmpty(dictBasicEntityList)
+                    && Objects.equals(dictBasicEntityList.get(0).getValue(), view.getSkuNo());
+            if (!isSpecialSku && view.getDeliveryQty() <= MathUtil.ZERO) {
+                continue;
+            }
+            if (hasVirtualWarehouse
+                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
+                    && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
+                continue;
+            }
+            resultList.add(view);
         }
         if(CollectionUtils.isEmpty(resultList)){
-            throw new ServiceException("没有待发货明细");
+            throw new ServiceException("没有待发货明细或者绑定数量为0");
         }
         return resultList;
     }

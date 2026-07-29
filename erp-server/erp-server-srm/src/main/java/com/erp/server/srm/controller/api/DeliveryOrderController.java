@@ -1,6 +1,7 @@
 package com.erp.server.srm.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -151,6 +152,7 @@ public class DeliveryOrderController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "送货单编辑")
+    @DataIdempotent(keyIdName = "dto.id")
     public ApiResult<Object> update(@RequestBody @Validated DeliveryOrderDTO.UpdateDTO dto) {
         deliveryOrderService.update(dto);
         return success();

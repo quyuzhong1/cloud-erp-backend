@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -128,6 +129,7 @@ public class PackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @DataIdempotent(keyIdName = "dto.sourceId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "装箱任务装箱保存")
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {

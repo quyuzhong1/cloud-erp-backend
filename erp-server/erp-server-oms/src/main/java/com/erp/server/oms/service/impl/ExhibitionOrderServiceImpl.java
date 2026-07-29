@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -33,7 +32,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -186,6 +184,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private SoChangeService soChangeService;
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private WorkflowTaskInstanceService workflowTaskInstanceService;
     @Resource
     private MQProducerService mqProducerService;
 
@@ -715,14 +715,15 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Override
     public PagingVO<ExhibitionOrderDTO.ListDTO> paging(PagingDTO<ExhibitionOrderDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize(), false);
         IPage<ExhibitionOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        Long total = Optional.ofNullable(this.baseMapper.pagingCount(pagingParamDTO.getParams())).orElse(0L);
         if (CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData.getRecords(), total.intValue(), pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
         }
         // 数据处理
         fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData.getRecords(), total.intValue(), pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
     }
 
     @Override
@@ -778,7 +779,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         ExhibitionOrderEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -822,7 +822,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -904,7 +903,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息单数据"));
         // 反审核条件判断
@@ -916,13 +914,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //判断上一次的审核的任务是否已经全部执行成功
-        Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, id)
-                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE)
-                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
-                .count();
-        if(count > 0){
-            throw new ServiceException("上一次审核任务未执行完成，无法进行反审核");
-        }
+        validatePreviousWorkflowTaskFinished(id, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE,
+                "上一次审核任务未执行完成，无法进行反审核");
 
         //任务节点记录表
         workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true)
@@ -932,6 +925,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
         if(CollUtil.isNotEmpty(list)){
+            // 同一单据同一任务节点只能存在一组未删除记录；再次反审核前清理上一轮已完成的反审核任务。
+            validatePreviousWorkflowTaskFinished(id, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE,
+                    "上一次反审核任务未执行完成，无法再次反审核");
+            workflowTaskRecordService.removeBySourceIdAndSourceType(id, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE.getCode());
+
             WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
             addTaskDTO.setSourceId(entity.getId());
             addTaskDTO.setSourceCode(entity.getCode());
@@ -944,13 +942,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             map.put("exhibitionOrderId", entity.getId());
             addTaskDTO.setFirstNodeInputData(map);
 
-            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-            }
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
 
@@ -972,6 +966,32 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
+    private void validatePreviousWorkflowTaskFinished(String sourceId, WorkflowTaskRecordTypeEnum sourceTypeEnum, String errorMsg) {
+        // 优先按实例化模型校验，避免历史轮次残留节点误拦新一轮操作
+        WorkflowTaskInstanceEntity latestInstance = workflowTaskInstanceService.getLatestBySource(sourceId, sourceTypeEnum.getCode());
+        if (latestInstance != null) {
+            // 实例已终态（成功/已取消）则认为前置任务已完成，允许继续
+            if (WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(latestInstance.getStatus())
+                    || WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(latestInstance.getStatus())) {
+                return;
+            }
+            // 实例未终态（RUNNING/FAILED/WAITING），前置任务未完成
+            throw new ServiceException(errorMsg);
+        }
+        // 无实例（历史数据），兜底按节点逻辑判断，仅校验无 instanceId 的 legacy 节点
+        Integer count = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, sourceId)
+                .eq(WorkflowTaskRecordEntity::getSourceType, sourceTypeEnum.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .and(w -> w.isNull(WorkflowTaskRecordEntity::getInstanceId)
+                        .or().eq(WorkflowTaskRecordEntity::getInstanceId, ""))
+                .count();
+        if (count > 0) {
+            throw new ServiceException(errorMsg);
+        }
+    }
+
     private Boolean validateDisApprove(ExhibitionOrderEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
@@ -982,7 +1002,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
         // 只有待提交数据允许删除
@@ -1007,7 +1026,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO invalid(String id,String remark) {
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
         // 只有待提交、审核不通过数据允许作废
@@ -1041,7 +1059,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
@@ -1090,13 +1107,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             Map<String, Object> map = new HashMap<>();
             map.put("id", entity.getId());
             addTaskDTO.setFirstNodeInputData(map);
-            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-            }
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
 
@@ -1568,7 +1581,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
 

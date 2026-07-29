@@ -5,7 +5,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,7 +15,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
@@ -76,7 +74,6 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "addDTO.erpUserId,addDTO.kingdeePostId", unlockAfterTx = true)
     public Boolean add(KingdeeUserRefPostDTO.AddDTO addDTO) {
         KingdeeUserRefPostEntity kingdeeUserRefPostEntity = new KingdeeUserRefPostEntity();
         BeanMapperUtils.copy(addDTO, kingdeeUserRefPostEntity);
@@ -102,7 +99,6 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "updateDTO.id", unlockAfterTx = true)
     public Boolean update(KingdeeUserRefPostDTO.UpdateDTO updateDTO) {
         KingdeeUserRefPostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶员工任岗单"));
@@ -305,7 +301,6 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         KingdeeUserRefPostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶员工任岗"));

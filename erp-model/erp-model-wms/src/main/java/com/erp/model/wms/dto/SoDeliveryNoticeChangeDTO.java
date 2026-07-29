@@ -338,6 +338,21 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         private Integer pickedQty;
 
         /**
+         * 锁定数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+         */
+        private Integer pendingNoticeQty;
+
+        /**
+         * 新发货通知数量 = 锁定数量 + 本单原发货通知数量
+         */
+        private Integer newNoticeQty;
+
+        /**
          * 最大可变更数量
          */
         private Integer maxCanChangeQty;
@@ -589,6 +604,16 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
          * 已拣货
          */
         private Integer pickedQty;
+
+        /**
+         * 锁定数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+         */
+        private Integer pendingNoticeQty;
 
         /**
          * 最大可变更数量

@@ -83,14 +83,7 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 			Class<?> clazz = Class.forName(className);
 			Object bean = ApplicationContextUtils.getBean(clazz);
 			if(CollUtil.isNotEmpty(param)) {
-				Method[] methods = clazz.getMethods();
-				Method invokeMethod = null;
-				for(Method method : methods) {
-					if(method.getName().equals(methodName) && method.getParameterCount() == param.size()) {
-						invokeMethod = method;
-						break;
-					}
-				}
+				Method invokeMethod = getInvokeMethod(feignInvoke, clazz, methodName, param);
 				if(invokeMethod == null) {
 					throw new ServiceException("调用远程"+ className + "#" + methodName +"方法不存在");
 				}
@@ -140,6 +133,28 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 			paramVarArgs[i] = JSON.parseObject(s, parameterTypes[i]);
 		}
 		return paramVarArgs;
+	}
+
+	private static Method getInvokeMethod(FeignInvoke feignInvoke, Class<?> clazz, String methodName, List<Object> param) throws ClassNotFoundException, NoSuchMethodException {
+		if(CollUtil.isNotEmpty(feignInvoke.getParameterTypeNames())) {
+			List<String> parameterTypeNames = feignInvoke.getParameterTypeNames();
+			Class<?>[] parameterTypes = new Class<?>[parameterTypeNames.size()];
+			for(int i = 0; i < parameterTypeNames.size(); i++) {
+				parameterTypes[i] = Class.forName(parameterTypeNames.get(i));
+			}
+			try {
+				return clazz.getMethod(methodName, parameterTypes);
+			} catch (NoSuchMethodException e) {
+				return null;
+			}
+		}
+		Method[] methods = clazz.getMethods();
+		for(Method method : methods) {
+			if(method.getName().equals(methodName) && method.getParameterCount() == param.size()) {
+				return method;
+			}
+		}
+		return null;
 	}
 
 }

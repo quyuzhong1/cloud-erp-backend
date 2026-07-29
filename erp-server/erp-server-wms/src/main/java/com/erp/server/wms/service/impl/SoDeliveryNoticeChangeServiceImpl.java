@@ -8,7 +8,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -27,7 +26,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -307,7 +305,6 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -535,7 +532,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         // 数据处理
         for (SoDeliveryNoticeChangeDTO.ProductDTO record : pageData.getRecords()) {
+            int frozenQty = record.getFrozenQty() == null ? 0 : record.getFrozenQty();
             record.setMaxCanChangeQty(record.getSaleQty() - record.getAllNoticeQty() + record.getCurrentNoticeQty());
+            // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+            record.setPendingNoticeQty(record.getSaleQty() - record.getAllNoticeQty() - frozenQty);
+            // 新发货通知数量 = 锁定数量 + 本单原发货通知数量
+            record.setNewNoticeQty(frozenQty + record.getCurrentNoticeQty());
             SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(record.getSkuId())).findFirst().orElse(new SkuVO());
             record.setProductName(skuVO.getSkuName());
         }
@@ -581,7 +583,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         // 数据处理
         for (SoDeliveryNoticeChangeDTO.ProductDTO record : pageData.getRecords()) {
+            int frozenQty = record.getFrozenQty() == null ? 0 : record.getFrozenQty();
             record.setMaxCanChangeQty(record.getSaleQty() - record.getAllNoticeQty() + record.getCurrentNoticeQty());
+            // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+            record.setPendingNoticeQty(record.getSaleQty() - record.getAllNoticeQty() - frozenQty);
+            // 新发货通知数量 = 锁定数量 + 本单原发货通知数量
+            record.setNewNoticeQty(frozenQty + record.getCurrentNoticeQty());
             SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(record.getSkuId())).findFirst().orElse(new SkuVO());
             record.setProductName(skuVO.getSkuName());
         }
@@ -637,8 +644,11 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         if(StringUtil.isNotBlank(soDeliveryNoticeChangeEntity.getId())){
             List<SoDeliveryNoticeChangeDTO.ViewDetail> detailList = baseMapper.listViewDetailList(soDeliveryNoticeChangeEntity.getId());
             for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailList) {
+                int frozenQty = viewDetail.getFrozenQty() == null ? 0 : viewDetail.getFrozenQty();
                 viewDetail.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(viewDetail.getChangeType()));
                 viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() + viewDetail.getCurrentNoticeQty());
+                // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+                viewDetail.setPendingNoticeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() - frozenQty);
             }
             viewDTO.setViewDetailList(detailList);
         }
@@ -656,11 +666,16 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             List<String> skuNoList = detailList.stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSkuNo).collect(Collectors.toList());
             List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
             for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailList) {
+                int frozenQty = viewDetail.getFrozenQty() == null ? 0 : viewDetail.getFrozenQty();
                 SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(viewDetail.getSkuNo())).findFirst().orElse(new SkuVO());
                 viewDetail.setChangeType(SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode());
                 viewDetail.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.UPDATE.getName());
                 viewDetail.setProductName(skuVO.getSkuName());
                 viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() + viewDetail.getCurrentNoticeQty());
+                // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+                viewDetail.setPendingNoticeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() - frozenQty);
+                // 新发货通知数量 = 锁定数量 + 本单原发货通知数量
+                viewDetail.setNewNoticeQty(frozenQty + viewDetail.getCurrentNoticeQty());
             }
             viewDTO.setViewDetailList(detailList);
         }

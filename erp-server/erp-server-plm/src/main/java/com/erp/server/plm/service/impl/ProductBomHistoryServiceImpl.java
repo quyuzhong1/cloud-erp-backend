@@ -152,6 +152,22 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
     }
 
     @Override
+    public List<BomChildrenSkuDTO> listBomHistoryByIds(List<String> bomHistoryIds) {
+        if (CollectionUtils.isEmpty(bomHistoryIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listBomHistoryByIds(bomHistoryIds);
+    }
+
+    @Override
+    public List<BomChildrenSkuDTO> listBomHistoryByParentSkuIds(List<String> parentSkuIds) {
+        if (CollectionUtils.isEmpty(parentSkuIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listBomHistoryByParentSkuIds(parentSkuIds);
+    }
+
+    @Override
     public List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto) {
         List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
@@ -161,7 +177,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
                 .select(ProductBomHistoryEntity::getBomVersion)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getBomVersion())).collect(Collectors.toList());
         return resultList;

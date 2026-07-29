@@ -18,6 +18,10 @@ public enum  BasicDictTypeEnum {
      */
     DECLARE_PROPERTY("declareProperty", "报关属性"),
     /**
+     * 报关单位
+     */
+    DECLARE_UNIT("declareUnit", "报关单位"),
+    /**
      * 国家
      */
     COUNTRY("country", "国家"),

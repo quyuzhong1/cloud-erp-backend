@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -140,6 +139,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         // 校验验收数量
         validateAcceptQty(addDTO.getDetailList());
+        validateMoldRefSkuForSave(addDTO.getDetailList());
         
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
@@ -327,6 +327,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         // 校验验收数量
         validateAcceptQty(addOrUpdateDTO.getDetailList());
+        validateMoldRefSkuForSave(addOrUpdateDTO.getDetailList());
         
         AssetAcceptEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产验收单"));
@@ -739,7 +740,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         AssetAcceptEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -767,25 +767,23 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        ApplicationContextUtils.getBean(AssetAcceptServiceImpl.class).submit(result.getId());
+        this.submit(result.getId());
         return result;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public void updateAndSubmit(AssetAcceptDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
         // 提交
-        ApplicationContextUtils.getBean(AssetAcceptServiceImpl.class).submit(dto.getId());
+        this.submit(dto.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -834,7 +832,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单单数据"));
         // 反审核条件判断
@@ -955,7 +952,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单数据"));
@@ -1451,7 +1447,6 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetAcceptEntity::getId, id)
         .set(AssetAcceptEntity::getApproveUserId, "")
@@ -1479,7 +1474,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         List<String> moldCodes = list.stream()
@@ -1579,6 +1574,57 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     acceptQty, availableAcceptQty));
             }
         }
+    }
+
+    private void validateMoldRefSkuForSave(List<AssetAcceptDetailDTO.AddDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> skuIds = detailList.stream()
+                .map(AssetAcceptDetailDTO.AddDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIds)) {
+            return;
+        }
+        List<com.erp.model.plm.entity.ProductDetailEntity> skuInfoList = plmTaskFeign.getByIdList(skuIds);
+        if (CollUtil.isEmpty(skuInfoList)) {
+            return;
+        }
+        List<String> moldCodes = skuInfoList.stream()
+                .map(com.erp.model.plm.entity.ProductDetailEntity::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        validateMoldRefSku(moldCodes, "保存");
+    }
+
+    private void validateMoldRefSkuForPush(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return;
+        }
+        List<String> moldCodes = dtoList.stream()
+                .map(AssetPurchaseOrderDTO.GenerateAssetAcceptDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        validateMoldRefSku(moldCodes, "下推");
+    }
+
+    private void validateMoldRefSku(List<String> moldCodes, String actionName) {
+        if (CollUtil.isEmpty(moldCodes)) {
+            return;
+        }
+        List<String> invalidMoldCodes = plmTaskFeign.listInvalidMoldCodesForRefSku(moldCodes);
+        if (CollUtil.isEmpty(invalidMoldCodes)) {
+            return;
+        }
+        String errorMsg = invalidMoldCodes.stream()
+                .distinct()
+                .map(moldCode -> "模具【" + moldCode + "】未关联SKU或关联SKU数据未审核通过，无法" + actionName)
+                .collect(Collectors.joining("；"));
+        throw new ServiceException(errorMsg);
     }
 
     /**
@@ -2361,6 +2407,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (dtoList.isEmpty()) {
             return Boolean.FALSE;
         }
+        validateMoldRefSkuForPush(dtoList);
 
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         assetAcceptEntity.setSourceId(dtoList.get(0).getId());

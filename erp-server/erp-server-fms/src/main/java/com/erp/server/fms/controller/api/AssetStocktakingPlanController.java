@@ -121,7 +121,6 @@ public class AssetStocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "资产盘点方案表新增并提交")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetStocktakingPlanDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = assetStocktakingPlanService.addAndSubmit(dto);
         return success(result);
@@ -135,7 +134,6 @@ public class AssetStocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
-    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "资产盘点方案表修改并提交")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktakingPlan:updateAndSubmit",

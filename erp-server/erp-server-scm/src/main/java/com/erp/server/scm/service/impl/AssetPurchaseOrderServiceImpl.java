@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
@@ -871,7 +870,6 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetPurchaseOrderEntity::getId, id)
         .set(AssetPurchaseOrderEntity::getApproveStatus, approveStatus)
@@ -896,7 +894,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
 
@@ -1688,6 +1686,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 iterator.remove();
             }
         }
+        validateMoldRefSkuForGenerateAssetAccept(dtoList);
 
         //按单分组下推
         List<List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO>> groupList = dtoList.stream()
@@ -1721,6 +1720,29 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             log.info("生成资产验收单失败", e);
             throw e;
         }
+    }
+
+    private void validateMoldRefSkuForGenerateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return;
+        }
+        List<String> moldCodes = dtoList.stream()
+                .map(AssetPurchaseOrderDTO.GenerateAssetAcceptDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(moldCodes)) {
+            return;
+        }
+        List<String> invalidMoldCodes = plmTaskFeign.listInvalidMoldCodesForRefSku(moldCodes);
+        if (CollUtil.isEmpty(invalidMoldCodes)) {
+            return;
+        }
+        String errorMsg = invalidMoldCodes.stream()
+                .distinct()
+                .map(moldCode -> "模具【" + moldCode + "】未关联SKU或关联SKU数据未审核通过，无法下推")
+                .collect(Collectors.joining("；"));
+        throw new ServiceException(errorMsg);
     }
 
     @Override

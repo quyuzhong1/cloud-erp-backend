@@ -39,6 +39,7 @@ public interface LogisticsBillConverter {
             @Mapping(target = "city", source = "cityName"),
             @Mapping(target = "district", source = "districtName"),
             @Mapping(target = "streetAddress", source = "fullAddress"),
+            @Mapping(target = "houseNumber", source = "houseNumber"),
             @Mapping(target = "addressFirst", source = "firstAddress"),
             @Mapping(target = "addressSecond", source = "secondAddress"),
             @Mapping(target = "zipCode", source = "postCode"),
@@ -48,9 +49,10 @@ public interface LogisticsBillConverter {
 
     @Mappings({
             @Mapping(target = "totalWeight", source = "weight" , qualifiedByName="bigDecimalToInt"),
-            @Mapping(target = "length", source = "length" , qualifiedByName="bigDecimalToInt"),
-            @Mapping(target = "width", source = "width", qualifiedByName="bigDecimalToInt"),
-            @Mapping(target = "height", source = "height", qualifiedByName="bigDecimalToInt"),
+            // 包裹尺寸单位已是 cm；向上取整后再给各物流平台（含速卖通 APL goodsLength 等）
+            @Mapping(target = "length", source = "length" , qualifiedByName="bigDecimalCmToIntCeil"),
+            @Mapping(target = "width", source = "width", qualifiedByName="bigDecimalCmToIntCeil"),
+            @Mapping(target = "height", source = "height", qualifiedByName="bigDecimalCmToIntCeil"),
             @Mapping(target = "currency", source = "currency"),
     })
     ParceInfoVO convertParceInfo(LogisticsBillDTO.PackageDTO packageDTO);

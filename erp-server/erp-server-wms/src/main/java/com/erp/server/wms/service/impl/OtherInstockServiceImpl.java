@@ -16,7 +16,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -38,7 +38,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
@@ -69,6 +68,7 @@ import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
@@ -84,7 +84,7 @@ import com.erp.server.wms.convert.OtherInStockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
 import com.erp.server.wms.listener.OtherInStockExcelListener;
 import com.erp.server.wms.mapper.OtherInstockMapper;
-import com.erp.server.wms.mapper.WdtWarehouseLocationMappingMapper;
+import com.erp.server.wms.mapper.WarehouseLocationMappingMapper;
 import com.erp.server.wms.query.OtherInstockQueryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
@@ -187,7 +187,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Resource
     private AbstractWdtService abstractWdtService;
     @Resource
-    private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
+    private WarehouseLocationMappingMapper warehouseLocationMappingMapper;
     @Resource
     private SoOutstockService soOutstockService;
 
@@ -246,6 +246,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String addAndApprove(OtherInstockEntity entity, Boolean isPushWdt) {
+        return addAndApprove(entity, isPushWdt, true);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public String addAndApprove(OtherInstockEntity entity, Boolean isPushWdt, boolean updateOccupyImmediately) {
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         entity.setCode(code);
@@ -258,17 +265,22 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //新增明细
             entity.getDetailEntityList().forEach(v->v.setMainId(id));
             otherInstockDetailService.saveBatch(entity.getDetailEntityList());
-            //标记SKU
-            List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
-            plmTaskFeign.updateOccupyStatus(skuIds);
-            //提交
-            this.submit(id,Boolean.FALSE);
-            //审核
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Collections.singletonList(id));
-            baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            baseApproveParamDTO.setComment("");
-            this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(), isPushWdt);
+            //标记SKU：可延迟到调用方本地事务提交后执行，避免本地回滚后远程占用无法撤销；成功路径最终仍会标记同一批 SKU
+            if (updateOccupyImmediately) {
+                List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
+                plmTaskFeign.updateOccupyStatus(skuIds);
+            }
+            // 提交但不启动审批流；addAndApprove 为系统自动闭环场景，需直接结束审核，不能走 workflowFeign.approve，
+            // 否则创建人与当前操作人相同时会触发「创建人与审批人不能相同」并被包装为「审核失败」
+            this.submit(id, Boolean.FALSE);
+            entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+            entity.setIsPushWdt(isPushWdt);
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "");
+            approveOneDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+            this.approveEnd(approveOneDTO, entity);
+            operateLogService.addModuleOperateLog(
+                    String.format("审核【%s】了一个其他入库单【%s】", ApproveTypeEnum.getName(ApproveTypeEnum.PASS.getStatus()), code),
+                    ModuleTypeEnum.OTHER_INSTOCK.getCode(), id, "审核操作");
             return id;
         }
         return entity.getId();
@@ -581,7 +593,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
@@ -792,6 +803,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             inOutStockDTO.setQty(detailEntity.getActualQty());
             inOutStockDTO.setWarehouseId(entity.getWarehouseId());
             inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            if (Boolean.TRUE.equals(detailEntity.getDefectiveProductFlag())) {
+                inOutStockDTO.setInventoryStatus(InventoryStatusEnum.DEFECTIVE_PRODUCT);
+            }
             inOutStockList.add(inOutStockDTO);
         }
         //其他入库增加库存
@@ -1411,7 +1425,6 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.OTHER_INSTOCK_APPROVE_KEY, keyName = "updateApprovalStatusDTO.otherInstockEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
          String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         OtherInstockEntity otherInstockEntity = updateApprovalStatusDTO.getOtherInstockEntity();
@@ -1424,7 +1437,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.OTHER_INSTOCK_WDT_SYNC_KEY, keyName = "dto.thirdCode")
+    @DataIdempotent(keyIdName = "dto.thirdCode")
     public void syncWdtPreInstock(DmpSoPrestockInfoDTO.PrestockDTO dto) {
         if(Objects.isNull(dto.getCheckTime())){
             log.warn("{}旺店通审核时间为空",dto.getThirdCode());
@@ -1502,7 +1515,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
-        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByIds(Collections.singletonList("1675799739955679233"));
+        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByIds(Collections.singletonList(WmsConstant.DEFAULT_WAREHOUSING_DEPT_ID));
         if (CollectionUtils.isEmpty(sysDepartmentEntity)) {
             throw new ServiceException("获取不到仓储部门信息");
         }
@@ -1652,7 +1665,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         return listApiResult;

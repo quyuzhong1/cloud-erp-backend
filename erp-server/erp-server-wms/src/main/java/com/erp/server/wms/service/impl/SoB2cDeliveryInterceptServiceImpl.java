@@ -9,7 +9,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
@@ -18,7 +17,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -157,7 +155,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_INTERCEPT_KEY, keyName = "addDTO.sourceCode", unlockAfterTx = true)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
 
@@ -632,8 +629,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
+        // 仅待处理可改状态（如取消拦截），避免覆盖已处理/已取消
         return lambdaUpdate()
                 .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds)
+                .eq(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus())
                 .set(SoB2cDeliveryInterceptEntity::getHandleStatus, status)
                 .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
                 .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
@@ -652,6 +651,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException("拦截单为空"));
         if (!SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
             throw new ServiceException("发货拦截单来源类型错误");
+        }
+        if (SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(entity.getHandleStatus())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "拦截单已取消，不可操作");
         }
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
             if (HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())) {

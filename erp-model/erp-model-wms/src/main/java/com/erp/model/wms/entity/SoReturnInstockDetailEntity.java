@@ -86,10 +86,18 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String remark;
 
     /**
-     * 来源明细id
+     * 来源明细id（签收单明细id，sourceType=soReturnReceive 时有值）
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
+
+    /**
+     * 来源预入库单明细ID（so_return_prestock_detail.id），仅 sourceType=soReturnPrestock 时有值；
+     * 与 source_detail_id 语义分离，避免复用同一字段导致按签收单明细id反查的既有逻辑（如
+     * SoReturnReceiveServiceImpl#generateSoReturnInstockView/#pdaList）误判
+     */
+    @TableField("prestock_detail_id")
+    private String prestockDetailId;
 
     /**
      * 退货单详情
@@ -199,6 +207,12 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     @TableField("tax_price")
     private BigDecimal taxPrice;
 
+    /**
+     * 是否不良品（true=不良品，false=可用），默认可用
+     */
+    @TableField("defective_product_flag")
+    private Boolean defectiveProductFlag;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
@@ -210,6 +224,11 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     public static final String RECEIVE_QTY = "receive_qty";
 
     public static final String REAL_QTY = "real_qty";
+    /**
+     * 剩余应退货数量 = 应退数量(must_qty) - 历史已入库实退数量(real_qty)累计（含本次）
+     */
+    @TableField("remain_should_qty")
+    private Integer remainShouldQty;
 
     public static final String RETURN_TYPE_DICT = "return_type_dict";
 
@@ -221,9 +240,11 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
-    
+    public static final String REMAIN_SHOULD_QTY = "remain_should_qty";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
+    public static final String PRESTOCK_DETAIL_ID = "prestock_detail_id";
 
     @Override
     public Serializable pkVal() {

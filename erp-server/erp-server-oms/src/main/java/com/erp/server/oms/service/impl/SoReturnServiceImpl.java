@@ -8,9 +8,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.*;
@@ -29,7 +29,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -41,7 +40,9 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
+import com.erp.model.oms.enums.SoReturnInstockStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -61,10 +62,14 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.SoReturnConverter;
+import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.mapper.SoReturnMapper;
+import com.erp.server.oms.query.LinkAfterSaleQueryContext;
+import com.erp.server.oms.query.SoReturnLinkAfterSaleQueryHandler;
 import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -100,6 +105,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RETURN;
 @Slf4j
 @Service
 public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoReturnEntity> implements SoReturnService {
+
+    /**
+     * WMS 预入库「关联售后单」菜单权限码（与 {@code SoReturnPrestockController#confirmLinkAfterSale} 一致）。
+     */
+    private static final String LINK_AFTER_SALE_MENU_CODE = "wms:soReturnPrestock:linkAfterSale";
 
     @Resource
     private SoReturnDetailService soReturnDetailService;
@@ -165,6 +175,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private RedisUtil redisUtil;
     @Resource
     private AuthDataFeign authDataFeign;
+    @Resource
+    private UserInfoFeign userInfoFeign;
+    @Resource
+    private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cReturnMapper soB2cReturnMapper;
 
 
     @Override
@@ -195,7 +211,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
 
         if (CollectionUtils.isNotEmpty(records)) {
@@ -227,6 +243,21 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setCustomerName(customerInfoEntity.getName());
                 Integer returnInStockQty = soReturnInstockDetailEntityList.stream().filter(detail -> obj.getDetailId().equals(detail.getSoReturnDetailId())  ).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setReturnInStockQty(returnInStockQty);
+                //入库状态：退货数量与实退入库数量比较
+                int inStockQty = returnInStockQty;
+                int returnQty = Objects.isNull(obj.getReturnQty()) ? MathUtil.ZERO : obj.getReturnQty();
+                SoReturnInstockStatusEnum instockStatusEnum;
+                if (inStockQty == 0) {
+                    instockStatusEnum = SoReturnInstockStatusEnum.NOT;
+                } else if (inStockQty < returnQty) {
+                    instockStatusEnum = SoReturnInstockStatusEnum.PARTIAL;
+                } else if (inStockQty == returnQty) {
+                    instockStatusEnum = SoReturnInstockStatusEnum.INSTOCKED;
+                } else {
+                    instockStatusEnum = SoReturnInstockStatusEnum.BEYOND;
+                }
+                obj.setInstockStatus(instockStatusEnum.getCode());
+                obj.setInstockStatusName(instockStatusEnum.getName());
 
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
@@ -236,6 +267,121 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             });
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSale(PagingDTO<SoReturnDTO.LinkAfterSalePagingParam> dto) {
+        SoReturnDTO.LinkAfterSalePagingParam params = dto.getParams();
+        try {
+            String billType = resolveLinkAfterSaleBillType(params);
+            if (StringUtils.isBlank(billType)) {
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "单据类型");
+            }
+            boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
+            // B2B/B2C 分表别名不同，行级数据权限在 Service 按单据类型动态拼装后写入 params.permissionSql
+            applyLinkAfterSaleDataPermission(params, isB2b);
+            // 剩余应退货数量在 SQL 层计算并过滤（OMS 本地 so_return_instock* 表，片段由高级查询 Handler 统一生成）
+            SoReturnLinkAfterSaleQueryHandler.fillRemainReturnQtySql(params, isB2b);
+            Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(dto.getPage(), dto.getPageSize());
+            IPage<SoReturnDTO.LinkAfterSaleView> pageData = isB2b
+                    ? this.baseMapper.pagingLinkAfterSaleB2B(query, params)
+                    : soB2cReturnMapper.pagingLinkAfterSaleB2C(query, params);
+            List<SoReturnDTO.LinkAfterSaleView> records = pageData.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return new PagingVO<>(pageData);
+            }
+            Map<String, String> shopNameMap = Collections.emptyMap();
+            if (!isB2b) {
+                List<String> shopIds = records.stream().map(SoReturnDTO.LinkAfterSaleView::getShopId)
+                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(shopIds)) {
+                    shopNameMap = shopInfoService.listByIds(shopIds).stream()
+                            .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName, (a, b) -> a));
+                }
+            }
+            for (SoReturnDTO.LinkAfterSaleView view : records) {
+                view.setType(billType);
+                view.setTypeName(BillTypeEnum.getName(billType));
+                view.setReturnTypeName(CharSequenceUtil.blankToDefault(ReturnTypeEnum.getName(view.getReturnType()), view.getReturnType()));
+                String reasonName = ReturnReasonEnum.getName(view.getReturnReason());
+                if (StringUtils.isBlank(reasonName)) {
+                    reasonName = CharSequenceUtil.blankToDefault(SoB2cReturnReasonEnum.getName(view.getReturnReason()), view.getReturnReason());
+                }
+                view.setReturnReasonName(reasonName);
+                if (!isB2b) {
+                    view.setPlatformName(PlatformDictEnum.getNameByCode(view.getPlatform()));
+                    view.setShopName(shopNameMap.get(view.getShopId()));
+                }
+            }
+            return new PagingVO<>(pageData);
+        } finally {
+            LinkAfterSaleQueryContext.remove();
+        }
+    }
+
+    /**
+     * 解析关联售后单查询的单据类型：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件中 type 字段。
+     * <p>仅允许 {@link BillTypeEnum#B2B} / {@link BillTypeEnum#B2C}；非法值或集合多值在
+     * {@link SoReturnLinkAfterSaleQueryHandler#resolveAndValidateBillType} 中直接拒绝，禁止默认路由到 B2C。</p>
+     *
+     * @param params 关联售后单分页入参
+     * @return 单据类型编码（B2B / B2C）；未传 type 时返回 null
+     */
+    private String resolveLinkAfterSaleBillType(SoReturnDTO.LinkAfterSalePagingParam params) {
+        String billType = LinkAfterSaleQueryContext.getBillType();
+        if (StringUtils.isNotBlank(billType)) {
+            return SoReturnLinkAfterSaleQueryHandler.resolveAndValidateBillType(billType);
+        }
+        if (params != null && CollectionUtils.isNotEmpty(params.getAdvanceQueryDTOList())) {
+            for (AdvanceQueryDTO advanceQueryDTO : params.getAdvanceQueryDTOList()) {
+                if ("type".equals(advanceQueryDTO.getField()) && advanceQueryDTO.getValue() != null) {
+                    return SoReturnLinkAfterSaleQueryHandler.resolveAndValidateBillType(advanceQueryDTO.getValue());
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 预入库-关联售后单：按 B2B/B2C 分表别名拼装数据权限 SQL（创建人 / 仓库 / 店铺），写入 {@code params.permissionSql}。
+     * <p>Controller {@code @DataPermission} 仅校验 WMS 菜单 {@link #LINK_AFTER_SALE_MENU_CODE}；
+     * 本方法负责与各自分页接口一致的行级过滤字段：</p>
+     * <ul>
+     *   <li>B2B：{@code sr.create_user_id}、{@code sr.warehouse_id}、{@code sr.customer_id}</li>
+     *   <li>B2C：{@code sbr.create_user_id}、{@code sbd.warehouse_id}、{@code sbr.shop_id}</li>
+     * </ul>
+     *
+     * @param params 分页入参
+     * @param isB2b  是否 B2B 售后单
+     */
+    private void applyLinkAfterSaleDataPermission(SoReturnDTO.LinkAfterSalePagingParam params, boolean isB2b) {
+        if (params == null) {
+            return;
+        }
+        StringBuilder permissionSql = new StringBuilder();
+        if (isB2b) {
+            appendPermissionSqlFragment(permissionSql, userInfoFeign.getUserDatePermissionSql("sr.create_user_id", LINK_AFTER_SALE_MENU_CODE));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getWarehousePermissionSql("sr.warehouse_id"));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getShopPermissionSql("sr.customer_id"));
+        } else {
+            appendPermissionSqlFragment(permissionSql, userInfoFeign.getUserDatePermissionSql("sbr.create_user_id", LINK_AFTER_SALE_MENU_CODE));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getWarehousePermissionSql("sbd.warehouse_id"));
+            appendPermissionSqlFragment(permissionSql, authDataFeign.getShopPermissionSql("sbr.shop_id"));
+        }
+        params.setPermissionSql(permissionSql.toString());
+    }
+
+    /**
+     * 追加非空的数据权限 SQL 片段。
+     *
+     * @param target  目标 StringBuilder
+     * @param fragment 权限 SQL 片段
+     */
+    private static void appendPermissionSqlFragment(StringBuilder target, String fragment) {
+        if (target == null || StringUtils.isBlank(fragment)) {
+            return;
+        }
+        target.append(fragment);
     }
 
     @Override
@@ -687,7 +833,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO submit(SoReturnEntity entity,Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -787,7 +932,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO, SoReturnEntity entity) {
         List<SoReturnEntity> entityList = Arrays.asList(entity);
         //判断是否是审核中的状态
@@ -932,7 +1076,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
 
         for (SoReturnDTO.PagingView pagingView : page.getRecords()) {
@@ -1086,7 +1230,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO disApprove(SoReturnEntity entity) {
         //已审核支持反审核
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
@@ -1122,7 +1265,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.ids", unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
         List<String> ids = dto.getIds();
         List<SoReturnEntity> entityList = this.listByIds(ids);
@@ -1164,7 +1306,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1194,7 +1335,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean delete(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1217,7 +1357,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public List<BatchResultDTO> delete(List<String> ids, boolean returnDetails) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1431,6 +1570,18 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE)
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public List<SoReturnEntity> listByReturnLogisticCode(String returnLogisticCode) {
+        if (StringUtils.isBlank(returnLogisticCode)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery()
+                .eq(SoReturnEntity::getReturnLogisticCode, returnLogisticCode)
+                .eq(SoReturnEntity::getInvalidStatus, Boolean.FALSE)
+                .orderByDesc(SoReturnEntity::getCreateTime)
+                .list();
     }
 
     @Override
