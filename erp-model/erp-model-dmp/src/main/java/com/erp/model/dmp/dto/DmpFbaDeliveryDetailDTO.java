@@ -308,7 +308,7 @@ public class DmpFbaDeliveryDetailDTO implements Serializable {
         * 重量
         */
         @NotNull(message = "重量不能为空")
-        @Digits(integer = 15, fraction = 4, message = "重量整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal weight;
 
         /**
@@ -334,7 +334,7 @@ public class DmpFbaDeliveryDetailDTO implements Serializable {
         * 成本
         */
         @NotNull(message = "成本不能为空")
-        @Digits(integer = 15, fraction = 4, message = "成本整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "成本整数位不能超过18位，小数位不能超过6位")
         private BigDecimal cost;
 
         /**
@@ -362,21 +362,21 @@ public class DmpFbaDeliveryDetailDTO implements Serializable {
         * 体积
         */
         @NotNull(message = "体积不能为空")
-        @Digits(integer = 15, fraction = 4, message = "体积整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "体积整数位不能超过18位，小数位不能超过6位")
         private BigDecimal volume;
 
         /**
         * 分摊物流费用
         */
         @NotNull(message = "分摊物流费用不能为空")
-        @Digits(integer = 15, fraction = 4, message = "分摊物流费用整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "分摊物流费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal logicComputeCost;
 
         /**
         * 分摊自定义费用
         */
         @NotNull(message = "分摊自定义费用不能为空")
-        @Digits(integer = 15, fraction = 4, message = "分摊自定义费用整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "分摊自定义费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal customComputeCost;
 
         /**

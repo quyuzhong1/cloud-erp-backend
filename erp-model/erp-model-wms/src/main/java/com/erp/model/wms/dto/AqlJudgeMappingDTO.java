@@ -237,7 +237,7 @@ public class AqlJudgeMappingDTO implements Serializable {
         * AQL值（0.010/0.015/.../100）
         */
         @NotNull(message = "AQL值（0.010/0.015/.../100）不能为空")
-        @Digits(integer = 3, fraction = 3, message = "AQL值（0.010/0.015/.../100）整数位不能超过3位，小数位不能超过3位")
+        @Digits(integer = 18, fraction = 6, message = "AQL值（0.010/0.015/.../100）整数位不能超过18位，小数位不能超过6位")
         private String aqlValue;
 
         /**

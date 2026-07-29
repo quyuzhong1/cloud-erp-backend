@@ -946,33 +946,33 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 冲期初在途费用
          */
         @NotNull(message = "新的冲期初在途费用不能为空")
-        @Digits(integer = 12, fraction = 2, message = "冲期初在途费用整数位不能超过12位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "冲期初在途费用整数位不能超过18位，小数位不能超过6位")
         private String newMidPeriodTransitCost;
         /**
          * 分摊重量
          */
         @NotNull(message = "新的分摊重量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "分摊重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "分摊重量整数位不能超过18位，小数位不能超过6位")
         private String newAllocatedWeight;
         /**
          * 本期分摊费用
          */
         @NotNull(message = "新的本期分摊费用不能为空")
-        @Digits(integer = 12, fraction = 2, message = "本期分摊费用整数位不能超过12位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "本期分摊费用整数位不能超过18位，小数位不能超过6位")
         private String newCurrentPeriodAllocatedCost;
 
         /**
          * 期末在途费用
          */
         @NotNull(message = "新的期末在途费用不能为空")
-        @Digits(integer = 12, fraction = 2, message = "期末在途费用整数位不能超过12位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "期末在途费用整数位不能超过18位，小数位不能超过6位")
         private String newEndPeriodTransitCost;
 
         /**
          * 期末暂估费用
          */
         @NotNull(message = "新的期末暂估费用不能为空")
-        @Digits(integer = 12, fraction = 2, message = "期末暂估费用整数位不能超过12位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "期末暂估费用整数位不能超过18位，小数位不能超过6位")
         private String newEndPeriodEstimatedCost;
         /**
          * 明细备注

@@ -319,7 +319,7 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         * 成交单价
         */
         @NotNull(message = "成交单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "成交单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "成交单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal transactionPrice;
 
         /**
@@ -333,7 +333,7 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         * 成交金额
         */
         @NotNull(message = "成交金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "成交金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "成交金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal transactionAmount;
 
         /**
@@ -385,7 +385,7 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         * 基准售价
         */
         @NotNull(message = "基准售价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "基准售价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "基准售价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal listPrice;
 
         /**

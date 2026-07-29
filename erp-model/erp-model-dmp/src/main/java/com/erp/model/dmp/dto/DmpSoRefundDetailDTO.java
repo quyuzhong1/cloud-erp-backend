@@ -173,7 +173,7 @@ public class DmpSoRefundDetailDTO implements Serializable {
         * 金额
         */
         @NotNull(message = "金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal amount;
 
         /**
