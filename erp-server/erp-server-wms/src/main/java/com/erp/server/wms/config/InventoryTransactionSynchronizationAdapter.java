@@ -3,9 +3,6 @@ package com.erp.server.wms.config;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.common.business.utils.ApplicationContextUtils;
-import com.erp.server.wms.service.InventoryTransactionService;
-
 import io.seata.core.context.RootContext;
 
 public class InventoryTransactionSynchronizationAdapter extends TransactionSynchronizationAdapter{
@@ -28,14 +25,7 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 
 	@Override
 	public void afterCompletion(int status) {
-		InventoryTransactionService bean = ApplicationContextUtils.getBean(InventoryTransactionService.class);
-		if (status == STATUS_COMMITTED) {
-			if(needCommit) {
-				bean.commitRedis(transactionId , true);
-			}
-		}else {
-			bean.rollbackRedis(transactionId);
-		}
+		InventoryRedisTxSynchronizationHelper.afterEntityCompletion(transactionId, status, needCommit);
 	}
 	
 	public static void register(String transactionId) {

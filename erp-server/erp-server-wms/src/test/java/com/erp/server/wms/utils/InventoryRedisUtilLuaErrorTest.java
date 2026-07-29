@@ -1,6 +1,6 @@
 package com.erp.server.wms.utils;
 
-import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ public class InventoryRedisUtilLuaErrorTest {
      */
     @Test
     public void resolvesDirectUnallocPrefix() {
-        String msg = VirtualInventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX + "sku不足";
+        String msg = InventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX + "sku不足";
         Assert.assertEquals(msg, InventoryRedisUtil.resolveLuaBusinessErrorBody(msg));
     }
 
@@ -23,7 +23,7 @@ public class InventoryRedisUtilLuaErrorTest {
      */
     @Test
     public void resolvesErrPrefixedUnallocMessage() {
-        String inner = VirtualInventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX + "sku不足";
+        String inner = InventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX + "sku不足";
         Assert.assertEquals(inner, InventoryRedisUtil.resolveLuaBusinessErrorBody("ERR " + inner));
     }
 
@@ -32,7 +32,7 @@ public class InventoryRedisUtilLuaErrorTest {
      */
     @Test
     public void resolvesWrappedExceptionChain() {
-        String inner = VirtualInventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX + "sku不足";
+        String inner = InventoryUnallocCheckHelper.UNALLOC_LUA_ERROR_PREFIX + "sku不足";
         Exception cause = new RuntimeException(inner);
         Exception wrapper = new RuntimeException("Error in execution", cause);
         Assert.assertEquals(inner, InventoryRedisUtil.resolveLuaBusinessErrorMessage(wrapper));
@@ -44,5 +44,25 @@ public class InventoryRedisUtilLuaErrorTest {
     @Test
     public void ignoresNonBusinessErrMessage() {
         Assert.assertNull(InventoryRedisUtil.resolveLuaBusinessErrorBody("ERR WRONGTYPE Operation against a key"));
+    }
+
+    /**
+     * Lua 脚本运行时错误（user_script）应识别为运行时失败摘要。
+     */
+    @Test
+    public void resolvesLuaRuntimeErrorFromUserScript() {
+        String raw = "ERR Error running script (null): @user_script:390: attempt to concatenate local 'beforeinv' (a boolean value)";
+        Assert.assertEquals(
+                "@user_script:390: attempt to concatenate local 'beforeinv' (a boolean value)",
+                InventoryRedisUtil.resolveLuaRuntimeErrorMessage(new RuntimeException(raw)));
+    }
+
+    /**
+     * 普通 Redis 连接异常不得误判为 Lua 运行时错误。
+     */
+    @Test
+    public void ignoresNonLuaRuntimeMessage() {
+        Assert.assertNull(InventoryRedisUtil.resolveLuaRuntimeErrorMessage(
+                new RuntimeException("RedisConnectionFailureException: Connection reset")));
     }
 }

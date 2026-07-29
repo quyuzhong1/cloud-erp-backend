@@ -31,7 +31,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
-import com.erp.server.wms.inventory.VirtualInventoryUnallocCheckHelper;
+import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -117,6 +117,9 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 				if (isLuaScriptBusinessError(redisEx)) {
 					throwLuaBusinessException(opName, redisEx);
 				}
+				if (isLuaScriptRuntimeError(redisEx)) {
+					throwLuaRuntimeException(opName, redisEx);
+				}
 				if (isWriteOpNoRetryOnUnknownResult(inventoryRedisOpEnum)) {
 					log.error("库存redis写操作{}基础设施异常，执行结果未知，禁止重试", opName, redisEx);
 					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis写操作异常，执行结果未知");
@@ -183,7 +186,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	/**
 	 * 解析 Lua {@code redis.error_reply} 并转为业务异常。
 	 * <p>
-	 * 约定：{@code biz_error} 以 {@link VirtualInventoryUnallocCheckHelper#UNALLOC_LUA_ERROR_PREFIX} 开头时映射
+	 * 约定：{@code biz_error} 以 {@link InventoryUnallocCheckHelper#UNALLOC_LUA_ERROR_PREFIX} 开头时映射
 	 * {@link ApiError#VM_CHECK_OUT_VIRTUAL_INVENTORY}；其它 {@code biz_error} 暂用默认 code，扩展时按前缀增映射。
 	 * 仓位库存不足等可重试场景仍走 JSON {@code {success:false}}，不经本方法。
 	 * </p>
@@ -194,16 +197,61 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	private void throwLuaBusinessException(String opName, Exception redisEx) {
 		String luaErr = extractLuaErrorMessage(redisEx);
 		log.error("库存redis操作{} Lua业务失败：{}", opName, luaErr, redisEx);
-		if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(luaErr)) {
+		if (InventoryUnallocCheckHelper.isUnallocLuaBusinessError(luaErr)) {
 			throw new ServiceException(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY.getCode(),
-					VirtualInventoryUnallocCheckHelper.stripUnallocLuaErrorPrefix(luaErr));
+					InventoryUnallocCheckHelper.stripUnallocLuaErrorPrefix(luaErr));
 		}
-		if (VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(luaErr)) {
+		if (InventoryUnallocCheckHelper.isInventoryLuaBusinessError(luaErr)) {
 			throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED.getCode(),
-					VirtualInventoryUnallocCheckHelper.stripInventoryLuaBusinessErrorPrefix(luaErr));
+					InventoryUnallocCheckHelper.stripInventoryLuaBusinessErrorPrefix(luaErr));
 		}
 		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED,
 				StringUtils.defaultIfBlank(luaErr, "Redis Lua业务失败"));
+	}
+
+	/**
+	 * 解析 Lua 脚本运行时错误（非 {@code redis.error_reply} 业务失败）并抛出可读异常。
+	 * 前端仅返回固定文案，脚本行号等详情写入 error 日志。
+	 *
+	 * @param opName  Redis 操作名
+	 * @param redisEx Spring Redis 访问异常
+	 */
+	private void throwLuaRuntimeException(String opName, Exception redisEx) {
+		String runtimeErr = resolveLuaRuntimeErrorMessage(redisEx);
+		log.error("库存redis操作{} Lua脚本运行时失败：{}", opName, runtimeErr, redisEx);
+		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis Lua脚本执行失败，请联系管理员");
+	}
+
+	/**
+	 * 判断是否为 Lua 脚本运行时错误（如类型错误、拼接失败），区别于网络超时等基础设施异常。
+	 *
+	 * @param redisEx Spring Redis 访问异常
+	 * @return true 表示 Lua EVAL 执行过程中脚本自身崩溃
+	 */
+	private static boolean isLuaScriptRuntimeError(Exception redisEx) {
+		return StringUtils.isNotBlank(resolveLuaRuntimeErrorMessage(redisEx));
+	}
+
+	/**
+	 * 从异常链提取 Lua 脚本运行时错误摘要（{@code user_script:} / {@code Error running script}）。
+	 *
+	 * @param ex 异常
+	 * @return 可读错误摘要；无法识别则 null
+	 */
+	static String resolveLuaRuntimeErrorMessage(Throwable ex) {
+		while (ex != null) {
+			String msg = ex.getMessage();
+			if (StringUtils.isNotBlank(msg)
+					&& (msg.contains("user_script:") || msg.contains("Error running script"))) {
+				int scriptIdx = msg.indexOf("user_script:");
+				if (scriptIdx >= 0) {
+					return msg.substring(scriptIdx).trim();
+				}
+				return msg.trim();
+			}
+			ex = ex.getCause();
+		}
+		return null;
 	}
 
 	/**
@@ -227,14 +275,14 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		if (StringUtils.isBlank(raw)) {
 			return null;
 		}
-		if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(raw)
-				|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(raw)) {
+		if (InventoryUnallocCheckHelper.isUnallocLuaBusinessError(raw)
+				|| InventoryUnallocCheckHelper.isInventoryLuaBusinessError(raw)) {
 			return raw;
 		}
 		if (raw.contains("ERR ")) {
 			String body = raw.substring(raw.indexOf("ERR ") + 4);
-			if (VirtualInventoryUnallocCheckHelper.isUnallocLuaBusinessError(body)
-					|| VirtualInventoryUnallocCheckHelper.isInventoryLuaBusinessError(body)) {
+			if (InventoryUnallocCheckHelper.isUnallocLuaBusinessError(body)
+					|| InventoryUnallocCheckHelper.isInventoryLuaBusinessError(body)) {
 				return body;
 			}
 		}
@@ -292,7 +340,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 
 	/**
 	 * 解析 {@code inventory:current} TRY 片段数量，兼容二段 {@code txn@@qty} 与三段 {@code txn@@operationId@@qty}。
-	 * <p>非法片段 fail-closed，与 {@link VirtualInventoryUnallocCheckHelper#sumPendingReserve} 预占解析策略一致。</p>
+	 * <p>非法片段 fail-closed，与 {@link InventoryUnallocCheckHelper#sumPendingReserve} 预占解析策略一致。</p>
 	 *
 	 * @param qtySplit 按 {@link #atSign} 拆分后的 TRY 片段
 	 * @return TRY 数量（可为负，表示出库在途）

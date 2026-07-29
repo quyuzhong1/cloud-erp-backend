@@ -1,4 +1,4 @@
-package com.erp.server.wms.inventory;
+package com.erp.server.wms.util;
 
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
@@ -10,24 +10,24 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * {@link VirtualInventoryUnallocCheckHelper} 与 try.lua 约定一致性校验。
+ * {@link InventoryUnallocCheckHelper} 与 try.lua 约定一致性校验。
  */
-public class VirtualInventoryUnallocCheckHelperTest {
+public class InventoryUnallocCheckHelperTest {
 
     /**
-     * try.lua {@code unalloc_lua_error_prefix} 必须与 Java {@link VirtualInventoryUnallocCheckHelper#UNALLOC_LUA_ERROR_PREFIX} 一致。
+     * try.lua {@code unalloc_lua_error_prefix} 必须与 Java {@link InventoryUnallocCheckHelper#UNALLOC_LUA_ERROR_PREFIX} 一致。
      */
     @Test
     public void tryLuaUnallocPrefixMatchesJavaConstant() {
-        VirtualInventoryUnallocCheckHelper.assertTryLuaUnallocPrefixSynced();
+        InventoryUnallocCheckHelper.assertTryLuaUnallocPrefixSynced();
     }
 
     /**
-     * try.lua {@code inventory_lua_biz_prefix} 必须与 Java {@link VirtualInventoryUnallocCheckHelper#INVENTORY_LUA_BIZ_ERROR_PREFIX} 一致。
+     * try.lua {@code inventory_lua_biz_prefix} 必须与 Java {@link InventoryUnallocCheckHelper#INVENTORY_LUA_BIZ_ERROR_PREFIX} 一致。
      */
     @Test
     public void tryLuaInventoryBizPrefixMatchesJavaConstant() {
-        VirtualInventoryUnallocCheckHelper.assertTryLuaInventoryBizPrefixSynced();
+        InventoryUnallocCheckHelper.assertTryLuaInventoryBizPrefixSynced();
     }
 
     /**
@@ -35,11 +35,11 @@ public class VirtualInventoryUnallocCheckHelperTest {
      */
     @Test
     public void warehouseSkuGroupKeyUsesDelimiter() {
-        String key = VirtualInventoryUnallocCheckHelper.buildWarehouseSkuGroupKey("sku-a", "wh-b");
-        Assert.assertEquals("sku-a" + VirtualInventoryUnallocCheckHelper.WAREHOUSE_SKU_GROUP_KEY_DELIMITER + "wh-b", key);
+        String key = InventoryUnallocCheckHelper.buildWarehouseSkuGroupKey("sku-a", "wh-b");
+        Assert.assertEquals("sku-a" + InventoryUnallocCheckHelper.WAREHOUSE_SKU_GROUP_KEY_DELIMITER + "wh-b", key);
         Assert.assertNotEquals(
-                VirtualInventoryUnallocCheckHelper.buildWarehouseSkuGroupKey("ab", "c"),
-                VirtualInventoryUnallocCheckHelper.buildWarehouseSkuGroupKey("a", "bc"));
+                InventoryUnallocCheckHelper.buildWarehouseSkuGroupKey("ab", "c"),
+                InventoryUnallocCheckHelper.buildWarehouseSkuGroupKey("a", "bc"));
     }
 
     /**
@@ -47,7 +47,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
      */
     @Test(expected = ServiceException.class)
     public void sumPendingReserveRejectsInvalidQtySegment() {
-        VirtualInventoryUnallocCheckHelper.sumPendingReserve("0&&txn@@not-a-number", null, null);
+        InventoryUnallocCheckHelper.sumPendingReserve("0&&txn@@not-a-number", null, null);
     }
 
     /**
@@ -55,7 +55,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
      */
     @Test
     public void sumPendingReserveSupportsOperationIdSegment() {
-        int pending = VirtualInventoryUnallocCheckHelper.sumPendingReserve(
+        int pending = InventoryUnallocCheckHelper.sumPendingReserve(
                 "0&&txn-a@@op-1@@3&&txn-b@@op-2@@5", "exclude-txn", "exclude-op");
         Assert.assertEquals(8, pending);
     }
@@ -65,7 +65,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
      */
     @Test
     public void sumPendingReserveCountsSameTransactionOtherOperations() {
-        int pending = VirtualInventoryUnallocCheckHelper.sumPendingReserve(
+        int pending = InventoryUnallocCheckHelper.sumPendingReserve(
                 "0&&txn-a@@op-1@@3&&txn-a@@op-2@@5", null, null);
         Assert.assertEquals(8, pending);
     }
@@ -79,7 +79,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
         first.setId("flow-b");
         InventoryTransactionDTO second = new InventoryTransactionDTO();
         second.setId("flow-a");
-        String operationId = VirtualInventoryUnallocCheckHelper.resolveTryOperationId(Arrays.asList(first, second));
+        String operationId = InventoryUnallocCheckHelper.resolveTryOperationId(Arrays.asList(first, second));
         Assert.assertEquals("flow-a,flow-b", operationId);
     }
 
@@ -99,7 +99,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
         withoutVirtual.setInventoryStatus(com.erp.model.wms.enums.inventory.InventoryStatusEnum.USABLE.getCode());
         withoutVirtual.setSourceType(com.erp.model.wms.enums.inventory.InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode());
 
-        List<InventoryTransactionDTO> entityOnly = VirtualInventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(
+        List<InventoryTransactionDTO> entityOnly = InventoryUnallocCheckHelper.filterNeedEntityUnallocCheck(
                 Arrays.asList(withVirtual, withoutVirtual));
         Assert.assertEquals(1, entityOnly.size());
         Assert.assertNull(entityOnly.get(0).getVirtualWarehouseId());
@@ -113,7 +113,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
         java.util.Map<String, Integer> map = new java.util.HashMap<>();
         map.put("inv-1", 10);
         map.put("inv-2", 20);
-        int total = VirtualInventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(Arrays.asList("inv-1", "inv-2", "inv-3"), map);
+        int total = InventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(Arrays.asList("inv-1", "inv-2", "inv-3"), map);
         Assert.assertEquals(30, total);
     }
 
@@ -130,7 +130,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
         withVirtual.setSourceType(com.erp.model.wms.enums.inventory.InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode());
         withVirtual.setVirtualWarehouseId("vw-1");
 
-        List<String> keys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeys(
+        List<String> keys = InventoryUnallocCheckHelper.buildUnallocLockKeys(
                 Collections.singletonList(withVirtual));
         Assert.assertEquals(1, keys.size());
         Assert.assertTrue(keys.get(0).contains("wh-1"));
@@ -142,9 +142,9 @@ public class VirtualInventoryUnallocCheckHelperTest {
      */
     @Test(expected = ServiceException.class)
     public void assertUnallocTryItemsHaveInventoryIdsRejectsEmptyList() {
-        VirtualInventoryUnallocCheckHelper.UnallocTryItem item = new VirtualInventoryUnallocCheckHelper.UnallocTryItem(
+        InventoryUnallocCheckHelper.UnallocTryItem item = new InventoryUnallocCheckHelper.UnallocTryItem(
                 "wh-1", "sku-1", "SKU001", "WH-A", 5, 10, Collections.emptyList());
-        VirtualInventoryUnallocCheckHelper.assertUnallocTryItemsHaveInventoryIds(Collections.singletonList(item));
+        InventoryUnallocCheckHelper.assertUnallocTryItemsHaveInventoryIds(Collections.singletonList(item));
     }
 
     /**
@@ -160,7 +160,7 @@ public class VirtualInventoryUnallocCheckHelperTest {
                 new com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.InventoryTransactionDTO();
         second.setSkuId("sku-1");
         second.setWarehouseId("wh-1");
-        List<String> keys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeysForVirtualStock(
+        List<String> keys = InventoryUnallocCheckHelper.buildUnallocLockKeysForVirtualStock(
                 Arrays.asList(first, second));
         Assert.assertEquals(1, keys.size());
         Assert.assertTrue(keys.get(0).contains("wh-1"));
