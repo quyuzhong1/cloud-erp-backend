@@ -4374,6 +4374,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 fillApiInterceptFailure(addDTO, resultDTO.getMsg());
                 soB2cDeliveryInterceptFeign.add(addDTO);
                 updateApiInterceptFailureOrder(entity.getId(), resultDTO.getMsg());
+            } else {
+                // 爱亚取消接口为异步受理：先落一张待处理拦截单，后续由出库状态轮询回写成功/失败终态
+                addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+                soB2cDeliveryInterceptFeign.add(addDTO);
             }
             return resultDTO;
         } else {
