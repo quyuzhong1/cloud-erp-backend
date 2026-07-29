@@ -82,8 +82,11 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
                 this.deleteTransactionFlowList(ids);
             }
             log.warn("stopwatch4 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        }catch (Exception e) {
-            throw new ServiceException(e.getMessage());
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("虚拟仓库存交易失败", e);
+            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
         } finally {
             stopwatch.stop();
             // 计时器-结束

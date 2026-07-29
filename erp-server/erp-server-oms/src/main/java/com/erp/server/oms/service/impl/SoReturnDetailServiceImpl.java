@@ -23,6 +23,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -79,6 +80,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
     @Resource
     private SoReturnReceiveFeign soReturnReceiveFeign;
+
+    @Resource
+    private SoReturnInstockFeign soReturnInstockFeign;
 
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
@@ -363,6 +367,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取退货单id
         List<String> returnMainIds = list.stream().map(SoDetailDTO.AddDetailView::getMainId).distinct().collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(returnMainIds);
+        //剩余应退货数量：应退数量(mustQty) - 历史已入库实退数量(realQty)累计，实退数量来自退货入库单明细（按退货单明细id关联，跨单据累计）
+        List<String> returnDetailIdsForRemainQty = list.stream().map(SoDetailDTO.AddDetailView::getId).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockFeign.listDetailBySoReturnDetailIds(returnDetailIdsForRemainQty);
         List<String> orgIds = list.stream().map(SoDetailDTO.AddDetailView::getInventoryOrgId).collect(Collectors.toList());
 
         List<String> warehouseIdList = list.stream().map(SoDetailDTO.AddDetailView::getWarehouseId).collect(Collectors.toList());
@@ -402,6 +409,12 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             addDetailView.setReceiveQty(receiveQty);
             addDetailView.setMustQty(returnQty);
+            //剩余应退货数量 = 应退数量(returnQty) - 历史已入库实退数量(realQty)累计
+            Integer instockRealQty = soReturnInstockDetailEntities.stream()
+                    .filter(req -> addDetailView.getId().equals(req.getSoReturnDetailId()))
+                    .map(SoReturnInstockDetailEntity::getRealQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            addDetailView.setRemainMustQty(returnQty - instockRealQty);
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
             //平台sku

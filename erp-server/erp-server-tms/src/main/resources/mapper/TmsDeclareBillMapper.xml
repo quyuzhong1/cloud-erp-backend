@@ -13,13 +13,17 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="source_type" property="sourceType" />
        <result column="declare_status" property="declareStatus" />
-       <result column="delivery_type" property="businessType" />
+       <result column="business_type" property="businessType" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
        <result column="country" property="country" />
        <result column="net_weight" property="netWeight" />
        <result column="gross_weight" property="grossWeight" />
        <result column="declare_date" property="declareDate" />
+       <result column="declare_confirm_date" property="declareConfirmDate" />
+       <result column="declare_user_id" property="declareUserId" />
+       <result column="declare_user_name" property="declareUserName" />
        <result column="declare_type" property="declareType" />
        <result column="pre_input_no" property="preInputNo" />
        <result column="dest_customs" property="destCustoms" />
@@ -41,10 +45,7 @@
        <result column="insurance_fee" property="insuranceFee" />
        <result column="other_fee" property="otherFee" />
        <result column="box_qty" property="boxQty" />
-       <result column="merge_source_id" property="mergeSourceId" />
         <result column="country_name" property="countryName" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_code" property="sourceCode" />
         <result column="transport_no" property="transportNo" />
         <result column="type" property="type" />
     </resultMap>
@@ -60,7 +61,7 @@
         update_time,
         version,
         is_deleted,
-        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, merge_source_id
+        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, logistics_supplier_id, logistics_supplier_name, country, net_weight, gross_weight, declare_date, declare_confirm_date, declare_user_id, declare_user_name, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, merge_source_id
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$TabListDTO">
         SELECT db.declare_status as tabFlag,
@@ -73,41 +74,6 @@
             ${permissionSql}
         </if>
         group by db.declare_status
-    </select>
-    <select id="paging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
-        SELECT  db.id,
-                db.source_code as  sourceCode,
-                db.code,
-                (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
-                db.merge_source_id as mergeSourceId,
-                case when db.merge_source_id !='' then true else false end as isMerged,
-                db.declare_status as declareStatus,
-                db.business_type as businessType,
-                db.country,
-                db.country_name as  countryName,
-                db.box_qty as  boxQty,
-                db.net_weight as  netWeight,
-                db.gross_weight as  grossWeight,
-                db.declare_date as   declareDate,
-                db.declare_type as   declareType,
-                db.create_user_name as   createUserName,
-                db.create_time as   createTime
-        from  tms_declare_bill  db
-        where
-            ${params.sqlMap.default}
-          and db.is_deleted = false
-        and db.type = #{params.type}
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        db.create_time DESC
     </select>
 
     <select id="statistics" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$StatisticsAllDTO">
@@ -135,17 +101,33 @@
         order by  EXTRACT(year FROM db.declare_date), EXTRACT(month FROM db.declare_date)
     </select>
     <select id="exportDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$ExportDTO">
+        WITH delivery_notice as (
+        select
+        declare_id,
+        array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
+        array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
+        array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
+        array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName,
+        array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgName
+        from delivery_declare_detail_mid
+        where is_deleted = false
+        group by declare_id
+        )
         select
             db.id,
             db.type,
-            db.source_code as   sourceCode,
+            dn.businessCode,
+            dn.sourceCode,
             db.pre_input_no as  preInputNo,
             db.dest_customs as  destCustoms,
             db.sender_id as   senderId,
+            db.sender_name as   senderName,
             db.export_customs_name as   exportCustomsName,
             db.export_date as   exportDate,
             db.declare_date as   declareDate,
+            db.receiver_id as    receiverId,
             db.receiver_name as    receiverName,
+            db.receiver_type as    receiverType,
             db.transport_no as     transportNo,
             db.dict_supervision_method as   dictSupervisionMethod,
             db.dict_nature_levy as      dictNatureLevy,
@@ -166,6 +148,7 @@
             db.other_fee as             otherFee,
             db.country_name as countryName
         from tms_declare_bill db
+        left join delivery_notice dn on db.id = dn.declare_id
         where   ${params.sqlMap.default}
           and db.is_deleted = false
           and db.type = #{params.type}
@@ -182,5 +165,151 @@
         db.create_time DESC
     </select>
 
+    <!-- B2B申报分页查询 -->
+    <select id="b2bDeclarePaging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
+        WITH delivery_notice as (
+        select
+            declare_id,
+            array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
+            array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
+            array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
+            array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName,
+            array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgName
+        from delivery_declare_detail_mid
+        where is_deleted = false and source_type = 'soDeliveryNotice'
+        group by declare_id
+        ),
+        detail_sku_agg as (
+        select
+            main_id,
+            count(distinct sku_id) as goods_qty
+        from tms_declare_bill_detail
+        where is_deleted = false
+        group by main_id
+        )
+        SELECT
+            db.id,
+            db.declare_confirm_date as declareConfirmDate,
+            db.code,
+            COALESCE(dsa.goods_qty, 0) as goodsQty,
+            db.declare_status as declareStatus,
+            db.business_type as businessType,
+            db.country,
+            db.country_name as  countryName,
+            db.box_qty as  boxQty,
+            db.net_weight as  netWeight,
+            db.gross_weight as  grossWeight,
+            db.declare_date as   declareDate,
+            db.declare_type as   declareType,
+            db.declare_user_name as declareUserName,
+            db.remark,
+            db.create_user_name as   createUserName,
+            db.create_time as   createTime,
+            dn.businessCode,
+            dn.sourceCode,
+            dn.fromWarehouseName,
+            dn.transferWarehouseName,
+            dn.salesOrgName
+        from  tms_declare_bill db
+        left join delivery_notice dn on db.id = dn.declare_id
+        left join detail_sku_agg dsa on db.id = dsa.main_id
+        where
+        ${params.sqlMap.default}
+        and db.is_deleted = false
+        and db.type = #{params.type}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
+
+    <!-- 程申报分页查询 -->
+    <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
+        WITH first_mile_delivery as (
+        select
+            declare_id,
+            array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
+            array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
+            array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
+            array_to_string(array_agg(DISTINCT dest_warehouse_name),',') as destWarehouseName,
+            array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName
+        from delivery_declare_detail_mid
+        where is_deleted = false and source_type = 'firstMileDelivery'
+        group by declare_id
+        ),
+        detail_sku_agg as (
+        select
+            main_id,
+            count(distinct sku_id) as goods_qty
+        from tms_declare_bill_detail
+        where is_deleted = false
+        group by main_id
+        )
+        SELECT
+            db.id,
+            db.declare_confirm_date as declareConfirmDate,
+            db.code,
+            COALESCE(dsa.goods_qty, 0) as goodsQty,
+            db.declare_status as declareStatus,
+            db.business_type as businessType,
+            db.country,
+            db.country_name as  countryName,
+            db.box_qty as  boxQty,
+            db.net_weight as  netWeight,
+            db.gross_weight as  grossWeight,
+            db.declare_date as   declareDate,
+            db.declare_type as   declareType,
+            db.declare_user_name as declareUserName,
+            db.remark,
+            db.create_user_name as   createUserName,
+            db.create_time as   createTime,
+            dn.businessCode,
+            dn.sourceCode,
+            dn.fromWarehouseName,
+            dn.destWarehouseName,
+            dn.transferWarehouseName
+        from  tms_declare_bill db
+        left join first_mile_delivery dn on db.id = dn.declare_id
+        left join detail_sku_agg dsa on db.id = dsa.main_id
+        where
+        ${params.sqlMap.default}
+        and db.is_deleted = false
+        and db.type = #{params.type}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
+
+    <!-- 根据申报单id查询来源单信息 -->
+    <select id="listSourceByDeclareBillId" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$BillSourceDTO">
+        select
+            DISTINCT
+            dddm.source_id,
+            dddm.source_type,
+            dddm.source_code,
+            dddm.business_id,
+            dddm.business_code
+        from tms_declare_bill tdb
+        inner join delivery_declare_detail_mid dddm on tdb.id = dddm.declare_id and dddm.is_deleted = false
+        <where>
+            tdb.is_deleted = false
+            and tdb.id = #{declareBillId}
+        </where>
+    </select>
 
 </mapper>

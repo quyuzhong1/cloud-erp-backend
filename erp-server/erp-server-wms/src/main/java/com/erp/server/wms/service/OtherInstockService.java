@@ -53,6 +53,19 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
     String add(OtherInstockDTO.AddDTO dto);
 
     String addAndApprove(OtherInstockEntity dto, Boolean isPushWdt);
+
+    /**
+     * 新增其它入库单并直接审核通过。
+     *
+     * @param dto                       其它入库单（含明细）
+     * @param isPushWdt                 是否推送旺店通
+     * @param updateOccupyImmediately   true：在本方法事务内立即调用 PLM 标记 SKU 占用（历史默认行为）；
+     *                                  false：跳过占用标记，由调用方在本地事务提交后自行调用
+     *                                  {@code plmTaskFeign.updateOccupyStatus}（成功路径最终仍标记同一批 SKU，业务结果一致）
+     * @return 其它入库单 ID
+     */
+    String addAndApprove(OtherInstockEntity dto, Boolean isPushWdt, boolean updateOccupyImmediately);
+
     String disApproveAndGenerate(String dbId,DmpSoPrestockInfoDTO.PrestockDTO dto);
     /**
      * @description: 新增并提交
