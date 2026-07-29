@@ -227,6 +227,14 @@ public final class LogisticsCostImportRowValueHelper {
                 result = toSignedNumberText(result, true);
                 continue;
             }
+            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode(), type)) {
+                result = convertNumberBySign(result, true);
+                continue;
+            }
+            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode(), type)) {
+                result = convertNumberBySign(result, false);
+                continue;
+            }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
                 result = applyFillEmptyRule(result, rule, rowData, headMap);
                 continue;
@@ -388,6 +396,36 @@ public final class LogisticsCostImportRowValueHelper {
             BigDecimal number = new BigDecimal(value.trim());
             BigDecimal signedNumber = negative ? number.abs().negate() : number.abs();
             return signedNumber.stripTrailingZeros().toPlainString();
+        } catch (NumberFormatException e) {
+            return value;
+        }
+    }
+
+    /**
+     * 按符号条件转换数值。
+     * <p>正数转为负数：仅当数值大于 0 时取反；负数转为正数：仅当数值小于 0 时取绝对值。非数值原样返回。</p>
+     *
+     * @param value              原始文本
+     * @param positiveToNegative true=正数转为负数，false=负数转为正数
+     * @return 转换后的文本
+     */
+    private static String convertNumberBySign(String value, boolean positiveToNegative) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return value;
+        }
+        try {
+            BigDecimal number = new BigDecimal(value.trim());
+            int signum = number.signum();
+            if (positiveToNegative) {
+                if (signum <= 0) {
+                    return value;
+                }
+                return number.negate().stripTrailingZeros().toPlainString();
+            }
+            if (signum >= 0) {
+                return value;
+            }
+            return number.abs().stripTrailingZeros().toPlainString();
         } catch (NumberFormatException e) {
             return value;
         }
