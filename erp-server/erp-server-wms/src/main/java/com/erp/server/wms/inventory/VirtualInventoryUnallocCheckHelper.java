@@ -345,7 +345,7 @@ public final class VirtualInventoryUnallocCheckHelper {
     public static String resolveTryOperationId(List<InventoryTransactionDTO> transactionList) {
         if (transactionList == null || transactionList.isEmpty()) {
             log.warn("resolveTryOperationId 库存流水列表为空");
-            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "库存流水列表为空");
         }
         return resolveTryOperationIdFromFlowIds(
                 transactionList.stream().map(InventoryTransactionDTO::getId).collect(Collectors.toList()));
@@ -360,7 +360,7 @@ public final class VirtualInventoryUnallocCheckHelper {
     public static String resolveTryOperationIdFromFlowIds(Collection<String> flowIds) {
         if (flowIds == null || flowIds.isEmpty()) {
             log.warn("resolveTryOperationIdFromFlowIds 流水 ID 为空");
-            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "流水ID为空");
         }
         String operationId = flowIds.stream()
                 .filter(CharSequenceUtil::isNotBlank)
@@ -368,7 +368,7 @@ public final class VirtualInventoryUnallocCheckHelper {
                 .collect(Collectors.joining(","));
         if (CharSequenceUtil.isBlank(operationId)) {
             log.warn("resolveTryOperationIdFromFlowIds 无法解析 operationId");
-            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "无法解析操作ID");
         }
         return operationId;
     }
@@ -495,7 +495,7 @@ public final class VirtualInventoryUnallocCheckHelper {
         }
         if (transactionRedisParam == null || transactionRedisParam.isEmpty()) {
             log.warn("未分配TRY参数存在但仓位库存TRY为空 items={}", unallocTryItems.size());
-            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "未分配预占缺少仓位库存TRY参数");
         }
     }
 
@@ -512,7 +512,7 @@ public final class VirtualInventoryUnallocCheckHelper {
             if (item.getVirtualQty() > 0 && item.getInventoryIds().isEmpty()) {
                 log.warn("未分配TRY缺少实体inventoryId wh={}, sku={}, virtualQty={}",
                         item.getWarehouseId(), item.getSkuId(), item.getVirtualQty());
-                ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+                ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "未分配预占缺少实体库存ID");
             }
         }
     }
@@ -658,20 +658,20 @@ public final class VirtualInventoryUnallocCheckHelper {
     private static int parseReserveQtySegment(String qtySegment) {
         if (CharSequenceUtil.isBlank(qtySegment)) {
             log.warn("未分配预占 Redis 片段数量为空");
-            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "未分配预占数据异常");
         }
         try {
             int qty = Integer.parseInt(qtySegment.trim());
             if (qty < 0) {
                 log.warn("未分配预占 Redis 片段数量为负 qty={}", qtySegment);
-                ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+                ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "未分配预占数量异常");
             }
             return qty;
         } catch (NumberFormatException e) {
             log.warn("未分配预占 Redis 片段数量解析失败 qty={}", qtySegment);
-            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "未分配预占数据解析失败");
         }
-        throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+        throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, "未分配预占数据解析失败");
     }
 
     /**

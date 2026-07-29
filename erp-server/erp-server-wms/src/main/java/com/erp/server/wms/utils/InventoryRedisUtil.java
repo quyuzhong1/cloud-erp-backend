@@ -119,11 +119,11 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 				}
 				if (isWriteOpNoRetryOnUnknownResult(inventoryRedisOpEnum)) {
 					log.error("库存redis写操作{}基础设施异常，执行结果未知，禁止重试", opName, redisEx);
-					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis写操作异常，执行结果未知");
 				}
 				log.warn("库存redis操作{}基础设施异常，准备重试 attempt={}/3", opName, i + 1, redisEx);
 				if (i >= 2) {
-					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+					throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis操作重试失败");
 				}
 				try {
 					Thread.sleep(1000L);
@@ -202,7 +202,8 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED.getCode(),
 					VirtualInventoryUnallocCheckHelper.stripInventoryLuaBusinessErrorPrefix(luaErr));
 		}
-		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED,
+				StringUtils.defaultIfBlank(luaErr, "Redis Lua业务失败"));
 	}
 
 	/**
@@ -303,15 +304,15 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		String qtyStr = qtySplit.length >= 3 ? qtySplit[2] : qtySplit[1];
 		if (StringUtils.isBlank(qtyStr)) {
 			log.warn("Redis current TRY 片段数量为空 segment={}", String.join(atSign, qtySplit));
-			ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+			ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis库存TRY片段数量为空");
 		}
 		try {
 			return Integer.parseInt(qtyStr.trim());
 		} catch (NumberFormatException e) {
 			log.warn("Redis current TRY 片段数量解析失败 segment={}", String.join(atSign, qtySplit));
-			ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+			ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis库存TRY片段解析失败");
 		}
-		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, "Redis库存TRY片段解析失败");
 	}
 
 	/**
