@@ -171,6 +171,7 @@ local function unalloc_biz_error(errorTemplate, available, virtualQty)
     return biz_error(unalloc_lua_error_prefix .. format_unalloc_error(errorTemplate, available, virtualQty));
 end
 
+-- 即时库存基量允许负整数（允许负库存仓 commit 后基量可能为负）；预占/reserve 数量仍为非负
 local function base_current_qty(currentvalue)
     if currentvalue == 0 or currentvalue == false then
         return 0;
@@ -178,7 +179,7 @@ local function base_current_qty(currentvalue)
     local d = 0;
     for cv in string.gmatch(currentvalue, '([^' .. split .. ']+)') do
         if d == 0 then
-            local baseQty = strict_nonneg_int(cv);
+            local baseQty = strict_signed_int(cv);
             if baseQty == nil then
                 return nil;
             end
@@ -322,7 +323,7 @@ if params ~= nil and params ~= '' then
             local currentqty = 0;
             for cv in string.gmatch(currentvalue, '([^' .. split .. ']+)') do
                 if d == 0 then
-                    local baseQty = strict_nonneg_int(cv);
+                    local baseQty = strict_signed_int(cv);
                     if baseQty == nil then
                         return biz_error('即时库存基量非法 key=' .. currentkey);
                     end
