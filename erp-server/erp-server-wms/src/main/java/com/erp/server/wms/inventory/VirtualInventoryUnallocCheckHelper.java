@@ -8,6 +8,7 @@ import com.common.core.utils.MessageUtils;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -275,6 +276,46 @@ public final class VirtualInventoryUnallocCheckHelper {
      */
     public static boolean needsUnallocSharedLock(List<InventoryTransactionDTO> transactionList) {
         return !filterNeedUnallocCheck(transactionList).isEmpty();
+    }
+
+    /**
+     * 虚拟仓库存交易按仓+SKU 构建未分配共享锁 key，与实体出库共用 {@code whsku:unalloc:lock}，
+     * 避免分货/调拨与出库预检并发读写虚拟已分配量快照。
+     *
+     * @param transactionList 虚拟仓库存交易列表（调用方应已剔除 ignore 明细）
+     * @return 仓+SKU 维度 Redisson 锁 key（去重、字典序）
+     */
+    public static List<String> buildUnallocLockKeysForVirtualStock(
+            List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList) {
+        if (transactionList == null || transactionList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> keys = new LinkedHashSet<>();
+        for (VirtualInventoryStockDTO.InventoryTransactionDTO transaction : transactionList) {
+            if (transaction == null || transaction.isIgnoreTransaction()) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(transaction.getWarehouseId())
+                    || CharSequenceUtil.isBlank(transaction.getSkuId())) {
+                continue;
+            }
+            keys.add(InventoryRedisOpKeyEnum.getWhSkuKey(
+                    InventoryRedisOpKeyEnum.WHSKU_UNALLOC_LOCK,
+                    transaction.getWarehouseId(),
+                    transaction.getSkuId()));
+        }
+        return keys.stream().sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * 判断虚拟仓库存交易是否需要获取仓+SKU 未分配共享锁。
+     *
+     * @param transactionList 虚拟仓库存交易列表
+     * @return true 表示至少有一条有效仓+SKU 明细
+     */
+    public static boolean needsUnallocSharedLockForVirtualStock(
+            List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList) {
+        return !buildUnallocLockKeysForVirtualStock(transactionList).isEmpty();
     }
 
     /**

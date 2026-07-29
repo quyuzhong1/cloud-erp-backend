@@ -878,22 +878,8 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			transactionId = TraceContext.traceId();
 		}
 		
-		Integer redisQty = 0;
 		Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
-		if(redisQtyObj != null) {
-			String[] split = redisQtyObj.toString().split(InventoryRedisUtil.splitSign);
-			redisQty = Integer.valueOf(split[0]);
-			for(String s : split) {
-				String[] qtySplit = s.split(InventoryRedisUtil.atSign);
-				if(qtySplit.length > 1) {
-					Integer tryQty = Integer.valueOf(qtySplit[1]);
-					if(tryQty < 0 || (StringUtils.isNotBlank(transactionId) && qtySplit[0].equals(transactionId))) {
-						redisQty = redisQty + tryQty;
-					}
-				}
-			}
-		}
-		return redisQty;
+		return InventoryRedisUtil.computeCurrentQtyWithTry(redisQtyObj, transactionId);
 	}
 	
 }

@@ -290,6 +290,67 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 	}
 
 	/**
+	 * 解析 {@code inventory:current} TRY 片段数量，兼容二段 {@code txn@@qty} 与三段 {@code txn@@operationId@@qty}。
+	 * <p>非法片段 fail-closed，与 {@link VirtualInventoryUnallocCheckHelper#sumPendingReserve} 预占解析策略一致。</p>
+	 *
+	 * @param qtySplit 按 {@link #atSign} 拆分后的 TRY 片段
+	 * @return TRY 数量（可为负，表示出库在途）
+	 */
+	public static int parseTrySegmentQty(String[] qtySplit) {
+		if (qtySplit == null || qtySplit.length < 2) {
+			return 0;
+		}
+		String qtyStr = qtySplit.length >= 3 ? qtySplit[2] : qtySplit[1];
+		if (StringUtils.isBlank(qtyStr)) {
+			log.warn("Redis current TRY 片段数量为空 segment={}", String.join(atSign, qtySplit));
+			ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+		}
+		try {
+			return Integer.parseInt(qtyStr.trim());
+		} catch (NumberFormatException e) {
+			log.warn("Redis current TRY 片段数量解析失败 segment={}", String.join(atSign, qtySplit));
+			ServiceException.runError(ApiError.WAREHOUSE_INVENTORY_FAILED);
+		}
+		throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+	}
+
+	/**
+	 * 计算 {@code inventory:current} 含 TRY 在途后的可用量。
+	 * <p>负 TRY 或当前事务 TRY 均计入；与 try.lua 写入的三段格式一致。</p>
+	 *
+	 * @param redisQtyObj   Redis GET 返回值
+	 * @param transactionId 当前全局事务 ID 或 traceId，可为空
+	 * @return 基量加在途 TRY 后的数量；key 不存在时返回 0
+	 */
+	public static int computeCurrentQtyWithTry(Object redisQtyObj, String transactionId) {
+		if (redisQtyObj == null) {
+			return 0;
+		}
+		String[] split = redisQtyObj.toString().split(splitSign);
+		if (split.length == 0 || StringUtils.isBlank(split[0])) {
+			return 0;
+		}
+		int redisQty;
+		try {
+			redisQty = Integer.parseInt(split[0].trim());
+		} catch (NumberFormatException e) {
+			log.warn("Redis current 基量解析失败 base={}", split[0]);
+			return 0;
+		}
+		for (String segment : split) {
+			String[] qtySplit = segment.split(atSign);
+			if (qtySplit.length < 2) {
+				continue;
+			}
+			int tryQty = parseTrySegmentQty(qtySplit);
+			if (tryQty < 0 || (StringUtils.isNotBlank(transactionId) && qtySplit[0].equals(transactionId))) {
+				redisQty += tryQty;
+			}
+		}
+		return redisQty;
+	}
+
+	/**
 	 * 批量 MGET {@code inventory:current} 基量，避免预检按 inventoryId 逐条 GET。
 	 *
 	 * @param inventoryIds 库存 ID 集合

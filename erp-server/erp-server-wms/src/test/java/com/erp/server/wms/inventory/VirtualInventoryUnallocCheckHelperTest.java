@@ -146,4 +146,24 @@ public class VirtualInventoryUnallocCheckHelperTest {
                 "wh-1", "sku-1", "SKU001", "WH-A", 5, 10, Collections.emptyList());
         VirtualInventoryUnallocCheckHelper.assertUnallocTryItemsHaveInventoryIds(Collections.singletonList(item));
     }
+
+    /**
+     * 虚拟仓分货/调拨交易应生成与实体出库相同的仓+SKU 未分配共享锁 key。
+     */
+    @Test
+    public void buildUnallocLockKeysForVirtualStockGroupsByWarehouseSku() {
+        com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.InventoryTransactionDTO first =
+                new com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.InventoryTransactionDTO();
+        first.setSkuId("sku-1");
+        first.setWarehouseId("wh-1");
+        com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.InventoryTransactionDTO second =
+                new com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.InventoryTransactionDTO();
+        second.setSkuId("sku-1");
+        second.setWarehouseId("wh-1");
+        List<String> keys = VirtualInventoryUnallocCheckHelper.buildUnallocLockKeysForVirtualStock(
+                Arrays.asList(first, second));
+        Assert.assertEquals(1, keys.size());
+        Assert.assertTrue(keys.get(0).contains("wh-1"));
+        Assert.assertTrue(keys.get(0).contains("sku-1"));
+    }
 }
