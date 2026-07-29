@@ -204,6 +204,7 @@ public final class ApiErrorWms {
     public static final ApiError VM_VIRTUAL_WAREHOUSE_NOT_FOUND = new ApiError("VM_VIRTUAL_WAREHOUSE_NOT_FOUND", 12524, "虚拟仓【{0}】未找到");
     public static final ApiError VM_WDT_ENTITY_INVENTORY_INSUFFICIENT = new ApiError("VM_WDT_ENTITY_INVENTORY_INSUFFICIENT", 12525, "提交失败，旺店通【{0}】【{1}】可用库存不足无法分货，可用库存【{2}】，分配数量【{3}】");
     public static final ApiError WH_UNALLOC_LOCK_FAILED = new ApiError("WH_UNALLOC_LOCK_FAILED", 12526, "未分配库存校验获取锁失败，请稍后重试");
+    public static final ApiError VM_CHECK_OUT_VIRTUAL_WAREHOUSE_INVENTORY = new ApiError("VM_CHECK_OUT_VIRTUAL_WAREHOUSE_INVENTORY", 12527, "SKU【{0}】实体仓【{1}】虚拟仓库【{2}】库存已分配【{3}】，出库数量【{4}】超过分配数量【{5}】");
     public static final ApiError WH_MACHINE_EXIST_PURCHASE_RETURN = new ApiError("WH_MACHINE_EXIST_PURCHASE_RETURN", 11000, "加工单【{0}】已存在下推采购退货单，不支持反审核");
     public static final ApiError WH_LOCATION_REQUIRED = new ApiError("WH_LOCATION_REQUIRED", 11001, "仓库【{0}】下必须配置至少一个仓位，仓位不能为空");
     public static final ApiError WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN = new ApiError("WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN", 11002, "【{0}】已存在下推的直接调拨单，不允许执行反审核操作");
