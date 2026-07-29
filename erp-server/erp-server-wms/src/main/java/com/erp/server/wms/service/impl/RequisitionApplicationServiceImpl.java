@@ -2573,10 +2573,11 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                 executionData, warehouseId, new ArrayList<>(shortageItemMap.values()));
         Set<String> locationCodes = new HashSet<>();
         for (CfgRulePickingDTO.ReplenishLocationSuggestDTO suggest : suggests) {
-            if (CharSequenceUtil.isNotBlank(suggest.getFromWarehouseLocation())) {
+            // 空仓位编码为 ""，不能用 isNotBlank 排除
+            if (suggest.getFromWarehouseLocation() != null) {
                 locationCodes.add(suggest.getFromWarehouseLocation());
             }
-            if (CharSequenceUtil.isNotBlank(suggest.getToWarehouseLocation())) {
+            if (suggest.getToWarehouseLocation() != null) {
                 locationCodes.add(suggest.getToWarehouseLocation());
             }
         }
@@ -2632,8 +2633,9 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         if (CharSequenceUtil.isBlank(warehouseId) || CollectionUtils.isEmpty(warehouseLocationCodes)) {
             return Collections.emptyMap();
         }
+        // 空仓位编码为 ""，仅排除 null
         List<String> codes = warehouseLocationCodes.stream()
-                .filter(CharSequenceUtil::isNotBlank)
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(codes)) {

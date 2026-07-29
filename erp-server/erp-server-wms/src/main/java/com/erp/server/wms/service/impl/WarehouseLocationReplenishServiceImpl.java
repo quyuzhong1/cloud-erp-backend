@@ -210,8 +210,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             toWarehouseLocationMap = productDetailEntities.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getWarehouseLocation())).collect(Collectors.toMap(ProductDetailEntity::getId,ProductDetailEntity::getWarehouseLocation));
         }
         for (WarehouseLocationReplenishDTO.AddDTO dto : addList) {
-            // 已预填取货/上架时不再覆盖产品小货区推荐
-            boolean prefilled = CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+            // 已预填取货/上架时不再覆盖产品小货区推荐（取货空仓位 code=""，不能用 isNotBlank）
+            boolean prefilled = dto.getFromWarehouseLocation() != null
                     && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation());
             if (!prefilled && toWarehouseLocationMap.containsKey(dto.getSkuId())) {
                 //推荐仓位（小货区）
@@ -233,7 +233,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private void prefillDeliverStockOutSuggestQty(List<WarehouseLocationReplenishDTO.AddDTO> addList) {
         List<WarehouseLocationReplenishDTO.AddDTO> prefilledList = addList.stream()
                 .filter(dto -> ReplenishTypeEnum.DELIVER_STOCK_OUT.equals(dto.getSourceType()))
-                .filter(dto -> CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+                // 取货空仓位 code=""，仅排除 null
+                .filter(dto -> dto.getFromWarehouseLocation() != null
                         && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation()))
                 .filter(dto -> dto.getSuggestQty() == null)
                 .collect(Collectors.toList());
@@ -311,8 +312,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
         //发货缺货补货
         if(dto.getSourceType().equals(ReplenishTypeEnum.DELIVER_STOCK_OUT)){
-            // 已由仓位推荐预填取货/上架时，直接落库并计算建议数量
-            if (CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+            // 已由仓位推荐预填取货/上架时，直接落库并计算建议数量（取货空仓位 code=""，仅排除 null）
+            if (dto.getFromWarehouseLocation() != null
                     && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation())) {
                 entity.setFromWarehouseArea(dto.getFromWarehouseArea());
                 entity.setFromWarehouseLocation(dto.getFromWarehouseLocation());

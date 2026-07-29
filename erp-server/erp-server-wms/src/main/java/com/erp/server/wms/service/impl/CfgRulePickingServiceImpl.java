@@ -657,9 +657,10 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
 
         // 同 SKU 多明细时扣减候选库存，避免重复占用同一仓位
+        // 注意：空仓位编码为 ""，不能用 isBlank 过滤
         Map<String, Integer> remainingQtyMap = new LinkedHashMap<>();
         for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inv : replenishInventories) {
-            if (!warehouseId.equals(inv.getWarehouseId()) || CharSequenceUtil.isBlank(inv.getWarehouseLocation())
+            if (!warehouseId.equals(inv.getWarehouseId()) || inv.getWarehouseLocation() == null
                     || inv.getQty() == null || inv.getQty() <= 0) {
                 continue;
             }
@@ -701,7 +702,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
             for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inv : replenishInventories) {
                 boolean skuMatch = (CharSequenceUtil.isNotBlank(item.getSkuId()) && item.getSkuId().equals(inv.getSkuId()))
                         || (CharSequenceUtil.isNotBlank(item.getSkuNo()) && item.getSkuNo().equals(inv.getSkuNo()));
-                if (!warehouseId.equals(inv.getWarehouseId()) || !skuMatch || CharSequenceUtil.isBlank(inv.getWarehouseLocation())) {
+                // 空仓位编码为 ""，仅排除 null
+                if (!warehouseId.equals(inv.getWarehouseId()) || !skuMatch || inv.getWarehouseLocation() == null) {
                     continue;
                 }
                 String key = inv.getSkuId() + "#" + inv.getWarehouseLocation();
@@ -723,7 +725,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 fromArea = area != null ? area.getCode() : null;
             }
 
-            String toLocation = resolveToWarehouseLocation(hitRule.getInWarehouseLocation(), productMap.get(item.getSkuId()),
+            String toLocation = resolveToWarehouseLocation(hitRule, productMap.get(item.getSkuId()),
                     warehouseId, item.getSkuId(), item.getSkuNo(), pickLocationCodes, locationByCode, recentLocationBySkuId);
             WarehouseLocationEntity toLocEntity = locationByCode.get(toLocation);
             if (toLocEntity == null) {
@@ -735,7 +737,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                         .last("limit 1"));
             }
             if (toLocEntity == null) {
-                throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, item.getSkuNo());
+                throwReplenishToLocationNotConfigured(item.getSkuNo(), hitRule);
             }
             String toArea = null;
             if (CharSequenceUtil.isNotBlank(toLocEntity.getParentId())) {
@@ -761,23 +763,24 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     }
 
     /**
-     * 按规则上架类型解析上架仓位编码。
+     * 按规则上架类型解析上架仓位编码；失败时带规则名称抛出 {@link ApiError#WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED}。
      * <ul>
      *   <li>{@code large}：产品推荐仓位（大货区），多值取第一个并校验系统仓位</li>
      *   <li>{@code small}：产品推荐仓位（小货区），多值取第一个并校验系统仓位</li>
      *   <li>{@code recent}：先小货区；无效则查拣货区出入库流水最新仓位；仍无则抛业务异常</li>
      * </ul>
      *
-     * @param inWarehouseLocationConfig 规则上的上架类型配置
-     * @param product                   SKU 产品主数据（可空）
-     * @param warehouseId               仓库 ID
-     * @param skuId                     SKU ID（recent 查流水必填）
-     * @param skuNo                     SKU 编码（异常文案）
-     * @param pickLocationCodes         拣货区仓位编码集合
-     * @param locationByCode            本仓库位缓存
+     * @param hitRule               命中的补货规则
+     * @param product               SKU 产品主数据（可空）
+     * @param warehouseId           仓库 ID
+     * @param skuId                 SKU ID（recent 查流水必填）
+     * @param skuNo                 SKU 编码（异常文案）
+     * @param pickLocationCodes     拣货区仓位编码集合
+     * @param locationByCode        本仓库位缓存
+     * @param recentLocationBySkuId 预加载的拣货区最近出入库仓位
      * @return 上架仓位编码
      */
-    private String resolveToWarehouseLocation(String inWarehouseLocationConfig,
+    private String resolveToWarehouseLocation(CfgRulePickingEntity hitRule,
                                               ProductDetailEntity product,
                                               String warehouseId,
                                               String skuId,
@@ -785,24 +788,25 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                                               List<String> pickLocationCodes,
                                               Map<String, WarehouseLocationEntity> locationByCode,
                                               Map<String, String> recentLocationBySkuId) {
+        String inWarehouseLocationConfig = hitRule == null ? null : hitRule.getInWarehouseLocation();
         if (CharSequenceUtil.isBlank(inWarehouseLocationConfig)) {
-            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+            throwReplenishToLocationNotConfigured(skuNo, hitRule);
         }
         InWarehouseLocationEnum locationEnum = InWarehouseLocationEnum.getEnum(inWarehouseLocationConfig);
         if (locationEnum == null) {
-            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+            throwReplenishToLocationNotConfigured(skuNo, hitRule);
         }
         if (InWarehouseLocationEnum.LARGE.equals(locationEnum)) {
             String loc = firstLocationCode(product == null ? null : product.getWarehouseLocationLarge());
             if (CharSequenceUtil.isBlank(loc) || !isValidSystemLocation(loc, locationByCode, warehouseId)) {
-                throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+                throwReplenishToLocationNotConfigured(skuNo, hitRule);
             }
             return loc;
         }
         if (InWarehouseLocationEnum.SMALL.equals(locationEnum)) {
             String loc = firstLocationCode(product == null ? null : product.getWarehouseLocation());
             if (CharSequenceUtil.isBlank(loc) || !isValidSystemLocation(loc, locationByCode, warehouseId)) {
-                throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+                throwReplenishToLocationNotConfigured(skuNo, hitRule);
             }
             return loc;
         }
@@ -812,13 +816,29 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
             return smallLoc;
         }
         if (CollectionUtils.isEmpty(pickLocationCodes) || CharSequenceUtil.isBlank(skuId)) {
-            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+            throwReplenishToLocationNotConfigured(skuNo, hitRule);
         }
         String recentLoc = recentLocationBySkuId == null ? null : recentLocationBySkuId.get(skuId);
         if (CharSequenceUtil.isBlank(recentLoc)) {
-            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+            throwReplenishToLocationNotConfigured(skuNo, hitRule);
         }
         return recentLoc;
+    }
+
+    /**
+     * 抛出补货上架仓位未配置异常，文案携带 SKU、规则名称、上架类型。
+     *
+     * @param skuNo   SKU 编码
+     * @param hitRule 命中的补货规则（可空）
+     */
+    private void throwReplenishToLocationNotConfigured(String skuNo, CfgRulePickingEntity hitRule) {
+        String ruleName = hitRule == null || CharSequenceUtil.isBlank(hitRule.getName()) ? "-" : hitRule.getName();
+        String typeName = "-";
+        if (hitRule != null && CharSequenceUtil.isNotBlank(hitRule.getInWarehouseLocation())) {
+            InWarehouseLocationEnum locationEnum = InWarehouseLocationEnum.getEnum(hitRule.getInWarehouseLocation());
+            typeName = locationEnum == null ? hitRule.getInWarehouseLocation() : locationEnum.getName();
+        }
+        throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo, ruleName, typeName);
     }
 
     /**
