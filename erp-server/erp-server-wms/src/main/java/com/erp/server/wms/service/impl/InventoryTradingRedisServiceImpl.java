@@ -354,7 +354,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * <p>
      * 指定虚拟仓时校验该虚拟仓已分配量；未指定时校验实体仓未分配（含在途预占）。
      * 最终并发放行以 {@code try.lua} 仓+SKU 未分配原子预占为准；此处用于提前失败、减少无效 TRY。
-     * 预检 pending 排除本批 {@code operationId}，仍计入同事务内其它批次的在途预占。
+     * 预检 pending 不排除本批（流水 ID 尚未生成，与 PG 路径及 {@link VirtualInventoryUnallocCheckHelper#sumPendingReserve} 约定一致），
+     * 计入全部在途预占；TRY 阶段再按流水 ID 解析 {@code operationId} 做幂等排除。
      * </p>
      *
      * @param transactionList 库存交易列表
@@ -363,8 +364,9 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         if (CollectionUtils.isEmpty(transactionList)) {
             return;
         }
-        String excludeTransactionId = inventoryTransactionService.resolveRedisTransactionIdFromList(transactionList);
-        String excludeOperationId = VirtualInventoryUnallocCheckHelper.resolveTryOperationId(transactionList);
+        // 预检早于 saveCurrTransactionFlow，无法解析 operationId；与 PG 预检一致传 null
+        String excludeTransactionId = null;
+        String excludeOperationId = null;
         List<InventoryTransactionDTO> virtualWarehouseCheckList =
                 VirtualInventoryUnallocCheckHelper.filterNeedVirtualWarehouseCheck(transactionList);
         List<InventoryTransactionDTO> entityUnallocCheckList =
