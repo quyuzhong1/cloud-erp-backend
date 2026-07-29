@@ -568,7 +568,7 @@ public class MouldInfoDTO implements Serializable {
          */
 
         @NotNull(message = "实际返还金额不能为空")
-        @Digits(integer = 18, fraction = 6, message = "实际返还金额最大999999999，最多2位小数")
+        @Digits(integer = 18, fraction = 6, message = "实际返还金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal realRefundAmount;
 
         /**
