@@ -1763,8 +1763,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
 
-        /**
-     * 修改审核数量（只有审核中的才能修改）
+    /**
+     * 修改审核数量（只有审核中的才能修改）。
+     * 仅当明细审核数量相对库中值有实际变更时才更新并写操作日志；多 SKU 变更时按 SKU 各写一条。
+     *
+     * @param dto 主单 id + 明细审核数量列表
+     * @return 处理成功返回 true；无数量变更时也返回 true（不写操作日志）
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1816,7 +1820,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                             (existing, replacement) -> replacement
                     ));
 
-            // 5. 更新明细的审核数量
+            // 5. 仅收集审核数量有变更的明细
+            List<SampleRecipientDetailEntity> changedDetails = new ArrayList<>();
+            Map<String, Integer> oldAuditQtyMap = new HashMap<>();
             for (SampleRecipientDetailEntity detail : detailList) {
                 Integer auditQty = auditQtyMap.get(detail.getId());
                 if (auditQty == null) {
@@ -1828,21 +1834,43 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY, detail.getSkuNo(), auditQty, detail.getRecipientQty());
                 }
 
+                Integer oldAuditQty = ObjectUtil.defaultIfNull(detail.getAuditQty(), 0);
+                if (Objects.equals(oldAuditQty, auditQty)) {
+                    continue;
+                }
+
+                oldAuditQtyMap.put(detail.getId(), oldAuditQty);
                 detail.setAuditQty(auditQty);
+                changedDetails.add(detail);
             }
 
-            // 6. 批量更新明细
-            boolean updateResult = sampleRecipientDetailService.updateBatchById(detailList);
+            // 无实际变更：不落库、不写操作日志
+            if (CollUtil.isEmpty(changedDetails)) {
+                return true;
+            }
+
+            // 6. 批量更新有变更的明细
+            boolean updateResult = sampleRecipientDetailService.updateBatchById(changedDetails);
             if (!updateResult) {
                 throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_UPDATE_FAILED);
             }
 
-            // 7. 记录操作日志
-            String msg = StrUtil.format("用户【{}】修改样品领用单【{}】的审核数量",
-                    UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "修改审核数量");
+            // 7. 按变更 SKU 记录操作日志（含改前/改后数量）
+            String userName = UserContext.getDefaultLoginUser().getUserName();
+            for (SampleRecipientDetailEntity detail : changedDetails) {
+                String msg = StrUtil.format(
+                        "用户【{}】审核样品领用单【{}】，并编辑了SKU【{}】的【审核数量】由【{}】修改为【{}】",
+                        userName, entity.getCode(), detail.getSkuNo(),
+                        oldAuditQtyMap.get(detail.getId()), detail.getAuditQty());
+                try {
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(),
+                            entity.getId(), "修改审核数量");
+                } catch (Exception e) {
+                    log.warn("样品领用单修改审核数量操作日志写入失败,bizId:{},skuNo:{}",
+                            entity.getId(), detail.getSkuNo(), e);
+                }
+            }
 
-            log.info("修改审核数量成功，单据编号：{}，修改明细数量：{}", entity.getCode(), detailList.size());
             return true;
 
         } catch (ServiceException e) {
