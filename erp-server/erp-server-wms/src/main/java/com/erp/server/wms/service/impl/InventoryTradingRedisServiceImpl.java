@@ -109,7 +109,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             throw e;
         } catch (Exception e) {
             log.error("redis库存交易失败", e);
-            throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
+            throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, e.getMessage());
         } finally {
             stopwatch.stop();
             // 计时器-结束
