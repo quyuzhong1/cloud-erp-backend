@@ -56,6 +56,18 @@ public enum DictCostAttributionEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static DictCostAttributionEnum getByCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (DictCostAttributionEnum statusEnum : DictCostAttributionEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum;
+            }
+        }
+        return null;
+    }
 }
 
 

@@ -403,10 +403,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                         errorMsgList.add("未找到对应物流费用单");
                         break;
                     }
-                    checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, mainIdListMap, errorMsgList);
-                    if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                        break;
-                    }
                     targetPairList.add(new Pair<>(logisticsBillVo, logisticsBillCostEntity));
                     targetUpdateMap.put(logisticsBillVo.getDetailId(), currentUpdateList);
                 }
@@ -468,12 +464,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                         errorList.addAll(value);
                         continue;
                     }
-                }
-                checkCategoryCurrency(updateList, logisticsBillCostEntity, cfgCostList, Collections.emptyMap(), errorMsgList);
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                    value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList)));
-                    errorList.addAll(value);
-                    continue;
                 }
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO,updateList);
                 updateDataDTO.setReconciliationMonth(reconciliationMonth);
@@ -605,39 +595,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             }
         }
         return mainIdListMap;
-    }
-
-    /**
-     * 校验导入费用和存量费用在同一费用分类下的币种一致性。
-     */
-    private void checkCategoryCurrency(List<TmsCostDetailDTO.UpdateDTO> updateList,
-                                       LogisticsBillCostEntity logisticsBillCostEntity,
-                                       List<TmsCfgCostEntity> cfgCostList,
-                                       Map<String, List<TmsCostDetailEntity>> mainIdListMap,
-                                       List<String> errorMsgList) {
-        List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
-        List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.getOrDefault(logisticsBillCostEntity.getId(), Collections.emptyList());
-        if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
-            List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
-            validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
-        }
-        Set<String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
-        if (CollUtil.isEmpty(validateCategoryCurrency)) {
-            return;
-        }
-        Map<String, String> costIdTypeListMap = new LinkedHashMap<>();
-        for(String validateCategory : validateCategoryCurrency) {
-            String[] split = validateCategory.split("_");
-            List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
-            for(UpdateDTO remove : removeList) {
-                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null);
-                if(Objects.nonNull(tmsCfgCostEntity)){
-                    String costName = tmsCfgCostEntity.getCostName();
-                    costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
-                }
-            }
-        }
-        errorMsgList.addAll(costIdTypeListMap.values());
     }
 
     /**

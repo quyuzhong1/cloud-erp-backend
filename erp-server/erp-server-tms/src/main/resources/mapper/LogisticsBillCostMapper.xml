@@ -99,7 +99,6 @@
             lb.so_delivery_code as soDeliveryCode,
             lbc.remark,
             lbc.weight_unit as weightUnit,
-            lbc.currency,
             lb.platform_code as platformCode,
             lbc.fee_rule as feeRule,
             lbc.confirm_time as confirmTime,
@@ -171,7 +170,6 @@
             lb.so_delivery_code as soDeliveryCode,
             lbc.remark,
             lbc.weight_unit as weightUnit,
-            lbc.currency,
             lb.platform_code as platformCode,
             lbc.fee_rule as feeRule,
             lbc.confirm_time as confirmTime,
@@ -284,6 +282,8 @@
             tcd.id as detailId,
             tcd.currency,
             tcd.exchange_rate,
+            tcd.local_currency,
+            tcd.cost_value_local_currency,
             tcd."type",
             tcd.source_type,
             tcd.cost_value
@@ -418,10 +418,10 @@
     <!-- 统计总数 -->
     <select id="listTotalCostValueCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TotalCountDTO">
         select
-            sum((case when tcc.dict_cost_category = 'shippingCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualShippingCost,
-            sum((case when tcc.dict_cost_category = 'declareCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeclareCost,
-            sum((case when tcc.dict_cost_category = 'deductibleTax' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeductibleTax,
-            sum((case when tcc.dict_cost_category = 'otherCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualOtherCost
+            sum(case when tcc.dict_cost_category = 'shippingCost' and tcd.type = 'actual' then coalesce(tcd.cost_value_local_currency, tcd.cost_value * coalesce(tcd.exchange_rate, 1)) else 0 end) as totalActualShippingCost,
+            sum(case when tcc.dict_cost_category = 'declareCost' and tcd.type = 'actual' then coalesce(tcd.cost_value_local_currency, tcd.cost_value * coalesce(tcd.exchange_rate, 1)) else 0 end) as totalActualDeclareCost,
+            sum(case when tcc.dict_cost_category = 'deductibleTax' and tcd.type = 'actual' then coalesce(tcd.cost_value_local_currency, tcd.cost_value * coalesce(tcd.exchange_rate, 1)) else 0 end) as totalActualDeductibleTax,
+            sum(case when tcc.dict_cost_category = 'otherCost' and tcd.type = 'actual' then coalesce(tcd.cost_value_local_currency, tcd.cost_value * coalesce(tcd.exchange_rate, 1)) else 0 end) as totalActualOtherCost
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         inner join tms_cost_detail tcd on tcd.main_id = lbc.id and tcd.is_deleted = false
