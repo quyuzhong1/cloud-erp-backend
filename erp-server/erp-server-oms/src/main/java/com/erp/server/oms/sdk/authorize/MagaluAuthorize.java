@@ -218,32 +218,43 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
     private String buildAuthorizeUrl(CfgAppClientEntity cfgAppClient, String state) {
         String scope = getScope(cfgAppClient);
         String template = cfgAppClient.getUrl();
+        String authorizeUrl;
         int placeholderCount = StringUtils.countMatches(template, "%s");
         if (placeholderCount >= 4) {
-            return String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(scope), urlEncode(state));
-        }
-        if (placeholderCount == 3) {
-            String authorizeUrl = String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(state));
-            if (StringUtils.isBlank(scope)) {
-                return authorizeUrl;
+            authorizeUrl = String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(scope), urlEncode(state));
+        } else if (placeholderCount == 3) {
+            authorizeUrl = String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(state));
+            if (StringUtils.isNotBlank(scope)) {
+                authorizeUrl = authorizeUrl + (authorizeUrl.contains("?") ? "&" : "?") + "scope=" + urlEncode(scope);
             }
-            return authorizeUrl + (authorizeUrl.contains("?") ? "&" : "?") + "scope=" + urlEncode(scope);
+        } else {
+            authorizeUrl = appendAuthorizeQuery(template, cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), scope, state);
         }
-        return appendAuthorizeQuery(template, cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), scope, state);
+        // Magalu 官方授权要求显式携带 response_type=code 与 choose_tenants=true
+        return ensureAuthorizeRequiredParams(authorizeUrl);
     }
 
     private String appendAuthorizeQuery(String url, String clientId, String redirectUrl, String scope, String state) {
         String separator = url.contains("?") ? "&" : "?";
         StringBuilder builder = new StringBuilder(url)
                 .append(separator)
-                .append("response_type=code")
-                .append("&client_id=").append(urlEncode(clientId))
+                .append("client_id=").append(urlEncode(clientId))
                 .append("&redirect_uri=").append(urlEncode(redirectUrl))
                 .append("&state=").append(urlEncode(state));
         if (StringUtils.isNotBlank(scope)) {
             builder.append("&scope=").append(urlEncode(scope));
         }
         return builder.toString();
+    }
+
+    private String ensureAuthorizeRequiredParams(String authorizeUrl) {
+        if (!StringUtils.containsIgnoreCase(authorizeUrl, "response_type=")) {
+            authorizeUrl = authorizeUrl + (authorizeUrl.contains("?") ? "&" : "?") + "response_type=code";
+        }
+        if (!StringUtils.containsIgnoreCase(authorizeUrl, "choose_tenants=")) {
+            authorizeUrl = authorizeUrl + (authorizeUrl.contains("?") ? "&" : "?") + "choose_tenants=true";
+        }
+        return authorizeUrl;
     }
 
     private String getScope(CfgAppClientEntity cfgAppClient) {
