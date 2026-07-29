@@ -137,7 +137,8 @@ local function compute_new_current_value(currvalue, txn, opType)
     local i = 0;
     for sku in string.gmatch(currvalue, '([^' .. split .. ']+)') do
         if i == 0 then
-            local baseQty = strict_nonneg_int(sku);
+            -- 基量允许负整数，与允许负库存仓 commit 结果及 override 重算一致
+            local baseQty = strict_signed_int(sku);
             if baseQty == nil then
                 return nil;
             end
