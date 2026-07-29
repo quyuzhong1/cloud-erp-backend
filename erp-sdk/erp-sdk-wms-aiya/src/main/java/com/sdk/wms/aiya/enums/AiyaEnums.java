@@ -91,6 +91,55 @@ public enum AiyaEnums {
     }
 
     /**
+     * AIYA 2C 出库单「阶段」枚举（响应字段 {@code stage}，2026-07-29 联调真实报文确认存在）。
+     * <p>
+     * {@code status=VALID} 只代表订单本身有效/未被拦截，<b>不代表已实际出库</b>——
+     * 联调实测同一单 {@code status=VALID} 时 {@code stage} 会经历 {@code PICKING}/{@code PACKING}
+     * 等中间阶段，只有 {@code stage=SHIPPED} 才是已发货实锤（该值来自实测样本核对，其余阶段码
+     * 由爱亚提供但未逐一验证语义，仅供参考，禁止假设其代表已发货）。
+     * <p>
+     * 因此 {@code VALID} 判定是否等价 ERP 已发货，须与 {@link #isShipped(String)} 联合判断，
+     * 具体见 {@code AiyaOutBoundDmpHandler}。
+     */
+    public enum StageEnum {
+        /** 已发货（2026-07-29 实测确认，唯一已验证代表"已发货"的阶段码） */
+        SHIPPED("SHIPPED"),
+        /** 以下均为爱亚提供的阶段码原文，语义未逐一核实，仅供排查参考 */
+        DUE_OUT("DUE_OUT"),
+        ALLOCATED("ALLOCATED"),
+        PICKING("PICKING"),
+        PICKED("PICKED"),
+        PACKING("PACKING"),
+        PACKED("PACKED"),
+        SHIPPING("SHIPPING"),
+        CLOSED("CLOSED"),
+        PICK("PICK"),
+        PACK("PACK"),
+        PARTIALLY_ALLOCATED("PARTIALLY_ALLOCATED"),
+        OPEN("OPEN"),
+        CREATED("CREATED"),
+        ROUTING("ROUTING"),
+        ;
+
+        @Getter
+        private final String code;
+
+        StageEnum(String code) {
+            this.code = code;
+        }
+
+        /**
+         * 判断 {@code stage} 是否为已发货唯一确认值 {@code SHIPPED}。
+         *
+         * @param stage AIYA 响应 {@code stage} 原文
+         * @return 是否已发货
+         */
+        public static boolean isShipped(String stage) {
+            return SHIPPED.getCode().equalsIgnoreCase(stage);
+        }
+    }
+
+    /**
      * AIYA 库存类型枚举（占位）。
      * <p>TODO：取值需按 AIYA 官方文档核对。
      */

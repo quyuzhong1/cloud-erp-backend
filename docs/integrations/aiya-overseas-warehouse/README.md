@@ -340,6 +340,7 @@ DMP定时「爱亚退货入库」
 - [x] **【已修复】推海外仓面单时未传 trackingNumber/files（2026-07-28）**：根因是 OMS `needOnlineLabelUrl` 未包含爱亚，`isPushLabel=是` 时未生成 `labelUrl`，Handler 因 `labelUrl` 为空误走 API。已：① 爱亚加入 `needOnlineLabelUrl`（对齐 WEGO 上传 FastDFS 得 URL）；② 爱亚跳过无意义的 `uploadFile`；③ Handler 在 `isPushLabel=是` 时强制 ATTACHMENT + `trackingNumber` + `files[{fileType=Shipping Label, fileName=面单信息, fileUrl=labelUrl}]`，缺参直接报错。
 - [x] **【已确认】出库单查询响应为扁平结构（2026-07-22 联调）**：顶层 `{success, code, message, total, orderInfoList:[]}`，列表字段是 `orderInfoList`（不是同族仓库/承运商接口的 `resultList`）；`total` 失败时可为 null，成功分页是否回填待再确认。
 - [x] **【已纠正】出库单查询状态字段（2026-07-28）**：官方响应字段是 {@code status}（{@code VALID}/{@code HELD}/{@code CANCELLED}），不是方案字母码 A/B/C/D，也不是臆造的 {@code orderStatus}。此前 DTO 用 {@code orderStatus} 反序列化导致联调打印丢状态。已改为映射 {@code status}；拦截终态看 {@code CANCELLED}→ERP 已取消（DISUSE），由 DMP 推送收敛。
+- [x] **【已纠正】`status=VALID` 不等价已发货，须联合 `stage=SHIPPED`（2026-07-29 联调真实报文确认）**：真实响应还有一个此前未接入的字段 `stage`（阶段），枚举值 `DUE_OUT`/`ALLOCATED`/`PICKING`/`PICKED`/`PACKING`/`PACKED`/`SHIPPING`/`SHIPPED`/`CLOSED`/`PICK`/`PACK`/`PARTIALLY_ALLOCATED`/`OPEN`/`CREATED`/`ROUTING`（仅 `SHIPPED` 经实测确认代表已发货，其余语义未逐一核实）。同一单 `status=VALID` 时会经历 `PICKING`/`PACKING` 等中间阶段，此前只看 `status=VALID` 就映射 `ENUM_SHIPPED` 会提前把"仍在履约中"的订单误判为已发货。已修复：`AiyaOutboundResp.OutboundOrderDTO` 补充 `stage` 字段；新增 `AiyaEnums.StageEnum.isShipped()`；`AiyaOutBoundDmpHandler` 改为 `status=VALID` 时二次校验 `stage=SHIPPED` 才写入 `orderStatus`，否则本轮跳过推送（ERP 侧维持原状态，不会被提前标记已发货）。同批顺带修复 `items[].quantity`（此前 DTO 误用字段名 `qty`，导致该字段一直反序列化为空，未在任何下游被使用，本次一并修正字段名并保留 `qty` 别名兼容）。
 - [ ] **"汉化管理"错误码翻译能力是否已有可复用实现**：本次不做，留待后续单独排期。
 - [ ] **"超量发货"处理流程**：WEGO 无对应实现，AIYA 独有新分支；本次不做，留待后续单独排期。
 
@@ -404,7 +405,8 @@ DMP定时「爱亚退货入库」
   - **状态枚举**：`AiyaEnums.OrderStatusEnum` 改为字母码 `A`(已出库→SHIPPED)/`B`(已取消→DISUSE)/`C`(库存不足→EXCEPTION)/`D`(锁住→EXCEPTION)，替换掉此前照抄 WEGO 的数字状态码占位。
   - **查询入参（2026-07-23）**：`AiyaOutboundQueryDTO` 支持 `createdTimeFrom`/`createdTimeTo`（主窗口）+ 可选 `shippingTime*`/`page`/`pageSize`。`AiyaOutboundInitHandler` / Handler `queryOutboundBill` 按创建时间窗口拉，对齐 WEGO `orderDate*`，避免 `shippingTime*` 漏未发货单。
   - **响应结构（2026-07-28）**：扁平 `{success, code, message, total, orderInfoList}`；状态字段官方为 `status`=`VALID|HELD|CANCELLED`（拦截成功看 `CANCELLED`）。方案 A/B/C/D 为业务说明，已废弃作网关枚举。
-  - **状态映射**：`VALID`→已发货、`HELD`→异常、`CANCELLED`→已取消（DISUSE，拦截终态）。
+  - **状态映射**：`VALID`→已发货、`HELD`→异常、`CANCELLED`→已取消（DISUSE，拦截终态）。**（2026-07-29 修正）** `VALID` 单独出现时只代表"未被拦截"，不等价"已发货"；须联合响应字段 `stage=SHIPPED`（阶段，见上方「待产品确认」条目）才视为已发货终态写入 `orderStatus`，否则本轮跳过推送。
+  - **DMP 出库数据链路配置缺失（2026-07-29，test 环境排查发现）**：`dmp_cfg_input_convert_mapping`（爱亚出库 main_id）此前完全没有配置字段映射，导致 `dmp_third_outbound.order_code`/`reference_no` 落库为空、永远匹配不到具体单据；`dmp_cfg_output` 缺 `output_class=AiyaOutboundRocketMQTaskHandler` 记录、`dmp_cfg_output_detail` 缺对应授权行，即使 1) 修好也不会有调度推 MQ。已产出补丁脚本 `docs/integrations/aiya-overseas-warehouse/sql/aiya_outbound_dmp_output_patch.sql`，需在目标环境执行前按脚本头部注释核对 ID 后再跑。
   - **DMP 映射建议**：`orderNumber→order_code`/`reference_no`、`warehouseCode→warehouse_code`、`status→order_status`、`trackingNumber→tracking_no`、`actualLogistic|carrier→carrier_name`；`shippingTime` 由 Convert Handler 转 `dateShipping`。
   - **`safeResponseLog`（2026-07-22）**：改为读取爱亚字段 `code`/`message`（此前误用 WEGO 的 `errorCode`/`errorMsg`，失败日志会打成 null）。
   - **SDK 方法**：`query2cOrder(AiyaOutboundQueryDTO.QueryReqDTO)`；`intercept2cOrder` 入参为 `orderNumbers[]`（字符串集合，对齐方案文档与入库取消 `asnNumbers[]`）。

@@ -5,6 +5,7 @@ import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.wego.WegoOutBoundDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.aiya.AiyaOutboundInitHandler;
+import com.sdk.wms.aiya.enums.AiyaEnums;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -29,6 +30,10 @@ import java.util.TreeMap;
  *   <li>{@code shippingTime}（文档发运时间，格式 {@code yyyy-MM-dd HH:mm:ss}）
  *       → {@code dateShipping}（{@link LocalDateTime}）；</li>
  *   <li>{@code status}（官方 VALID/HELD/CANCELLED；兼容历史 {@code orderStatus}）→ 统一转 String；</li>
+ *   <li>{@code status=VALID} 时联合 {@code stage} 二次确认：仅 {@code stage=SHIPPED}（2026-07-29
+ *       联调实测确认）才视为已发货终态写入 {@code orderStatus}；否则视为尚在履约中（PICKING/PACKING 等），
+ *       本轮跳过 {@code orderStatus} 推送，避免 ERP 侧被提前标记为已发货，详见
+ *       {@link AiyaEnums.StageEnum}；</li>
  *   <li>固定写入 {@code warehousePlatformType} = {@code overseasWarehouse}；</li>
  *   <li>固定写入 {@code orderType} = {@code B2C}。</li>
  * </ol>
@@ -48,6 +53,8 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     /** 官方字段 status；兼容历史误写 orderStatus */
     private static final String MONGO_KEY_STATUS = "status";
     private static final String MONGO_KEY_ORDER_STATUS_LEGACY = "orderStatus";
+    /** 官方字段 stage：VALID 是否等价"已发货"需联合此字段二次确认，见类注释 */
+    private static final String MONGO_KEY_STAGE = "stage";
 
     private static final String DMP_KEY_DATE_SHIPPING = "dateShipping";
     private static final String DMP_KEY_ORDER_STATUS = "orderStatus";
@@ -75,6 +82,16 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
                 statusRaw = mongoData.get(MONGO_KEY_ORDER_STATUS_LEGACY);
             }
             String orderStatus = statusRaw != null ? String.valueOf(statusRaw) : null;
+            if (AiyaEnums.OrderStatusEnum.VALID.getCode().equalsIgnoreCase(orderStatus)) {
+                Object stageRaw = mongoData.get(MONGO_KEY_STAGE);
+                String stage = stageRaw != null ? String.valueOf(stageRaw) : null;
+                if (!AiyaEnums.StageEnum.isShipped(stage)) {
+                    // VALID 只代表未被拦截，stage 非 SHIPPED 说明尚在履约中，本轮不推送状态，避免 ERP 侧被提前标记已发货
+                    log.warn("[AIYA出库] status=VALID但stage非SHIPPED，暂不视为已发货终态，本轮跳过orderStatus推送。AIYA单号={}，stage原始值={}",
+                            orderNumber, stage);
+                    orderStatus = null;
+                }
+            }
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 if (dateShipping != null) {
