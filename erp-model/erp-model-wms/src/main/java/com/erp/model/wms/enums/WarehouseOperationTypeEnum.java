@@ -28,6 +28,10 @@ public enum WarehouseOperationTypeEnum implements EnumMessage {
     LIMIT_PLATE_NUM("limitPlateNum", "限板数"),
     LIMIT_PLATE_HEIGHT("limitPlateHeight", "限板高"),
     LIMIT_PLATE_WEIGHT("limitPlateWeight", "限板重"),
+    /** 通邮 B2B：操作指令-是否换标，operationDesc 填「是」/「否」 */
+    IS_RELABEL("isRelabel", "是否换标"),
+    /** 通邮 B2B：操作指令-是否混装，operationDesc 填「是」/「否」 */
+    IS_MIXED_PACKING("isMixedPacking", "是否混装"),
     ;
     /**
      * 类型

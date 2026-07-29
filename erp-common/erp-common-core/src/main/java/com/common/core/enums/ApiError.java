@@ -396,6 +396,7 @@ public final class ApiError implements Serializable {
     public static final ApiError CUSTOMER_DISABLE_FORBIDDEN = ApiErrorOms.CUSTOMER_DISABLE_FORBIDDEN;
     public static final ApiError CUSTOMER_SKU_INTERVAL_OVERLAP = ApiErrorOms.CUSTOMER_SKU_INTERVAL_OVERLAP;
     public static final ApiError CUSTOMER_NAME_DUPLICATE = ApiErrorOms.CUSTOMER_NAME_DUPLICATE;
+    public static final ApiError CUSTOMER_NAME_RELATE_SHOP_FORBIDDEN = ApiErrorOms.CUSTOMER_NAME_RELATE_SHOP_FORBIDDEN;
     public static final ApiError SALES_DEMAND_NOT_FOUND = ApiErrorOms.SALES_DEMAND_NOT_FOUND;
     public static final ApiError SALES_DEMAND_DETAIL_NOT_FOUND = ApiErrorOms.SALES_DEMAND_DETAIL_NOT_FOUND;
     public static final ApiError SALES_DEMAND_SKU_QTY_EXCEEDS = ApiErrorOms.SALES_DEMAND_SKU_QTY_EXCEEDS;
