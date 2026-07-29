@@ -1331,6 +1331,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             return;
         }
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutStockByIdAndWarehouseId(mainEntity.getId(),warehouseId);
+        // 循环内只做纯内存判断，超发SKU描述先收集到本地列表；出库主流程成功后再统一登记，
+        // 避免"提示性"Feign失败阻断出库，也避免出库未成功时提前落异常
+        List<String> overShipMessages = new ArrayList<>();
         //查询三方仓发货明细，重新赋值明细数据
         if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryDetailService.listByMainId(thirdWarehouseDeliveryEntity.getId());
@@ -1340,10 +1343,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 // 爱亚侧SKU(platformSkuNo) -> 实际发货数量，一次性构建供下面按SKU O(1)查表比较超发，
                 // 不在明细循环里发起新的查询/远程调用
                 Map<String, Integer> platformSkuActualQtyMap = buildPlatformSkuActualQtyMap(dto);
-                // 循环内只做纯内存判断，超发SKU先收集到本地列表，不在循环里同步调用Feign登记异常：
-                // 一避免同一单多个SKU超发时产生N次远程调用，二避免该"提示性"调用失败时直接抛出异常，
-                // 连带中断本方法、阻断下面 thirdWarehouseCheckAndGenerate 的销售出库单生成
-                List<String> overShipMessages = new ArrayList<>();
                 for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntityList) {
                     //表示有啊
                     SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
@@ -1373,9 +1372,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     wantDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(wantDetailList);
-                // 循环外统一登记：整单所有超发SKU合并成一条异常、只发一次Feign调用；
-                // 登记失败只记日志、不向上抛出，避免"提示性"异常影响下面真正的出库单生成
-                reportOverShipIfNeeded(mainEntity, dto, overShipMessages);
             }
             generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
             generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
@@ -1396,6 +1392,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
             }
         }
+        // 出库主流程成功后再登记超发：整单合并成一条异常、只发一次Feign；失败只告警不抛出
+        reportOverShipIfNeeded(mainEntity, dto, overShipMessages);
     }
 
     /**
@@ -1455,9 +1453,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     /**
      * 把整单所有超发SKU合并成一条"三方仓超发"异常订单登记（仅提示，不阻断销售出库单自动生成/
-     * 审核流程）：一个订单无论有多少SKU超发，只发起一次 {@code soB2cFeign.addSoB2cError} 调用，
-     * 避免 N+1 远程调用；该调用异常整体 try-catch 兜底，失败只记日志、不向上抛出，确保调用方
-     * 后续生成销售出库单（{@code thirdWarehouseCheckAndGenerate}）不受影响。
+     * 审核流程）。须在出库主流程（{@code thirdWarehouseCheckAndGenerate}）成功之后调用：
+     * <ul>
+     *   <li>一个订单无论有多少SKU超发，只发起一次 {@code soB2cFeign.addSoB2cError}，避免 N+1；</li>
+     *   <li>登记失败整体 try-catch 兜底：不向上抛出（避免已成功生成的出库单被 MQ 重试打断），
+     *       但除 {@code log.error} 外还会发一条系统预警（{@link MQProducerService#sendWarnMsg}），
+     *       保证运维可感知、不至于静默丢失。</li>
+     * </ul>
      *
      * @param mainEntity        B2C销售订单主表
      * @param dto               平台出库单DTO，异常登记时用于记录原始报文
@@ -1481,8 +1483,35 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             );
             soB2cFeign.addSoB2cError(addError);
         } catch (Exception e) {
-            log.error("销售订单{} 登记三方仓超发异常失败，仅记录日志不阻断出库单生成，超发详情={}",
+            log.error("销售订单{} 登记三方仓超发异常失败，不阻断已成功的出库主流程，改为发送系统预警，超发详情={}",
                     mainEntity.getCode(), message, e);
+            sendOverShipRegisterWarn(mainEntity, message, e);
+        }
+    }
+
+    /**
+     * 超发异常登记 Feign 失败时的可观测性兜底：发系统预警，避免只落本地日志导致运维无感知。
+     * 告警本身再失败只打 error 日志，不再向外抛，以免影响出库主流程已成功的消费结果。
+     *
+     * @param mainEntity B2C销售订单主表
+     * @param message    超发详情文案
+     * @param cause      原始登记失败异常
+     */
+    private void sendOverShipRegisterWarn(SoB2cEntity mainEntity, String message, Exception cause) {
+        try {
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("三方仓超发异常登记");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+            warnMsgInfo.setTitle(CharSequenceUtil.format("销售订单【{}】三方仓超发异常登记失败", mainEntity.getCode()));
+            warnMsgInfo.setTableName("so_b2c");
+            warnMsgInfo.setTableId(CharSequenceUtil.blankToDefault(mainEntity.getId(), ""));
+            warnMsgInfo.setKeyInfo(CharSequenceUtil.format("{}；登记失败原因：{}",
+                    message, cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage()));
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            mqProducerService.sendWarnMsg(warnMsgInfo);
+        } catch (Exception warnEx) {
+            log.error("销售订单{} 三方仓超发异常登记失败后发送系统预警也失败，超发详情={}",
+                    mainEntity.getCode(), message, warnEx);
         }
     }
 
