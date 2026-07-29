@@ -575,11 +575,10 @@
         AND wcd.sku_id = fmdd.sku_id
         AND ((fmdd.fn_sku != '' and  wcd.fn_sku = fmdd.fn_sku) or fmdd.platform_sku_no = wcd.fn_sku)
         LEFT JOIN fba_shipment_packing fsp ON fsp.carton_id = wc.ID
-        AND fsp.is_deleted =
-        FALSE LEFT JOIN first_mile_delivery_detail fmdd2 ON fmdd2.main_id = fmd.ID
-        AND fmdd2.is_deleted =
-        FALSE LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fmd.ID
+        AND fsp.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fmd.ID
         AND owi.is_deleted = FALSE
+        AND owi.instock_status != 'canceled'
         where ${params.sqlMap.default} and fmd.is_deleted = false
           AND wcd.pack_qty > 0
         <if test="ids != null and ids.size > 0">

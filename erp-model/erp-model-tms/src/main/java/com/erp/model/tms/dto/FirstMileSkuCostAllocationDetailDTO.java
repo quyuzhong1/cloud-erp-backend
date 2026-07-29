@@ -178,63 +178,63 @@ public class FirstMileSkuCostAllocationDetailDTO implements Serializable {
         * 头程总金额
         */
         @NotNull(message = "头程总金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "头程总金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "头程总金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal amount;
 
         /**
         * 头程分摊金额
         */
         @NotNull(message = "头程分摊金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "头程分摊金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "头程分摊金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allocatedAmount;
 
         /**
         * 单个产品分摊金额
         */
         @NotNull(message = "单个产品分摊金额不能为空")
-        @Digits(integer = 12, fraction = 6, message = "单个产品分摊金额整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "单个产品分摊金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal productAllocatedAmount;
 
         /**
         * 期初在途费用
         */
         @NotNull(message = "期初在途费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "期初在途费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "期初在途费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal initTransitCost;
 
         /**
         * 期初暂估费用
         */
         @NotNull(message = "期初暂估费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "期初暂估费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "期初暂估费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal initEstimatedCost;
 
         /**
         * 冲期初在途费用
         */
         @NotNull(message = "冲期初在途费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "冲期初在途费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "冲期初在途费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal midPeriodTransitCost;
 
         /**
         * 本期分摊费用
         */
         @NotNull(message = "本期分摊费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "本期分摊费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "本期分摊费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal currentPeriodAllocatedCost;
 
         /**
         * 期末在途费用
         */
         @NotNull(message = "期末在途费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "期末在途费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "期末在途费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal endPeriodTransitCost;
 
         /**
         * 期末暂估费用
         */
         @NotNull(message = "期末暂估费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "期末暂估费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "期末暂估费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal endPeriodEstimatedCost;
 
 

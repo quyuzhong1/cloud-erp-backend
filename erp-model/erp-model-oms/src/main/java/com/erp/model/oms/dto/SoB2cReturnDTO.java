@@ -186,7 +186,7 @@ public class SoB2cReturnDTO implements Serializable {
         * 订单金额
         */
         @NotNull(message = "订单金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "订单金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal amount;
 
         /**
@@ -376,6 +376,11 @@ public class SoB2cReturnDTO implements Serializable {
          * 入库数量
          */
         private Integer instockQty;
+        /**
+         * 剩余应退货数量 = 退货数量 - 全部有效入库实退累计（含待审；与 listAddDetailView / WMS 口径一致）
+         * 注意：入库数量(instockQty)仍仅统计已审核，二者口径不同
+         */
+        private Integer remainMustQty;
         /**
          * 备注
          */

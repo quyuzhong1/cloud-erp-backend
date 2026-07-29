@@ -784,7 +784,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 最高报关金额
          */
-        @Digits(integer = 12, fraction = 4, message = "最高报关金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "最高报关金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal maxCustomsAmount;
 
         /**
@@ -796,7 +796,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 最低报关金额
          */
-        @Digits(integer = 12, fraction = 4, message = "最低报关金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "最低报关金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal minCustomsAmount;
 
         /**
@@ -820,17 +820,17 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 长度上限
          */
-        @Digits(integer = 12, fraction = 4, message = "长度上限整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "长度上限整数位不能超过18位，小数位不能超过6位")
         private BigDecimal maxLength;
         /**
          * 宽度上限
          */
-        @Digits(integer = 12, fraction = 4, message = "宽度上限整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "宽度上限整数位不能超过18位，小数位不能超过6位")
         private BigDecimal maxWidth;
         /**
          * 高度上限
          */
-        @Digits(integer = 12, fraction = 4, message = "高度上限整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "高度上限整数位不能超过18位，小数位不能超过6位")
         private BigDecimal maxHeight;
 
         /**

@@ -285,7 +285,7 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
         * 销量比例值(%)
         */
-        @Digits(integer = 3, fraction = 2, message = "销量比例值整数位不能超过3位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "销量比例值整数位不能超过18位，小数位不能超过6位")
         private BigDecimal salesRatio;
 
         /**

@@ -166,37 +166,38 @@ public class DictHsCodeDTO implements Serializable {
         * 最惠国税率 (%)
         */
 //        @NotNull(message = "最惠国税率 (%)不能为空")
-//        @Digits(integer = 12, fraction = 4, message = "最惠国税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "最惠国税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal mfnRate;
 
         /**
         * 普通税率 (%)
         */
 //        @NotNull(message = "普通税率 (%)不能为空")
-//        @Digits(integer = 12, fraction = 4, message = "普通税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "普通税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal generalRate;
 
         /**
         * 增值税率 (%)
         */
 //        @NotNull(message = "增值税率 (%)不能为空")
-//        @Digits(integer = 12, fraction = 4, message = "增值税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "增值税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal vatRate;
 
         /**
         * 消费税率 (%)
         */
 //        @NotNull(message = "消费税率 (%)不能为空")
-//        @Digits(integer = 12, fraction = 4, message = "消费税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "消费税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal consumptionTaxRate;
 
         /**
         * 出口退税率 (%)
+        * <p>产品需求：小数精度升级统一 @Digits(18,6)，税率类字段按产品确认保留六位校验。
         */
         @NotNull(message = "出口退税率 (%)不能为空")
         @Min(value = 0, message = "出口退税率 (%)不能为负数")
         @Max(value = 100, message = "出口退税率 (%)不能超过100")
-        @Digits(integer = 3, fraction = 2, message = "出口退税率 (%)整数位不能超过3位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "出口退税率(%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exportRebateRate;
 
         /**

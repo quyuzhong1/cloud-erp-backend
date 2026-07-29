@@ -440,14 +440,14 @@ public class LogisticsLargeDTO implements Serializable {
         * 重量
         */
         @NotNull(message = "重量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal weight;
 
         /**
         * 物流商计费重量
         */
         @NotNull(message = "物流商计费重量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "物流商计费重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "物流商计费重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal logisticsBillingWeight;
 
         /**
@@ -534,7 +534,7 @@ public class LogisticsLargeDTO implements Serializable {
         * 计算系数运费
         */
         @NotNull(message = "计算系数运费不能为空")
-        @Digits(integer = 10, fraction = 6, message = "计算系数运费整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "计算系数运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal freightCalculationFactor;
 
         /**
@@ -548,49 +548,49 @@ public class LogisticsLargeDTO implements Serializable {
         * 账单总金额
         */
         @NotNull(message = "账单总金额不能为空")
-        @Digits(integer = 10, fraction = 6, message = "账单总金额整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "账单总金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal billTotalAmount;
 
         /**
         * 头程预估运费（含税）
         */
         @NotNull(message = "头程预估运费（含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程预估运费（含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程预估运费（含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileEstimatedFreightTax;
 
         /**
         * 头程预估运费（不含税）
         */
         @NotNull(message = "头程预估运费（不含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程预估运费（不含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程预估运费（不含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileEstimatedFreight;
 
         /**
         * 头程实际运费（含税）
         */
         @NotNull(message = "头程实际运费（含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程实际运费（含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程实际运费（含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileActualFreightTax;
 
         /**
         * 头程实际运费（不含税）
         */
         @NotNull(message = "头程实际运费（不含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程实际运费（不含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程实际运费（不含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileActualFreight;
 
         /**
         * 税率
         */
         @NotNull(message = "税率不能为空")
-        @Digits(integer = 10, fraction = 6, message = "税率整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "税率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxRate = BigDecimal.ZERO;
 
         /**
         * 头程运费增值税
         */
         @NotNull(message = "头程运费增值税不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程运费增值税整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程运费增值税整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileFreightVatAmount;
 
         /**
@@ -602,28 +602,28 @@ public class LogisticsLargeDTO implements Serializable {
         * 尾程运费金额（含税）
         */
         @NotNull(message = "尾程运费金额（含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "尾程运费金额（含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "尾程运费金额（含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal lastMileFreightAmountTax;
 
         /**
         * 尾程运费金额（不含税）
         */
         @NotNull(message = "尾程运费金额（不含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "尾程运费金额（不含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "尾程运费金额（不含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal lastMileFreightAmount;
 
         /**
         * 尾程运费金额-增值税
         */
         @NotNull(message = "尾程运费金额不能为空")
-        @Digits(integer = 10, fraction = 6, message = "尾程运费金额整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "尾程运费金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal lastMileFreightVatAmount;
 
         /**
         * 目的杂费计算系数
         */
         @NotNull(message = "目的杂费计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "目的杂费计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "目的杂费计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal destMiscFeeFactor;
 
         /**
@@ -644,14 +644,14 @@ public class LogisticsLargeDTO implements Serializable {
         * 预估目的港杂费
         */
         @NotNull(message = "预估目的港杂费不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估目的港杂费整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估目的港杂费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedDestMiscFee;
 
         /**
         * 实际目的港杂费
         */
         @NotNull(message = "实际目的港杂费不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际目的港杂费整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际目的港杂费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualDestMiscFee;
 
         /**
@@ -663,7 +663,7 @@ public class LogisticsLargeDTO implements Serializable {
         * 关税计算系数
         */
         @NotNull(message = "目的杂费计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "关税计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "关税计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal dutyCalculationFactor;
 
         /**
@@ -684,14 +684,14 @@ public class LogisticsLargeDTO implements Serializable {
         * 预估税金-关税
         */
         @NotNull(message = "预估税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedDutyAmount;
 
         /**
         * 实际税金-关税
         */
         @NotNull(message = "实际税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualDutyAmount;
 
         /**
@@ -703,7 +703,7 @@ public class LogisticsLargeDTO implements Serializable {
         * 可抵扣税金计算系数
         */
         @NotNull(message = "可抵扣税金计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "可抵扣税金计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "可抵扣税金计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal deductibleTaxFactor;
 
         /**
@@ -722,14 +722,14 @@ public class LogisticsLargeDTO implements Serializable {
         * 预估的可抵扣税金
         */
         @NotNull(message = "预估的可抵扣税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估的可抵扣税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估的可抵扣税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedDeductibleTax;
 
         /**
         * 实际的可抵扣税金
         */
         @NotNull(message = "实际的可抵扣税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际的可抵扣税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际的可抵扣税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualDeductibleTax;
 
         /**
@@ -741,7 +741,7 @@ public class LogisticsLargeDTO implements Serializable {
         * 其他税金计算系数
         */
         @NotNull(message = "其他税金计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "其他税金计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "其他税金计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal otherTaxCalculationFactor;
 
         /**
@@ -762,14 +762,14 @@ public class LogisticsLargeDTO implements Serializable {
         * 预估税金-其他税金
         */
         @NotNull(message = "预估税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedTaxOtherTax;
 
         /**
         * 实际税金-其他税金
         */
         @NotNull(message = "实际税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualTaxOtherTax;
 
         /**
@@ -885,7 +885,7 @@ public class LogisticsLargeDTO implements Serializable {
          * 计算系数运费
          */
         @NotNull(message = "计算系数运费不能为空")
-        @Digits(integer = 10, fraction = 6, message = "计算系数运费整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "计算系数运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal freightCalculationFactor;
 
         /**
@@ -899,49 +899,49 @@ public class LogisticsLargeDTO implements Serializable {
          * 账单总金额
          */
         @NotNull(message = "账单总金额不能为空")
-        @Digits(integer = 10, fraction = 6, message = "账单总金额整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "账单总金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal billTotalAmount;
 
         /**
          * 头程预估运费（含税）
          */
         @NotNull(message = "头程预估运费（含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程预估运费（含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程预估运费（含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileEstimatedFreightTax;
 
         /**
          * 头程预估运费（不含税）
          */
         @NotNull(message = "头程预估运费（不含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程预估运费（不含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程预估运费（不含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileEstimatedFreight;
 
         /**
          * 头程实际运费（含税）
          */
         @NotNull(message = "头程实际运费（含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程实际运费（含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程实际运费（含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileActualFreightTax;
 
         /**
          * 头程实际运费（不含税）
          */
         @NotNull(message = "头程实际运费（不含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程实际运费（不含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程实际运费（不含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileActualFreight;
 
         /**
          * 税率
          */
         @NotNull(message = "税率不能为空")
-        @Digits(integer = 10, fraction = 6, message = "税率整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "税率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxRate;
 
         /**
          * 头程运费增值税
          */
         @NotNull(message = "头程运费增值税不能为空")
-        @Digits(integer = 10, fraction = 6, message = "头程运费增值税整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程运费增值税整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileFreightVatAmount;
 
         /**
@@ -953,28 +953,28 @@ public class LogisticsLargeDTO implements Serializable {
          * 尾程运费金额（含税）
          */
         @NotNull(message = "尾程运费金额（含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "尾程运费金额（含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "尾程运费金额（含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal lastMileFreightAmountTax;
 
         /**
          * 尾程运费金额（不含税）
          */
         @NotNull(message = "尾程运费金额（不含税）不能为空")
-        @Digits(integer = 10, fraction = 6, message = "尾程运费金额（不含税）整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "尾程运费金额（不含税）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal lastMileFreightAmount;
 
         /**
          * 尾程运费金额-增值税
          */
         @NotNull(message = "尾程运费金额不能为空")
-        @Digits(integer = 10, fraction = 6, message = "尾程运费金额整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "尾程运费金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal lastMileFreightVatAmount;
 
         /**
          * 目的杂费计算系数
          */
         @NotNull(message = "目的杂费计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "目的杂费计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "目的杂费计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal destMiscFeeFactor;
 
         /**
@@ -995,14 +995,14 @@ public class LogisticsLargeDTO implements Serializable {
          * 预估目的港杂费
          */
         @NotNull(message = "预估目的港杂费不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估目的港杂费整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估目的港杂费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedDestMiscFee;
 
         /**
          * 实际目的港杂费
          */
         @NotNull(message = "实际目的港杂费不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际目的港杂费整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际目的港杂费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualDestMiscFee;
 
         /**
@@ -1014,7 +1014,7 @@ public class LogisticsLargeDTO implements Serializable {
          * 关税计算系数
          */
         @NotNull(message = "关税计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "关税计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "关税计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal dutyCalculationFactor;
 
         /**
@@ -1035,14 +1035,14 @@ public class LogisticsLargeDTO implements Serializable {
          * 预估税金-关税
          */
         @NotNull(message = "预估税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedDutyAmount;
 
         /**
          * 实际税金-关税
          */
         @NotNull(message = "实际税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualDutyAmount;
 
         /**
@@ -1054,7 +1054,7 @@ public class LogisticsLargeDTO implements Serializable {
          * 可抵扣税金计算系数
          */
         @NotNull(message = "可抵扣税金计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "可抵扣税金计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "可抵扣税金计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal deductibleTaxFactor;
 
         /**
@@ -1073,14 +1073,14 @@ public class LogisticsLargeDTO implements Serializable {
          * 预估的可抵扣税金
          */
         @NotNull(message = "预估的可抵扣税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估的可抵扣税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估的可抵扣税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedDeductibleTax;
 
         /**
          * 实际的可抵扣税金
          */
         @NotNull(message = "实际的可抵扣税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际的可抵扣税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际的可抵扣税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualDeductibleTax;
 
         /**
@@ -1092,7 +1092,7 @@ public class LogisticsLargeDTO implements Serializable {
          * 其他税金计算系数
          */
         @NotNull(message = "其他税金计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "其他税金计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "其他税金计算系数整数位不能超过18位，小数位不能超过6位")
         private BigDecimal otherTaxCalculationFactor;
 
         /**
@@ -1113,14 +1113,14 @@ public class LogisticsLargeDTO implements Serializable {
          * 预估税金-其他税金
          */
         @NotNull(message = "预估税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "预估税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "预估税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedTaxOtherTax;
 
         /**
          * 实际税金-其他税金
          */
         @NotNull(message = "实际税金不能为空")
-        @Digits(integer = 10, fraction = 6, message = "实际税金整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "实际税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualTaxOtherTax;
 
         /**

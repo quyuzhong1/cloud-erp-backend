@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -40,14 +41,13 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
     List<String> getBindedShopByDictPlatform(@Param("dictPlatform") String dictPlatform);
 
     /**
-     * 根据平台参数查询
+     * 按平台/店铺/分区/实体仓匹配虚拟仓渠道，直接返回命中虚拟仓与入参实体仓的关联列表。
+     * 多条渠道时：精确店铺/分区优先于空通配，再按渠道 id；仅取一个虚拟仓下的关联行。
      *
-     * @param platformDTO
-     * @return VirtualWarehouseChannelEntity
-     * @author will
-     * @date 2024/6/13 12:27
+     * @param platformDTO 平台、店铺、分区、实体仓条件
+     * @return 虚拟仓-实体仓关联列表，无匹配时为空列表
      */
-    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO") VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+    List<VirtualWarehouseRelationEntity> listRelationByPlatform(@Param("platformDTO") VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
 
     /**
      * 根据平台参数查询

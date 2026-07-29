@@ -60,7 +60,7 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 年目标销售额
      */
-    @Digits(integer = 16,fraction = 4,message = "年目标销售额最大16字符，小数位不能大于4位")
+    @Digits(integer = 18, fraction = 6,message = "年目标销售额整数位不能超过18位，小数位不能超过6位")
     private BigDecimal yearSaleAmount;
 
     /**
@@ -73,7 +73,7 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 月目标销售额
      */
-    @Digits(integer = 16,fraction = 4,message = "月目标销售额最大16字符，小数位不能大于4位")
+    @Digits(integer = 18, fraction = 6,message = "月目标销售额整数位不能超过18位，小数位不能超过6位")
     private BigDecimal monthSaleAmount;
 
     /**
@@ -115,7 +115,7 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 首季度目标销量
      */
-    @Digits(integer = 16,fraction = 2,message = "首季度目标销量最大16字符")
+    @Digits(integer = 18, fraction = 6,message = "首季度目标销量整数位不能超过18位，小数位不能超过6位")
     private BigDecimal targetSalesQty;
 
     /**

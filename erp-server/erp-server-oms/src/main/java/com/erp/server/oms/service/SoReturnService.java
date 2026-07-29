@@ -280,5 +280,21 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
 
     SoReturnEntity getByPlatformOrderCode(String platformOrderCode);
 
+    /**
+     * 根据退货物流单号查询销售退货单（可能多条，按创建时间倒序）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.oms.entity.SoReturnEntity>
+     */
+    List<SoReturnEntity> listByReturnLogisticCode(String returnLogisticCode);
+
     void addByPlatform(SoReturnEntity soReturn, List<SoReturnDetailEntity> soB2cReturnDetailEntityList);
+
+    /**
+     * 预入库-关联售后单：分页查询候选售后单
+     * <p>根据入参售后单据类型分流：B2B 查 so_return，B2C 查 so_b2c_return；
+     * 按仓库信息、选择的 sku 过滤</p>
+     * @param dto 分页与过滤参数
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>
+     */
+    PagingVO<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSale(PagingDTO<SoReturnDTO.LinkAfterSalePagingParam> dto);
 }

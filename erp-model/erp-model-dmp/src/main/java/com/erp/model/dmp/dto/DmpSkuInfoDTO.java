@@ -251,7 +251,7 @@ public class DmpSkuInfoDTO implements Serializable {
         * 统一成本价
         */
         @NotNull(message = "统一成本价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "统一成本价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "统一成本价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal defaultCost;
 
         /**
@@ -286,14 +286,14 @@ public class DmpSkuInfoDTO implements Serializable {
         * 售价
         */
         @NotNull(message = "售价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "售价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "售价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal sellPrice;
 
         /**
         * 申报价格
         */
         @NotNull(message = "申报价格不能为空")
-        @Digits(integer = 14, fraction = 2, message = "申报价格整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "申报价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal declarePrice;
 
         /**
@@ -335,28 +335,28 @@ public class DmpSkuInfoDTO implements Serializable {
         * sku重量
         */
         @NotNull(message = "sku重量不能为空")
-        @Digits(integer = 14, fraction = 2, message = "sku重量整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "sku重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal grossWeight;
 
         /**
         * sku物流尺寸-高
         */
         @NotNull(message = "sku物流尺寸不能为空")
-        @Digits(integer = 14, fraction = 2, message = "sku物流尺寸整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "sku物流尺寸整数位不能超过18位，小数位不能超过6位")
         private BigDecimal packageHeight;
 
         /**
         * sku物流尺寸-宽
         */
         @NotNull(message = "sku物流尺寸不能为空")
-        @Digits(integer = 14, fraction = 2, message = "sku物流尺寸整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "sku物流尺寸整数位不能超过18位，小数位不能超过6位")
         private BigDecimal packageWidth;
 
         /**
         * sku物流尺寸-长
         */
         @NotNull(message = "sku物流尺寸不能为空")
-        @Digits(integer = 14, fraction = 2, message = "sku物流尺寸整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "sku物流尺寸整数位不能超过18位，小数位不能超过6位")
         private BigDecimal packageLength;
 
         /**
