@@ -79,6 +79,16 @@ public class InventoryTransactionDTO implements Serializable {
     private String warehouseName;
 
     /**
+     * 虚拟仓id
+     */
+    private String virtualWarehouseId;
+
+    /**
+     * 虚拟仓名称（冗余字段）
+     */
+    private String virtualWarehouseName;
+
+    /**
      * 库位id（没有不用传输，某些单据不需要选择库位信息）
      */
     @NotEmpty(message = "仓位 不能为空", groups = {ValidGroup.Update.class})
