@@ -359,7 +359,12 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
-        Map<String, List<InventoryTransactionDTO>> map = checkTransactionList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        // 按实体仓 + SKU + 虚拟仓隔离汇总出库量，避免多虚拟仓串算或误用首条虚拟仓库存校验
+        Map<String, List<InventoryTransactionDTO>> map = checkTransactionList.stream().collect(Collectors.groupingBy(obj ->
+                String.join("_",
+                        CharSequenceUtil.nullToEmpty(obj.getSkuId()),
+                        CharSequenceUtil.nullToEmpty(obj.getWarehouseId()),
+                        CharSequenceUtil.nullToEmpty(obj.getVirtualWarehouseId()))));
         for (Map.Entry<String, List<InventoryTransactionDTO>> entry : map.entrySet()) {
             List<InventoryTransactionDTO> value = entry.getValue();
             String skuId = value.get(0).getSkuId();
