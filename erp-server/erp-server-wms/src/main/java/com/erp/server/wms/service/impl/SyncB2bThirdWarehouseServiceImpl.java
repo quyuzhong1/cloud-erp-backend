@@ -206,6 +206,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                                         List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
         fillTongYouEmail(req, entity);
         if (CollUtil.isNotEmpty(attachmentList)) {
+            String orderAttachmentUrl = null;
+            String legacyOrderAttachmentUrl = null;
             for (WmsAttachmentDTO.UpdateDTO attachment : attachmentList) {
                 if (Objects.isNull(attachment) || StrUtil.isBlank(attachment.getAttachUrl())) {
                     continue;
@@ -216,9 +218,14 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 } else if (B2bThirdDeliveryAttachmentTypeEnum.OUTER_BOX_LABEL.getCode().equals(attachment.getType())) {
                     req.setOuterBoxLabelFileUrl(publicUrl);
                 } else if (B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode().equals(attachment.getType())) {
-                    req.setOrderAttachmentFileUrl(publicUrl);
+                    // 新类型优先
+                    orderAttachmentUrl = publicUrl;
+                } else if (ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode().equals(attachment.getType())) {
+                    // 历史 type=157 仅作回退，避免覆盖新类型
+                    legacyOrderAttachmentUrl = publicUrl;
                 }
             }
+            req.setOrderAttachmentFileUrl(StrUtil.blankToDefault(orderAttachmentUrl, legacyOrderAttachmentUrl));
         }
     }
 

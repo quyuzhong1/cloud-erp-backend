@@ -335,7 +335,8 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
                 versionConflictIds.add(kolSubId);
             }
         }
-        // 版本冲突时按单条重读重算一次（并发发货回调场景）
+        // 版本冲突时按单条重读重算一次；仍失败则抛错回滚同事务源单状态，由上游重试
+        List<String> retryFailedIds = new ArrayList<>();
         for (String kolSubId : versionConflictIds) {
             KolSubB2cApplicationEntity latest = getById(kolSubId);
             if (latest == null) {
@@ -362,7 +363,11 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
             boolean retried = updateDeliveryAndTrack(latest, soList, logisticsMap);
             if (!retried) {
                 log.warn("KOL拆分单发货状态回写版本冲突重试仍失败 kolSubId={}", kolSubId);
+                retryFailedIds.add(kolSubId);
             }
+        }
+        if (CollUtil.isNotEmpty(retryFailedIds)) {
+            throw new ServiceException("KOL拆分单发货状态回写发生并发冲突，请重试");
         }
     }
 
