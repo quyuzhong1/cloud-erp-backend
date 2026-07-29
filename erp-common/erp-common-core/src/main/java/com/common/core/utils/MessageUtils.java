@@ -20,6 +20,12 @@ public class MessageUtils {
     }
 
     public static String getMessage(ApiError apiError, Object... args) {
+        if (apiError == null) {
+            return "";
+        }
+        if (messageSource == null) {
+            return format(apiError.getMsg(), args);  // 直接用枚举中文模板
+        }
         Locale locale = LocaleContextHolder.getLocale();
         // 尝试从国际化文件读取，失败则回退到默认msg
         try {
@@ -36,6 +42,9 @@ public class MessageUtils {
     }
 
     public static String getMessage(String key, Object... args) {
+        if (messageSource == null) {
+            return format(key, args);  // 直接用枚举中文模板
+        }
         Locale locale = LocaleContextHolder.getLocale();
         try {
             return messageSource.getMessage(key, args, locale);

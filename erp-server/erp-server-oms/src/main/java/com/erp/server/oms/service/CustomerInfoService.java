@@ -416,4 +416,9 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * B2B 平台订单入库时，用客户档案默认发货仓库/收款账号回填空字段。
      */
     void applyB2bOrderCustomerDefaults(PlatformB2bOrderDTO dto, CustomerInfoEntity customerInfo);
+
+    /**
+     * 店铺改名时同步客户名称；已审核或已推送金蝶时触发客户改名推送。
+     */
+    void syncNameFromShopAndPushKingdee(String customerId, String newName);
 }

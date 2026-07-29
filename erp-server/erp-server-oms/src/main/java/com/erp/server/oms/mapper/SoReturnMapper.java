@@ -83,4 +83,12 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
     IPage<SoReturnEntity> listSoReturnByApproveStatus(Page query, @Param("params") SoReturnDTO.ApproveStatusPagingParam params,
                                                        @Param("approveStatus") String approveStatus,
                                                        @Param("permissionSql") String permissionSql);
+
+    /**
+     * 预入库-关联售后单：分页查询 B2B 售后单（so_return），按仓库、sku 过滤
+     * @param query 分页
+     * @param params 过滤参数
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>
+     */
+    IPage<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSaleB2B(Page query, @Param("params") SoReturnDTO.LinkAfterSalePagingParam params);
 }

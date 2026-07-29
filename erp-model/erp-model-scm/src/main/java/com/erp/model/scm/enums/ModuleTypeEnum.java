@@ -90,6 +90,7 @@ public enum ModuleTypeEnum {
     WAREHOUSE_AREA("80", "库区"),
     PICKING_STRATEGY("81", "拣货策略"),
     WAREHOUSE_LOCATION("90", "仓位"),
+    WAREHOUSE_LOCATION_MAPPING("168", "仓位绑定"),
 
 
 
@@ -222,6 +223,7 @@ public enum ModuleTypeEnum {
 
     AFTER_SALE_PACK("190", "售后装箱"),
     FULL_BOX_TRANSFER("191", "整箱移仓"),
+    SO_RETURN_PRESTOCK("192", "预入库单"),
 
 
 

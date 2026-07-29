@@ -1446,27 +1446,31 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     public void updateKolSubStatus(String kolId) {
         List<KolSubB2cApplicationEntity> kolSubB2cApplicationEntities = kolSubB2cApplicationService.lambdaQuery().eq(KolSubB2cApplicationEntity::getSourceId, kolId).list();
-        if(CollUtil.isNotEmpty(kolSubB2cApplicationEntities)){
-            List<String> sourceIds = kolSubB2cApplicationEntities.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
-            List<SoB2cEntity> soB2cEntities = soB2cService.lambdaQuery().eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
-                    .in(SoB2cEntity::getSourceId, sourceIds).list();
-
-            for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
-                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getSourceId().equals(entity.getId())).findFirst().orElse(null);
-                if(Objects.nonNull(soB2cEntity)){
-                    entity.setPlatformSoCode(soB2cEntity.getCode());
-                    entity.setPlatformOrderCode(soB2cEntity.getCode());
-                    entity.setOrderStatus(soB2cEntity.getApproveStatus().getStatus());
-                    if(StringUtils.isNotBlank(soB2cEntity.getBillStatus())&&soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
-                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
-                    }else {
-                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-                    }
-                    entity.setTrackNo(soB2cEntity.getShippingOrderNo());
-                }
-            }
-            kolSubB2cApplicationService.updateBatchById(kolSubB2cApplicationEntities);
+        if (CollUtil.isEmpty(kolSubB2cApplicationEntities)) {
+            return;
         }
+        List<String> sourceIds = kolSubB2cApplicationEntities.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .in(SoB2cEntity::getSourceId, sourceIds)
+                .list();
+        List<KolSubB2cApplicationEntity> toUpdate = new ArrayList<>();
+        for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
+            SoB2cEntity soB2cEntity = soB2cEntities.stream()
+                    .filter(e -> e.getSourceId().equals(entity.getId()) && !Boolean.TRUE.equals(e.getInvalidStatus()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(soB2cEntity)) {
+                entity.setPlatformSoCode(soB2cEntity.getCode());
+                entity.setPlatformOrderCode(soB2cEntity.getCode());
+                toUpdate.add(entity);
+            }
+        }
+        if (CollUtil.isNotEmpty(toUpdate)) {
+            kolSubB2cApplicationService.updateBatchById(toUpdate);
+        }
+        // 批量汇总回写发货状态/跟踪号，避免逐单 refresh 的 N+1
+        kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2cBatch(sourceIds);
     }
 
     /**
@@ -1929,8 +1933,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             if (warehouseRuleMatch) {
                 // 通过代理调用，确保 logisticsRule() 方法上的独立事务生效
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRuleNotRequiresNew(id, new HashMap<>(), false);
-                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
                 if(isRuleMatch){
@@ -1939,12 +1941,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     //申报信息规则
                     soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                SoB2cEntity entity = soB2cService.getById(id);
-                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
-                }
+                soB2cRuleService.handleAutoLogisticsAction(id, logisticsRuleResult);
             }
         }
         //自动计算预估运费到订单的预估运费字段（异步）
@@ -2256,7 +2253,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
 
