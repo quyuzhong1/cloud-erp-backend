@@ -1,8 +1,10 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp.aiya;
 
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
+import com.erp.server.dmp.inout.handler.input.task.dmp.eccang.EccangOutBoundDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.wego.WegoOutBoundDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.aiya.AiyaOutboundInitHandler;
 import com.sdk.wms.aiya.enums.AiyaEnums;
@@ -38,7 +40,11 @@ import java.util.TreeMap;
  *       本轮跳过 {@code orderStatus} 推送，避免 ERP 侧被提前标记为已发货，详见
  *       {@link AiyaEnums.StageEnum}；</li>
  *   <li>固定写入 {@code warehousePlatformType} = {@code overseasWarehouse}；</li>
- *   <li>固定写入 {@code orderType} = {@code B2C}。</li>
+ *   <li>固定写入 {@code orderType} = {@code B2C}；</li>
+ *   <li>{@code items}（产品明细，含爱亚侧 SKU + 实际数量）原样透传写入 {@code detailListJson}
+ *       （JSON 数组，模式对齐 {@link EccangOutBoundDmpHandler}），供输出端 MQ handler 解析成
+ *       {@code PlatformOutboundDTO.items} 用于超发判定，见
+ *       {@code AiyaOutboundRocketMQTaskHandler#convertItems}。</li>
  * </ol>
  * <p>
  * 多例：因父类持有成员变量，Spring 管理为 {@link Scope}({@code prototype})。
@@ -60,11 +66,14 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final String MONGO_KEY_ORDER_STATUS_LEGACY = "orderStatus";
     /** 官方字段 stage：VALID 是否等价"已发货"需联合此字段二次确认，见类注释 */
     private static final String MONGO_KEY_STAGE = "stage";
+    /** 产品明细（爱亚侧 SKU + 数量），原样透传给下游做超发判定 */
+    private static final String MONGO_KEY_ITEMS = "items";
 
     private static final String DMP_KEY_DATE_SHIPPING = "dateShipping";
     private static final String DMP_KEY_ORDER_STATUS = "orderStatus";
     private static final String DMP_KEY_WAREHOUSE_PLATFORM_TYPE = "warehousePlatformType";
     private static final String DMP_KEY_ORDER_TYPE = "orderType";
+    private static final String DMP_KEY_DETAIL_LIST_JSON = "detailListJson";
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -97,6 +106,8 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
                     orderStatus = null;
                 }
             }
+            Object items = mongoData.get(MONGO_KEY_ITEMS);
+            String detailListJson = items != null ? JSON.toJSONString(items) : null;
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 if (dateShipping != null) {
@@ -107,6 +118,9 @@ public class AiyaOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
                 dmpDataMap.put(DMP_KEY_WAREHOUSE_PLATFORM_TYPE, WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode());
                 dmpDataMap.put(DMP_KEY_ORDER_TYPE, OrderTypeEnum.B2C.getCode());
+                if (StringUtils.isNotBlank(detailListJson)) {
+                    dmpDataMap.put(DMP_KEY_DETAIL_LIST_JSON, detailListJson);
+                }
             }
         }
     }

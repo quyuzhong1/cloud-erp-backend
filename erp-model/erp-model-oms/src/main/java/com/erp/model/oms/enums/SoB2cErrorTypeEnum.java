@@ -32,6 +32,12 @@ public enum SoB2cErrorTypeEnum {
     OTHER("other",  "其他异常"),
     GET_EXCHANGE_RATE("getExchangeRate",  "获取汇率异常"),
     RETRY_PLATFORM_OUTBOUND("retryPlatformOutbound",  "自动出库异常"),
+    /**
+     * 三方仓出库单实际发货数量大于应发数量（超发）。
+     * 目前用于爱亚海外仓：{@code PlatformOutboundConsumerService#generateSoOut} 按 SKU 比较
+     * 三方仓实际发货数量与《三方仓发货单》应发数量，超出部分登记为该类型异常，仅提示不阻断出库单生成。
+     */
+    THIRD_WAREHOUSE_OVER_SHIP("thirdWarehouseOverShip",  "三方仓超发"),
     ;
     /**
      * 类型
