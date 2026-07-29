@@ -1649,10 +1649,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
-		// 入库日期取关单时间
-		if (dto.getPutawayTime() != null) {
-			soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
-		}
+		// 入库日期取关单时间，为空兜底当前日期
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		// 库存组织
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		// 组织信息
@@ -1676,11 +1674,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if (Objects.nonNull(soB2cEntity)) {
 			// B2C订单
 			soReturnInstockEntity.setType("B2C");
-			//取客户订单号，匹配数大臣的B2C三方仓发货单的三方仓订单号，匹配到后将发货单的销售单号作为退货入库单的来源订单号
-			if (Objects.equals(soB2cEntity.getShippingOrderNo(),dto.getOrderReferenceNo())) {
-				soReturnInstockEntity.setSourceId(soB2cEntity.getId());
-				soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
-			}
+			soReturnInstockEntity.setSourceId(soB2cEntity.getId());
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSalesOrgId(soB2cEntity.getOrgId());
 			soReturnInstockEntity.setSalesOrgName(soB2cEntity.getOrgName());
 			// 退货客户
