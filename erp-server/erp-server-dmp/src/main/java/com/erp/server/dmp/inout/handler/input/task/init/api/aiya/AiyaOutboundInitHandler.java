@@ -23,7 +23,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AIYA（爱亚）2C 出库单状态轮询 InitHandler，对齐 {@code WegoOutboundInitHandler} 结构，
@@ -33,6 +35,10 @@ import java.util.List;
  * 对齐 WEGO 按订单日期拉取，可覆盖已提交未发货单；勿单独依赖 {@code shippingTime*}（仅已发货有值）。
  * 按服务商下每个已启用仓库分页拉取（{@code warehouseCode} 文档必填）。
  * 翻页终止：暂以「本页条数 &lt; pageSize」判断末页。
+ * <p>
+ * 本次拉取聚合结果里若同一 {@code orderNumber} 出现多条（正常流程不应出现，接口异常/联调测试数据
+ * 可能触发），按 {@code createTime}/{@code orderCreatedTime} 保留最新一条，两者均缺失/解析失败时
+ * 按数组顺序兜底保留最后一条，见 {@link #dedupeLatestByOrderNumber}。
  */
 @Slf4j
 @Service
@@ -62,7 +68,7 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
         String createdTimeFrom = resolveCreatedTimeFrom();
         String createdTimeTo = resolveCreatedTimeTo();
 
-        List<Object> allResult = new ArrayList<>();
+        List<AiyaOutboundResp.OutboundOrderDTO> allResult = new ArrayList<>();
         for (OverseasProviderWarehouseEntity warehouse : warehouseList) {
             String warehouseCode = warehouse.getPlatformWarehouseCode();
             if (StringUtils.isBlank(warehouseCode)) {
@@ -78,6 +84,8 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
                     auth.getAuthId(), createdTimeFrom, createdTimeTo);
             return Collections.emptyList();
         }
+
+        allResult = dedupeLatestByOrderNumber(allResult);
 
         JSONArray result = JSON.parseArray(JSONObject.toJSONString(allResult));
         log.warn("[AIYA出库] 服务商[id={}] 创建时间[{} ~ {}] 共拉取={}条",
@@ -126,6 +134,89 @@ public class AiyaOutboundInitHandler extends AbstractAiyaInitHandler {
             throw new ServiceException(ApiError.WH_AIYA_PAGE_LIMIT_EXCEEDED, ACTION, MAX_PAGE_LIMIT, orderList.size());
         }
         return orderList;
+    }
+
+    /**
+     * 按 {@code orderNumber} 去重：同一 {@code orderNumber} 出现多条时只保留"最新"一条，
+     * 避免重复/陈旧记录同批写入下游 DMP 造成重复处理或状态被旧数据覆盖。判定依据见 {@link #isNewer}。
+     * {@code orderNumber} 为空（异常数据，正常流程必填）时不参与去重，原样保留，避免丢单。
+     *
+     * @param orderList 本次拉取聚合的全量出库单列表（跨仓库、跨分页）
+     * @return 去重后的出库单列表
+     */
+    private List<AiyaOutboundResp.OutboundOrderDTO> dedupeLatestByOrderNumber(
+            List<AiyaOutboundResp.OutboundOrderDTO> orderList) {
+        Map<String, AiyaOutboundResp.OutboundOrderDTO> latestByOrderNumber = new LinkedHashMap<>();
+        List<AiyaOutboundResp.OutboundOrderDTO> noOrderNumberList = new ArrayList<>();
+        int duplicateCount = 0;
+        for (AiyaOutboundResp.OutboundOrderDTO order : orderList) {
+            String orderNumber = order.getOrderNumber();
+            if (StringUtils.isBlank(orderNumber)) {
+                noOrderNumberList.add(order);
+                continue;
+            }
+            AiyaOutboundResp.OutboundOrderDTO existing = latestByOrderNumber.get(orderNumber);
+            if (existing != null) {
+                duplicateCount++;
+            }
+            if (existing == null || isNewer(order, existing)) {
+                latestByOrderNumber.put(orderNumber, order);
+            }
+        }
+        if (duplicateCount > 0) {
+            log.warn("[AIYA出库] 本次拉取发现重复orderNumber共{}条，已按createTime/orderCreatedTime"
+                    + "（缺失则按数组顺序）仅保留每个单号最新一条", duplicateCount);
+        }
+        List<AiyaOutboundResp.OutboundOrderDTO> result = new ArrayList<>(latestByOrderNumber.values());
+        result.addAll(noOrderNumberList);
+        return result;
+    }
+
+    /**
+     * 判断 candidate 是否比 current 更"新"：优先比较 {@code createTime}，为空则比较
+     * {@code orderCreatedTime}；双方时间都无法解析时，视 candidate（数组中排在后面）为更新，
+     * 与去重前的遍历顺序兼容。
+     *
+     * @param candidate 待比较的新记录
+     * @param current   当前已保留的记录
+     * @return {@code true} 表示 candidate 应替换 current
+     */
+    private boolean isNewer(AiyaOutboundResp.OutboundOrderDTO candidate, AiyaOutboundResp.OutboundOrderDTO current) {
+        LocalDateTime candidateTime = resolveRecencyTime(candidate);
+        LocalDateTime currentTime = resolveRecencyTime(current);
+        if (candidateTime == null) {
+            // 都解析不到时间，数组顺序在后的（candidate）胜出
+            return currentTime == null;
+        }
+        if (currentTime == null) {
+            return true;
+        }
+        return !candidateTime.isBefore(currentTime);
+    }
+
+    /**
+     * 解析用于去重判定的"最近创建时间"：优先取 {@code createTime}，为空/解析失败则退回
+     * {@code orderCreatedTime}。
+     */
+    private LocalDateTime resolveRecencyTime(AiyaOutboundResp.OutboundOrderDTO order) {
+        LocalDateTime time = parseRecencyTime(order.getCreateTime());
+        return time != null ? time : parseRecencyTime(order.getOrderCreatedTime());
+    }
+
+    /**
+     * 按 {@link #TIME_FORMATTER}（{@code yyyy-MM-dd HH:mm:ss}）解析时间字符串，为空或格式不符时返回
+     * {@code null}（不中断主流程，去重判定退回其他依据）。
+     */
+    private LocalDateTime parseRecencyTime(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value.trim(), TIME_FORMATTER);
+        } catch (Exception e) {
+            log.warn("[AIYA出库] 去重判定时间字段解析失败，原始值={}", value, e);
+            return null;
+        }
     }
 
     /**

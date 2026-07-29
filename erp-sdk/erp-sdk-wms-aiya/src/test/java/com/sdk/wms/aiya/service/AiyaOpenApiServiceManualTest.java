@@ -291,7 +291,7 @@ public class AiyaOpenApiServiceManualTest {
                         .build())
                 .items(Collections.singletonList(
                         // TODO：换成测试仓库真实已映射且有库存的平台 SKU
-                        AiyaOutboundSaveDTO.Item.builder().sku("test1602").quantity(1).build()))
+                        AiyaOutboundSaveDTO.Item.builder().sku("2635A").quantity(1).build()))
                 // shipFrom：2026-07-24 联调确认可不传
                 // ATTACHMENT 时必须下发 files，且有且仅有一个 Shipping Label 附件；
                 // 一旦下发 FileItem，fileType 必填（取值见 AiyaOutboundSaveDTO.FileItem 常量）
@@ -315,7 +315,11 @@ public class AiyaOpenApiServiceManualTest {
      * <p>
      * 重点核对：成功时 {@code orderInfoList} 明细是否含官方 {@code status}
      * （{@code VALID}/{@code HELD}/{@code CANCELLED}）、{@code shippingTime}/{@code trackingNumber} 等。
-     * 若控制台只见少数字段，先看 SDK 日志里的原始 response，再核对 DTO 是否漏映射。
+     * <p>
+     * {@code AiyaOpenApiService.doQuery} 在解析前会把原始 HTTP 响应体存入
+     * {@link com.common.business.threadlocal.ThirdWarehouseContext#getResponseJson()}（同线程内，
+     * 未做 {@link #RAW_RESPONSE_LOG_MAX_LEN}=2000 截断，也不受 DTO 字段映射对错影响）；
+     * 若解析后的 DTO 字段对不上，先打印这段原文核对网关到底返回了什么，再核对 DTO/mapping。
      */
     @Test
     public void query2cOrderTest() {
@@ -330,9 +334,12 @@ public class AiyaOpenApiServiceManualTest {
                 .pageSize(50)
                 .build();
         List<AiyaOutboundResp.OutboundOrderDTO> response = aiyaOpenApiService.query2cOrder(req);
+        System.out.println("========== 原始响应报文（未截断） ==========");
+        System.out.println(com.common.business.threadlocal.ThirdWarehouseContext.getResponseJson());
+        System.out.println("========== DTO 解析后结果 ==========");
         System.out.println(JSONUtil.toJsonStr(response));
-        // 拦截收敛：看 status 是否为 CANCELLED
-        response.forEach(o -> System.out.println(o.getOrderNumber() + " status=" + o.getStatus()));
+        // 拦截收敛：看 status 是否为 CANCELLED；已发货判定须 status=VALID 且 stage=SHIPPED 同时成立
+        response.forEach(o -> System.out.println(o.getOrderNumber() + " status=" + o.getStatus() + " stage=" + o.getStage()));
     }
 
     /**

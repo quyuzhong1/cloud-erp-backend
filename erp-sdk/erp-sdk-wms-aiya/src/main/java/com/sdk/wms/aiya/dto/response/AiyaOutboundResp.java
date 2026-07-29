@@ -73,9 +73,40 @@ public class AiyaOutboundResp implements Serializable {
          * 订单状态（官方字段名 {@code status}）：{@code VALID}/{@code HELD}/{@code CANCELLED}。
          * <p>
          * 兼容历史误用字段名 {@code orderStatus}。拦截收敛看 {@code CANCELLED}。
+         * <p>
+         * 注意：{@code VALID} 只代表订单未被拦截，<b>不等价于已发货</b>，是否已发货须结合 {@link #stage}
+         * 判断，见 {@link com.sdk.wms.aiya.enums.AiyaEnums.StageEnum#isShipped(String)}。
          */
         @JSONField(name = "status", alternateNames = {"orderStatus"})
         private String status;
+
+        /**
+         * 订单阶段（官方字段名 {@code stage}，2026-07-29 联调真实报文确认存在，此前未接入）。
+         * <p>
+         * 枚举取值：{@code DUE_OUT}/{@code ALLOCATED}/{@code PICKING}/{@code PICKED}/{@code PACKING}/
+         * {@code PACKED}/{@code SHIPPING}/{@code SHIPPED}/{@code CLOSED}/{@code PICK}/{@code PACK}/
+         * {@code PARTIALLY_ALLOCATED}/{@code OPEN}/{@code CREATED}/{@code ROUTING}；
+         * 仅 {@code SHIPPED} 经实测确认代表已发货，其余语义未逐一核实。
+         */
+        @JSONField(name = "stage")
+        private String stage;
+
+        /**
+         * 订单创建时间（文档字段 {@code createTime}，类型标注为 {@code Date} 但网关按字符串下发，
+         * 格式对齐其余时间字段 {@code yyyy-MM-dd HH:mm:ss}）。
+         * <p>
+         * 同一 {@code orderNumber} 出现多条重复记录时（正常流程不应出现），用于判定"最新"，
+         * 优先于 {@link #orderCreatedTime}，见 {@code AiyaOutboundInitHandler#isNewer}。
+         */
+        @JSONField(name = "createTime")
+        private String createTime;
+
+        /**
+         * 订单创建时间（文档字段 {@code orderCreatedTime}）；{@link #createTime} 缺失/解析失败时
+         * 的去重兜底依据。
+         */
+        @JSONField(name = "orderCreatedTime")
+        private String orderCreatedTime;
 
         /**
          * 发运时间（文档字段 {@code shippingTime}，格式 {@code yyyy-MM-dd HH:mm:ss}），
@@ -127,9 +158,10 @@ public class AiyaOutboundResp implements Serializable {
         private String sku;
 
         /**
-         * 数量（文档字段名 {@code qty}，不是建单请求的 {@code quantity}）
+         * 数量（2026-07-29 联调真实报文确认官方字段名为 {@code quantity}，此前误用 {@code qty}
+         * 导致该字段一直反序列化为空；保留 {@code qty} 作为兼容别名）
          */
-        @JSONField(name = "qty")
+        @JSONField(name = "quantity", alternateNames = {"qty"})
         private Integer qty;
     }
 }
