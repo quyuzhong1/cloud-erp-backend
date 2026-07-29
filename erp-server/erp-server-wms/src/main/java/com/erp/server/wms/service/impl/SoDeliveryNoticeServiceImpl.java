@@ -2041,6 +2041,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             if (isFirst){
                 transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
+                transferInfoDetail.setVirtualWarehouseId(entity.getVirtualWarehouseId());
             }else {
                 transferInfoDetail.setOutWarehouseLocation("");
             }
@@ -2327,6 +2328,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(v -> v.getId().equals(detailEntity.getSourceDetailId()))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售订单明细"));
                     PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO(soDeliveryNotice.getWarehouseId(),
+                            soDeliveryNotice.getVirtualWarehouseId(),
                             soDeliveryNotice.getWarehouseName(),
                             detailEntity.getSkuId(),
                             detailEntity.getSkuNo(),

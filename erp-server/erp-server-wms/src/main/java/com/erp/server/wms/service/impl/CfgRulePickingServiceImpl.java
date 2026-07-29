@@ -199,6 +199,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 WarehouseLocationEntity entity = locationList.stream().filter(location -> location.getCode().equals(inventory.getWarehouseLocation()))
                         .findFirst().orElse(new WarehouseLocationEntity());
                 inventoryResultDTO.setWarehouseId(inventory.getWarehouseId());
+                inventoryResultDTO.setVirtualWarehouseId(detail.getVirtualWarehouseId());
                 inventoryResultDTO.setWarehouseAreaId(inventory.getWarehouseAreaId());
                 inventoryResultDTO.setWarehouseLocationId(entity.getId());
                 inventoryResultDTO.setWarehouseLocation(inventory.getWarehouseLocation());
@@ -236,7 +237,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     public CfgRulePickingDTO.CfgExecutionDataDTO getRuleExecutionData(PickingListsDTO.AddDTO dto){
         pickingListsService.generatePicking(dto);
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
-                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getPlatformSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
+                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getVirtualWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getPlatformSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(dto.getBillType());
         executionData.setCustomerId(dto.getCustomerId());

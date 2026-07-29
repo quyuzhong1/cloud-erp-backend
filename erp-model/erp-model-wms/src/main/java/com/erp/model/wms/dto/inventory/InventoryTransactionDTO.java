@@ -77,6 +77,14 @@ public class InventoryTransactionDTO implements Serializable {
     //仓库名称（冗余字段）
     @NotEmpty(message = "仓库名称 不能为空", groups = {ValidGroup.Update.class})
     private String warehouseName;
+    /**
+     * 虚拟仓id
+     */
+    private String virtualWarehouseId;
+    /**
+     * 虚拟仓名称（冗余字段）
+     */
+    private String virtualWarehouseName;
 
     /**
      * 库位id（没有不用传输，某些单据不需要选择库位信息）
@@ -139,6 +147,14 @@ public class InventoryTransactionDTO implements Serializable {
      */
     @NotNull(message = "库存变更数量不能为空")
     private Integer qty;
+    /**
+     * 是否同仓库 默认false
+     */
+    private boolean isSameWarehouse;
+    /**
+     * 是否同库存状态
+     */
+    private boolean isSameInventoryStatus;
 
     // 用户id （冗余字段）
     @NotEmpty(message = "用户ID 不能为空", groups = {ValidGroup.Update.class})

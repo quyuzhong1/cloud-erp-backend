@@ -34,6 +34,11 @@ public class PickingListsEntity extends BaseEntity<PickingListsEntity> {
      */
     @TableField("warehouse_id")
     private String warehouseId;
+    /**
+     * 虚拟仓id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
 
     /**
      * 收货仓库名称

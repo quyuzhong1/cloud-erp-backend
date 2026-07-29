@@ -41,6 +41,10 @@ public class InventoryStockBaseDTO implements Serializable {
      */
     @NotBlank(message = "仓库id 不能为空", groups = {ValidGroup.Update.class})
     private String warehouseId;
+    /**
+     * 虚拟仓id
+     */
+    private String virtualWarehouseId;
 
     /**
      * 库位id（没有不用传输，某些单据不需要选择库位信息）
