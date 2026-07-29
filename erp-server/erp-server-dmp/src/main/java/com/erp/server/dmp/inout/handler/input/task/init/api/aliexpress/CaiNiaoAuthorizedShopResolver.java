@@ -2,6 +2,8 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.aliexpress;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -22,6 +24,26 @@ import java.util.Objects;
  */
 @Service
 public class CaiNiaoAuthorizedShopResolver {
+
+    private static final String CAINIAO_AUTH_ID = "cainiaoAuthId";
+
+    /**
+     * 从海外托管主任务扩展配置中读取菜鸟仓授权配置 ID。
+     *
+     * @param taskExtendJson DMP 主任务 extend_json
+     * @return overseas_provider.id
+     */
+    public String resolveAuthIdFromTaskExtendJson(String taskExtendJson) {
+        if (StrUtil.isBlank(taskExtendJson)) {
+            throw new ServiceException("速卖通海外托管主任务未配置cainiaoAuthId");
+        }
+        JSONObject extend = JSON.parseObject(taskExtendJson);
+        String authId = extend.getString(CAINIAO_AUTH_ID);
+        if (StrUtil.isBlank(authId)) {
+            throw new ServiceException("速卖通海外托管主任务未配置cainiaoAuthId");
+        }
+        return authId;
+    }
 
     /**
      * 兼容普通速卖通店铺 ID 和菜鸟仓授权配置 ID。

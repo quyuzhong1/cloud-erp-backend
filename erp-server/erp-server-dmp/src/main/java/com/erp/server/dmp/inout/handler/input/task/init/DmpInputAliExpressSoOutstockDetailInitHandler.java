@@ -76,15 +76,10 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
-		if (isOverseasManaged()) {
-			return getOfficialWarehouseOutstockDetails(findMongoData);
-		}
-		String taskAuthId = findMongoData.get(0).get("nextLevelId").toString();
-		String apiShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(taskAuthId);
-		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(apiShopId);
+		List<Map<String, Object>> parentOrderData = findMongoData;
 		
 		List<ParamData> paramDataList = new ArrayList<>();
-		List<String> orderIdList = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(findMongoData);
+		List<String> orderIdList = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(parentOrderData);
 		paramDataList.add(new ParamData(
 				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
 				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
@@ -98,7 +93,18 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 			return new ArrayList<>();
 		}
 		
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+		JSONArray result = new JSONArray();
+		if (isOverseasManaged()) {
+			result.addAll(officialWarehouseChildService.flattenOutstockDetails(findMongoData));
+			findMongoData = officialWarehouseChildService.selectFfoOutstockRows(findMongoData);
+			if (CollUtil.isEmpty(findMongoData)) {
+				return toInitData(result);
+			}
+		}
+
+		String taskAuthId = resolveFfoTaskAuthId(parentOrderData);
+		String apiShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(taskAuthId);
+		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(apiShopId);
 		
 		String appKey = aliExpressShopInfoDTO.getClientId();
         String appSecret = aliExpressShopInfoDTO.getClientSecret();
@@ -115,7 +121,6 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 		request.setApiName(apiType);
 		request.addApiParameter("simplify", "true");
 		
-		JSONArray result = new JSONArray();
         for(Map<String, Object> findMongo : findMongoData) {
         	Map<String, Object> paramMap = new HashMap<>();
             paramMap.put("biz_type", 288000);
@@ -149,47 +154,35 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
         	});
         	result.addAll(jsonArray);
         }
-        
-        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.toJSONString());
-		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-        
-		return dmpInputTaskInitDTOList;
+		return toInitData(result);
 	}
 
 	/**
-	 * 从已完成的官方仓发货主子任务中展开发货明细，避免重复调用平台接口。
+	 * 解析 FFO 发货明细接口所使用的授权配置。
 	 *
-	 * @param parentOrderData 订单列表主任务 Mongo 数据
-	 * @return 现有 soOutstockDetail 子任务可处理的数据
+	 * @param parentOrderData 订单列表主任务数据
+	 * @return 普通速卖通店铺 ID 或菜鸟仓授权配置 ID
 	 */
-	private List<DmpInputTaskInitDTO> getOfficialWarehouseOutstockDetails(
-			List<Map<String, Object>> parentOrderData) {
+	private String resolveFfoTaskAuthId(List<Map<String, Object>> parentOrderData) {
+		if (!isOverseasManaged()) {
+			return parentOrderData.get(0).get("nextLevelId").toString();
+		}
 		DmpInputTaskEntity parentTask = dmpInputTaskService.getById(
 				dmpInputTaskEntity.getParentTaskId());
-		if (parentTask == null || StringUtils.isBlank(parentTask.getNextLevelId())) {
-			throw new ServiceException("速卖通海外托管发货明细子任务未找到主任务授权");
+		if (parentTask == null) {
+			throw new ServiceException("速卖通海外托管发货明细子任务未找到主任务");
 		}
-		List<String> orderIds = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(
-				parentOrderData);
-		DmpInputTaskEntity outstockTask = getSiblingTask(SO_OUTSTOCK_CODE);
-		List<ParamData> params = new ArrayList<>();
-		params.add(new ParamData(
-				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
-				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
-				PannoEnum.EQ,
-				outstockTask.getId()));
-		params.add(new ParamData(
-				"trade_order_no", "trade_order_no", PannoEnum.IN, orderIds));
-		List<Map<String, Object>> outstockData = mongoService.findMongoData(
-				params,
-				AliExpressDmpHandlerUtils.getMongoStorageName(
-						dmpBasicSystemEntity,
-						dmpCfgInputService,
-						dmpHandlerCache,
-						dmpCfgInputEntity.getSystemId(),
-						SO_OUTSTOCK_CODE));
-		JSONArray result = officialWarehouseChildService.flattenOutstockDetails(outstockData);
+		return caiNiaoAuthorizedShopResolver.resolveAuthIdFromTaskExtendJson(
+				parentTask.getExtendJson());
+	}
+
+	/**
+	 * 将发货明细结果封装为 DMP 初始化数据。
+	 *
+	 * @param result 发货明细
+	 * @return DMP 初始化数据
+	 */
+	private List<DmpInputTaskInitDTO> toInitData(JSONArray result) {
 		return java.util.Collections.singletonList(
 				DmpInputTaskInitDTO.initMsg(result.toJSONString()));
 	}

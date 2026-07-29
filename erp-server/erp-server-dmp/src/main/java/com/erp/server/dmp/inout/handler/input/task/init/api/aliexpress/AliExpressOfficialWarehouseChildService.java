@@ -114,6 +114,90 @@ public class AliExpressOfficialWarehouseChildService {
     }
 
     /**
+     * 从海外托管订单中筛选全部明细均为菜鸟仓的订单。
+     *
+     * @param parentOrderData 订单列表主任务 Mongo 数据
+     * @param orderDetailData 订单详情子任务 Mongo 数据
+     * @return 应使用菜鸟仓授权调用 FFO 接口的订单
+     */
+    public List<Map<String, Object>> selectCainiaoWarehouseOrders(
+            List<Map<String, Object>> parentOrderData,
+            List<Map<String, Object>> orderDetailData) {
+        return selectWarehouseOrders(parentOrderData, orderDetailData, true);
+    }
+
+    /**
+     * 从海外托管订单中筛选全部明细均非菜鸟仓的 AE 官方仓订单。
+     *
+     * @param parentOrderData 订单列表主任务 Mongo 数据
+     * @param orderDetailData 订单详情子任务 Mongo 数据
+     * @return 应使用海外托管授权查询库存流水的订单
+     */
+    public List<Map<String, Object>> selectOfficialWarehouseOrders(
+            List<Map<String, Object>> parentOrderData,
+            List<Map<String, Object>> orderDetailData) {
+        return selectWarehouseOrders(parentOrderData, orderDetailData, false);
+    }
+
+    /**
+     * 按订单明细仓型筛选海外托管订单。
+     *
+     * @param parentOrderData 订单列表主任务 Mongo 数据
+     * @param orderDetailData 订单详情子任务 Mongo 数据
+     * @param cainiaoWarehouse true 选择菜鸟仓，false 选择 AE 官方仓
+     * @return 符合仓型的订单
+     */
+    private List<Map<String, Object>> selectWarehouseOrders(
+            List<Map<String, Object>> parentOrderData,
+            List<Map<String, Object>> orderDetailData,
+            boolean cainiaoWarehouse) {
+        if (CollUtil.isEmpty(parentOrderData) || CollUtil.isEmpty(orderDetailData)) {
+            return Collections.emptyList();
+        }
+        Map<String, Map<String, Object>> detailByOrderId = orderDetailData.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StrUtil.isNotBlank(text(item.get("order_id"))))
+                .collect(Collectors.toMap(
+                        item -> text(item.get("order_id")),
+                        item -> item,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+        return parentOrderData.stream()
+                .filter(Objects::nonNull)
+                .filter(parentOrder -> {
+                    Map<String, Object> detail = detailByOrderId.get(
+                            text(parentOrder.get("order_id")));
+                    List<Map<String, Object>> childOrders = detail == null
+                            ? Collections.emptyList()
+                            : toMapList(detail.get("child_order_list"));
+                    if (CollUtil.isEmpty(childOrders)) {
+                        return false;
+                    }
+                    return cainiaoWarehouse
+                            ? childOrders.stream().allMatch(this::isCainiaoWarehouseItem)
+                            : childOrders.stream().noneMatch(this::isCainiaoWarehouseItem);
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 从混合发货主单中筛选由 FFO 接口返回的记录。
+     *
+     * @param outstockData 发货主单 Mongo 数据
+     * @return 需要继续调用 FFO 明细接口的记录
+     */
+    public List<Map<String, Object>> selectFfoOutstockRows(
+            List<Map<String, Object>> outstockData) {
+        if (CollUtil.isEmpty(outstockData)) {
+            return Collections.emptyList();
+        }
+        return outstockData.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !item.containsKey(OUTSTOCK_ITEMS))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 构造订单与速卖通货品关系上下文。
      *
      * @param parentOrderData 订单列表数据
@@ -186,15 +270,14 @@ public class AliExpressOfficialWarehouseChildService {
      * @param parentOrder 订单列表数据
      * @param detail 订单详情数据
      * @param childOrders 子订单列表
-     * @return 全部子订单均为菜鸟仓且订单状态换算为已发货时返回 true
+     * @return 全部子订单均非菜鸟仓且订单状态换算为已发货时返回 true
      */
     private boolean isOfficialWarehouseShippedOrder(String orderId,
                                                      Map<String, Object> parentOrder,
                                                      Map<String, Object> detail,
                                                      List<Map<String, Object>> childOrders) {
         boolean officialWarehouseOrder = childOrders.stream()
-                .allMatch(childOrder -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(
-                        text(childOrder.get("logistics_warehouse_type"))));
+                .noneMatch(this::isCainiaoWarehouseItem);
         if (!officialWarehouseOrder) {
             log.debug("跳过非官方仓速卖通海外托管订单, orderId={}", orderId);
             return false;
@@ -210,6 +293,18 @@ public class AliExpressOfficialWarehouseChildService {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 判断订单明细是否标记为菜鸟仓。
+     *
+     * @param childOrder 平台订单明细
+     * @return 是否为菜鸟国际仓
+     */
+    private boolean isCainiaoWarehouseItem(Map<String, Object> childOrder) {
+        return childOrder != null
+                && AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(
+                text(childOrder.get("logistics_warehouse_type")));
     }
 
     /**

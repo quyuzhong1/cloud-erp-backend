@@ -76,14 +76,24 @@ public class DmpInputAliExpressSoOutstockInitHandler extends DmpInputInitHandler
 			return new ArrayList<>();
 		}
 		if (isOverseasManaged()) {
-			return getOfficialWarehouseOutstock(findMongoData);
+			return getOverseasManagedOutstock(findMongoData);
 		}
 		String taskAuthId = findMongoData.get(0).get("nextLevelId").toString();
+		return toInitData(queryFfoOutstock(findMongoData, taskAuthId));
+	}
+
+	/**
+	 * 使用指定授权查询速卖通 FFO 发货主单。
+	 *
+	 * @param parentOrderData 订单列表主任务 Mongo 数据
+	 * @param taskAuthId 普通速卖通店铺 ID 或菜鸟仓授权配置 ID
+	 * @return FFO 发货主单
+	 */
+	private JSONArray queryFfoOutstock(List<Map<String, Object>> parentOrderData,
+									  String taskAuthId) {
 		String apiShopId = caiNiaoAuthorizedShopResolver.resolveShopIdOrOriginal(taskAuthId);
 		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(apiShopId);
-		
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-		
+
 		String appKey = aliExpressShopInfoDTO.getClientId();
         String appSecret = aliExpressShopInfoDTO.getClientSecret();
         String baseUrl = aliExpressShopInfoDTO.getBaseUrl();
@@ -100,7 +110,7 @@ public class DmpInputAliExpressSoOutstockInitHandler extends DmpInputInitHandler
 		String apiType = dmpCfgApiEntity.getApiType();
 		request.setApiName(apiType);
 		request.addApiParameter("simplify", "true");
-		List<String> orderLists = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(findMongoData);
+		List<String> orderLists = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(parentOrderData);
 		List<List<String>> partition = Lists.partition(orderLists, pageSize);
 		
 		JSONArray result = new JSONArray();
@@ -141,20 +151,19 @@ public class DmpInputAliExpressSoOutstockInitHandler extends DmpInputInitHandler
 			}
 		}
         
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.toJSONString());
-		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-		
-		return dmpInputTaskInitDTOList;
+		return result;
 	}
 
 	/**
-	 * 使用海外托管订单主任务授权查询官方仓发货流水。
+	 * 使用海外托管主任务订单按仓型查询发货数据。
+	 *
+	 * <p>菜鸟仓使用主任务扩展配置中的菜鸟授权调用 FFO；其余 AE 官方仓
+	 * 使用海外托管主任务自身授权查询库存流水。</p>
 	 *
 	 * @param parentOrderData 订单列表主任务 Mongo 数据
 	 * @return 现有 soOutstock 子任务可处理的数据
 	 */
-	private List<DmpInputTaskInitDTO> getOfficialWarehouseOutstock(
+	private List<DmpInputTaskInitDTO> getOverseasManagedOutstock(
 			List<Map<String, Object>> parentOrderData) {
 		DmpInputTaskEntity parentTask = dmpInputTaskService.getById(
 				dmpInputTaskEntity.getParentTaskId());
@@ -186,12 +195,40 @@ public class DmpInputAliExpressSoOutstockInitHandler extends DmpInputInitHandler
 							dmpCfgInputEntity.getSystemId(),
 							"orderDetail"));
 		}
-		JSONArray result = officialWarehouseChildService.queryOutstock(
-				parentTask.getNextLevelId(),
-				parentOrderData,
-				orderDetailData,
-				parentTask.getStartTime(),
-				parentTask.getEndTime());
+		JSONArray result = new JSONArray();
+		List<Map<String, Object>> cainiaoOrders =
+				officialWarehouseChildService.selectCainiaoWarehouseOrders(
+						parentOrderData, orderDetailData);
+		if (CollUtil.isNotEmpty(cainiaoOrders)) {
+			String cainiaoAuthId = caiNiaoAuthorizedShopResolver
+					.resolveAuthIdFromTaskExtendJson(parentTask.getExtendJson());
+			result.addAll(queryFfoOutstock(cainiaoOrders, cainiaoAuthId));
+		}
+		List<Map<String, Object>> officialWarehouseOrders =
+				officialWarehouseChildService.selectOfficialWarehouseOrders(
+						parentOrderData, orderDetailData);
+		if (CollUtil.isNotEmpty(officialWarehouseOrders)) {
+			result.addAll(officialWarehouseChildService.queryOutstock(
+					parentTask.getNextLevelId(),
+					officialWarehouseOrders,
+					orderDetailData,
+					parentTask.getStartTime(),
+					parentTask.getEndTime()));
+		}
+		log.info("速卖通海外托管发货子任务完成, parentTaskId={}, orderCount={}, "
+						+ "cainiaoOrderCount={}, officialWarehouseOrderCount={}, outstockCount={}",
+				parentTask.getId(), parentOrderData.size(), cainiaoOrders.size(),
+				officialWarehouseOrders.size(), result.size());
+		return toInitData(result);
+	}
+
+	/**
+	 * 将平台发货结果封装为 DMP 初始化数据。
+	 *
+	 * @param result 平台发货数据
+	 * @return DMP 初始化数据
+	 */
+	private List<DmpInputTaskInitDTO> toInitData(JSONArray result) {
 		return java.util.Collections.singletonList(
 				DmpInputTaskInitDTO.initMsg(result.toJSONString()));
 	}
