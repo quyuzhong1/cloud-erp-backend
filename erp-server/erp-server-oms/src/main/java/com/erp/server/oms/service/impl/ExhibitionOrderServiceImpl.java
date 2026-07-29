@@ -97,6 +97,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -199,12 +200,15 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ExhibitionOrderDTO.AddDTO addDTO) {
-        // 新增时：未传收款账号则带出客户默认收款账号；人为传入则不覆盖
+        // 新增时：未传收款账号则带出客户默认收款账号；人为传入则不覆盖（DTO 不再 @NotBlank，以便本分支可执行）
         if (StringUtils.isBlank(addDTO.getReceiveAccount()) && StringUtils.isNotBlank(addDTO.getCustomerId())) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(addDTO.getCustomerId());
             if (customerInfo != null && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
                 addDTO.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
             }
+        }
+        if (StringUtils.isBlank(addDTO.getReceiveAccount())) {
+            throw new ServiceException("收款账号不能为空");
         }
 
         ExhibitionOrderEntity exhibitionOrderEntity = new ExhibitionOrderEntity();
@@ -1226,17 +1230,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String soId;
         try {
             soId = soInfoService.add(addDTO);
-            // 创建人与展会订单创建人保持一致（收款单可选销售订单依赖创建人）
-            if (StringUtils.isNotBlank(soId) && StringUtils.isNotBlank(entity.getCreateUserId())) {
-                soInfoService.lambdaUpdate()
-                        .set(SoInfoEntity::getCreateUserId, entity.getCreateUserId())
-                        .set(SoInfoEntity::getCreateUserName, entity.getCreateUserName())
-                        .eq(SoInfoEntity::getId, soId)
-                        .update();
-            }
         }catch (Exception e) {
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
+            // catch 后正常 return 不会触发回滚，需显式标记，避免「审核失败但销售订单已落库」
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return mqResponseDTO;
         }finally {
             //恢复系统标识
@@ -1253,7 +1251,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
         }catch (Exception e) {
             log.error("B2B订单提交异常，soId: {}", soId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             return mqResponseDTO;
         }finally {
             //恢复系统标识
@@ -1270,7 +1268,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soInfoService.approve(baseApproveParamDTO,soInfoEntity);
         }catch (Exception e) {
             log.error("B2B订单审批通过异常，soId: {}", soId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             return mqResponseDTO;
         }finally {
             //恢复系统标识

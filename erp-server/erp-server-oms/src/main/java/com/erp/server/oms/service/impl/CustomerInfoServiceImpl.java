@@ -2697,7 +2697,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         checkName(customerId, newName);
         entity.setName(newName);
-        updateById(entity);
+        // 乐观锁未命中时不得继续推送金蝶，避免 OMS 仍为旧名、金蝶收到新名
+        if (!updateById(entity)) {
+            throw new ServiceException("同步客户名称失败，请重试");
+        }
         // 已审核或已推送金蝶：走 operateApprove（金蝶侧反审核→更新→提交→审核）
         if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())
                 || StringUtils.isNotBlank(entity.getSyncKingdeeId())) {

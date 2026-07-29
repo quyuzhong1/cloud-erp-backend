@@ -497,8 +497,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             if (isTongYouProvider(overseasProvider)) {
                 fillTongYouAttachmentView(viewDTO, entity.getId());
             } else {
-                viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(dto.getId()),
-                        B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode()));
+                // 兼容历史 type=ModuleTypeEnum.B2B_THIRD_DELIVERY(157)，新存 b2b_third_delivery_order_attachment
+                viewDTO.setAttachList(listOrderAttachmentsCompatible(entity.getId()));
             }
             fillPackingView(viewDTO, entity, detailEntityList, overseasProvider);
             if (Objects.nonNull(soInfoEntity)) {
@@ -1984,14 +1984,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (CollUtil.isNotEmpty(packingDetailList)) {
             throw new ServiceException("通邮仓库不支持装箱明细");
         }
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException("产品明细不能为空");
+        }
         TongYouB2bOperationResolver.validateRequiredOperations(warehouseOperationTypeDTOList);
         assertOptionalPdfAttachment(attachList, "订单附件");
         assertOptionalPdfAttachment(outerBoxLabelAttachList, "外箱面单");
         if (Boolean.TRUE.equals(TongYouB2bOperationResolver.resolveRelabel(warehouseOperationTypeDTOList))) {
             assertRequiredPdfAttachment(productLabelAttachList, "产品标签");
-            if (CollUtil.isEmpty(detailList)) {
-                throw new ServiceException("产品明细不能为空");
-            }
             for (com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO detail : detailList) {
                 if (CharSequenceUtil.isBlank(detail.getRelabelSku())) {
                     throw new ServiceException("换标时换标SKU不能为空");
@@ -2040,9 +2040,28 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             viewDTO.setOuterBoxLabelAttachList(Collections.emptyList());
             return;
         }
-        viewDTO.setAttachList(filterAttachmentByType(allAttach, B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode()));
+        viewDTO.setAttachList(filterOrderAttachmentsCompatible(allAttach));
         viewDTO.setProductLabelAttachList(filterAttachmentByType(allAttach, B2bThirdDeliveryAttachmentTypeEnum.PRODUCT_LABEL.getCode()));
         viewDTO.setOuterBoxLabelAttachList(filterAttachmentByType(allAttach, B2bThirdDeliveryAttachmentTypeEnum.OUTER_BOX_LABEL.getCode()));
+    }
+
+    /**
+     * 订单附件：新 type 与历史 ModuleTypeEnum.B2B_THIRD_DELIVERY(157) 并存读取。
+     */
+    private List<WmsAttachmentDTO.UpdateDTO> listOrderAttachmentsCompatible(String businessId) {
+        List<WmsAttachmentDTO.UpdateDTO> allAttach = wmsAttachmentService.getByBusinessIds(Collections.singletonList(businessId));
+        return filterOrderAttachmentsCompatible(allAttach);
+    }
+
+    private List<WmsAttachmentDTO.UpdateDTO> filterOrderAttachmentsCompatible(List<WmsAttachmentDTO.UpdateDTO> attachments) {
+        if (CollUtil.isEmpty(attachments)) {
+            return Collections.emptyList();
+        }
+        String newType = B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode();
+        String legacyType = ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode();
+        return attachments.stream()
+                .filter(item -> newType.equals(item.getType()) || legacyType.equals(item.getType()))
+                .collect(Collectors.toList());
     }
 
     private List<WmsAttachmentDTO.UpdateDTO> filterAttachmentByType(List<WmsAttachmentDTO.UpdateDTO> attachments, String type) {

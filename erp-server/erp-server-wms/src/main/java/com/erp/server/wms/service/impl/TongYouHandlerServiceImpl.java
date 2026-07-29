@@ -63,8 +63,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 通邮处理服务实现类
@@ -262,22 +264,37 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return failure(CharSequenceUtil.blankToDefault(originalMessage, TONGYOU_ERROR_ORDER_ALREADY_EXISTS));
     }
 
+    /** 通邮查询接口仅支持单号；批量查询串行调用，限制单次数量避免任务拖死 */
+    private static final int QUERY_FBA_OUTBOUND_MAX_SIZE = 50;
+
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         TongYouCreateHbOutboundReq hbOutboundReq = buildHbOutboundDto(createOutboundReq);
-        log.warn(getPlatForm().getName() + "创建B2B出库单请求:{}", JSONUtil.toJsonStr(hbOutboundReq));
+        // 不打印完整请求体（含收件人/地址/联系方式/附件 URL）
+        log.warn("{}创建B2B出库单请求, referenceNo={}, deliver_no={}",
+                getPlatForm().getName(), createOutboundReq.getReferenceNo(), hbOutboundReq.getDeliver_no());
         TongYouBaseResp<TongYouOutboundResp> tongYouBaseResp = tongYouService.createHbOutboundBill(hbOutboundReq);
-        log.warn(getPlatForm().getName() + "创建B2B出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
+        log.warn("{}创建B2B出库单结果, referenceNo={}, error={}, content={}",
+                getPlatForm().getName(), createOutboundReq.getReferenceNo(),
+                tongYouBaseResp == null ? null : tongYouBaseResp.getError(),
+                tongYouBaseResp == null ? null : tongYouBaseResp.getContent());
+        if (tongYouBaseResp == null) {
+            return failure("通邮创建出库单未收到有效响应");
+        }
         if (!isSuccess(tongYouBaseResp.getError())) {
-            return failure(tongYouBaseResp.getContent());
+            return failure(CharSequenceUtil.blankToDefault(tongYouBaseResp.getContent(), "通邮创建出库单失败"));
         }
         return success(createOutboundReq.getReferenceNo());
     }
 
     private TongYouCreateHbOutboundReq buildHbOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        // 推送路径强校验，避免历史单/重试缺操作指令时静默按「否」推送
+        TongYouB2bOperationResolver.validateRequiredOperations(createOutboundReq);
+        Boolean relabel = TongYouB2bOperationResolver.resolveRelabel(createOutboundReq);
+        Boolean mixedPacking = TongYouB2bOperationResolver.resolveMixedPacking(createOutboundReq);
         TongYouCreateHbOutboundReq request = TongYouCreateHbOutboundConverter.INSTANCE.toHbOutboundReq(createOutboundReq);
-        request.setIs_hb(TongYouB2bOperationResolver.isRelabel(createOutboundReq) ? "2" : "1");
-        request.setIs_hz(TongYouB2bOperationResolver.isMixedPacking(createOutboundReq) ? "1" : "2");
+        request.setIs_hb(Boolean.TRUE.equals(relabel) ? "2" : "1");
+        request.setIs_hz(Boolean.TRUE.equals(mixedPacking) ? "1" : "2");
         if (CollUtil.isNotEmpty(request.getDeliver_products())) {
             for (TongYouCreateHbOutboundReq.DeliverProductDTO product : request.getDeliver_products()) {
                 if (product.getNums() != null) {
@@ -326,8 +343,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"取消出库单请求:{}", JSONUtil.toJsonStr(cancelOutboundReq));
         TongYouCancelOutboundResp tongYouBaseResp = tongYouService.cancelOutboundBill(cancelOutboundReq);
         log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
+        if (tongYouBaseResp == null) {
+            return failure("通邮取消出库单未收到有效响应");
+        }
         if(!isSuccess(tongYouBaseResp.getError())){
-            return failure(tongYouBaseResp.getContent());
+            return failure(CharSequenceUtil.blankToDefault(tongYouBaseResp.getContent(), "通邮取消出库单失败"));
         }
         return resolveCancelOutboundResult(cancelOutboundReq, tongYouBaseResp);
 
@@ -590,17 +610,40 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (CollUtil.isEmpty(req.getErpOrderCodeList())) {
             return success(Collections.emptyList());
         }
-        List<ThirdWarehouseQueryFbaOutboundResponse> resultList = new ArrayList<>();
+        // 通邮 hwc_order.php 仅支持单号查询；去重后限流，失败写入 errorReason 不静默丢弃
+        Set<String> orderCodes = new LinkedHashSet<>();
         for (String erpOrderCode : req.getErpOrderCodeList()) {
-            if (CharSequenceUtil.isBlank(erpOrderCode)) {
+            if (CharSequenceUtil.isNotBlank(erpOrderCode)) {
+                orderCodes.add(erpOrderCode.trim());
+            }
+        }
+        if (orderCodes.isEmpty()) {
+            return success(Collections.emptyList());
+        }
+        if (orderCodes.size() > QUERY_FBA_OUTBOUND_MAX_SIZE) {
+            return failure("通邮批量查询出库单单次最多支持" + QUERY_FBA_OUTBOUND_MAX_SIZE + "条");
+        }
+        List<ThirdWarehouseQueryFbaOutboundResponse> resultList = new ArrayList<>(orderCodes.size());
+        Object tokenObj = ThirdWarehouseContext.getAuthMap().get("appToken");
+        String token = ObjectUtil.isEmpty(tokenObj) ? "" : tokenObj.toString();
+        for (String erpOrderCode : orderCodes) {
+            Map<String, Object> authJson = new HashMap<>(4);
+            authJson.put("token", token);
+            authJson.put("deliver_no", erpOrderCode);
+            TongYouQueryOutboundBillResp queryResp;
+            try {
+                queryResp = tongYouService.getOutboundBill(authJson);
+            } catch (Exception e) {
+                log.warn("{}查询B2B出库单异常, deliver_no={}", getPlatForm().getName(), erpOrderCode, e);
+                resultList.add(buildQueryFbaFailResponse(erpOrderCode, "通邮查询出库单异常"));
                 continue;
             }
-            Map<String, Object> authJson = new HashMap<>();
-            Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
-            authJson.put("token", ObjectUtil.isEmpty(object) ? "" : object.toString());
-            authJson.put("deliver_no", erpOrderCode);
-            TongYouQueryOutboundBillResp queryResp = tongYouService.getOutboundBill(authJson);
             if (ObjectUtil.isEmpty(queryResp) || !isSuccess(queryResp.getError()) || CollUtil.isEmpty(queryResp.getData())) {
+                String failMsg = ObjectUtil.isEmpty(queryResp)
+                        ? "通邮查询出库单未收到有效响应"
+                        : CharSequenceUtil.blankToDefault(queryResp.getContent(), "未查询到对应通邮出库单信息");
+                log.warn("{}查询B2B出库单失败, deliver_no={}, msg={}", getPlatForm().getName(), erpOrderCode, failMsg);
+                resultList.add(buildQueryFbaFailResponse(erpOrderCode, failMsg));
                 continue;
             }
             TongYouQueryOutboundResp outboundResp = queryResp.getData().get(0);
@@ -615,6 +658,15 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             resultList.add(response);
         }
         return success(resultList);
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildQueryFbaFailResponse(String erpOrderCode, String errorReason) {
+        ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+        response.setCode(erpOrderCode);
+        response.setPlatformOrderCode(erpOrderCode);
+        response.setPlatform(PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode());
+        response.setErrorReason(errorReason);
+        return response;
     }
 
     @Override

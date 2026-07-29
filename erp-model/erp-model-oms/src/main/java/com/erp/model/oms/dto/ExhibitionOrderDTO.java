@@ -746,9 +746,9 @@ public class ExhibitionOrderDTO implements Serializable {
         private String receiveCondition;
 
         /**
-        * 收款账号（表单顺序在结算币别前，由前端控制展示顺序）
+        * 收款账号（表单顺序在结算币别前，由前端控制展示顺序）。
+        * 允许为空：Service 新增时未传则回填客户默认收款账号，回填后仍为空再抛业务异常。
         */
-        @NotBlank(message = "收款账号不能为空")
         private String receiveAccount;
 
         /**

@@ -130,10 +130,15 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
         boolean tongYouWarehouse = PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderEntity.getCode());
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = tongYouWarehouse
-                ? wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()))
-                : wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()),
-                B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode());
+        // 非通邮：订单附件需兼容历史 type=ModuleTypeEnum.B2B_THIRD_DELIVERY(157)
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()));
+        if (!tongYouWarehouse) {
+            String newType = B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode();
+            String legacyType = ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode();
+            attachmentList = CollUtil.isEmpty(attachmentList) ? Collections.emptyList() : attachmentList.stream()
+                    .filter(item -> newType.equals(item.getType()) || legacyType.equals(item.getType()))
+                    .collect(Collectors.toList());
+        }
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
         if (tongYouWarehouse) {
             fillTongYouOutboundReq(req, entity, attachmentList);
@@ -201,6 +206,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                                         List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
         fillTongYouEmail(req, entity);
         if (CollUtil.isNotEmpty(attachmentList)) {
+            String orderAttachmentUrl = null;
+            String legacyOrderAttachmentUrl = null;
             for (WmsAttachmentDTO.UpdateDTO attachment : attachmentList) {
                 if (Objects.isNull(attachment) || StrUtil.isBlank(attachment.getAttachUrl())) {
                     continue;
@@ -211,9 +218,14 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 } else if (B2bThirdDeliveryAttachmentTypeEnum.OUTER_BOX_LABEL.getCode().equals(attachment.getType())) {
                     req.setOuterBoxLabelFileUrl(publicUrl);
                 } else if (B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode().equals(attachment.getType())) {
-                    req.setOrderAttachmentFileUrl(publicUrl);
+                    // 新类型优先
+                    orderAttachmentUrl = publicUrl;
+                } else if (ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode().equals(attachment.getType())) {
+                    // 历史 type=157 仅作回退，避免覆盖新类型
+                    legacyOrderAttachmentUrl = publicUrl;
                 }
             }
+            req.setOrderAttachmentFileUrl(StrUtil.blankToDefault(orderAttachmentUrl, legacyOrderAttachmentUrl));
         }
     }
 
