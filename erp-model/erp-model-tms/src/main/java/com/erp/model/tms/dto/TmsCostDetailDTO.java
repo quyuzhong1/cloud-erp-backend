@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -138,6 +139,16 @@ public class TmsCostDetailDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
+         * 本位币别
+         */
+        private String localCurrency;
+
+        /**
+         * 本位币费用值
+         */
+        private BigDecimal costValueLocalCurrency;
+
+        /**
          * 费用设置id
          */
         private String cfgCostId;
@@ -260,6 +271,16 @@ public class TmsCostDetailDTO implements Serializable {
          * 币别
          */
         private String currency;
+
+        /**
+         * 本位币别
+         */
+        private String localCurrency;
+
+        /**
+         * 本位币费用值
+         */
+        private BigDecimal costValueLocalCurrency;
     }
 
 
@@ -322,6 +343,36 @@ public class TmsCostDetailDTO implements Serializable {
          * 汇率
          */
         private BigDecimal exchangeRate;
+
+        /**
+         * 本位币别
+         */
+        private String localCurrency;
+
+        /**
+         * 本位币费用值
+         */
+        private BigDecimal costValueLocalCurrency;
+
+        /**
+         * 解析本位币费用值：优先取落库值，否则按原币×汇率回退。
+         */
+        public BigDecimal resolveCostValueLocalCurrency() {
+            if (costValueLocalCurrency != null) {
+                return costValueLocalCurrency;
+            }
+            BigDecimal value = costValue == null ? BigDecimal.ZERO : costValue;
+            BigDecimal rate = exchangeRate == null ? BigDecimal.ONE : exchangeRate;
+            return value.multiply(rate);
+        }
+
+        /**
+         * 解析本位币别，默认 CNY。
+         */
+        public String resolveLocalCurrency() {
+            return localCurrency == null || localCurrency.isEmpty()
+                    ? CurrencyEnum.CNY.getCurrencyCode() : localCurrency;
+        }
     }
 
 
