@@ -27,6 +27,7 @@ import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -47,7 +48,12 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.*;
+import com.sdk.wms.antu.dto.request.AntuGetOutboundRefReq;
+import com.sdk.wms.antu.dto.response.AntuOutboundResp;
+import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.service.AntuService;
 import com.sdk.wms.wego.enums.WegoEnums;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.redisson.api.RLock;
@@ -250,6 +256,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             || CharSequenceUtil.isBlank(mainEntity.getTransactionSubType())
                             || OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(mainEntity.getTransactionSubType())) {
                         updateStatus.setTrackNo(dto.getTrackNo());
+                        // WFHD 已建单回传：渠道未推送海外仓面单且跟踪号不一致时强制覆盖（与 checkAndBuildMap 一致）
+                        updateStatus.setForceUpdateLogisticsTrack(
+                                shouldForceUpdateLogisticsTrackForOrder(mainEntity.getId(), dto.getTrackNo()));
                     }
                     soB2cFeign.updateSoB2cStatusByParams(updateStatus);
                     //更新物流单跟踪号
@@ -297,6 +306,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     }
                 }
                 updateStatus.setTrackNo(dto.getTrackNo());
+                // 销售订单号回传：渠道未推送海外仓面单且跟踪号不一致时强制覆盖
+                updateStatus.setForceUpdateLogisticsTrack(
+                        shouldForceUpdateLogisticsTrackForOrder(mainEntity.getId(), dto.getTrackNo()));
                 soB2cFeign.updateSoB2cStatusByParams(updateStatus);
 
                 map.put(mainEntity, thirdWarehouseDeliveryEntity);
@@ -512,6 +524,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }
         ThirdWarehouseLogisticsChannelValidationContext logisticsChannelContext =
                 loadThirdWarehouseLogisticsChannelValidationContext(soB2cIds, dto);
+        // 订单物流渠道 isPushLabel：未推送海外仓面单时，仓回传跟踪号不一致则覆盖订单物流单号/跟踪号
+        Map<String, LogisticsChannelEntity> orderLogisticsChannelById =
+                loadOrderLogisticsChannelById(logisticsChannelContext.getLogisticsByMainId());
 
         for (SoB2cEntity mainEntity : mainEntityList) {
             SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryMap.get(mainEntity.getId());
@@ -606,6 +621,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 updateDto.setResolvedLogisticsChannelId(resolvedLogisticsChannel.getId());
                 updateDto.setResolvedLogisticsChannelName(resolvedLogisticsChannel.getName());
             }
+            // 本消费者仅处理海外仓出库回传；渠道未配置推送海外仓面单且跟踪号不一致时，强制覆盖物流单号+跟踪号
+            updateDto.setForceUpdateLogisticsTrack(shouldForceUpdateLogisticsTrack(
+                    logisticsChannelContext.getLogisticsByMainId().get(mainEntity.getId()),
+                    orderLogisticsChannelById,
+                    resolvedLogisticsChannel,
+                    dto.getTrackNo()));
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
                 //只有已发货才更新
                 updateDto.setBillStatus(dto.getOrderStatus());
@@ -718,6 +739,94 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         String providerCode = StrUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
         String providerName = StrUtil.blankToDefault(OmsPlatformEnum.getName(providerCode), providerCode);
         return StrUtil.format("自动出库失败，【{}】物流渠道【{}】未映射", providerName, dto.getShippingMethod());
+    }
+
+    /**
+     * 批量加载订单已绑定物流渠道（用于读取 isPushLabel）。
+     * 一次 FeignQuery.in 拉取，避免按渠道 ID 循环远程调用。
+     * 查询失败时返回空 Map，由 {@link #shouldForceUpdateLogisticsTrack} 对已绑定渠道订单禁止强制覆盖。
+     */
+    private Map<String, LogisticsChannelEntity> loadOrderLogisticsChannelById(
+            Map<String, SoB2cLogisticsEntity> logisticsByMainId) {
+        Map<String, LogisticsChannelEntity> channelById = new HashMap<>();
+        if (CollUtil.isEmpty(logisticsByMainId)) {
+            return channelById;
+        }
+        Set<String> channelIds = logisticsByMainId.values().stream()
+                .filter(Objects::nonNull)
+                .map(SoB2cLogisticsEntity::getLogisticsChannelId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(channelIds)) {
+            return channelById;
+        }
+        try {
+            List<LogisticsChannelEntity> channelList = FeignQuery.create(LogisticsChannelEntity.class)
+                    .in(LogisticsChannelEntity::getId, new ArrayList<>(channelIds))
+                    .list();
+            if (CollUtil.isNotEmpty(channelList)) {
+                for (LogisticsChannelEntity channel : channelList) {
+                    if (Objects.nonNull(channel) && StringUtils.isNotBlank(channel.getId())) {
+                        channelById.put(channel.getId(), channel);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("三方仓自动出库: 批量查询物流渠道失败, channelIds={}", channelIds, e);
+        }
+        return channelById;
+    }
+
+    /**
+     * 渠道「是否推送海外仓面单」为否（含未配置）且仓回传跟踪号与订单不一致时，强制覆盖物流单号/跟踪号。
+     * 配置为是则不做覆盖。本消费者单据均为海外仓出库回传。
+     * 订单已绑定 logisticsChannelId 但渠道未加载成功时禁止覆盖，避免查询失败被当成未配置而误覆盖面单跟踪号。
+     */
+    private boolean shouldForceUpdateLogisticsTrack(SoB2cLogisticsEntity logisticsEntity,
+                                                    Map<String, LogisticsChannelEntity> orderLogisticsChannelById,
+                                                    LogisticsChannelEntity resolvedLogisticsChannel,
+                                                    String warehouseTrackNo) {
+        if (CharSequenceUtil.isBlank(warehouseTrackNo) || Objects.isNull(logisticsEntity)) {
+            return false;
+        }
+        LogisticsChannelEntity channel;
+        if (StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            channel = orderLogisticsChannelById.get(logisticsEntity.getLogisticsChannelId());
+            if (Objects.isNull(channel)) {
+                // 已绑定渠道但查询失败/未返回：禁止强制覆盖（不回退 resolved，也不按未配置处理）
+                log.warn("三方仓自动出库: 订单物流渠道未加载成功，跳过强制覆盖跟踪号, soMainId={}, logisticsChannelId={}",
+                        logisticsEntity.getMainId(), logisticsEntity.getLogisticsChannelId());
+                return false;
+            }
+        } else {
+            channel = resolvedLogisticsChannel;
+        }
+        // 推送海外仓面单=是：跟踪号以 ERP 面单为准，不覆盖
+        if (Objects.nonNull(channel) && Boolean.TRUE.equals(channel.getIsPushLabel())) {
+            return false;
+        }
+        String orderTrack = CharSequenceUtil.blankToDefault(logisticsEntity.getTrackNo(), logisticsEntity.getCode());
+        return !StrUtil.equals(warehouseTrackNo, orderTrack);
+    }
+
+    /**
+     * WFHD / 销售订单号回传路径（单订单）：按订单已绑定物流渠道判断是否强制覆盖跟踪号。
+     * 批量建单路径请使用循环外预加载的 logistics/channel 映射，勿循环调用本方法。
+     */
+    private boolean shouldForceUpdateLogisticsTrackForOrder(String soB2cId, String warehouseTrackNo) {
+        if (CharSequenceUtil.isBlank(soB2cId) || CharSequenceUtil.isBlank(warehouseTrackNo)) {
+            return false;
+        }
+        List<SoB2cLogisticsEntity> logisticsList = FeignQuery.create(SoB2cLogisticsEntity.class)
+                .eq(SoB2cLogisticsEntity::getMainId, soB2cId)
+                .list();
+        if (CollUtil.isEmpty(logisticsList)) {
+            return false;
+        }
+        SoB2cLogisticsEntity logisticsEntity = logisticsList.get(0);
+        Map<String, SoB2cLogisticsEntity> logisticsByMainId = Collections.singletonMap(soB2cId, logisticsEntity);
+        Map<String, LogisticsChannelEntity> channelById = loadOrderLogisticsChannelById(logisticsByMainId);
+        return shouldForceUpdateLogisticsTrack(logisticsEntity, channelById, null, warehouseTrackNo);
     }
 
     private ThirdWarehouseSkuValidationContext loadThirdWarehouseSkuValidationContext(PlatformOutboundDTO dto,

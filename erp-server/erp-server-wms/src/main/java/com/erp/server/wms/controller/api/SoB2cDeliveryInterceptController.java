@@ -170,11 +170,11 @@ public class SoB2cDeliveryInterceptController extends BaseController {
                 log.error("物流拦截单 拦截结果确认失败",e);
                 SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
+                    result = BatchResultDTO.fail(id, id, "物流拦截单不存在, 拦截结果确认失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(result);
         }
@@ -203,11 +203,11 @@ public class SoB2cDeliveryInterceptController extends BaseController {
                 log.error("发货拦截单 拦截成功处理失败",e);
                 SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
+                    result = BatchResultDTO.fail(id, id, "物流拦截单不存在, 拦截成功处理失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(result);
         }
@@ -233,11 +233,11 @@ public class SoB2cDeliveryInterceptController extends BaseController {
                 log.error("发货拦截单 拦截失败处理异常",e);
                 SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
+                    result = BatchResultDTO.fail(id, id, "物流拦截单不存在, 拦截失败处理异常");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(result);
         }

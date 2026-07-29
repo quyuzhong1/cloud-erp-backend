@@ -517,6 +517,21 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 操作类型
          */
         private String operateType;
+
+        /**
+         * 来源id（旺店通自动移仓幂等键等）
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**

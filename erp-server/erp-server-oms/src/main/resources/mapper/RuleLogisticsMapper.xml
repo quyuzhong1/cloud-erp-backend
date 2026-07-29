@@ -19,6 +19,9 @@
 
        <result column="mode" property="mode" />
        <result column="auto_get_track_no" property="autoGetTrackNo" />
+       <result column="auto_track_no_only" property="autoTrackNoOnly" />
+       <result column="auto_track_no_in_range" property="autoTrackNoInRange" />
+       <result column="auto_get_track_not_of_range_delivery" property="autoGetTrackNotOfRangeDelivery" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -45,6 +48,9 @@
         logistics_channel_id,
         mode_type,
         auto_get_track_no,
+        auto_track_no_only,
+        auto_track_no_in_range,
+        auto_get_track_not_of_range_delivery,
         create_user_name,
         create_time,
         update_user_name,
@@ -63,7 +69,10 @@
             rl.*
         FROM rule_logistics rl
         WHERE rl.is_deleted=FALSE and rl.disabled = FALSE
-        and (rl.auto_get_track_no=TRUE or rl.auto_get_track_not_of_range_delivery=TRUE)
+        and (rl.auto_get_track_no=TRUE
+            or rl.auto_track_no_only=TRUE
+            or rl.auto_track_no_in_range=TRUE
+            or rl.auto_get_track_not_of_range_delivery=TRUE)
         and rl.logistics_channel_id != ''
     </select>
 

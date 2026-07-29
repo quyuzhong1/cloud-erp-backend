@@ -196,6 +196,10 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             if (flag) {
                 return chain.filter(exchange);
             }
+            // token 可选路径：无 token 直接放行；带合法 token 时解析并注入登录用户
+            if (isOptionalAuthPath(uri)) {
+                return passOptionalAuth(exchange, chain, request);
+            }
             // 埋点路径解析
             if (isEventTrackingPath(uri)) {
                 // 解析请求参数token用户
@@ -260,6 +264,37 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     private boolean isEventTrackingPath(String uri) {
         return AuthPassPath.EVENT_TRACKING_PATH.equals(uri) || API_SYS_EVENT_TRACKING_PATH.equals(uri);
+    }
+
+    private boolean isOptionalAuthPath(String uri) {
+        if (StringUtils.isBlank(uri)) {
+            return false;
+        }
+        for (String authPath : AuthPassPath.OPTIONAL_AUTH_PATH_LIST.split(";")) {
+            if (StringUtils.isNotBlank(authPath) && uri.contains(authPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Mono<Void> passOptionalAuth(ServerWebExchange exchange, GatewayFilterChain chain,
+                                        ServerHttpRequest request) throws UnsupportedEncodingException {
+        String token = request.getHeaders().getFirst(TokenConstants.AUTHENTICATION);
+        if (StringUtils.isBlank(token)) {
+            return chain.filter(exchange);
+        }
+        LoginUser loginUser = tokenService.getLoginUser(token);
+        if (Objects.isNull(loginUser)) {
+            // token 非法/过期时按未登录处理，不拦截，交由业务层用系统用户兜底
+            return chain.filter(exchange);
+        }
+        loginUser.setAccessToken(token);
+        String tokenUserInfo = LoginUser.simpleLoginUser(loginUser);
+        ServerHttpRequest mutatedRequest = request.mutate()
+                .header("tokenUserInfo", tokenUserInfo)
+                .build();
+        return chain.filter(exchange.mutate().request(mutatedRequest).build());
     }
 
     private Mono<Void> tryApiTokenAuth(ServerWebExchange exchange, GatewayFilterChain chain,

@@ -247,6 +247,11 @@ public class WorkflowTaskStepDispatcher {
             return;
         }
         int nextIndex = completedIndex + 1;
+        // 跳过已成功的后续节点，避免「全部节点已 SUCCESS 时仍 markRunning」把实例打回执行中
+        while (indexMap.containsKey(nextIndex)
+                && WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(indexMap.get(nextIndex).getStatus())) {
+            nextIndex++;
+        }
         if (!indexMap.containsKey(nextIndex)) {
             markInstanceSuccess(instance, indexMap.values().stream()
                     .sorted(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
@@ -337,7 +342,7 @@ public class WorkflowTaskStepDispatcher {
 
     private void markInstanceSuccess(WorkflowTaskInstanceEntity instance, List<WorkflowTaskRecordEntity> steps) {
         int maxIndex = steps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
-        workflowTaskInstanceService.markSuccess(instance.getId(), maxIndex, steps.size());
+        workflowTaskInstanceService.markSuccessOrThrow(instance.getId(), maxIndex, steps.size());
     }
 
     private void syncInstanceFailed(WorkflowTaskInstanceEntity instance, WorkflowTaskRecordEntity step) {

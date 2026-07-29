@@ -1,10 +1,12 @@
 package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.server.tms.service.DeliveryDeclareDetailMidService;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +24,10 @@ import java.util.List;
 public class TmsDeclareBillFeignController {
     @Resource
     private TmsDeclareBillService tmsDeclareBillService;
+
+    @Resource
+    private DeliveryDeclareDetailMidService deliveryDeclareDetailMidService;
+
 
     /**
      * 根据来源id查询报关单
@@ -48,18 +54,43 @@ public class TmsDeclareBillFeignController {
     }
 
     /**
-     * 自动生成头程报关单
-     **/
-    @PostMapping("/autoGenerateFirstMileDeclare")
-    Boolean autoGenerateFirstMileDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
-        return tmsDeclareBillService.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+     * 删除tms发货明细
+     * @author will
+     * @date 2026/4/24 14:55
+     * @param dto 删除参数
+     * @return java.lang.Boolean
+     */
+    @PostMapping("/deleteDeliveryDeclareDetailMid")
+    public Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto){
+        return deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(dto.getSourceIds());
     }
 
     /**
-     * 自动生成B2b报关单
+     * 自动生成报关单预览
      **/
-    @PostMapping("/autoGenerateB2bDeclare")
-    Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
-        return tmsDeclareBillService.autoGenerateB2bDeclare(autoGenerateBillDTO);
+    @PostMapping("/autoMergeDeclareBillView")
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(@RequestBody TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO){
+        return tmsDeclareBillService.autoMergeDeclareBillView(viewDTO);
+    }
+
+    @PostMapping("/batchAddMergeDetail")
+    Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto) {
+        return tmsDeclareBillService.batchAddMergeDetail(dto.getSourceType(), dto.getMergeDeclareBillDTOS());
+    }
+
+    /**
+     * B2B 报关合并预览：判断境外收货人是否按客户分发。
+     */
+    @PostMapping("/isB2bCustomerReceiver")
+    Boolean isB2bCustomerReceiver(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        return tmsDeclareBillService.isB2bCustomerReceiver(sourceDetailList);
+    }
+
+    /**
+     * 独立报关：按来源单分组判断境外收货人是否按客户分发，返回「来源 key -> 是否按客户分发」。
+     */
+    @PostMapping("/isB2bCustomerReceiverBySource")
+    java.util.Map<String, Boolean> isB2bCustomerReceiverBySource(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        return tmsDeclareBillService.isB2bCustomerReceiverBySource(sourceDetailList);
     }
 }

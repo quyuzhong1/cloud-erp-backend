@@ -92,7 +92,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                 .stream()
                 .filter(item -> !existReportTypeList.contains(item.getReportType()))
                 .collect(Collectors.toList());
-        // 新增
+        // 新增（按国家过滤后可能为空：如 MX 仅支持部分报告类型，其余类型不应 saveBatch 空列表）
         if (CollectionUtil.isNotEmpty(notExistReportTypeList)) {
             List<AmzReportScheduleEntity> insertEntityList = notExistReportTypeList.stream()
                     .filter(e -> e.getCountryList().contains(marketplaceEnum.getCountryCode()))
@@ -102,7 +102,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                             ""
                     ))
                     .collect(Collectors.toList());
-            if (!this.saveBatch(insertEntityList)) {
+            if (CollectionUtil.isNotEmpty(insertEntityList) && !this.saveBatch(insertEntityList)) {
                 throw new ServiceException("批量添加报告计划失败");
             }
         }

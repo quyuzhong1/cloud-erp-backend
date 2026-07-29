@@ -41,3 +41,5 @@ rebel.xml
 
 ### Cursor 个人本地规则（不提交，体验后再决定是否转公共规则） ###
 .cursor/rules/*.local.mdc
+/.understand-anything/**
+/.omc/**
