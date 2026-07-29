@@ -40,6 +40,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptSourceTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -390,12 +391,20 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         mainEntity.setIsIntercept(false);
                         mainEntity.setIsFrozen(false);
                         soB2cFeign.updateStatus(mainEntity);
+                        // 爱亚异步截单：出库已发货即拦截失败，回写待处理发货拦截单
+                        completeAiyaIntercept(mainEntity, dto, false, "爱亚出库单已发货");
                     }
 
                     platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto, "", "");
                 }
 
                 if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
+                    // 爱亚 HELD（锁住）按中间态继续等待
+                    if (OmsPlatformEnum.AI_YA.getCode().equals(dto.getPlatform())) {
+                        log.warn("爱亚出库单处于锁住/暂挂中间态，继续等待终态, soCode={}, referenceNo={}, thirdOrderStatus={}",
+                                mainEntity.getCode(), dto.getReferenceNo(), dto.getThirdOrderStatus());
+                        continue;
+                    }
                     //更新异常订单信息
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                             mainEntity.getId(),
@@ -443,6 +452,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())) {
                             confirmWegoInterceptBills(mainEntity.getId(), true, "出库单已取消，拦截成功");
                         }
+                        // 爱亚异步截单：出库已取消即拦截成功，回写待处理发货拦截单
+                        completeAiyaIntercept(mainEntity, dto, true, "爱亚出库单已取消");
                     }
                 }
             }
@@ -1449,6 +1460,45 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         overShipMessages.add(StrUtil.format("SKU【{}】（ERP SKU【{}】）应发数量{}，三方仓实际发货数量{}",
                 platformSkuNo, thirdWarehouseDeliveryDetail.getSkuNo(), deliveryQty, actualQty));
         return actualQty;
+    }
+
+    /**
+     * 爱亚异步截单终态回写：仅处理爱亚平台，取最新一张 API 来源且待处理的发货拦截单，
+     * 成功走 {@link SoB2cDeliveryInterceptService#apiHandleSuccess}，失败走
+     * {@link SoB2cDeliveryInterceptService#apiHandleFailure}；无待处理单时仅打日志不抛错，保证幂等。
+     *
+     * @param mainEntity B2C销售订单
+     * @param dto        平台出库回传
+     * @param success    true=拦截成功（出库已取消），false=拦截失败（出库已发货）
+     * @param remark     回写备注
+     */
+    private void completeAiyaIntercept(SoB2cEntity mainEntity, PlatformOutboundDTO dto,
+                                       boolean success, String remark) {
+        if (mainEntity == null || dto == null
+                || !OmsPlatformEnum.AI_YA.getCode().equals(dto.getPlatform())) {
+            return;
+        }
+        List<SoB2cDeliveryInterceptEntity> interceptList =
+                soB2cDeliveryInterceptService.listBySourceIds(Collections.singletonList(mainEntity.getId()));
+        if (CollUtil.isEmpty(interceptList)) {
+            log.warn("爱亚拦截终态回写：未找到发货拦截单, soCode={}, success={}", mainEntity.getCode(), success);
+            return;
+        }
+        SoB2cDeliveryInterceptEntity latestPending = interceptList.stream()
+                .filter(item -> SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(item.getSourceType()))
+                .filter(item -> SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode().equals(item.getHandleStatus()))
+                .max(Comparator.comparing(SoB2cDeliveryInterceptEntity::getCreateTime,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
+        if (latestPending == null) {
+            log.warn("爱亚拦截终态回写：无待处理API拦截单, soCode={}, success={}", mainEntity.getCode(), success);
+            return;
+        }
+        if (success) {
+            soB2cDeliveryInterceptService.apiHandleSuccess(latestPending.getId(), remark);
+        } else {
+            soB2cDeliveryInterceptService.apiHandleFailure(latestPending.getId(), remark);
+        }
     }
 
     /**
