@@ -386,6 +386,9 @@ local afterinventorys = '';
 local newcurrentvaluearrindex = 0;
 for _, newc in ipairs(newcurrentvaluearr) do
     local beforeinv = redis.call('get', newc[2]);
+    if beforeinv == 0 or beforeinv == false then
+        beforeinv = '0';
+    end
     if newcurrentvaluearrindex == 0 then
         beforeinventorys = beforeinventorys .. newc[2] .. '==' .. beforeinv;
     else
