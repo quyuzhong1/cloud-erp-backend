@@ -192,6 +192,7 @@ public class DictHsCodeDTO implements Serializable {
 
         /**
         * 出口退税率 (%)
+        * <p>产品需求：小数精度升级统一 @Digits(18,6)，税率类字段按产品确认保留六位校验。
         */
         @NotNull(message = "出口退税率 (%)不能为空")
         @Min(value = 0, message = "出口退税率 (%)不能为负数")

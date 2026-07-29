@@ -1101,7 +1101,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 
 	/**
-	 * 众包退货入库明细：按销售订单/退货订单明细价格计算退货金额与含税退货金额
+	 * 众包退货入库明细：按销售订单/退货订单明细价格计算退货金额与含税退货金额。
+	 * <p>
+	 * 产品需求（众包海外仓对接 §七）：B2C 仅要求【退货金额】【含税退货金额】（真实售价×签收数量），
+	 * 未要求 returnAmount、退货金额（本位币）等字段；与极兔分支字段范围不同，勿按极兔补齐。
 	 */
 	private List<SoReturnInstockDetailEntity> buildZhongBaoSoReturnInstockDetail(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity, SoInfoEntity soInfoEntity, WarehouseEntity warehouseEntity) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
@@ -1151,6 +1154,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soB2cDetailEntity)) {
+					// 产品需求：众包 B2C 只落 amount / taxReturnAmount，不填 returnAmount 及本位币字段
 					BigDecimal amount = MathUtil.multiplyWithSix(soB2cDetailEntity.getPrice(), BigDecimal.valueOf(actualQty));
 					soReturnInstockDetailEntity.setAmount(amount);
 					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
