@@ -19,7 +19,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -503,7 +502,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().multiply(rateMap.get(obj.getActualShippingCurrency()))
         		.add(obj.getActualDeclareCost().multiply(rateMap.get(obj.getActualDeclareCurrency())))
         		.add(obj.getActualOtherCost().multiply(rateMap.get(obj.getActualOtherCurrency())))).reduce(BigDecimal.ZERO, BigDecimal::add);
-        data.setTotalCost(MathUtil.scaleToSix(totalCost, BigDecimal.ROUND_DOWN));
+        data.setTotalCost(totalCost.setScale(4, RoundingMode.DOWN));
 
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
             //店铺名称
@@ -655,9 +654,9 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             		}
             	}
             }
-            actualShippingCost = MathUtil.scaleToSix(actualShippingCost, BigDecimal.ROUND_DOWN);
-            actualDeclareCost = MathUtil.scaleToSix(actualDeclareCost, BigDecimal.ROUND_DOWN);
-            actualOtherCost = MathUtil.scaleToSix(actualOtherCost, BigDecimal.ROUND_DOWN);
+            actualShippingCost = actualShippingCost.setScale(4, RoundingMode.DOWN);
+            actualDeclareCost = actualDeclareCost.setScale(4, RoundingMode.DOWN);
+            actualOtherCost = actualOtherCost.setScale(4, RoundingMode.DOWN);
             data.setActualShippingCost(actualShippingCost);
             data.setActualDeclareCost(actualDeclareCost);
             data.setActualOtherCost(actualOtherCost);

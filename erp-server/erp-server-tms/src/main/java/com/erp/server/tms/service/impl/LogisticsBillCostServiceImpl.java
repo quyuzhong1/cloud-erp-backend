@@ -1582,7 +1582,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             //运费差异（本位币）
             listDTO.setDiffShippingCostCurrencySymbol(defaultLocalCurrencySymbol);
-            listDTO.setDiffShippingCost(MathUtil.scaleToSix(MathUtil.subtract(actualShippingCostLocal, estimatedShippingCostLocal), BigDecimal.ROUND_DOWN));
+            listDTO.setDiffShippingCost(MathUtil.subtract(actualShippingCostLocal, estimatedShippingCostLocal).setScale(4, RoundingMode.DOWN));
             listDTO.setDiffShippingCostStr(listDTO.getDiffShippingCostCurrencySymbol() + listDTO.getDiffShippingCost());
 
             //实际报关费
@@ -3660,8 +3660,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				// 尾程分摊：账单金额/折合金额均按本位币费用值合计
 				BigDecimal costValueSum = CostDetailLocalCurrencyHelper.resolveListAmount(costViewDTOList);
 				String allocatedCurrency = CostDetailLocalCurrencyHelper.resolveListCurrency(costViewDTOList);
-				BigDecimal billAmountExchange = MathUtil.scaleToSix(costValueSum,BigDecimal.ROUND_DOWN);
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
+				BigDecimal billAmountExchange = costValueSum.setScale(4, RoundingMode.DOWN);
 				smallBagCostAllocationDetailEntity.setBillAmountExchange(billAmountExchange);
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();

@@ -1066,8 +1066,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         BigDecimal estimatedBillingWeight = Objects.nonNull(estimatedListDTO.getBillingWeight()) ? estimatedListDTO.getBillingWeight():BigDecimal.ZERO;
 
         // 重新计算实际总数
-        actualListDTO.setTotalLogisticsCost(MathUtil.scaleToSix(actualShippingCostExchange.add(actualDeclareCostExchange).add(actualOtherCostExchange).add(actualOtherTaxCostExchange), BigDecimal.ROUND_DOWN));
-        estimatedListDTO.setTotalLogisticsCost(MathUtil.scaleToSix(estimatedShippingCostExchange.add(estimatedDeclareCostExchange).add(estimatedOtherCostExchange).add(estimatedOtherTaxCostExchange), BigDecimal.ROUND_DOWN));
+        actualListDTO.setTotalLogisticsCost(actualShippingCostExchange.add(actualDeclareCostExchange).add(actualOtherCostExchange).add(actualOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
+        estimatedListDTO.setTotalLogisticsCost(estimatedShippingCostExchange.add(estimatedDeclareCostExchange).add(estimatedOtherCostExchange).add(estimatedOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
         // 重新计算差异值
         // 总物流费用
         // 实际重量【箱包装重量】
@@ -1077,19 +1077,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 计费重
         diffListDTO.setBillingWeight(actualBillingWeight.subtract(estimatedBillingWeight));
         // 物流运费用【预计物流费用】
-        diffListDTO.setShippingCost(MathUtil.scaleToSix(actualShippingCostExchange.subtract(estimatedShippingCostExchange), BigDecimal.ROUND_DOWN));
+        diffListDTO.setShippingCost(actualShippingCostExchange.subtract(estimatedShippingCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setShippingCostCurrency("CNY");
         diffListDTO.setShippingCostCurrencySymbol(idSymbolMap.get("CNY"));
         // 报关费用【预计报关费用】
-        diffListDTO.setDeclareCost(MathUtil.scaleToSix(actualDeclareCostExchange.subtract(estimatedDeclareCostExchange), BigDecimal.ROUND_DOWN));
+        diffListDTO.setDeclareCost(actualDeclareCostExchange.subtract(estimatedDeclareCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setDeclareCostCurrency("CNY");
         diffListDTO.setDeclareCostCurrencySymbol(idSymbolMap.get("CNY"));
         // 其他费用【预计其他费用】
-        diffListDTO.setOtherCost(MathUtil.scaleToSix(actualOtherCostExchange.subtract(estimatedOtherCostExchange), BigDecimal.ROUND_DOWN));
+        diffListDTO.setOtherCost(actualOtherCostExchange.subtract(estimatedOtherCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setOtherCostCurrency("CNY");
         diffListDTO.setOtherCostCurrencySymbol(idSymbolMap.get("CNY"));
         //其他税费
-        diffListDTO.setOtherTaxCost(MathUtil.scaleToSix(actualOtherTaxCostExchange.subtract(estimatedOtherTaxCostExchange), BigDecimal.ROUND_DOWN));
+        diffListDTO.setOtherTaxCost(actualOtherTaxCostExchange.subtract(estimatedOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setOtherTaxCurrency("CNY");
         diffListDTO.setOtherTaxCurrencySymbol(idSymbolMap.get("CNY"));
         diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedListDTO.getTotalLogisticsCost()));
@@ -1564,7 +1564,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
 
         // 合计费用
-        record.setTotalLogisticsCost(MathUtil.scaleToSix(totalCost, BigDecimal.ROUND_DOWN));
+        record.setTotalLogisticsCost(totalCost.setScale(4, RoundingMode.DOWN));
     }
 
 
