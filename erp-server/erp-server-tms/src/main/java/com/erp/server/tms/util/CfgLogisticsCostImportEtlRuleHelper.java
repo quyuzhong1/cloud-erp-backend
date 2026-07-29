@@ -125,7 +125,9 @@ public final class CfgLogisticsCostImportEtlRuleHelper {
             return;
         }
         if (Objects.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_POSITIVE.getCode(), type)
-                || Objects.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_NEGATIVE.getCode(), type)) {
+                || Objects.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_NEGATIVE.getCode(), type)
+                || Objects.equals(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode(), type)
+                || Objects.equals(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode(), type)) {
             return;
         }
         if (Objects.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
@@ -245,7 +247,7 @@ public final class CfgLogisticsCostImportEtlRuleHelper {
     }
 
     /**
-     * 兼容历史数据：前端 toPositive/toNegative 等规则会把未用字段存成空字符串。
+     * 兼容历史数据：前端 toPositive/toNegative/positiveToNegative/negativeToPositive 等规则会把未用字段存成空字符串。
      */
     private static JSONArray stripBlankStringFields(JSONArray data) {
         JSONArray sanitizedData = new JSONArray(data.size());

@@ -3666,6 +3666,36 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return LogisticsCostImportRowValueHelper.cleanFieldValue(value, detail, rowData, headMap);
     }
 
+    /**
+     * 按符号条件转换数值。
+     * <p>正数转为负数：仅当数值大于 0 时取反；负数转为正数：仅当数值小于 0 时取绝对值。非数值原样返回。</p>
+     *
+     * @param value              原始文本
+     * @param positiveToNegative true=正数转为负数，false=负数转为正数
+     * @return 转换后的文本
+     */
+    private String convertNumberBySign(String value, boolean positiveToNegative) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return value;
+        }
+        try {
+            BigDecimal number = new BigDecimal(value.trim());
+            int signum = number.signum();
+            if (positiveToNegative) {
+                if (signum <= 0) {
+                    return value;
+                }
+                return number.negate().stripTrailingZeros().toPlainString();
+            }
+            if (signum >= 0) {
+                return value;
+            }
+            return number.abs().stripTrailingZeros().toPlainString();
+        } catch (NumberFormatException e) {
+            return value;
+        }
+    }
+
     private void setPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail, String value) {
         LogisticsCostImportRowValueHelper.setPreparedValue(rowData, detail, value);
     }
