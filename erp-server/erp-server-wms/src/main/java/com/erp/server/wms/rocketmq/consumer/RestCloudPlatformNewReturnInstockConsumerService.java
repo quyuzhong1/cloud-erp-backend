@@ -1144,13 +1144,14 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockDetailEntity.setMustQty(0);
 			soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
 			soReturnInstockDetailEntity.setRealQty(detail.getRealQty());
+			int actualQty = detail.getReceiveQty() != null ? detail.getReceiveQty() : 0;
 			if (!soB2cDetails.isEmpty()) {
 				SoB2cDetailEntity soB2cDetailEntity = soB2cDetails.stream()
 						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soB2cDetailEntity)) {
-					BigDecimal amount = MathUtil.multiplyWithTwo(soB2cDetailEntity.getPrice(), detail.getReceiveQty());
+					BigDecimal amount = MathUtil.multiplyWithSix(soB2cDetailEntity.getPrice(), BigDecimal.valueOf(actualQty));
 					soReturnInstockDetailEntity.setAmount(amount);
 					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
 				} else {
@@ -1163,8 +1164,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soDetailEntity)) {
-					soReturnInstockDetailEntity.setReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), detail.getReceiveQty()));
-					soReturnInstockDetailEntity.setTaxReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getTaxPrice(), detail.getReceiveQty()));
+					soReturnInstockDetailEntity.setReturnAmount(MathUtil.multiplyWithSix(soDetailEntity.getPrice(), BigDecimal.valueOf(actualQty)));
+					soReturnInstockDetailEntity.setTaxReturnAmount(MathUtil.multiplyWithSix(soDetailEntity.getTaxPrice(), BigDecimal.valueOf(actualQty)));
 				} else {
 					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
 					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
