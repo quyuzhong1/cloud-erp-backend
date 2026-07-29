@@ -140,6 +140,10 @@ public class LogisticsCostImportFieldRuleTest {
                 "mode", CfgLogisticsCostImportEtlSubstringModeEnum.ENGLISH.getCode())), rowData, headMap));
         assertEquals("12.5", clean(service, "-12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.TO_POSITIVE.getCode())), rowData, headMap));
         assertEquals("-12.5", clean(service, "12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.TO_NEGATIVE.getCode())), rowData, headMap));
+        assertEquals("-12.5", clean(service, "12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode())), rowData, headMap));
+        assertEquals("-12.5", clean(service, "-12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode())), rowData, headMap));
+        assertEquals("12.5", clean(service, "-12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode())), rowData, headMap));
+        assertEquals("12.5", clean(service, "12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode())), rowData, headMap));
         assertEquals("custom", clean(service, "", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
                 "mode", CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), "fillValue", "custom")), rowData, headMap));
         assertEquals("88", clean(service, "", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
