@@ -52,6 +52,7 @@ public class ProductCustomsDTO {
 
     /**
      * 税率
+     * <p>产品需求：小数精度升级统一 @Digits(18,6)，非单独金额字段域约束调整。
      */
     @Digits(integer = 18, fraction = 6,message = "税率整数位不能超过18位，小数位不能超过6位")
     private BigDecimal taxRate;
@@ -408,6 +409,7 @@ public class ProductCustomsDTO {
 
         /**
          * 目的国关税税率%
+         * <p>产品需求：目的国各类税率随精度升级统一 @Digits(18,6)，保留原 0~100 业务校验即可。
          */
 
         @Min(value = 0, message = "目的国关税税率不能为负数")

@@ -243,7 +243,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     viewDTO.setAdvicePrice(BigDecimal.ZERO);
                 }else{
                     //原捆绑商品真实售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的真实售价金额
-                    BigDecimal amount = viewDTO.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
+                    BigDecimal amount = viewDTO.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
                     viewDTO.setAmount(amount);
                     remainAmount = remainAmount.subtract(amount);
                     //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
@@ -251,7 +251,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     viewDTO.setAdvicePrice(advancePrice);
                     remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                 }
-                viewDTO.setPrice(viewDTO.getAmount().divide(new BigDecimal(viewDTO.getQty()),4, RoundingMode.HALF_UP));
+                viewDTO.setPrice(viewDTO.getAmount().divide(new BigDecimal(viewDTO.getQty()), MathUtil.scaleSix, RoundingMode.HALF_UP));
             }
         }
         return resultList;
@@ -486,7 +486,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         soB2cDetailEntity.setAdvicePrice(BigDecimal.ZERO);
                     }else{
                         //原捆绑商品真实售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的真实售价金额
-                        BigDecimal amount = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
+                        BigDecimal amount = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
                         soB2cDetailEntity.setAmount(amount);
                         remainAmount = remainAmount.subtract(amount);
                         //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
@@ -494,7 +494,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         soB2cDetailEntity.setAdvicePrice(advancePrice);
                         remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                     }
-                    soB2cDetailEntity.setPrice(soB2cDetailEntity.getAmount().divide(new BigDecimal(soB2cDetailEntity.getQty()),4, RoundingMode.HALF_UP));
+                    soB2cDetailEntity.setPrice(soB2cDetailEntity.getAmount().divide(new BigDecimal(soB2cDetailEntity.getQty()), MathUtil.scaleSix, RoundingMode.HALF_UP));
                 }
 
                 //封装平台sku信息

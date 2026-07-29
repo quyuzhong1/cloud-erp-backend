@@ -78,6 +78,7 @@ public class CfgSettingDTO implements Serializable {
         /**
          * 超时预警时间
          * HOUR:小时
+         * <p>产品需求：小数精度升级统一 @Digits(18,6)，非金额类字段按产品确认保留六位校验。
          */
         @NotNull(message = "预警时间不能为空")
         @Digits(integer = 18, fraction = 6, message = "预警时间整数位不能超过18位，小数位不能超过6位")

@@ -1221,7 +1221,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     					nowAmount = amount.subtract(addAmount);
     					nowAllAmountLocalCurrency = allAmountLocalCurrency.subtract(addAllAmountLocalCurrency);
         			}else {
-        				nowAmount = amount.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
+        				nowAmount = MathUtil.divideWithSix(amount.multiply(positionGoodsCount), sum, BigDecimal.ROUND_DOWN);
         				nowAllAmountLocalCurrency = MathUtil.divideWithSix(allAmountLocalCurrency.multiply(positionGoodsCount), sum, BigDecimal.ROUND_DOWN);
         			}
         			map.put(recId, new Pair<>(nowAmount, nowAllAmountLocalCurrency));
