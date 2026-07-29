@@ -209,6 +209,8 @@ public final class LogisticsCostImportRowValueHelper {
                                          JSONObject rowData,
                                          Map<Integer, String> headMap) {
         String result = ObjectUtil.isEmpty(value) ? "" : String.valueOf(value);
+        // 正数转负数 / 负数转正数互斥，命中其一后跳过另一条
+        boolean signOrRuleApplied = false;
         for (CfgLogisticsCostImportDetailDTO.EtlRuleDTO rule : getSortedEtlRuleList(detail)) {
             String type = rule.getType();
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(), type)) {
@@ -228,11 +230,17 @@ public final class LogisticsCostImportRowValueHelper {
                 continue;
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode(), type)) {
-                result = convertNumberBySign(result, true);
+                if (!signOrRuleApplied && matchesNumberSign(result, true)) {
+                    result = convertNumberBySign(result, true);
+                    signOrRuleApplied = true;
+                }
                 continue;
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode(), type)) {
-                result = convertNumberBySign(result, false);
+                if (!signOrRuleApplied && matchesNumberSign(result, false)) {
+                    result = convertNumberBySign(result, false);
+                    signOrRuleApplied = true;
+                }
                 continue;
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
@@ -242,6 +250,25 @@ public final class LogisticsCostImportRowValueHelper {
             throw new ServiceException("未知的 ETL 清洗规则类型：" + type);
         }
         return result;
+    }
+
+    /**
+     * 判断文本是否为符合符号条件的数值。
+     *
+     * @param value              原始文本
+     * @param positiveToNegative true=要求正数，false=要求负数
+     * @return 符合条件返回 true
+     */
+    private static boolean matchesNumberSign(String value, boolean positiveToNegative) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return false;
+        }
+        try {
+            int signum = new BigDecimal(value.trim()).signum();
+            return positiveToNegative ? signum > 0 : signum < 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public static boolean isVerticalCostItem(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList) {
