@@ -89,7 +89,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             throw e;
         } catch (Exception e) {
             log.error("redis虚拟仓库存交易失败", e);
-            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
+            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED, e.getMessage());
         } finally {
             if (unlockInFinally && unallocLock != null) {
                 inventoryRedisUtil.unLock(unallocLock);
@@ -139,7 +139,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             throw e;
         } catch (Exception e) {
             log.error("redis虚拟仓库存交易失败", e);
-            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
+            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED, e.getMessage());
         }
     }
 
