@@ -1221,13 +1221,16 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String soId;
         try {
             soId = soInfoService.add(addDTO);
-            // 创建人与展会订单创建人保持一致（收款单可选销售订单依赖创建人）
+            // 创建人与展会订单创建人保持一致（收款单可选销售订单依赖创建人）；走 updateById + @Version，避免无版本条件覆盖
             if (StringUtils.isNotBlank(soId) && StringUtils.isNotBlank(entity.getCreateUserId())) {
-                soInfoService.lambdaUpdate()
-                        .set(SoInfoEntity::getCreateUserId, entity.getCreateUserId())
-                        .set(SoInfoEntity::getCreateUserName, entity.getCreateUserName())
-                        .eq(SoInfoEntity::getId, soId)
-                        .update();
+                SoInfoEntity soInfo = soInfoService.getById(soId);
+                if (soInfo != null) {
+                    soInfo.setCreateUserId(entity.getCreateUserId());
+                    soInfo.setCreateUserName(entity.getCreateUserName());
+                    if (!soInfoService.updateById(soInfo)) {
+                        throw new ServiceException("回写销售订单创建人失败，请重试");
+                    }
+                }
             }
         }catch (Exception e) {
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
