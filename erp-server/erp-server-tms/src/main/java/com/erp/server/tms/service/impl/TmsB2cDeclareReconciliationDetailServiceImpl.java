@@ -343,7 +343,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         	}
         	rateMap.put(currency, rate);
             TmsCostDetailDTO.UpdateDTO dgDto = new TmsCostDetailDTO.UpdateDTO();
-            dgDto.setCostValue(MathUtil.divideWithSix(unitDgFee, rate));
+            dgDto.setCostValue(unitDgFee.divide(rate , 4 , RoundingMode.HALF_UP));
             dgDto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
             dgDto.setCfgCostId(dgCostId);
             dgDto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
@@ -351,7 +351,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     		updateList.add(dgDto);
     		
     		TmsCostDetailDTO.UpdateDTO xgDto = new TmsCostDetailDTO.UpdateDTO();
-    		xgDto.setCostValue(MathUtil.divideWithSix(unitXgFee, rate));
+    		xgDto.setCostValue(unitXgFee.divide(rate , 4 , RoundingMode.HALF_UP));
     		xgDto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
     		xgDto.setCfgCostId(xgCostId);
     		xgDto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());

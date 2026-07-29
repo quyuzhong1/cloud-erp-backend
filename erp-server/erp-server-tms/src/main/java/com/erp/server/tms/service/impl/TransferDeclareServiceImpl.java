@@ -1298,7 +1298,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							rateMap.put(key, rate);
 						}
 						transferDeclareCostAllocationDetailEntity.setBillAmount(costValueSum);
-						BigDecimal billAmountExchange = MathUtil.multiplyWithSix(transferDeclareCostAllocationDetailEntity.getBillAmount(), rate, BigDecimal.ROUND_DOWN);
+						BigDecimal billAmountExchange = transferDeclareCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4, RoundingMode.DOWN);
 						transferDeclareCostAllocationDetailEntity.setBillAmountExchange(billAmountExchange);
 						transferDeclareCostAllocationDetailEntity.setFeeType(feeType);
 						String feeAllocationType = feeTypeSettingMap.getValue();
