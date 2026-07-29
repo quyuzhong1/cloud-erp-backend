@@ -2461,11 +2461,18 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         setPreparedValue(rowData, amountDetail, cleanedValue);
     }
 
+    /**
+     * 按配置顺序执行字段清洗。
+     * <p>正数转为负数、负数转为正数之间为或级：按当前字段值符号最多生效其一，避免二次转换；
+     * 二者与其它规则类型为并级，仍按顺序依次执行。</p>
+     */
     private String cleanFieldValue(String value,
                                    CfgLogisticsCostImportDetailEntity detail,
                                    JSONObject rowData,
                                    Map<Integer, String> headMap) {
         String result = ObjectUtil.isEmpty(value) ? "" : String.valueOf(value);
+        // 正数转负数 / 负数转正数互斥，命中其一后跳过另一条
+        boolean signOrRuleApplied = false;
         for (com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO rule : getSortedEtlRuleList(detail)) {
             String type = rule.getType();
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(), type)) {
@@ -2485,11 +2492,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 continue;
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode(), type)) {
-                result = convertNumberBySign(result, true);
+                if (!signOrRuleApplied && matchesNumberSign(result, true)) {
+                    result = convertNumberBySign(result, true);
+                    signOrRuleApplied = true;
+                }
                 continue;
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode(), type)) {
-                result = convertNumberBySign(result, false);
+                if (!signOrRuleApplied && matchesNumberSign(result, false)) {
+                    result = convertNumberBySign(result, false);
+                    signOrRuleApplied = true;
+                }
                 continue;
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
@@ -2603,8 +2616,28 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
+     * 判断文本是否为符合符号条件的数值。
+     *
+     * @param value              原始文本
+     * @param positiveToNegative true=要求正数，false=要求负数
+     * @return 符合条件返回 true
+     */
+    private boolean matchesNumberSign(String value, boolean positiveToNegative) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return false;
+        }
+        try {
+            int signum = new BigDecimal(value.trim()).signum();
+            return positiveToNegative ? signum > 0 : signum < 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
      * 按符号条件转换数值。
-     * <p>正数转为负数：仅当数值大于 0 时取反；负数转为正数：仅当数值小于 0 时取绝对值。非数值原样返回。</p>
+     * <p>正数转为负数：仅当数值大于 0 时取反；负数转为正数：仅当数值小于 0 时取绝对值。非数值原样返回。
+     * 与另一符号转换规则同时配置时为或级处理，由 {@link #cleanFieldValue} 保证最多生效其一。</p>
      *
      * @param value              原始文本
      * @param positiveToNegative true=正数转为负数，false=负数转为正数

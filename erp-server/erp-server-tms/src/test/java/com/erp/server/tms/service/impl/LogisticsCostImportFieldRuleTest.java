@@ -144,6 +144,28 @@ public class LogisticsCostImportFieldRuleTest {
         assertEquals("-12.5", clean(service, "-12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode())), rowData, headMap));
         assertEquals("12.5", clean(service, "-12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode())), rowData, headMap));
         assertEquals("12.5", clean(service, "12.5", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode())), rowData, headMap));
+        // 正数转负数、负数转正数同时配置：按值符号或级择一，不做二次转换
+        assertEquals("-12.5", clean(service, "12.5", detailWithRules(
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode())), rowData, headMap));
+        assertEquals("12.5", clean(service, "-12.5", detailWithRules(
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode())), rowData, headMap));
+        // 与为空填充并级：符号或级规则命中后，填充规则仍生效
+        assertEquals("-12.5", clean(service, "12.5", detailWithRules(
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
+                        "mode", CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), "fillValue", "custom")), rowData, headMap));
+        assertEquals("custom", clean(service, "", detailWithRules(
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.POSITIVE_TO_NEGATIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
+                        "mode", CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), "fillValue", "custom")), rowData, headMap));
+        assertEquals("12.5", clean(service, "-12.5", detailWithRules(
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.NEGATIVE_TO_POSITIVE.getCode()),
+                rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
+                        "mode", CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), "fillValue", "custom")), rowData, headMap));
         assertEquals("custom", clean(service, "", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
                 "mode", CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), "fillValue", "custom")), rowData, headMap));
         assertEquals("88", clean(service, "", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(),
