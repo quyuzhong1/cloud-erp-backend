@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -79,8 +80,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
-        this.validateDbCategoryCurrency(mainId);
-        //操作���志
+        if (!skipCategoryCurrencyValidate(dictCostAttributionEnum)) {
+            this.validateDbCategoryCurrency(mainId);
+        }
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
         return saveBatch;
@@ -95,8 +97,8 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         }
         List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
 
-        //自发货要根据id判断删除
-        if (DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) && !isImport) {
+        //尾程（自发货/平台发货）要根据id判断删除
+        if (isLastMileCostAttribution(dictCostAttributionEnum) && !isImport) {
             List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
 
             List<String> deleteIds = getDeleteIds(list, oldList);
@@ -143,8 +145,26 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
-        this.validateDbCategoryCurrency(mainId);
+        // 尾程费用（含自发货）不拦同大类原币；头程/报关仍校验
+        if (!skipCategoryCurrencyValidate(dictCostAttributionEnum)) {
+            this.validateDbCategoryCurrency(mainId);
+        }
         return saveBatch;
+    }
+
+    /**
+     * 尾程费用单据归属：自发货 / 平台发货。
+     */
+    private boolean isLastMileCostAttribution(DictCostAttributionEnum attribution) {
+        return DictCostAttributionEnum.SELF_DELIVER.equals(attribution)
+                || DictCostAttributionEnum.LAST_MILE.equals(attribution);
+    }
+
+    /**
+     * 尾程费用（含自发货费用单）不做同大类原币一致性校验。
+     */
+    private boolean skipCategoryCurrencyValidate(DictCostAttributionEnum attribution) {
+        return isLastMileCostAttribution(attribution);
     }
 
     private void validateDbCategoryCurrency(String mainId) {
@@ -168,6 +188,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 		}
     }
 
+    /**
+     * 校验同费用分类下原币是否一致（供头程/报关等非尾程入口前置校验使用）。
+     */
     @Override
     public Set<String> validateCategoryCurrency(List<TmsCostDetailEntity> list){
     	Set<String> set = new HashSet<>();
@@ -301,10 +324,11 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                     LogisticsBillCostEntity costEntity = logisticsBillCostService.getById(mainId);
                     currency = null == costEntity ? "" : costEntity.getCurrency();
                 } else {
-                    currency = "CNY";
+                    currency = CurrencyEnum.CNY.getCurrencyCode();
                 }
                break;
             case SELF_DELIVER:
+            case LAST_MILE:
                 LogisticsBillCostEntity mainEntity = logisticsBillCostService.getById(mainId);
                 currency = ObjectUtil.isEmpty(mainEntity) ? "" : mainEntity.getCurrency();
                 break;
@@ -327,7 +351,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         Map<String, String> costMap = CollUtil.isEmpty(tmsCfgCostList) ? new HashMap<>() : tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getCostName));
 
         Map<String, BigDecimal> rateMap = new HashMap<>();
-        rateMap.put("CNY", BigDecimal.ONE);
+        rateMap.put(CurrencyEnum.CNY.getCurrencyCode(), BigDecimal.ONE);
         for (TmsCostDetailEntity entity : list) {
             entity.setMainId(mainId);
             String costCurrency = entity.getCurrency();
@@ -348,6 +372,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             }
             //汇率
             entity.setExchangeRate(exchangeRate);
+            fillLocalCurrencyFields(entity);
             //更新数据无类型默认实际
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
             //费用名称
@@ -364,6 +389,16 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("编辑了一个费用【{}】,费用值【{}】，币别【{}】",entity.getCostName(),entity.getCostValue(),entity.getCurrency()), ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(),entity.getId(),"编辑操作");
             }
         }
+    }
+
+    /**
+     * 按原币费用值与汇率回填本位币别、本位币费用值。
+     */
+    private void fillLocalCurrencyFields(TmsCostDetailEntity entity) {
+        entity.setLocalCurrency(CurrencyEnum.CNY.getCurrencyCode());
+        BigDecimal costValue = entity.getCostValue() == null ? BigDecimal.ZERO : entity.getCostValue();
+        BigDecimal exchangeRate = entity.getExchangeRate() == null ? BigDecimal.ONE : entity.getExchangeRate();
+        entity.setCostValueLocalCurrency(costValue.multiply(exchangeRate));
     }
 
     /**
@@ -388,6 +423,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     public boolean updateActual0ByMainId(List<String> delActualCostIds) {
         return this.lambdaUpdate()
                 .set(TmsCostDetailEntity::getCostValue, BigDecimal.ZERO)
+                .set(TmsCostDetailEntity::getCostValueLocalCurrency, BigDecimal.ZERO)
                 .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
                 .in(TmsCostDetailEntity::getMainId, delActualCostIds)
                 .update();
@@ -403,6 +439,12 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 
     @Override
     public Boolean batchImportAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum) {
+        return batchImportAdd(costDetailList, dictCostAttributionEnum, null);
+    }
+
+    @Override
+    public Boolean batchImportAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum,
+                                  Map<String, String> currencyMap) {
         if (CollectionUtils.isEmpty(costDetailList)) {
             return Boolean.TRUE;
         }
@@ -413,14 +455,14 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         Map<String, List<TmsCostDetailEntity>> mainIdMap = list.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
         Set<String> mainIds = mainIdMap.keySet();
 
-        Map<String, String> currencyMap = buildCurrencyMap(mainIdMap, dictCostAttributionEnum);
+        Map<String, String> resolvedCurrencyMap = resolveCurrencyMap(mainIdMap, dictCostAttributionEnum, currencyMap);
         List<String> cfgCostIdList = list.stream().map(TmsCostDetailEntity::getCfgCostId).distinct().collect(Collectors.toList());
         Map<String, String> costNameMap = buildCostNameMap(cfgCostIdList);
         Map<String, Map<String, TmsCostDetailEntity>> oldDetailMap = buildOldDetailMap(mainIds, cfgCostIdList);
 
         for (Map.Entry<String, List<TmsCostDetailEntity>> entry : mainIdMap.entrySet()) {
             String mainId = entry.getKey();
-            String currency = currencyMap.get(mainId);
+            String currency = resolvedCurrencyMap.get(mainId);
             if (ObjectUtil.isEmpty(currency)) {
                 log.error("未找到【{}】数据币别,mainId = {}", dictCostAttributionEnum.getName(), mainId);
                 throw new ServiceException(CharSequenceUtil.format("未找到【{}】数据币别", dictCostAttributionEnum.getName()));
@@ -434,11 +476,29 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if (!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
-        validateDbCategoryCurrencyBatch(mainIds);
-        //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
         return saveBatch;
+    }
+
+    /**
+     * 格式化币别；优先复用调用方传入的 currencyMap，避免重复查询主单。
+     */
+    private Map<String, String> resolveCurrencyMap(Map<String, List<TmsCostDetailEntity>> mainIdMap,
+                                                   DictCostAttributionEnum dictCostAttributionEnum,
+                                                   Map<String, String> currencyMap) {
+        if (!isLastMileCostAttribution(dictCostAttributionEnum)) {
+            throw new ServiceException("费用来源类型错误");
+        }
+        Set<String> mainIds = mainIdMap.keySet();
+        if (CollUtil.isNotEmpty(currencyMap) && currencyMap.keySet().containsAll(mainIds)) {
+            Map<String, String> reused = new HashMap<>(mainIds.size());
+            for (String mainId : mainIds) {
+                reused.put(mainId, currencyMap.get(mainId));
+            }
+            return reused;
+        }
+        return buildCurrencyMap(mainIdMap, dictCostAttributionEnum);
     }
 
     /**
@@ -449,6 +509,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         Set<String> mainIds = mainIdMap.keySet();
         switch (dictCostAttributionEnum) {
             case SELF_DELIVER:
+            case LAST_MILE:
                 logisticsBillCostService.listByIds(mainIds).forEach(e -> currencyMap.put(e.getId(), e.getCurrency()));
                 break;
             default:
@@ -507,6 +568,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 throw new ServiceException("汇率为空，请维护汇率后再提交");
             }
             entity.setExchangeRate(exchangeRate);
+            fillLocalCurrencyFields(entity);
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
             entity.setCostName(costNameMap.get(entity.getCfgCostId()));
             TmsCostDetailEntity oldDetailEntity = oldDetailMap.get(entity.getCfgCostId() + "_" + entity.getType());
@@ -529,9 +591,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     private Map<String, BigDecimal> batchGetRates(Set<String> currencySet) {
         Map<String, BigDecimal> rateMap = new HashMap<>();
         String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        rateMap.put("CNY", BigDecimal.ONE);
+        rateMap.put(CurrencyEnum.CNY.getCurrencyCode(), BigDecimal.ONE);
         for (String curr : currencySet) {
-            if ("CNY".equals(curr)) {
+            if (CurrencyEnum.CNY.getCurrencyCode().equals(curr)) {
                 continue;
             }
             BigDecimal rate = dmpTaskFeign.getRate(today, curr);
@@ -550,76 +612,16 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
      * @author Will
      * @date: 2026/04/02 19:52
      */
-    private void validateDbCategoryCurrencyBatch(Set<String> mainIds) {
-        if (CollectionUtils.isEmpty(mainIds)) {
-            return;
-        }
-        List<TmsCostDetailEntity> list = lambdaQuery().in(TmsCostDetailEntity::getMainId, mainIds).list();
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        List<String> cfgCostIds = list.stream().map(TmsCostDetailEntity::getCfgCostId).distinct().collect(Collectors.toList());
-        Map<String, String> costCategoryMap = tmsCfgCostService.listByIds(cfgCostIds).stream()
-                .collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getDictCostCategory));
-        Map<String, List<TmsCostDetailEntity>> listByMainId = list.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
-        for (Map.Entry<String, List<TmsCostDetailEntity>> entry : listByMainId.entrySet()) {
-            Set<String> categoryList = validateCategoryCurrency(entry.getValue(), costCategoryMap);
-            if (!categoryList.isEmpty()) {
-                throw new ServiceException(buildCategoryErrorMsg(categoryList));
-            }
-        }
-    }
-
-    /**
-     * @param list
-     * @param costCategoryMap
-     * @return Set<String>
-     * @description: 校验分类币别
-     * @author Will
-     * @date: 2026/04/02 19:52
-     */
-    private Set<String> validateCategoryCurrency(List<TmsCostDetailEntity> list, Map<String, String> costCategoryMap) {
-        Set<String> set = new HashSet<>();
-        if (CollUtil.isEmpty(list)) {
-            return set;
-        }
-        Map<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMaps = list.stream()
-                .filter(l -> l.getCostValue().compareTo(BigDecimal.ZERO) != 0)
-                .collect(Collectors.groupingBy(v -> costCategoryMap.get(v.getCfgCostId()) + "_" + v.getType()));
-        for (Map.Entry<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMap : costCategoryAddDataDTOMaps.entrySet()) {
-            List<TmsCostDetailEntity> costCategoryList = costCategoryAddDataDTOMap.getValue();
-            String categoryCurrency = costCategoryList.get(0).getCurrency();
-            if (costCategoryList.stream().anyMatch(d -> !categoryCurrency.equals(d.getCurrency()))) {
-                set.add(costCategoryMap.get(costCategoryList.get(0).getCfgCostId()) + "_" + costCategoryList.get(0).getType());
-            }
-        }
-        return set;
-    }
-
-    /**
-     * @param categoryList
-     * @return String
-     * @description: 构建分类错误信息
-     * @author Will
-     * @date: 2026/04/02 19:52
-     */
-    private String buildCategoryErrorMsg(Set<String> categoryList) {
-        StringBuilder sb = new StringBuilder();
-        for (String category : categoryList) {
-            sb.append("【");
-            String[] split = category.split("_");
-            sb.append(AllocationFeeTypeEnum.getName(split[0]));
-            sb.append("-");
-            sb.append(LogisticsBillCostTypeEnum.getName(split[1]));
-            sb.append("】");
-            sb.append("、");
-        }
-        return sb.substring(0, sb.length() - 1) + "分类下所有一级费用币种必须一致";
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean batchImportUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum, Boolean isImport) {
+        return batchImportUpdate(costDetailList, dictCostAttributionEnum, isImport, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean batchImportUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum, Boolean isImport) {
+    public Boolean batchImportUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum,
+                                     Boolean isImport, Map<String, String> currencyMap) {
         if (CollectionUtils.isEmpty(costDetailList)) {
             return Boolean.TRUE;
         }
@@ -630,8 +632,8 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         Map<String, List<TmsCostDetailEntity>> mainIdMap = list.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
         Set<String> mainIds = mainIdMap.keySet();
 
-        //删除逻辑: 自发货
-        if (DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) && !Boolean.TRUE.equals(isImport)) {
+        //删除逻辑: 尾程（自发货/平台发货）
+        if (isLastMileCostAttribution(dictCostAttributionEnum) && !Boolean.TRUE.equals(isImport)) {
             List<TmsCostDetailEntity> oldList = this.listByMainIdList(new ArrayList<>(mainIds));
             Map<String, List<TmsCostDetailEntity>> oldMap = oldList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
             List<String> deleteIds = new ArrayList<>();
@@ -676,14 +678,14 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             }
         }
 
-        Map<String, String> currencyMap = buildCurrencyMap(mainIdMap, dictCostAttributionEnum);
+        Map<String, String> resolvedCurrencyMap = resolveCurrencyMap(mainIdMap, dictCostAttributionEnum, currencyMap);
         List<String> cfgCostIdList = list.stream().map(TmsCostDetailEntity::getCfgCostId).distinct().collect(Collectors.toList());
         Map<String, String> costNameMap = buildCostNameMap(cfgCostIdList);
         Map<String, Map<String, TmsCostDetailEntity>> oldDetailMap = buildOldDetailMap(mainIds, cfgCostIdList);
 
         for (Map.Entry<String, List<TmsCostDetailEntity>> entry : mainIdMap.entrySet()) {
             String mainId = entry.getKey();
-            String currency = currencyMap.get(mainId);
+            String currency = resolvedCurrencyMap.get(mainId);
             if (ObjectUtil.isEmpty(currency)) {
                 log.error("未找到【{}】数据币别,mainId = {}", dictCostAttributionEnum.getName(), mainId);
                 throw new ServiceException(CharSequenceUtil.format("未找到【{}】数据币别", dictCostAttributionEnum.getName()));
@@ -702,7 +704,6 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if (!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
-        validateDbCategoryCurrencyBatch(mainIds);
         return saveBatch;
     }
 }
