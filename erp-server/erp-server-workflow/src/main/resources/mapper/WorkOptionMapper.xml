@@ -116,6 +116,8 @@
         <if test="params.status == 'waitHandle'">
             AND ptm.task_status = 'approveIng'
             and pm.approve_status = 'approveIng'
+            <!-- 已终止/已完成流程不进待办；脏数据可能 approve_status 仍为 approveIng -->
+            AND pm.process_status = 'running'
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">
@@ -195,6 +197,9 @@
         WHERE pm.is_deleted = FALSE
         <if test="params.status == 'waitHandle'">
             AND ptm.task_status = 'approveIng'
+            AND pm.approve_status = 'approveIng'
+            <!-- 与 approveView 一致：排除已终止/已完成，避免脏数据计入待办数量 -->
+            AND pm.process_status = 'running'
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">

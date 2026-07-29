@@ -522,12 +522,21 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
         }
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
-            // 审核不通过
+            // 审核不通过：关闭当前节点；若仍有并行节点存活则终止整个实例，避免 process_status=termination 但 approve_status 仍为 approveIng
             runtimeService.createProcessInstanceModification(processInstanceId)
-                    //关闭相关任务
                     .cancelAllForActivity(currentTask.getTaskDefinitionKey())
                     .setAnnotation(dto.getComment())
                     .execute();
+            ProcessInstance aliveInstance = runtimeService.createProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
+            if (aliveInstance != null && !aliveInstance.isEnded()) {
+                try {
+                    runtimeService.deleteProcessInstance(processInstanceId, dto.getComment());
+                } catch (ProcessEngineException e) {
+                    throw new ServiceException(ApiError.WF_TASK_COMPLETE_FAILED, e.getMessage());
+                }
+            }
         }
         // 保存流程任务数据
         processManagementService.updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment(), dto.getVariablesMap());
@@ -709,10 +718,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         LocalDateTime endTime = null;
         String nextNodeId = "";
         if(null != endTimeDate){
-            // 流程结束
-            statusEnum = ProcessStatusEnum.FINISH;
+            // 流程结束：驳回保持 termination，通过则为 finish
+            if (!ApproveTypeEnum.REJECT.equals(approveType)) {
+                statusEnum = ProcessStatusEnum.FINISH;
+            }
             endTime = LocalDateUtil.date2LocalDateTime(endTimeDate);
-        }else {
+        }else if (ApproveTypeEnum.REJECT.equals(approveType)) {
+            // 驳回后引擎未结束（历史脏路径）时仍收口审核状态与结束时间，避免首页待办继续露出
+            endTime = LocalDateTime.now();
+        } else {
             // 查询下一个任务
             ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
             if(null != activityInstance) {
@@ -725,7 +739,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .set(ProcessManagementEntity::getCurActivityId, nextNodeId)
                 .set(null != endTime, ProcessManagementEntity::getEndTime, endTime)
                 .set(null != endTime && ApproveTypeEnum.PASS.equals(approveType) , ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
-                .set(null != endTime && ApproveTypeEnum.REJECT.equals(approveType) , ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.REJECT)
+                .set(ApproveTypeEnum.REJECT.equals(approveType), ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.REJECT)
                 .eq(ProcessManagementEntity::getId, managementId)
                 .update();
         if (!update){
