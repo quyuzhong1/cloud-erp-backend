@@ -43,6 +43,8 @@ public class AliExpressOfficialWarehouseChildService {
 
     private static final int MAX_TRADE_IDS_PER_REQUEST = 5;
     private static final String OUTSTOCK_ITEMS = "official_outstock_items";
+    private static final String CAINIAO_LOGISTICS_PREFIX = "CAINIAO_";
+    private static final String AE_OFFICIAL_WAREHOUSE_LOGISTICS_PREFIX = "AE_LOCAL_";
 
     @Resource
     private AliExpressWarehouseInventoryService warehouseInventoryService;
@@ -173,9 +175,8 @@ public class AliExpressOfficialWarehouseChildService {
                     if (CollUtil.isEmpty(childOrders)) {
                         return false;
                     }
-                    return cainiaoWarehouse
-                            ? childOrders.stream().allMatch(this::isCainiaoWarehouseItem)
-                            : childOrders.stream().noneMatch(this::isCainiaoWarehouseItem);
+                    boolean cainiaoFfoOrder = isCainiaoFfoOrder(detail, childOrders);
+                    return cainiaoWarehouse == cainiaoFfoOrder;
                 })
                 .collect(Collectors.toList());
     }
@@ -276,8 +277,7 @@ public class AliExpressOfficialWarehouseChildService {
                                                      Map<String, Object> parentOrder,
                                                      Map<String, Object> detail,
                                                      List<Map<String, Object>> childOrders) {
-        boolean officialWarehouseOrder = childOrders.stream()
-                .noneMatch(this::isCainiaoWarehouseItem);
+        boolean officialWarehouseOrder = !isCainiaoFfoOrder(detail, childOrders);
         if (!officialWarehouseOrder) {
             log.debug("跳过非官方仓速卖通海外托管订单, orderId={}", orderId);
             return false;
@@ -293,6 +293,56 @@ public class AliExpressOfficialWarehouseChildService {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 判断订单是否应使用菜鸟仓 FFO 接口。
+     *
+     * <p>海外托管订单的 {@code logistics_warehouse_type} 可能统一返回
+     * {@code cainiaoInternationalWarehouse}，因此优先按实际物流服务代码区分。
+     * {@code CAINIAO_*} 使用 FFO，{@code AE_LOCAL_*} 使用官方仓库存流水；
+     * 平台未返回物流服务代码时才兼容旧仓型字段。</p>
+     *
+     * @param detail 订单详情
+     * @param childOrders 子订单列表
+     * @return 是否使用菜鸟仓 FFO 接口
+     */
+    private boolean isCainiaoFfoOrder(Map<String, Object> detail,
+                                      List<Map<String, Object>> childOrders) {
+        boolean hasCainiaoService = false;
+        boolean hasAeOfficialWarehouseService = false;
+        for (Map<String, Object> logisticInfo :
+                toMapList(detail.get("logistic_info_list"))) {
+            String serviceName = text(logisticInfo.get("logistics_service_name"));
+            String serviceCode = text(logisticInfo.get("logistics_type_code"));
+            hasCainiaoService = hasCainiaoService
+                    || startsWithIgnoreCase(serviceName, CAINIAO_LOGISTICS_PREFIX)
+                    || startsWithIgnoreCase(serviceCode, CAINIAO_LOGISTICS_PREFIX);
+            hasAeOfficialWarehouseService = hasAeOfficialWarehouseService
+                    || startsWithIgnoreCase(
+                    serviceName, AE_OFFICIAL_WAREHOUSE_LOGISTICS_PREFIX)
+                    || startsWithIgnoreCase(
+                    serviceCode, AE_OFFICIAL_WAREHOUSE_LOGISTICS_PREFIX);
+        }
+        if (hasAeOfficialWarehouseService) {
+            return false;
+        }
+        if (hasCainiaoService) {
+            return true;
+        }
+        return childOrders.stream().allMatch(this::isCainiaoWarehouseItem);
+    }
+
+    /**
+     * 忽略大小写判断物流服务代码前缀。
+     *
+     * @param value 物流服务代码
+     * @param prefix 目标前缀
+     * @return 是否匹配
+     */
+    private boolean startsWithIgnoreCase(String value, String prefix) {
+        return StrUtil.isNotBlank(value)
+                && value.regionMatches(true, 0, prefix, 0, prefix.length());
     }
 
     /**
