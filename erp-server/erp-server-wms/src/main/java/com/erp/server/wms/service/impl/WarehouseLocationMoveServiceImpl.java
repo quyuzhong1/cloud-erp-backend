@@ -1959,8 +1959,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (ApproveStatusEnum.APPROVE_ING.equals(status)) {
             log.warn("爱亚转移单幂等续跑 approve changeAttributeNumber={} moveId={}",
                     changeNo, existed.getId());
-            service.approve(new ApproveOneDTO(existed.getId(), ApproveTypeEnum.PASS.getStatus(),
-                    "爱亚库存状态转化自动审核"));
+            service.approveEnd(new ApproveOneDTO(existed.getId(), ApproveTypeEnum.PASS.getStatus(),
+                    "爱亚库存状态转化自动审核"), existed);
             return existed.getId();
         }
         if (ApproveStatusEnum.REJECT.equals(status)) {
@@ -1974,8 +1974,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
 
     private void submitAndApproveAiyaChangeAttribute(String moveId) {
-        service.submit(moveId);
-        service.approve(new ApproveOneDTO(moveId, ApproveTypeEnum.PASS.getStatus(), "爱亚库存状态转化自动审核"));
+        WarehouseLocationMoveEntity entity = service.getById(moveId);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到仓位移动主单数据");
+        }
+        // 爱亚系统自动库存状态转化，跳过人工审批流程，对齐 PurchaseApplicationServiceImpl#thirdApproveEnd 的系统自动审核模式
+        service.approveEnd(new ApproveOneDTO(moveId, ApproveTypeEnum.PASS.getStatus(), "爱亚库存状态转化自动审核"), entity);
     }
 
     /**
