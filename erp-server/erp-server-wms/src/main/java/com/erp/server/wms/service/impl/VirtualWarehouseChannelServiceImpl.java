@@ -350,15 +350,11 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
 
     @Override
     public List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
-        VirtualWarehouseChannelEntity channelEntity = this.getByPlatform(platformDTO);
-        if (ObjectUtil.isEmpty(channelEntity)) {
+        if (platformDTO == null || CollUtil.isEmpty(platformDTO.getWarehouseIdList())) {
             return Collections.emptyList();
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Collections.singletonList(channelEntity.getVirtualWarehouseId()));
-        if (ObjectUtil.isEmpty(warehouseEntityList)) {
-            return Collections.emptyList();
-        }
-        return warehouseEntityList;
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = baseMapper.listRelationByPlatform(platformDTO);
+        return CollUtil.isEmpty(warehouseEntityList) ? Collections.emptyList() : warehouseEntityList;
     }
 
     @Override
@@ -513,18 +509,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             e.setPartitionIds(partitionIds);
             e.setPartitionIdMd5(Md5Util.md5(CollUtil.isEmpty(partitionIds)? CharSequenceUtil.EMPTY : String.join(",", partitionIds)));
         });
-    }
-
-    /**
-     * 根据关联id和平台查询
-     *
-     * @param platformDTO
-     * @return VirtualWarehouseChannelEntity
-     * @author will
-     * @date 2024/6/12 12:34
-     */
-    private VirtualWarehouseChannelEntity getByPlatform(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
-        return baseMapper.getByPlatform(platformDTO);
     }
 
     /**

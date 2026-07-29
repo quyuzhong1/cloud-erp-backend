@@ -45,11 +45,10 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
 
     List<String> getBindedShopByDictPlatform(String dictPlatform);
     /**
-     *  根据关联id、平台、实体仓库id查询
-     * @author will
-     * @date 2024/6/12 14:20
-     * @param platformDTO
-     * @return List<VirtualWarehouseRelationEntity>
+     * 根据平台/店铺/分区/实体仓匹配虚拟仓，直接返回虚拟仓-实体仓关联列表（单次查询）。
+     *
+     * @param platformDTO 平台、店铺(relationId)、分区、实体仓条件
+     * @return 命中虚拟仓与入参实体仓的关联列表，无匹配时为空列表
      */
     List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
     /**
