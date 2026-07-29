@@ -1947,14 +1947,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (CollUtil.isNotEmpty(packingDetailList)) {
             throw new ServiceException("通邮仓库不支持装箱明细");
         }
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException("产品明细不能为空");
+        }
         TongYouB2bOperationResolver.validateRequiredOperations(warehouseOperationTypeDTOList);
         assertOptionalPdfAttachment(attachList, "订单附件");
         assertOptionalPdfAttachment(outerBoxLabelAttachList, "外箱面单");
         if (Boolean.TRUE.equals(TongYouB2bOperationResolver.resolveRelabel(warehouseOperationTypeDTOList))) {
             assertRequiredPdfAttachment(productLabelAttachList, "产品标签");
-            if (CollUtil.isEmpty(detailList)) {
-                throw new ServiceException("产品明细不能为空");
-            }
             for (com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO detail : detailList) {
                 if (CharSequenceUtil.isBlank(detail.getRelabelSku())) {
                     throw new ServiceException("换标时换标SKU不能为空");
