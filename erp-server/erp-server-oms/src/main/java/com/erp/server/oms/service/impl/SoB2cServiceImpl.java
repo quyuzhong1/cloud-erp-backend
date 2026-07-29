@@ -2331,7 +2331,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.SO_B2C_NOT_APPROVED_DISTRIBUTION_FORBIDDEN, entity.getCode());
         }
-        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
@@ -2458,10 +2457,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
-            if (resultDTO.getIsPlatformShip()) {
-                //更新平台已标发
-                soB2cDetailList.forEach(v -> v.setIsSignShipped(true));
-                soB2cDetailService.updateBatchById(soB2cDetailList);
+            if (Boolean.TRUE.equals(resultDTO.getIsPlatformShip())) {
+                // 按下单标发：按 mainId 直更，避免开头缓存明细 version 被并发抬高后 updateBatchById 乐观锁静默失败
+                boolean updated = soB2cDetailService.lambdaUpdate()
+                        .eq(SoB2cDetailEntity::getMainId, id)
+                        .set(SoB2cDetailEntity::getIsSignShipped, true)
+                        .setSql("version = version + 1")
+                        .update();
+                if (!updated) {
+                    log.warn("获取物流单号后回写平台已标发失败，soB2cId={}, code={}", id, entity.getCode());
+                }
             }
 
             return BatchResultDTO.success(entity.getId(), transportNo, "获取物流单号");
