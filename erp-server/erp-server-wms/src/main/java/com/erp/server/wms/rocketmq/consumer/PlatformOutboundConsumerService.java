@@ -1321,6 +1321,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 // 爱亚侧SKU(platformSkuNo) -> 实际发货数量，一次性构建供下面按SKU O(1)查表比较超发，
                 // 不在明细循环里发起新的查询/远程调用
                 Map<String, Integer> platformSkuActualQtyMap = buildPlatformSkuActualQtyMap(dto);
+                // 循环内只做纯内存判断，超发SKU先收集到本地列表，不在循环里同步调用Feign登记异常：
+                // 一避免同一单多个SKU超发时产生N次远程调用，二避免该"提示性"调用失败时直接抛出异常，
+                // 连带中断本方法、阻断下面 thirdWarehouseCheckAndGenerate 的销售出库单生成
+                List<String> overShipMessages = new ArrayList<>();
                 for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntityList) {
                     //表示有啊
                     SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
@@ -1333,7 +1337,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     addDTO.setSoDetailId(soB2cDetailEntity.getId());
                     Integer deliveryQty = thirdWarehouseDeliveryDetailEntity.getDeliveryQty();
                     addDTO.setPlanQty(deliveryQty);
-                    addDTO.setActualQty(detectOverShipActualQty(mainEntity, thirdWarehouseDeliveryDetailEntity, platformSkuActualQtyMap, deliveryQty, dto));
+                    addDTO.setActualQty(resolveActualQtyAndCollectOverShip(thirdWarehouseDeliveryDetailEntity, platformSkuActualQtyMap, deliveryQty, overShipMessages));
                     addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
                     if(StringUtils.isNotBlank(warehouseId)){
                         addDTO.setWarehouseId(warehouseId);
@@ -1346,6 +1350,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     wantDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(wantDetailList);
+                // 循环外统一登记：整单所有超发SKU合并成一条异常、只发一次Feign调用；
+                // 登记失败只记日志、不向上抛出，避免"提示性"异常影响下面真正的出库单生成
+                reportOverShipIfNeeded(mainEntity, dto, overShipMessages);
             }
             generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
             generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
@@ -1371,8 +1378,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     /**
      * 按爱亚侧 SKU（{@link PlatformOutboundDTO.Item#getProductSku()}，与建单时下发给三方仓的 sku
      * 同口径，等价 {@link ThirdWarehouseDeliveryDetailEntity#getPlatformSkuNo()}，<b>不是</b> ERP
-     * 自身 skuNo）构建"实际发货数量"查找表，一次构建，供 {@link #detectOverShipActualQty} 按 SKU
-     * O(1) 比较，避免在明细循环里重复解析。
+     * 自身 skuNo）构建"实际发货数量"查找表，一次构建，供 {@link #resolveActualQtyAndCollectOverShip}
+     * 按 SKU O(1) 比较，避免在明细循环里重复解析。
      *
      * @param dto 平台出库单DTO（{@code items} 目前仅爱亚出库单会填充，其他平台为空属正常场景）
      * @return 爱亚侧SKU -> 实际发货数量；dto.items 为空时返回空表
@@ -1395,22 +1402,21 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     /**
      * 超发（超量发货）判定：按 {@code platformSkuNo}（爱亚侧SKU，与 {@code platformSkuActualQtyMap}
      * 同口径，见 {@link #buildPlatformSkuActualQtyMap}）比较三方仓实际发货数量与《三方仓发货单》应发
-     * 数量（{@code deliveryQty}）。若实际数量大于应发数量，登记一条"三方仓超发"异常订单（仅提示，
-     * 不阻断销售出库单自动生成/审核），并返回实际数量供该行按实发数量生成出库单明细；否则维持现状，
-     * 返回应发数量。
+     * 数量（{@code deliveryQty}）。若实际数量大于应发数量，把该SKU的超发描述追加进
+     * {@code overShipMessages}（不在此处调用任何远程接口，纯内存判断），并返回实际数量供该行按
+     * 实发数量生成出库单明细；否则维持现状，返回应发数量。异常登记统一由调用方在明细循环结束后
+     * 通过 {@link #reportOverShipIfNeeded} 合并成一条一次性上报，避免逐SKU同步调用Feign。
      *
-     * @param mainEntity                   B2C销售订单主表
      * @param thirdWarehouseDeliveryDetail 三方仓发货单明细（含应发数量、爱亚侧SKU）
      * @param platformSkuActualQtyMap      爱亚侧SKU -> 实际发货数量查找表
      * @param deliveryQty                  应发数量
-     * @param dto                          平台出库单DTO，异常登记时用于记录原始报文
+     * @param overShipMessages             超发SKU描述收集列表（调用方持有，本方法只追加不上报）
      * @return 该明细行应写入销售出库单的实际数量
      */
-    private Integer detectOverShipActualQty(SoB2cEntity mainEntity,
-                                             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetail,
-                                             Map<String, Integer> platformSkuActualQtyMap,
-                                             Integer deliveryQty,
-                                             PlatformOutboundDTO dto) {
+    private Integer resolveActualQtyAndCollectOverShip(ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetail,
+                                                         Map<String, Integer> platformSkuActualQtyMap,
+                                                         Integer deliveryQty,
+                                                         List<String> overShipMessages) {
         String platformSkuNo = thirdWarehouseDeliveryDetail.getPlatformSkuNo();
         if (StringUtils.isBlank(platformSkuNo) || platformSkuActualQtyMap == null || platformSkuActualQtyMap.isEmpty()) {
             return deliveryQty;
@@ -1419,19 +1425,42 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (actualQty == null || deliveryQty == null || actualQty <= deliveryQty) {
             return deliveryQty;
         }
-        String message = StrUtil.format("三方仓超发：SKU【{}】（ERP SKU【{}】）应发数量{}，三方仓实际发货数量{}",
-                platformSkuNo, thirdWarehouseDeliveryDetail.getSkuNo(), deliveryQty, actualQty);
-        log.warn("销售订单{} {}", mainEntity.getCode(), message);
-        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
-                mainEntity.getId(),
-                SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OVER_SHIP.getCode(),
-                JSONUtil.toJsonStr(dto),
-                message,
-                JSONUtil.toJsonStr(dto),
-                thirdWarehouseDeliveryDetail.getId()
-        );
-        soB2cFeign.addSoB2cError(addError);
+        overShipMessages.add(StrUtil.format("SKU【{}】（ERP SKU【{}】）应发数量{}，三方仓实际发货数量{}",
+                platformSkuNo, thirdWarehouseDeliveryDetail.getSkuNo(), deliveryQty, actualQty));
         return actualQty;
+    }
+
+    /**
+     * 把整单所有超发SKU合并成一条"三方仓超发"异常订单登记（仅提示，不阻断销售出库单自动生成/
+     * 审核流程）：一个订单无论有多少SKU超发，只发起一次 {@code soB2cFeign.addSoB2cError} 调用，
+     * 避免 N+1 远程调用；该调用异常整体 try-catch 兜底，失败只记日志、不向上抛出，确保调用方
+     * 后续生成销售出库单（{@code thirdWarehouseCheckAndGenerate}）不受影响。
+     *
+     * @param mainEntity        B2C销售订单主表
+     * @param dto               平台出库单DTO，异常登记时用于记录原始报文
+     * @param overShipMessages  {@link #resolveActualQtyAndCollectOverShip} 收集到的超发SKU描述；为空则不登记
+     */
+    private void reportOverShipIfNeeded(SoB2cEntity mainEntity, PlatformOutboundDTO dto, List<String> overShipMessages) {
+        if (CollectionUtils.isEmpty(overShipMessages)) {
+            return;
+        }
+        String message = "三方仓超发：" + String.join("；", overShipMessages);
+        log.warn("销售订单{} {}", mainEntity.getCode(), message);
+        try {
+            String dtoJson = JSONUtil.toJsonStr(dto);
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                    mainEntity.getId(),
+                    SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OVER_SHIP.getCode(),
+                    dtoJson,
+                    message,
+                    dtoJson,
+                    null
+            );
+            soB2cFeign.addSoB2cError(addError);
+        } catch (Exception e) {
+            log.error("销售订单{} 登记三方仓超发异常失败，仅记录日志不阻断出库单生成，超发详情={}",
+                    mainEntity.getCode(), message, e);
+        }
     }
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
