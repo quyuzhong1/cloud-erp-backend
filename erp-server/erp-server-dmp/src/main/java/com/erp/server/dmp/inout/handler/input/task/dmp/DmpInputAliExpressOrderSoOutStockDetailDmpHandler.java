@@ -14,6 +14,7 @@ import com.common.core.utils.CurrencyUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoOutstockService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -41,6 +43,9 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 	
 	@Resource
 	private DmpSoOutstockService dmpSoOutstockService;
+
+	@Resource
+	private DmpSoDetailService dmpSoDetailService;
 	
 	@Override
 	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(
@@ -62,6 +67,8 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 						f -> f.get("fulfillment_order_no").toString(),
 						f -> f,
 						(left, right) -> left));
+				Map<String, DmpSoOutstockEntity> outstockMap = getOutstockMap(orderNoMainMap.keySet());
+				Map<String, List<DmpSoDetailEntity>> orderDetailMap = getOrderDetailMap(outstockMap.values());
 				for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 					Map<String, Object> mainMap = orderNoMainMap.get(dmpInputMongoChild.get("fulfillment_order_no"));
 					if (mainMap == null) {
@@ -72,13 +79,8 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 					dmpInputMongoChild.put("thirdOrderCode", mainMap.get("trade_order_no"));
 					dmpInputMongoChild.put("platformOrderCode", mainMap.get("trade_order_no"));
 
-					// 价格信息
-					// 明细单价
-					String unitPriceStr = dmpInputMongoChild.getOrDefault("unit_price", "").toString();
-					if (StringUtils.isNotBlank(unitPriceStr)){
-						CurrencyUtil.Money unitPrice = CurrencyUtil.Money.init(unitPriceStr);
-						dmpInputMongoChild.put("currency" ,unitPrice.getCurrency());
-					}
+					fillPriceFields(dmpInputMongoChild);
+					fillOrderDetailFields(dmpInputMongoChild, outstockMap, orderDetailMap);
 
 					// 实际明细支付金额
 					String skuActualPaidAmountStr = dmpInputMongoChild.getOrDefault("sku_actual_paid_amount", "").toString();
@@ -97,6 +99,113 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 			}
 		}
 		return dmpInputMongoChildList;
+	}
+
+	/**
+	 * 查询当前批次发货主单，供发货明细关联原销售订单使用。
+	 *
+	 * @param fulfillmentOrderNoSet 履约单号集合
+	 * @return 履约单号对应的发货主单
+	 */
+	private Map<String, DmpSoOutstockEntity> getOutstockMap(
+			java.util.Set<String> fulfillmentOrderNoSet) {
+		if (CollUtil.isEmpty(fulfillmentOrderNoSet)) {
+			return new HashMap<>();
+		}
+		return dmpSoOutstockService.lambdaQuery()
+				.eq(DmpSoOutstockEntity::getInputTaskId, inputTaskId)
+				.in(DmpSoOutstockEntity::getThirdCode, fulfillmentOrderNoSet)
+				.list()
+				.stream()
+				.collect(Collectors.toMap(
+						DmpSoOutstockEntity::getThirdCode,
+						entity -> entity,
+						(left, right) -> left));
+	}
+
+	/**
+	 * 查询发货主单关联的销售订单明细。
+	 *
+	 * @param outstockList 发货主单集合
+	 * @return 销售订单主表 ID 对应的订单明细
+	 */
+	private Map<String, List<DmpSoDetailEntity>> getOrderDetailMap(
+			java.util.Collection<DmpSoOutstockEntity> outstockList) {
+		List<String> sourceIdList = outstockList.stream()
+				.map(DmpSoOutstockEntity::getSourceId)
+				.filter(StringUtils::isNotBlank)
+				.distinct()
+				.collect(Collectors.toList());
+		if (CollUtil.isEmpty(sourceIdList)) {
+			return new HashMap<>();
+		}
+		return dmpSoDetailService.lambdaQuery()
+				.in(DmpSoDetailEntity::getMainId, sourceIdList)
+				.list()
+				.stream()
+				.collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId));
+	}
+
+	/**
+	 * 解析发货明细单价并计算明细金额。
+	 *
+	 * @param outstockDetail 平台发货明细
+	 */
+	static void fillPriceFields(Map<String, Object> outstockDetail) {
+		String unitPriceStr = String.valueOf(
+				outstockDetail.getOrDefault("unit_price", ""));
+		if (StringUtils.isBlank(unitPriceStr)) {
+			return;
+		}
+		CurrencyUtil.Money unitPrice = CurrencyUtil.Money.init(unitPriceStr);
+		outstockDetail.put("currency", unitPrice.getCurrency());
+		if (StringUtils.isBlank(unitPrice.getAmount())) {
+			return;
+		}
+		BigDecimal qty = new BigDecimal(String.valueOf(
+				outstockDetail.getOrDefault("order_line_qty", "0")));
+		outstockDetail.put("amount",
+				new BigDecimal(unitPrice.getAmount()).multiply(qty));
+	}
+
+	/**
+	 * 按销售订单和平台 SKU 唯一匹配订单明细，补充发货接口未返回的 SKU 编码。
+	 *
+	 * @param outstockDetail 平台发货明细
+	 * @param outstockMap 履约单号对应的发货主单
+	 * @param orderDetailMap 销售订单主表 ID 对应的订单明细
+	 */
+	static void fillOrderDetailFields(
+			Map<String, Object> outstockDetail,
+			Map<String, DmpSoOutstockEntity> outstockMap,
+			Map<String, List<DmpSoDetailEntity>> orderDetailMap) {
+		String fulfillmentOrderNo = String.valueOf(
+				outstockDetail.getOrDefault("fulfillment_order_no", ""));
+		DmpSoOutstockEntity outstock = outstockMap.get(fulfillmentOrderNo);
+		String platformSkuId = String.valueOf(
+				outstockDetail.getOrDefault("sku_id", ""));
+		if (outstock == null || StringUtils.isBlank(outstock.getSourceId())
+				|| StringUtils.isBlank(platformSkuId)) {
+			return;
+		}
+		List<DmpSoDetailEntity> candidates = orderDetailMap
+				.getOrDefault(outstock.getSourceId(), new ArrayList<>())
+				.stream()
+				.filter(detail -> platformSkuId.equals(detail.getPlatformSkuId()))
+				.collect(Collectors.toList());
+		if (candidates.size() != 1) {
+			return;
+		}
+		DmpSoDetailEntity orderDetail = candidates.get(0);
+		if (StringUtils.isBlank(String.valueOf(
+				outstockDetail.getOrDefault("platform_sku", "")))) {
+			outstockDetail.put("platform_sku", orderDetail.getPlatformSku());
+		}
+		if (StringUtils.isBlank(String.valueOf(
+				outstockDetail.getOrDefault("skuNo", "")))
+				&& StringUtils.isNotBlank(orderDetail.getSkuNo())) {
+			outstockDetail.put("skuNo", orderDetail.getSkuNo());
+		}
 	}
 
 	/**
