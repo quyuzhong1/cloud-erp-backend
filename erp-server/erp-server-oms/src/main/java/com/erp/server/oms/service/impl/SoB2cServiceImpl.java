@@ -3460,6 +3460,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return param;
     }
 
+    /**
+     * 按 Listing SKU 对照与仓库经营类型判断哪些明细需要尝试按组合装 BOM 拆分。
+     * <p>
+     * 无对照 / 无发货配置：仅自建仓进入拆分列表；三方仓保持父 SKU。<br>
+     * 有配置：仅「子件 SKU 发货」(single) 进入拆分列表；「捆绑 SKU 发货」(combine) 不拆。
+     * 发货 SKU 的 price 在后续组装阶段写入，本方法不处理价格。
+     *
+     * @param soDetailList                    订单明细
+     * @param skuMappingList                  Listing 对照
+     * @param warehouseManageType             仓库经营类型（用于读取 extendMap 发货类型）
+     * @param isSelfBuild                     是否自建仓
+     * @param wantSplitSkuIdList              输出：待查 BOM 的 skuId
+     * @param wantSplitSkuIdAndPlatformList   输出：待拆分的 skuId+platformSkuNo
+     */
     private void processSkuMapping(List<SoB2cDetailEntity> soDetailList, List<ListingInfoWithSkuMappingDTO> skuMappingList, String warehouseManageType, Boolean isSelfBuild, List<String> wantSplitSkuIdList, List<String> wantSplitSkuIdAndPlatformList) {
         String singleDelivery = WarehouseDeliveryTypeEnum.SINGLE.getCode();
         for (SoB2cDetailEntity soB2cDetailEntity : soDetailList) {
@@ -3469,16 +3483,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && (soB2cDetailEntity.getPlatformSpuNo().isEmpty() || soB2cDetailEntity.getPlatformSpuNo().equals(s.getPlatformSpuNo())))
                     .findFirst().orElse(null);
 
-            if (Objects.isNull(skuMappingDTO) || isSelfBuild) {
-                wantSplitSkuIdList.add(skuId);
-                wantSplitSkuIdAndPlatformList.add(skuId + soB2cDetailEntity.getPlatformSkuNo());
+            // 无对照：仅自建仓尝试拆 BOM
+            if (Objects.isNull(skuMappingDTO)) {
+                if (Boolean.TRUE.equals(isSelfBuild)) {
+                    wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId + soB2cDetailEntity.getPlatformSkuNo());
+                }
                 continue;
             }
 
             Map<String, String> extendMap = skuMappingDTO.getExtendMap();
-            String deliveryType = extendMap != null ? extendMap.get(warehouseManageType) : null;
+            // 无发货配置：仅自建仓尝试拆 BOM
+            if (Objects.isNull(extendMap)) {
+                if (Boolean.TRUE.equals(isSelfBuild)) {
+                    wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId + soB2cDetailEntity.getPlatformSkuNo());
+                }
+                continue;
+            }
 
-            if (singleDelivery.equals(deliveryType) || (isSelfBuild && deliveryType == null)) {
+            String deliveryType = extendMap.get(warehouseManageType);
+            if (StringUtils.isNotBlank(deliveryType)) {
+                // 子件发货才拆；捆绑发货保持父 SKU
+                if (singleDelivery.equals(deliveryType)) {
+                    wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId + soB2cDetailEntity.getPlatformSkuNo());
+                }
+            } else if (Boolean.TRUE.equals(isSelfBuild)) {
+                // 发货类型未配置：仅自建仓尝试拆 BOM
                 wantSplitSkuIdList.add(skuId);
                 wantSplitSkuIdAndPlatformList.add(skuId + soB2cDetailEntity.getPlatformSkuNo());
             }
