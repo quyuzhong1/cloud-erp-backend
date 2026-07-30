@@ -75,7 +75,7 @@ public class JacksonConfig {
 
         final SimpleModule simpleModule = new SimpleModule();
         // 序列化 BigDecimal
-        simpleModule.addSerializer(BigDecimal.class, new BigDecimalSerializer(4));
+        simpleModule.addSerializer(BigDecimal.class, new BigDecimalSerializer(6));
         objectMapper.registerModule(simpleModule);
 
         return objectMapper;

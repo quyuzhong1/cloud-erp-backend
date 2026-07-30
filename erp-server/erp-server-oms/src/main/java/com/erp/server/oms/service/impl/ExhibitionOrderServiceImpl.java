@@ -95,6 +95,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -197,6 +198,17 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ExhibitionOrderDTO.AddDTO addDTO) {
+        // 新增时：未传收款账号则带出客户默认收款账号；人为传入则不覆盖（DTO 不再 @NotBlank，以便本分支可执行）
+        if (StringUtils.isBlank(addDTO.getReceiveAccount()) && StringUtils.isNotBlank(addDTO.getCustomerId())) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(addDTO.getCustomerId());
+            if (customerInfo != null && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+                addDTO.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+            }
+        }
+        if (StringUtils.isBlank(addDTO.getReceiveAccount())) {
+            throw new ServiceException("收款账号不能为空");
+        }
+
         ExhibitionOrderEntity exhibitionOrderEntity = new ExhibitionOrderEntity();
         BeanMapperUtils.copy(addDTO, exhibitionOrderEntity);
 
@@ -326,7 +338,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
-                saleAmount = MathUtil.multiplyWithTwo(rate, saleAmount, 2);
+                saleAmount = MathUtil.multiplyWithSix(rate, saleAmount);
             }
             // 销售金额（本位币）
             item.setAmountLocalCurrency(saleAmount);
@@ -337,7 +349,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             if (Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
                 item.setAllAmountLocalCurrency(BigDecimal.ZERO);
             } else {
-                item.setAllAmountLocalCurrency(MathUtil.multiplyWithTwo(item.getExchangeRate(), taxAmount, 2));
+                item.setAllAmountLocalCurrency(MathUtil.multiplyWithSix(item.getExchangeRate(), taxAmount));
             }
         }
         updateSoDetailCost(item, purchasePrice);
@@ -530,7 +542,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         costParam.setSkuId(item.getSkuId());
         //该值应该为数量*单价*汇率
         BigDecimal amount = MathUtil.multiplyWithTwo(item.getPrice(), item.getQty());
-        BigDecimal saleAmount = MathUtil.multiplyWithTwo(amount, item.getExchangeRate());
+        BigDecimal saleAmount = MathUtil.multiplyWithSix(amount, item.getExchangeRate());
         //销售毛利=销售金额(折后)*汇率-总成本
         //销售金额(折后)*汇率
         BigDecimal amountLocalCurrency = item.getAmountLocalCurrency();
@@ -1185,6 +1197,13 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         addDTO.setSourceCode(entity.getCode());
         addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
         addDTO.setDictPlatform("");
+        // 要货日期取展会单据日期；订单金额=明细价税合计（折前）合计
+        addDTO.setRequireDate(entity.getBillDate());
+        BigDecimal orderAmount = detailList.stream()
+                .map(ExhibitionOrderDetailEntity::getTaxAmountBefore)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        addDTO.setOrderAmount(orderAmount);
 
         List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
         for (ExhibitionOrderDetailEntity detail : detailList) {
@@ -1205,7 +1224,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soId = soInfoService.add(addDTO);
         }catch (Exception e) {
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
+            // catch 后正常 return 不会触发回滚，需显式标记，避免「审核失败但销售订单已落库」
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return mqResponseDTO;
         }finally {
             //恢复系统标识
@@ -1222,7 +1243,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
         }catch (Exception e) {
             log.error("B2B订单提交异常，soId: {}", soId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             return mqResponseDTO;
         }finally {
             //恢复系统标识
@@ -1239,7 +1260,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             soInfoService.approve(baseApproveParamDTO,soInfoEntity);
         }catch (Exception e) {
             log.error("B2B订单审批通过异常，soId: {}", soId, e);
-            mqResponseDTO.setErrorMsg(e.getMessage());
+            mqResponseDTO.setErrorMsg(BatchResultDTO.resolveFailMsg(e));
             return mqResponseDTO;
         }finally {
             //恢复系统标识
@@ -1557,11 +1578,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             bankAccountMap = bankAccountService.listByIds(receiveAccountList).stream().collect(Collectors.toMap(BankAccountEntity::getId, BankAccountEntity::getAccountName, (o1, o2) -> o1));
         }
 
-        // 收款方式
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String, String> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
-
         // 收款条件
         List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
         Map<String, String> receiveConditionMap = receiveConditionList.stream().collect(Collectors.toMap(KingdeeReceiptConditionEntity::getId, KingdeeReceiptConditionEntity::getName, (o1, o2) -> o1));
@@ -1603,14 +1619,14 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             //销售单价
             BigDecimal price = item.getPrice();
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
+            item.setPriceLc(MathUtil.multiplyWithSix(price, exchangeRate));
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
             BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
 
             //销售部门
             String deptName = deptMap.getOrDefault(item.getSalesDeptId(), "");
@@ -1625,10 +1641,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             //实体仓名称
             String warehouseName = warehouseMap.getOrDefault(item.getWarehouseId(), "");
             item.setWarehouseName(warehouseName);
-
-            //收款方式
-            String receiveMethodName = dictBasicMap.getOrDefault(item.getReceiveMethod(), "");
-            item.setReceiveMethodName(receiveMethodName);
 
             //收款条件
             String receiveConditionName = receiveConditionMap.getOrDefault(item.getReceiveCondition(), "");
@@ -2072,37 +2084,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 }
                 addSo.setReceiveAccount(receiveAccount);
 
-                //收款方式
-                String receiveMethodStr = mainInfo.getReceiveMethod();
-                String receiveMethod = dictBasicList.stream().filter(d ->  StringUtils.isNotBlank(receiveMethodStr) &&  d.getName().equals(receiveMethodStr)).findFirst().
-                        map(DictBasicEntity::getValue).orElse("");
-                if (StringUtils.isBlank(receiveMethod)) {
-                    errorMsgList.add("收款方式不存在");
-                }
-                addSo.setReceiveMethod(receiveMethod);
-
-                //收款日期
-                String receiveDateStr = mainInfo.getReceiveDate();
-                if (StringUtils.isNotBlank(receiveDateStr)) {
-                    LocalDate receiveDate = null;
-                    try {
-                        receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter);
-                    } catch (Exception e1) {
-                        try {
-                            receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter2);
-                        } catch (Exception e2) {
-                            try {
-                                receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter3);
-                            } catch (Exception e3) {
-                                errorMsgList.add("收款日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
-                            }
-                        }
-                    }
-                    addSo.setReceiveDate(receiveDate);
-                }else {
-                    errorMsgList.add("收款日期不能为空");
-                }
-
                 //贸易条款
                 String tradeTermStr = mainInfo.getTradeTerm();
                 String tradeTerm = "";
@@ -2197,15 +2178,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String shippingFeeStr = mainInfo.getShippingFee();
                 BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
 
-                //收款金额
-                String receiveAmountStr = mainInfo.getReceiveAmount();
-                BigDecimal receiveAmount = MathUtil.getBigDecimalByStr(receiveAmountStr);
-
                 //折扣总额
                 String discountAmountStr = mainInfo.getDiscountAmount();
                 BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
                 addSo.setShippingFee(shippingFee);
-                addSo.setReceiveAmount(receiveAmount);
                 addSo.setDiscountAmount(discountAmount);
 
                 Boolean isAdd = Boolean.TRUE;

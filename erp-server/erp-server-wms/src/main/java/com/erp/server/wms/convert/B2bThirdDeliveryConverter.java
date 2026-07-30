@@ -52,6 +52,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "sourceCode", source = "entity.code")
     @Mapping(target = "referenceNo", source = "entity.code")
     @Mapping(target = "receiverCountryCode", source = "entity.countryId")
+    @Mapping(target = "countryName", source = "entity.countryName")
     @Mapping(target = "platformShipNo", constant = "N/A")
     @Mapping(target = "platformRefNo", constant = "N/A")
     @Mapping(target = "items", source = "detailEntityList")
@@ -71,6 +72,7 @@ public interface B2bThirdDeliveryConverter {
     ThirdWarehouseCreateFbaOutboundReq toCreateFbaOutboundReq(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
 
     @Mapping(target = "deliveryQty", source = "deliveryQty")
+    @Mapping(target = "relabelSku", source = "relabelSku")
     ThirdWarehouseCreateFbaOutboundReq.Item toCreateFbaOutboundReqItem(B2bThirdDeliveryDetailEntity entity);
 
     List<ThirdWarehouseQueryFbaOutboundResponse> toB2bThirdDeliveryQueryDTO(List<DaMaiGetFbaOrderResp> dataList);

@@ -182,7 +182,7 @@ public class DmpThirdExchangeRateDTO implements Serializable {
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
@@ -210,7 +210,7 @@ public class DmpThirdExchangeRateDTO implements Serializable {
         * 间接汇率
         */
         @NotNull(message = "间接汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "间接汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "间接汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal indirectExchangeRate;
 
         /**

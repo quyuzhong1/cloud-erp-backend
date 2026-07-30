@@ -913,7 +913,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         executionData.setBillType(PickingBillTypeEnum.TRANSFER.getCode());
         executionData.setSourceCode(allocationEntity.getCode());
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = transferWarehouseList.stream()
-                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getFromWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
+                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getFromWarehouseId(),"", v.getSkuId(), v.getSkuNo(),v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         executionData.setDetails(details);
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> pickPair = cfgRulePickingService.matchRuleActionList(executionData, "gt");
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, pickPair);
@@ -1316,7 +1316,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //实体仓已分配库存
             Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
                             && CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
-                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO,Integer::sum);
             resultDTO.setDistributionQty(ObjectUtil.isEmpty(distributionQty) ? MathUtil.ZERO : distributionQty);
 
             //实体仓实际库存

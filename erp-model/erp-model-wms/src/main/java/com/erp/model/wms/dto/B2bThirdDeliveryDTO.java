@@ -246,6 +246,14 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 附件
          */
         private List<WmsAttachmentDTO.UpdateDTO> attachList;
+        /**
+         * 产品标签
+         */
+        private List<WmsAttachmentDTO.UpdateDTO> productLabelAttachList;
+        /**
+         * 外箱面单
+         */
+        private List<WmsAttachmentDTO.UpdateDTO> outerBoxLabelAttachList;
     }
 
     /**
@@ -264,6 +272,16 @@ public class B2bThirdDeliveryDTO implements Serializable {
          */
         @Size(max = 1,message = "附件最大数量不能超过1个")
         private List<AttachDTO> attachList;
+        /**
+         * 产品标签（通邮，PDF）
+         */
+        @Size(max = 1, message = "产品标签最多上传1个")
+        private List<AttachDTO> productLabelAttachList;
+        /**
+         * 外箱面单（通邮，PDF）
+         */
+        @Size(max = 1, message = "外箱面单最多上传1个")
+        private List<AttachDTO> outerBoxLabelAttachList;
     }
 
     /**
@@ -286,6 +304,16 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 附件
          */
         private List<AttachDTO> attachList;
+        /**
+         * 产品标签（通邮，PDF）
+         */
+        @Size(max = 1, message = "产品标签最多上传1个")
+        private List<AttachDTO> productLabelAttachList;
+        /**
+         * 外箱面单（通邮，PDF）
+         */
+        @Size(max = 1, message = "外箱面单最多上传1个")
+        private List<AttachDTO> outerBoxLabelAttachList;
 
     }
 

@@ -482,11 +482,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
 				.eq(DmpPushMsgEntity::getSourceId, sourceId)
 				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
-				.ne(DmpPushMsgEntity::getId, dataId)
-				.select(DmpPushMsgEntity::getId)
+				.and(wrapper -> wrapper
+						.lt(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+						.or()
+						.eq(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+						.lt(DmpPushMsgEntity::getId, dataId))
+				.select(DmpPushMsgEntity::getId, DmpPushMsgEntity::getUniqueEncrypt)
 				.list();
 		if(CollUtil.isNotEmpty(sourceList)) {
+			if (this.finishDuplicateMessage(dmpOutputTaskRecordEntity, dmpPushMsgEntity, sourceList)) {
+				return true;
+			}
 			List<DmpOutputTaskRecordEntity> leDataIdList = dmpOutputTaskRecordService.lambdaQuery()
 					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
 					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
@@ -509,5 +515,40 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * 结束相同业务唯一值产生的重复推送消息，仅允许最早生成的消息继续推送。
+	 *
+	 * @param outputTaskRecord 输出任务记录
+	 * @param pushMsg 当前推送消息
+	 * @param previousMessages 当前消息之前的同来源消息
+	 * @return true表示当前消息为重复消息且已结束处理
+	 */
+	private boolean finishDuplicateMessage(DmpOutputTaskRecordEntity outputTaskRecord,
+			DmpPushMsgEntity pushMsg, List<DmpPushMsgEntity> previousMessages) {
+		if (StringUtils.isBlank(pushMsg.getUniqueEncrypt())) {
+			return false;
+		}
+		DmpPushMsgEntity firstMessage = previousMessages.stream()
+				.filter(message -> pushMsg.getUniqueEncrypt().equals(message.getUniqueEncrypt()))
+				.min(Comparator.comparing(DmpPushMsgEntity::getId))
+				.orElse(null);
+		if (firstMessage == null) {
+			return false;
+		}
+
+		String responseData = "检测到重复推送消息，保留最早消息id=" + firstMessage.getId();
+		dmpOutputTaskRecordService.lambdaUpdate()
+				.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+				.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+				.set(DmpOutputTaskRecordEntity::getResponseData, responseData)
+				.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+				.eq(DmpOutputTaskRecordEntity::getId, outputTaskRecord.getId())
+				.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+				.update();
+		log.warn("跳过重复推送消息，dataId={}，保留dataId={}，sourceId={}，targetPlatform={}",
+				pushMsg.getId(), firstMessage.getId(), pushMsg.getSourceId(), pushMsg.getTargetPlatform());
+		return true;
 	}
 }

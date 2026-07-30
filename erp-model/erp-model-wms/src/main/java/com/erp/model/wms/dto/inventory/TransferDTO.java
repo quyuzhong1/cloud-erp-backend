@@ -61,13 +61,19 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
      * （有的话请务必传输，没有不用传输，某些单据不需要选择库位信息）
      */
     private String curWarehouseLocation;
-
-
+    /**
+     * 当前虚拟仓库id
+     */
+    private String curVirtualWarehouseId;
     /**
      * 目的仓库
      */
     @NotEmpty(message = "目的仓库不能为空")
     private String targetWarehouseId;
+    /**
+     * 目的虚拟仓id
+     */
+    private String targetVirtualWarehouseId;
 
     /**
      * 目的仓库位id（没有不用传输，某些单据不需要选择库位信息）

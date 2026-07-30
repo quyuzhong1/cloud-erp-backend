@@ -193,6 +193,10 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
         * ERP的SKU
         */
         private String skuId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
 
         /**
         * ERP的SKU

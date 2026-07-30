@@ -29,73 +29,73 @@ public class ProductCostDTO implements Serializable {
     /**
      * 目标含税成本
      */
-    @Digits(integer = 16,fraction = 4,message = "目标含税成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "目标含税成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal targetTaxCost;
 
     /**
      * 目标不含税成本
      */
-    @Digits(integer = 16,fraction = 4,message = "目标不含税成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "目标不含税成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal targetNoTaxCost;
 
     /**
      * 实际含税成本
      */
-    @Digits(integer = 16,fraction = 4,message = "实际含税成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "实际含税成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal actualTaxCost;
 
     /**
      * 实际不含税成本
      */
-    @Digits(integer = 16,fraction = 4,message = "实际不含税成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "实际不含税成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal actualNoTaxCost;
 
     /**
      * 标准零售价
      */
-    @Digits(integer = 16,fraction = 4,message = "标准零售价最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "标准零售价整数位不能超过18位，小数位不能超过6位")
     private BigDecimal retailPrice;
 
     /**
      * 目标毛利率
      */
-    @Digits(integer = 16,fraction = 4,message = "目标毛利率最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "目标毛利率整数位不能超过18位，小数位不能超过6位")
     private BigDecimal targetGpm;
 
     /**
      * 实际毛利率（人民币）
      */
-    @Digits(integer = 16,fraction = 4,message = "实际毛利率（人民币）最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "实际毛利率（人民币）整数位不能超过18位，小数位不能超过6位")
     private BigDecimal actualGpmCny;
 
     /**
      * 实际毛利率（美元）
      */
-    @Digits(integer = 16,fraction = 4,message = "实际毛利率（美元）最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "实际毛利率（美元）整数位不能超过18位，小数位不能超过6位")
     private BigDecimal actualGpmUsd;
 
     /**
      * 立项成本
      */
-    @Digits(integer = 16,fraction = 4,message = "立项成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "立项成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal projectApprovalCost;
 
     /**
      * 量产成本
      */
-    @Digits(integer = 16,fraction = 4,message = "量产成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "量产成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal massCost;
 
     /**
      * 项目成本
      */
-    @Digits(integer = 16,fraction = 4,message = "项目成本最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "项目成本整数位不能超过18位，小数位不能超过6位")
     private BigDecimal projectCost;
 
 
     /**
      *税率
      */
-    @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
+    @Digits(integer = 18, fraction = 6,message = "税率整数位不能超过18位，小数位不能超过6位")
     private BigDecimal taxRate;
 }

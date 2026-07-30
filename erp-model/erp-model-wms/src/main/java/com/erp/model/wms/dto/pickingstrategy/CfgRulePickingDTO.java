@@ -151,6 +151,10 @@ public class CfgRulePickingDTO {
          */
         private String warehouseId;
         /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
          * skuId
          */
         private String skuId;

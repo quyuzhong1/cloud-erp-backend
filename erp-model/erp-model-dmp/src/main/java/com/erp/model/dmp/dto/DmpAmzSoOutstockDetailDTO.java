@@ -510,35 +510,35 @@ public class DmpAmzSoOutstockDetailDTO implements Serializable {
         * 优惠价格
         */
         @NotNull(message = "优惠价格不能为空")
-        @Digits(integer = 12, fraction = 4, message = "优惠价格整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "优惠价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal giftWrapPrice;
 
         /**
         * 优惠税号
         */
         @NotNull(message = "优惠税号不能为空")
-        @Digits(integer = 12, fraction = 4, message = "优惠税号整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "优惠税号整数位不能超过18位，小数位不能超过6位")
         private BigDecimal giftWrapTax;
 
         /**
         * 明细价格
         */
         @NotNull(message = "明细价格不能为空")
-        @Digits(integer = 12, fraction = 4, message = "明细价格整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "明细价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal itemPrice;
 
         /**
         * 明细折扣
         */
         @NotNull(message = "明细折扣不能为空")
-        @Digits(integer = 12, fraction = 4, message = "明细折扣整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "明细折扣整数位不能超过18位，小数位不能超过6位")
         private BigDecimal itemPromotionDiscount;
 
         /**
         * 明细税号
         */
         @NotNull(message = "明细税号不能为空")
-        @Digits(integer = 12, fraction = 4, message = "明细税号整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "明细税号整数位不能超过18位，小数位不能超过6位")
         private BigDecimal itemTax;
 
         /**
@@ -656,7 +656,7 @@ public class DmpAmzSoOutstockDetailDTO implements Serializable {
         * 配送优惠
         */
         @NotNull(message = "配送优惠不能为空")
-        @Digits(integer = 12, fraction = 4, message = "配送优惠整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "配送优惠整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shipPromotionDiscount;
 
         /**
@@ -698,14 +698,14 @@ public class DmpAmzSoOutstockDetailDTO implements Serializable {
         * 配送价格
         */
         @NotNull(message = "配送价格不能为空")
-        @Digits(integer = 12, fraction = 4, message = "配送价格整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "配送价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingPrice;
 
         /**
         * 配送税号
         */
         @NotNull(message = "配送税号不能为空")
-        @Digits(integer = 12, fraction = 4, message = "配送税号整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "配送税号整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingTax;
 
         /**
