@@ -441,7 +441,7 @@ public class AliExpressWarehouseInventoryService {
             JSONObject data = JSONUtil.parseObj(item);
             InventoryLogDTO inventoryLog = new InventoryLogDTO();
             inventoryLog.setInventoryType(data.getInt("inventory_type"));
-            inventoryLog.setWhOrderCode(data.getStr("wh_order_code"));
+            inventoryLog.setWhOrderCode(resolveWhOrderCode(data));
             inventoryLog.setBizType(data.getStr("biz_type"));
             inventoryLog.setBizTradeId(data.getStr("biz_trade_id"));
             inventoryLog.setOperateTime(data.getLong("operate_time"));
@@ -452,6 +452,40 @@ public class AliExpressWarehouseInventoryService {
             result.add(inventoryLog);
         }
         return result;
+    }
+
+    /**
+     * 获取库存流水的可用履约单号。
+     *
+     * <p>部分 AE 官方仓扣减流水的 {@code wh_order_code} 返回 {@code \N}，
+     * 此时平台仍会在 {@code biz_no} 返回唯一仓库业务单号，可作为发货单号使用。</p>
+     *
+     * @param data 平台库存流水
+     * @return 优先使用 wh_order_code，无效时回退 biz_no，均无效时返回空字符串
+     */
+    private String resolveWhOrderCode(JSONObject data) {
+        String whOrderCode = data.getStr("wh_order_code");
+        if (isValidPlatformValue(whOrderCode)) {
+            return whOrderCode.trim();
+        }
+        String bizNo = data.getStr("biz_no");
+        if (isValidPlatformValue(bizNo)) {
+            log.info("速卖通官方仓库存流水缺少whOrderCode，使用bizNo, bizTradeId={}, bizNo={}",
+                    data.getStr("biz_trade_id"), bizNo);
+            return bizNo.trim();
+        }
+        return "";
+    }
+
+    /**
+     * 判断平台字符串是否为有效业务值。
+     *
+     * @param value 平台返回值
+     * @return 非空且不是平台空值标记时返回 true
+     */
+    private boolean isValidPlatformValue(String value) {
+        return CharSequenceUtil.isNotBlank(value)
+                && !PLATFORM_NULL_MARKER.equalsIgnoreCase(value.trim());
     }
 
     /**
@@ -501,8 +535,7 @@ public class AliExpressWarehouseInventoryService {
                 && OUTBOUND_BIZ_TYPE.equalsIgnoreCase(inventoryLog.getBizType())
                 && Objects.nonNull(inventoryLog.getChangeQuantity())
                 && inventoryLog.getChangeQuantity() < 0
-                && CharSequenceUtil.isNotBlank(inventoryLog.getWhOrderCode())
-                && !PLATFORM_NULL_MARKER.equalsIgnoreCase(inventoryLog.getWhOrderCode().trim())
+                && isValidPlatformValue(inventoryLog.getWhOrderCode())
                 && CharSequenceUtil.isNotBlank(inventoryLog.getBizTradeId())
                 && CharSequenceUtil.isNotBlank(inventoryLog.getBizSubTradeId())
                 && Objects.nonNull(inventoryLog.getOperateTime())
