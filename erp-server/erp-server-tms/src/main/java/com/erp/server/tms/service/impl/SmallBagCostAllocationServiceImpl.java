@@ -327,7 +327,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 		}
 
-		Map<String, BigDecimal> rateMap = new HashMap<>();
 		DecimalFormat df2 = new DecimalFormat("0.00");
 		DecimalFormat df4 = new DecimalFormat("0.0000");
 		DecimalFormat df6 = new DecimalFormat("0.000000");
