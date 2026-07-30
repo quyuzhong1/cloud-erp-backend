@@ -80,6 +80,9 @@ public class DmpOutputJituProductRocketMQTaskHandler extends DmpOutputRocketMQTa
 		for(String changId : changeIds) {
 			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
 			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+			if (dmpProductInfoEntity == null || CollUtil.isEmpty(dmpSkuInfoEntityList)) {
+				continue;
+			}
 			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
 				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
 				if(product != null) {
