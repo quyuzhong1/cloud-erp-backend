@@ -22,6 +22,7 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
@@ -113,6 +114,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
         if (CollUtil.isEmpty(deliveryDTOList)){
+            if (addMissingOutstockError(mainEntity,
+                    "速卖通海外托管订单已发货，但未获取到平台仓发货明细")) {
+                return Boolean.FALSE;
+            }
             return Boolean.TRUE;
         }
         List<String> deliveryStatusNameList = AliexpressDeliveryOrderStatusEnum.getOutStockStatusList();
@@ -121,6 +126,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 .sorted(Comparator.comparing(PlatformDeliveryDTO::getDeliveryWarehouseTime))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(deliveryDTOList)){
+            addMissingOutstockError(mainEntity,
+                    "速卖通海外托管平台仓发货明细缺少有效发货状态或发货时间");
             return Boolean.FALSE;//不需要生成销售出库单
         }
         dto.setDeliveryDTOList(deliveryDTOList);
@@ -158,6 +165,35 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }else {
             return Boolean.FALSE;
         }
+    }
+
+    /**
+     * 为已发货但缺少有效发货明细的海外托管平台仓订单记录出库异常。
+     *
+     * <p>仅限制速卖通海外托管，避免改变普通速卖通和菜鸟仓现有处理行为。
+     * 后续重新拉取到有效发货明细并成功生成出库单时，现有成功分支会清除该异常。</p>
+     *
+     * @param mainEntity 销售订单
+     * @param message 异常原因
+     * @return 是否已记录异常
+     */
+    private boolean addMissingOutstockError(SoB2cEntity mainEntity, String message) {
+        if (!PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode()
+                .equals(mainEntity.getDictPlatform())
+                || !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()
+                .equals(mainEntity.getBillStatus())) {
+            return false;
+        }
+        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+        addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+        addError.setParamJson("");
+        addError.setReturnJson("");
+        addError.setMainId(mainEntity.getId());
+        addError.setMessage(message);
+        soB2cErrorService.add(addError);
+        log.warn("[速卖通海外托管生成销售出库单异常]:order={},msg={}",
+                mainEntity.getPlatformCode(), message);
+        return true;
     }
 
     private void createOrUpdateAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {

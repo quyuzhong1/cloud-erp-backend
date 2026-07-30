@@ -14,6 +14,7 @@ import com.erp.oms.aliexpress.dto.response.AliExpressWarehouseInventoryDTO.Inven
 import com.erp.oms.aliexpress.dto.response.AliExpressWarehouseInventoryDTO.ScItemDTO;
 import com.erp.oms.aliexpress.dto.response.AliExpressWarehouseInventoryDTO.ScItemRelationDTO;
 import com.erp.oms.aliexpress.dto.response.AliExpressWarehouseInventoryDTO.ShopItemRelationDTO;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.service.AliExpressWarehouseInventoryService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +24,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,6 +49,9 @@ public class AliExpressOfficialWarehouseChildService {
     private static final String OUTSTOCK_ITEMS = "official_outstock_items";
     private static final String CAINIAO_LOGISTICS_PREFIX = "CAINIAO_";
     private static final String AE_OFFICIAL_WAREHOUSE_LOGISTICS_PREFIX = "AE_LOCAL_";
+    private static final int INVENTORY_QUERY_BUFFER_DAYS = 1;
+    private static final DateTimeFormatter PLATFORM_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Resource
     private AliExpressWarehouseInventoryService warehouseInventoryService;
@@ -74,10 +81,10 @@ public class AliExpressOfficialWarehouseChildService {
             return new JSONArray();
         }
 
-        LocalDateTime queryBeginTime = Objects.isNull(beginTime)
-                ? LocalDateTime.now().minusDays(30) : beginTime.minusDays(1);
-        LocalDateTime queryEndTime = Objects.isNull(endTime)
-                ? LocalDateTime.now().plusDays(1) : endTime.plusDays(1);
+        LocalDateTime fallbackBeginTime = Objects.isNull(beginTime)
+                ? LocalDateTime.now().minusDays(30) : beginTime;
+        LocalDateTime fallbackEndTime = Objects.isNull(endTime)
+                ? LocalDateTime.now() : endTime;
         JSONArray result = new JSONArray();
         for (int start = 0; start < orderContexts.size(); start += MAX_TRADE_IDS_PER_REQUEST) {
             int end = Math.min(start + MAX_TRADE_IDS_PER_REQUEST, orderContexts.size());
@@ -85,8 +92,8 @@ public class AliExpressOfficialWarehouseChildService {
                     shopId,
                     shopRelation.getChannelSellerId(),
                     orderContexts.subList(start, end),
-                    queryBeginTime,
-                    queryEndTime));
+                    fallbackBeginTime,
+                    fallbackEndTime));
         }
         log.info("速卖通海外托管发货子任务查询完成, shopId={}, orderCount={}, outstockCount={}",
                 shopId, orderContexts.size(), result.size());
@@ -255,7 +262,11 @@ public class AliExpressOfficialWarehouseChildService {
                     itemContext.setScItem(resolveScItem(itemContext, scItems));
                     orderItems.add(itemContext);
                 }
-                result.add(new OrderContext(orderId, orderItems));
+                result.add(new OrderContext(
+                        orderId,
+                        orderItems,
+                        resolveOrderCreateTime(parentOrder),
+                        resolveOrderModifiedTime(parentOrder, detail)));
             } catch (ServiceException e) {
                 log.error("速卖通海外托管订单构造发货查询参数失败, orderId={}, reason={}",
                         orderId, e.getMessage());
@@ -363,15 +374,15 @@ public class AliExpressOfficialWarehouseChildService {
      * @param shopId 海外托管授权店铺 ID
      * @param channelSellerId 全托管渠道卖家 ID
      * @param batch 订单上下文，最多五单
-     * @param beginTime 查询开始时间
-     * @param endTime 查询结束时间
+     * @param fallbackBeginTime 查询开始时间
+     * @param fallbackEndTime 查询结束时间
      * @return 发货主单
      */
     private List<Map<String, Object>> queryBatch(String shopId,
                                                  String channelSellerId,
                                                  List<OrderContext> batch,
-                                                 LocalDateTime beginTime,
-                                                 LocalDateTime endTime) {
+                                                 LocalDateTime fallbackBeginTime,
+                                                 LocalDateTime fallbackEndTime) {
         List<String> tradeIds = batch.stream()
                 .map(OrderContext::getOrderId)
                 .distinct()
@@ -382,6 +393,23 @@ public class AliExpressOfficialWarehouseChildService {
                 .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        LocalDateTime beginTime = batch.stream()
+                .map(OrderContext::getCreateTime)
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(fallbackBeginTime)
+                .minusDays(INVENTORY_QUERY_BUFFER_DAYS);
+        LocalDateTime endTime = batch.stream()
+                .map(OrderContext::getModifiedTime)
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(fallbackEndTime)
+                .plusDays(INVENTORY_QUERY_BUFFER_DAYS);
+        if (!endTime.isAfter(beginTime)) {
+            endTime = beginTime.plusDays(INVENTORY_QUERY_BUFFER_DAYS);
+        }
+        log.info("查询速卖通海外托管官方仓库存流水, shopId={}, tradeIds={}, beginTime={}, endTime={}",
+                shopId, tradeIds, beginTime, endTime);
         List<InventoryLogDTO> inventoryLogs = warehouseInventoryService.queryInventoryLogs(
                 shopId, channelSellerId, tradeIds, scItemIds, beginTime, endTime);
         Map<String, List<InventoryLogDTO>> logsByOrderId = inventoryLogs.stream()
@@ -394,7 +422,7 @@ public class AliExpressOfficialWarehouseChildService {
             List<InventoryLogDTO> orderLogs = logsByOrderId.getOrDefault(
                     context.getOrderId(), Collections.emptyList());
             if (CollUtil.isEmpty(orderLogs)) {
-                log.info("速卖通海外托管订单未查询到官方仓发货流水, shopId={}, orderId={}",
+                log.warn("速卖通海外托管订单未查询到官方仓发货流水, shopId={}, orderId={}",
                         shopId, context.getOrderId());
                 continue;
             }
@@ -407,6 +435,85 @@ public class AliExpressOfficialWarehouseChildService {
             }
         }
         return result;
+    }
+
+    /**
+     * 读取订单创建时间并转换为系统时区，作为库存流水查询开始时间。
+     *
+     * @param parentOrder 订单列表数据
+     * @return 系统时区订单创建时间，无法解析时返回 null
+     */
+    private LocalDateTime resolveOrderCreateTime(Map<String, Object> parentOrder) {
+        return parsePlatformTime(firstNotBlank(
+                parentOrder.get("gmt_create"),
+                parentOrder.get("gmtCreate"),
+                parentOrder.get("gmt_pay_time"),
+                parentOrder.get("gmtPayTime")));
+    }
+
+    /**
+     * 读取订单更新时间并转换为系统时区。
+     *
+     * <p>订单列表更新时间、订单详情更新时间和发货时间取最新值，
+     * 避免任一数据源更新滞后导致库存流水查询结束时间过早。</p>
+     *
+     * @param parentOrder 订单列表数据
+     * @param detail 订单详情数据
+     * @return 系统时区订单更新时间，无法解析时返回 null
+     */
+    private LocalDateTime resolveOrderModifiedTime(Map<String, Object> parentOrder,
+                                                   Map<String, Object> detail) {
+        List<LocalDateTime> candidateTimes = new ArrayList<>();
+        candidateTimes.add(parsePlatformTime(firstNotBlank(
+                parentOrder.get("gmt_modified"),
+                parentOrder.get("gmtModified"),
+                parentOrder.get("gmt_update"),
+                parentOrder.get("gmtUpdate"))));
+        candidateTimes.add(parsePlatformTime(firstNotBlank(
+                detail.get("gmt_modified"),
+                detail.get("gmtModified"),
+                detail.get("gmt_update"),
+                detail.get("gmtUpdate"))));
+        candidateTimes.addAll(toMapList(detail.get("logistic_info_list")).stream()
+                .map(item -> parsePlatformTime(firstNotBlank(
+                        item.get("gmt_send"), item.get("gmtSend"))))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
+        return candidateTimes.stream()
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    /**
+     * 解析速卖通平台时间并转换为系统时区。
+     *
+     * <p>订单接口时间使用速卖通时区，而库存流水接口使用毫秒时间戳；
+     * 统一转换后再传参，避免服务器时区与平台时区造成查询边界偏移。</p>
+     *
+     * @param value 平台时间
+     * @return 系统时区时间，空值或格式不合法时返回 null
+     */
+    private LocalDateTime parsePlatformTime(Object value) {
+        String valueText = text(value);
+        if (StrUtil.isBlank(valueText)) {
+            return null;
+        }
+        String normalized = valueText.trim().replace('T', ' ');
+        if (normalized.length() < 19) {
+            return null;
+        }
+        try {
+            LocalDateTime platformTime = LocalDateTime.parse(
+                    normalized.substring(0, 19), PLATFORM_TIME_FORMATTER);
+            return platformTime
+                    .atZone(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                    .withZoneSameInstant(ZoneId.systemDefault())
+                    .toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            log.warn("速卖通海外托管订单时间格式无法解析, value={}", valueText);
+            return null;
+        }
     }
 
     /**
@@ -824,6 +931,8 @@ public class AliExpressOfficialWarehouseChildService {
     private static class OrderContext {
         private final String orderId;
         private final List<OrderItemContext> items;
+        private final LocalDateTime createTime;
+        private final LocalDateTime modifiedTime;
     }
 
     /**
