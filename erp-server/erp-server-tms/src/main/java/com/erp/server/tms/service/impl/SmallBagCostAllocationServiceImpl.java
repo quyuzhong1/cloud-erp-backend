@@ -6,7 +6,9 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -186,8 +188,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		Map<String, Integer> flagCountMap = this.getBaseMapper().tabList(dto).stream().collect(Collectors.toMap(TabListDTO::getTabFlag, TabListDTO::getCount));
 		SmallBagCostAllocationReportStatusEnum[] values = SmallBagCostAllocationReportStatusEnum.values();
         for (SmallBagCostAllocationReportStatusEnum statusEnum : values) {
-            LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             SmallBagCostAllocationDTO.TabListDTO resultDTO = new SmallBagCostAllocationDTO.TabListDTO();
             String code = statusEnum.getCode();
 			Integer count = flagCountMap.get(code);
@@ -202,55 +202,17 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 	@Override
 	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
-		long pagingStart = System.nanoTime();
 		PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        long countStart = System.nanoTime();
-        long totalCount = this.baseMapper.pagingCount(params);
-        long countCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - countStart);
-        log.info("小包费用分摊分页总数查询耗时:{}ms, currPage={}, pageSize={}, totalCount={}",
-                countCostMs, dto.getCurrPage(), dto.getPageSize(), totalCount);
-        if (totalCount == 0L) {
-            log.info("小包费用分摊分页总耗时:{}ms, result=empty", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart));
-            return new PagingVO<>(Collections.emptyList(), 0, dto.getPageSize(), dto.getCurrPage());
-        }
-
-        long offset = ((long) dto.getCurrPage() - 1L) * dto.getPageSize();
-        long idQueryStart = System.nanoTime();
-        List<String> detailIds = this.baseMapper.pagingDetailIds(params, offset, dto.getPageSize());
-        long idQueryCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - idQueryStart);
-        log.info("小包费用分摊分页主键查询耗时:{}ms, offset={}, pageSize={}, idCount={}",
-                idQueryCostMs, offset, dto.getPageSize(), detailIds.size());
-        if (CollectionUtils.isEmpty(detailIds)) {
-            log.info("小包费用分摊分页总耗时:{}ms, result=emptyIds", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart));
-            return new PagingVO<>(Collections.emptyList(), (int) totalCount, dto.getPageSize(), dto.getCurrPage());
-        }
-
-        long detailQueryStart = System.nanoTime();
-        List<ListDTO> loaded = this.baseMapper.selectByDetailIds(detailIds);
-        long detailQueryCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - detailQueryStart);
-        log.info("小包费用分摊分页回表查询耗时:{}ms, detailIdCount={}, loadedCount={}",
-                detailQueryCostMs, detailIds.size(), loaded.size());
-        Map<String, ListDTO> byDetailId = loaded.stream()
-                .collect(Collectors.toMap(ListDTO::getDetailId, Function.identity(), (first, ignored) -> first));
-
-        List<ListDTO> records = detailIds.stream()
-                .map(byDetailId::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(records)) {
-            log.info("小包费用分摊分页总耗时:{}ms, result=emptyRecords", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart));
-            return new PagingVO<>(records, (int) totalCount, dto.getPageSize(), dto.getCurrPage());
-        }
-
-        long formatStart = System.nanoTime();
-        handleDataPaging(records);
-        long formatCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - formatStart);
-        log.info("小包费用分摊分页数据处理耗时:{}ms, recordCount={}", formatCostMs, records.size());
-        log.info("小包费用分摊分页总耗时:{}ms, currPage={}, pageSize={}, totalCount={}, recordCount={}",
-                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart), dto.getCurrPage(), dto.getPageSize(),
-                totalCount, records.size());
-        return new PagingVO<>(records, (int) totalCount, dto.getPageSize(), dto.getCurrPage());
+		params.setPermissionSql(dto.getPermissionSql());
+		Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+		IPage<ListDTO> pageData = this.baseMapper.paging(query, params);
+		List<ListDTO> records = pageData.getRecords();
+		if (CollectionUtils.isEmpty(records)) {
+			return new PagingVO(pageData);
+		}
+		//数据赋值处理
+		handleDataPaging(records);
+		return new PagingVO(pageData);
 	}
 
 	/**
@@ -300,8 +262,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	/**
-	 * 按汇率换算单价并截断保留 6 位小数。
-	 * <p>该方法只处理乘法后的尺度控制，不做四舍五入，避免金额被向上修正。</p>
+	 * 按汇率换算单价并保留 6 位小数。
 	 *
 	 * @param unitCost 原始单价
 	 * @param rate 汇率
@@ -311,7 +272,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		if (unitCost == null || rate == null) {
 			return unitCost;
 		}
-		return unitCost.multiply(rate).setScale(6, RoundingMode.DOWN);
+		return unitCost.multiply(rate).setScale(6, RoundingMode.HALF_UP);
 	}
 
 	/**
