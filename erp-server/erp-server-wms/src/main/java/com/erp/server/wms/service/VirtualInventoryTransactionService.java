@@ -81,16 +81,18 @@ Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inv
      *
      * @param orphanRollbackTimeoutSeconds 孤儿 TRY 回滚等待秒数
      * @param commitRetryTimeoutSeconds    commit 重试等待秒数
+     * @return 补偿失败项合计，0 表示全部成功或无待补偿项
      */
-    void inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds);
+    int inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds);
 
     /**
      * 兼容旧 Job 参数：commit 重试默认 60s。
      *
      * @param timeout 孤儿 TRY 回滚等待秒数
+     * @return 补偿失败项合计
      */
-    default void inventoryCheckRollback(int timeout) {
-        inventoryCheckRollback(timeout, InventoryRedisTxCompensateHelper.DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS);
+    default int inventoryCheckRollback(int timeout) {
+        return inventoryCheckRollback(timeout, InventoryRedisTxCompensateHelper.DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS);
     }
     
     /**

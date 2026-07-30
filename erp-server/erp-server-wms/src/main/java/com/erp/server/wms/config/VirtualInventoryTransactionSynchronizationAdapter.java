@@ -45,9 +45,14 @@ public class VirtualInventoryTransactionSynchronizationAdapter extends Transacti
 		}
 	}
 	
+	/**
+	 * Seata XA 回调：虚拟库存 Redis 提交/回滚完成后释放未分配共享锁。
+	 * {@link io.seata.rm.datasource.xa.InventoryXAUtil} 先调实体 adapter 再调本方法，锁须在此处统一释放。
+	 */
 	public void doXa(String transactionId , Integer status) {
 		this.transactionId = transactionId;
 		this.afterCompletion(status);
+		PgUnallocLockDeferredRegistry.releaseByTransactionId(transactionId);
 	}
 	
 }
