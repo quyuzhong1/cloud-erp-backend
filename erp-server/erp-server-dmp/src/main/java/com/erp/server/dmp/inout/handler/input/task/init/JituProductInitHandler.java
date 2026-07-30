@@ -83,11 +83,11 @@ public class JituProductInitHandler extends DmpInputInitHandler{
             	pageNum = pageNum + 1;
             	request.put("startPage", pageNum);
             	String requestJson = JSONUtil.toJsonStr(request);
+            	try {
 				authMap.put("logistics_interface", requestJson);
-    			try {
     				String bodyStr = "";
+    				int i = 0;
     				while(true) {
-    					int i = 0;
     					try {
     						bodyStr = AuthUtils.doPost(jituService.getPreUrl() + apiType, authMap);
     						break;
@@ -105,6 +105,9 @@ public class JituProductInitHandler extends DmpInputInitHandler{
     				}
     	            JSONObject responseJson = JSON.parseObject(bodyStr);
     	            JSONArray jsonArray = responseJson.getJSONArray("responseitems");
+    	            if (CollUtil.isEmpty(jsonArray)) {
+    	                throw new ServiceException("极兔接口返回为空，请求报文：" + request);
+    	            }
     	            Object object = jsonArray.get(0);
     	            JSONObject jsonObject = JSON.parseObject(JSON.toJSONString(object));
     	            String success = jsonObject.getString("success");
