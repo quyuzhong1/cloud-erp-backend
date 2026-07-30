@@ -53,6 +53,21 @@ public class XxlJobStatusControllerTest {
         Assert.assertFalse(response.getBody().getMsg().contains("embedServer private field detail"));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldRejectForwardedLoopbackForDrain() {
+        ObjectProvider<XxlJobSpringExecutor> provider = Mockito.mock(ObjectProvider.class);
+        XxlJobStatusController controller = new XxlJobStatusController(provider);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.244.5.10");
+        request.addHeader("X-Forwarded-For", "127.0.0.1");
+
+        ResponseEntity<ApiResult<XxlJobLifecycleStatusVO>> response = controller.drain(request);
+
+        Assert.assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        Mockito.verify(provider, Mockito.never()).getIfAvailable();
+    }
+
     /**
      * Creates a loopback request accepted by lifecycle endpoints.
      *

@@ -24,6 +24,13 @@ import java.util.Map;
 
 /**
  * Loopback-only RocketMQ consumer lifecycle endpoints used by the release pipeline.
+ *
+ * <p>This intentionally follows the existing InternalHealthController trust boundary. Jenkins
+ * enters the single application container with kubectl exec and calls 127.0.0.1; no lifecycle
+ * request is accepted from the Pod or cluster network. A static token in the same container would
+ * add SSRF defense in depth but would not protect against a compromised same-container process,
+ * while coupling every environment to another distributed secret. Reassess this accepted boundary
+ * if a sidecar, local proxy, or SSRF-capable feature is introduced.</p>
  */
 @RestController
 @RequestMapping("/internal/rocketmq")
@@ -295,8 +302,9 @@ public class RocketMQConsumerStatusController extends BaseController {
     /**
      * Enforces the current deployment boundary: Jenkins enters the application container with
      * kubectl exec and calls 127.0.0.1. Forwarded client headers are intentionally ignored, so an
-     * external proxy cannot claim loopback through X-Forwarded-For. This boundary must be revisited
-     * if a same-Pod sidecar or local reverse proxy is introduced.
+     * external caller cannot claim loopback through X-Forwarded-For. This is also enforced before
+     * the controller by InternalHealthAccessFilter in services using erp-common-business. This
+     * boundary must be revisited if a same-Pod sidecar or local reverse proxy is introduced.
      *
      * @param request current HTTP request
      * @return true only for a connection originating from the Pod network namespace loopback

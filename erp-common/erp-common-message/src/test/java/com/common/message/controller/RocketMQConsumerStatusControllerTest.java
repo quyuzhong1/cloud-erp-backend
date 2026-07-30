@@ -57,6 +57,26 @@ public class RocketMQConsumerStatusControllerTest {
     }
 
     @Test
+    public void shouldRejectForwardedLoopbackForDrain() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
+        RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
+                context,
+                Mockito.mock(RocketMQConsumerActivationManager.class),
+                drainManager);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.244.5.10");
+        request.addHeader("X-Forwarded-For", "127.0.0.1");
+
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.drain(request);
+
+        Assert.assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        Mockito.verify(drainManager, Mockito.never()).beginDrain();
+        context.close();
+    }
+
+    @Test
     public void shouldStartTerminalDrainForLoopbackRequest() {
         GenericApplicationContext context = new GenericApplicationContext();
         context.refresh();
