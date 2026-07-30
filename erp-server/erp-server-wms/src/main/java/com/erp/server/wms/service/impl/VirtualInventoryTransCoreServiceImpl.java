@@ -238,6 +238,8 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             // 交易人员信息
             transactionDTO.setUserId(userInfo.getUid());
             transactionDTO.setUserName(userInfo.getUserName());
+            // 与审核路径一致：核算公司/仓库缺失时直接失败，避免名称为空写入流水
+            checkOrgNameAndWarehouseName(transactionDTO);
 
             result.add(transactionDTO);
         });

@@ -1865,20 +1865,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_UPDATE_FAILED);
             }
 
-            // 7. 按变更 SKU 记录操作日志（含改前/改后数量）
+            // 7. 按变更 SKU 记录操作日志（含改前/改后数量）；日志失败随事务回滚，避免数量已改但无审计记录
             String userName = UserContext.getDefaultLoginUser().getUserName();
             for (SampleRecipientDetailEntity detail : changedDetails) {
                 String msg = StrUtil.format(
                         "用户【{}】审核样品领用单【{}】，并编辑了SKU【{}】的【审核数量】由【{}】修改为【{}】",
                         userName, entity.getCode(), detail.getSkuNo(),
                         oldAuditQtyMap.get(detail.getId()), detail.getAuditQty());
-                try {
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(),
-                            entity.getId(), "修改审核数量");
-                } catch (Exception e) {
-                    log.warn("样品领用单修改审核数量操作日志写入失败,bizId:{},skuNo:{}",
-                            entity.getId(), detail.getSkuNo(), e);
-                }
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(),
+                        entity.getId(), "修改审核数量");
             }
 
             return true;
