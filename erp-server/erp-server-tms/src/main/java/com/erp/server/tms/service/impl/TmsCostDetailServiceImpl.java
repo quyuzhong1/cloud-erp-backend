@@ -378,9 +378,10 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             //费用名称
             entity.setCostName(costMap.get(entity.getCfgCostId()));
             // 按费用项+类型+币种匹配旧明细，避免同费用多币种互相覆盖
+            String finalCostCurrency = costCurrency;
             TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
                     && CharSequenceUtil.equals(entity.getType(), obj.getType())
-                    && CharSequenceUtil.equals(CharSequenceUtil.blankToDefault(obj.getCurrency(), ""), costCurrency)
+                    && CharSequenceUtil.equals(CharSequenceUtil.blankToDefault(obj.getCurrency(), ""), finalCostCurrency)
             ).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());
