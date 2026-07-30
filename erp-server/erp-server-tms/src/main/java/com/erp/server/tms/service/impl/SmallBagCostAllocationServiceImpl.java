@@ -6,7 +6,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -23,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.dmp.dto.BiSettlementExchangeRateDTO;
@@ -296,7 +296,22 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			log.error("币别 {} 未查询到有效汇率", unitCurrency);
 			throw new ServiceException("汇率为空，请维护汇率后再查询");
 		}
-		return rate;
+	return rate;
+	}
+
+	/**
+	 * 按汇率换算单价并截断保留 6 位小数。
+	 * <p>该方法只处理乘法后的尺度控制，不做四舍五入，避免金额被向上修正。</p>
+	 *
+	 * @param unitCost 原始单价
+	 * @param rate 汇率
+	 * @return 乘法后的精确结果
+	 */
+	protected BigDecimal multiplyUnitCost(BigDecimal unitCost, BigDecimal rate) {
+		if (unitCost == null || rate == null) {
+			return unitCost;
+		}
+		return unitCost.multiply(rate).setScale(6, RoundingMode.DOWN);
 	}
 
 	/**
@@ -349,7 +364,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				String unitCurrency = dto.getUnitCurrency();
 				if(StringUtils.isNotBlank(unitCurrency) && !"CNY".equals(unitCurrency)) {
 					BigDecimal rate = resolvePageRate(reportDate, unitCurrency, rateMap);
-					unitCost = unitCost.multiply(rate).setScale(6);
+					unitCost = multiplyUnitCost(unitCost, rate);
 				}
 				dto.setUnitCost(df6.format(unitCost));
 				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6, RoundingMode.HALF_UP)));

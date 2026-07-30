@@ -40,6 +40,16 @@ public interface BiSettlementExchangeRateMapper extends BaseMapper<BiSettlementE
     List<BiSettlementExchangeRateEntity> listByCurrencyCode(@Param("targetCurrencyCode") String targetCurrencyCode, @Param("sourceCurrencyCode") String sourceCurrencyCode);
 
     /**
+     * 根据目标币别和来源币别集合批量查询已审核启用汇率信息。
+     *
+     * @param targetCurrencyCode 目标币别
+     * @param sourceCurrencyCodeList 来源币别集合
+     * @return 汇率明细列表
+     */
+    List<BiSettlementExchangeRateEntity> listByCurrencyCodes(@Param("targetCurrencyCode") String targetCurrencyCode,
+                                                             @Param("sourceCurrencyCodeList") List<String> sourceCurrencyCodeList);
+
+    /**
      * @param query
      * @param params
      * @return IPage<ListDTO>
