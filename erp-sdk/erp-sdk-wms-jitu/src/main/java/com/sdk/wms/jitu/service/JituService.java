@@ -27,7 +27,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class JituService {
-    private String getPreUrl() {
+    public String getPreUrl() {
         if (BusinessCommonConstants.hasProfile("prod")) {
             return "https://sop.jtfulfillment.cn";
         } else {
