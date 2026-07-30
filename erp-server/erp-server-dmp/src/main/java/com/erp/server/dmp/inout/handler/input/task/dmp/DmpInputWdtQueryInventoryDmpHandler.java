@@ -184,7 +184,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         String skuId = Objects.nonNull(inventoryDTO) ? inventoryDTO.getSkuId() : "";
         int erpUsableQty = Objects.nonNull(inventoryDTO) ? inventoryDTO.getQty() : 0;
         //可用库存数量
-        BigDecimal availableSendStock = Objects.nonNull(detail) ? detail.getAvailableSendStock() : BigDecimal.ZERO;
+        BigDecimal availableNum = Objects.nonNull(detail) ? detail.getAvailableNum() : BigDecimal.ZERO;
         //库存量
         BigDecimal stockNum = Objects.nonNull(detail) ? detail.getStockNum() : BigDecimal.ZERO;
         //锁定量
@@ -196,7 +196,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         }
 
         int wdtStockQty = stockNum.intValue();
-        int wdtUsableQty = availableSendStock.intValue();
+        int wdtUsableQty = availableNum.intValue();
 
         TreeMap<String, Object> dmpDataMap = new TreeMap<>();
         dmpDataMap.put("sourcePlatform", ThirdSysTypeEnum.WDT.getCode());
