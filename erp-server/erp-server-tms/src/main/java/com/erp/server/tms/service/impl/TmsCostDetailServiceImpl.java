@@ -84,7 +84,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if (!skipCategoryCurrencyValidate(dictCostAttributionEnum)) {
             this.validateDbCategoryCurrency(mainId);
         }
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = list.stream()
+                .map(obj -> new Pair<>(obj.getMainId(), buildCostAmountLogValue(obj)))
+                .collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
         return saveBatch;
     }
@@ -138,7 +140,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         List<TmsCostDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         //添加费用日志
         if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
+            List<Pair<String, String>> addPairList = addList.stream()
+                    .map(obj -> new Pair<>(obj.getMainId(), buildCostAmountLogValue(obj)))
+                    .collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增了一条费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), addPairList, "编辑操作");
         }
 
@@ -404,9 +408,36 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             }
             //操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
-                operateLogService.addModuleOperateLog(CharSequenceUtil.format("编辑了一个费用【{}】,费用值【{}】，币别【{}】",entity.getCostName(),entity.getCostValue(),entity.getCurrency()), ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(),entity.getId(),"编辑操作");
+                operateLogService.addModuleOperateLog(
+                        CharSequenceUtil.format("编辑了一个费用【{}】", buildEditCostAmountLogValue(entity, oldDetailEntity)),
+                        ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getId(), "编辑操作");
             }
         }
+    }
+
+    /**
+     * 新增费用操作日志占位内容（配合模板「xxx【%s】」使用，末尾补齐币别右括号）。
+     */
+    private String buildCostAmountLogValue(TmsCostDetailEntity entity) {
+        return CharSequenceUtil.format("{}】,费用值【{}】，币别【{}",
+                CharSequenceUtil.blankToDefault(entity.getCostName(), ""),
+                entity.getCostValue(),
+                CharSequenceUtil.blankToDefault(entity.getCurrency(), ""));
+    }
+
+    /**
+     * 编辑费用操作日志占位内容：记录费用值/币别变更前后。
+     */
+    private String buildEditCostAmountLogValue(TmsCostDetailEntity entity, TmsCostDetailEntity oldDetailEntity) {
+        if (ObjectUtil.isEmpty(oldDetailEntity)) {
+            return buildCostAmountLogValue(entity);
+        }
+        return CharSequenceUtil.format("{}】,费用值由【{}】变更为【{}】，币别由【{}】变更为【{}",
+                CharSequenceUtil.blankToDefault(entity.getCostName(), ""),
+                oldDetailEntity.getCostValue(),
+                entity.getCostValue(),
+                CharSequenceUtil.blankToDefault(oldDetailEntity.getCurrency(), ""),
+                CharSequenceUtil.blankToDefault(entity.getCurrency(), ""));
     }
 
     /**
@@ -490,12 +521,19 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 
         log.info("开始批量新增自发货费用明细");
 
+        // 保存前回填主键前采集新增日志；匹配到旧明细的编辑日志已在 handleDataBatch 中写入
+        List<Pair<String, String>> pairList = list.stream()
+                .filter(c -> StringUtils.isBlank(c.getId()))
+                .map(obj -> new Pair<>(obj.getMainId(), buildCostAmountLogValue(obj)))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(pairList)) {
+            operateLogService.batchAddModuleOperateLog("添加了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
+        }
+
         boolean saveBatch = super.saveOrUpdateBatch(list);
         if (!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("添加了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
         return saveBatch;
     }
 
@@ -612,8 +650,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 oldDetailMap.remove(oldKey);
             }
             if (StringUtils.isNotBlank(entity.getId())) {
-                String value = entity.getCostName() + "】,费用值【" + entity.getCostValue() + "】，币别【" + entity.getCurrency();
-                logPairs.add(new Pair<>(entity.getId(), value));
+                logPairs.add(new Pair<>(entity.getId(), buildEditCostAmountLogValue(entity, oldDetailEntity)));
             }
         }
         if (CollectionUtils.isNotEmpty(logPairs)) {
@@ -732,7 +769,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         //新增费用日志
         List<TmsCostDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
+            List<Pair<String, String>> addPairList = addList.stream()
+                    .map(obj -> new Pair<>(obj.getMainId(), buildCostAmountLogValue(obj)))
+                    .collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增了一条费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), addPairList, "编辑操作");
         }
 
