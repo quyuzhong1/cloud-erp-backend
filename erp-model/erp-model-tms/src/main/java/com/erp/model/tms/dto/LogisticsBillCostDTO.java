@@ -5,6 +5,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.core.enums.CurrencyEnum;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -267,7 +268,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private BigDecimal diffShippingCost;
         
-        private String diffShippingCostCurrencySymbol = "¥";
+        private String diffShippingCostCurrencySymbol = CurrencyEnum.CNY.getCurrencySymbol();
         
         private String diffShippingCostStr;
 
@@ -1238,6 +1239,8 @@ public class LogisticsBillCostDTO implements Serializable {
         private String detailId;
         private String currency;
         private BigDecimal exchangeRate;
+        private String localCurrency;
+        private BigDecimal costValueLocalCurrency;
         //账单类型 实际账单 actual 暂估账单
         private String type;
         private String sourceType;
@@ -1259,26 +1262,26 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际运费(总)
          */
         private BigDecimal totalActualShippingCost = BigDecimal.ZERO;
-        private String actualShippingCostCurrencySymbol = "¥";
+        private String actualShippingCostCurrencySymbol = CurrencyEnum.CNY.getCurrencySymbol();
 
         /**
          * 实际关税费用(总)
          */
         private BigDecimal totalActualDeclareCost = BigDecimal.ZERO;
-        private String actualDeclareCostCurrencySymbol = "¥";
+        private String actualDeclareCostCurrencySymbol = CurrencyEnum.CNY.getCurrencySymbol();
 
 
         /**
          * 实际可抵扣税金[总]
          */
         private BigDecimal totalActualDeductibleTax = BigDecimal.ZERO;
-        private String actualDeductibleTaxCurrencySymbol = "¥";
+        private String actualDeductibleTaxCurrencySymbol = CurrencyEnum.CNY.getCurrencySymbol();
 
         /**
          * 实际其他费用(总)
          */
         private BigDecimal totalActualOtherCost = BigDecimal.ZERO;
-        private String actualOtherCostCurrencySymbol = "¥";
+        private String actualOtherCostCurrencySymbol = CurrencyEnum.CNY.getCurrencySymbol();
 
     }
 

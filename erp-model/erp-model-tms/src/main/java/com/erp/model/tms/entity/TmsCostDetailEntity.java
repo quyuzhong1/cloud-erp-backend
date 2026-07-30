@@ -34,7 +34,7 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
     @TableField("cost_value")
     private BigDecimal costValue;
     /**
-    * 币别
+    * 原币别
     */
     @TableField("currency")
     private String currency;
@@ -43,6 +43,19 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
     */
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
+
+    /**
+     * 本位币别（默认 CNY）
+     */
+    @TableField("local_currency")
+    private String localCurrency;
+
+    /**
+     * 本位币费用值（= costValue × exchangeRate）
+     */
+    @TableField("cost_value_local_currency")
+    private BigDecimal costValueLocalCurrency;
+
     /**
     * 费用设置id
     */
@@ -78,6 +91,10 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
     public static final String FIELD_CURRENCY = "currency";
 
     public static final String EXCHANGE_RATE = "exchange_rate";
+
+    public static final String LOCAL_CURRENCY = "local_currency";
+
+    public static final String COST_VALUE_LOCAL_CURRENCY = "cost_value_local_currency";
 
     public static final String CFG_COST_ID = "cfg_cost_id";
 

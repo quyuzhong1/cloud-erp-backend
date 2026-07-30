@@ -7,6 +7,7 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -93,6 +94,9 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      */
     void removeByMainIds(List<String> costIds);
     
+    /**
+     * 校验同费用分类下原币是否一致。
+     */
     Set<String> validateCategoryCurrency(List<TmsCostDetailEntity> list);
 
     /**
@@ -113,6 +117,12 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
     Boolean batchImportAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum);
 
     /**
+     * 按主表id批量新增；currencyMap 非空时复用调用方已查主单币别，避免重复 listByIds。
+     */
+    Boolean batchImportAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum,
+                           Map<String, String> currencyMap);
+
+    /**
      * @description: 按主表id批量更新
      * @author Will
      * @date: 2026/04/02 20:10
@@ -122,4 +132,10 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      * @return Boolean
      */
     Boolean batchImportUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum, Boolean isImport);
+
+    /**
+     * 按主表id批量更新；currencyMap 非空时复用调用方已查主单币别，避免重复 listByIds。
+     */
+    Boolean batchImportUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum,
+                              Boolean isImport, Map<String, String> currencyMap);
 }

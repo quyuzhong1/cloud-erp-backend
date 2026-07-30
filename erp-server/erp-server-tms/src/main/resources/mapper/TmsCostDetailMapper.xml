@@ -18,6 +18,8 @@
        <result column="cost_value" property="costValue" />
        <result column="currency" property="currency" />
        <result column="exchange_rate" property="exchangeRate" />
+       <result column="local_currency" property="localCurrency" />
+       <result column="cost_value_local_currency" property="costValueLocalCurrency" />
        <result column="cfg_cost_id" property="cfgCostId" />
     </resultMap>
 
@@ -32,7 +34,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, cost_code, cost_name, cost_value, currency, exchange_rate, cfg_cost_id
+        main_id, cost_code, cost_name, cost_value, currency, exchange_rate, local_currency, cost_value_local_currency, cfg_cost_id
     </sql>
     <select id="getCostCompareListByIds"
             resultType="com.erp.model.tms.dto.TmsCostDetailDTO$CostCompareDTO">
@@ -73,7 +75,9 @@
                 lbc.cfg_cost_id,
                 lbc.currency,
                 lbc.type,
-                lbc.exchange_rate
+                lbc.exchange_rate,
+                lbc.local_currency,
+                lbc.cost_value_local_currency
         from tms_cost_detail lbc
         inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
         where  lbc.is_deleted = false and lbc.main_id in

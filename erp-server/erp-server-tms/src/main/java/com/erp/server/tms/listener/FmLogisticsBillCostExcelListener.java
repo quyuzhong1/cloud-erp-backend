@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ConfirmStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
@@ -329,6 +330,10 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
 
                 }
                 updateCostDetailEntity.setExchangeRate(exchangeRate);
+                updateCostDetailEntity.setLocalCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                BigDecimal costValue = dto.getCost() == null ? BigDecimal.ZERO : dto.getCost();
+                BigDecimal rate = exchangeRate == null ? BigDecimal.ONE : exchangeRate;
+                updateCostDetailEntity.setCostValueLocalCurrency(costValue.multiply(rate));
                 updateCostDetailList.add(updateCostDetailEntity);
         	}
         }
