@@ -319,6 +319,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 是否走中转规则
          */
         private Boolean isMatchTransferRule = true;
+
+        /**
+         * 是否不出库发货：为 true 时新增发货单跳过虚拟仓冻结，由出库单一次扣可用
+         */
+        private Boolean isNotOutbound;
     }
 
     /**
