@@ -186,6 +186,49 @@ public class BiSettlementExchangeRateDTO {
         private String currency;
     }
 
+    /**
+     * 批量汇率查询入参。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchRateParamDTO {
+        /**
+         * 查询日期，格式为 yyyy-MM-dd。
+         */
+        @NotBlank(message = "查询日期不能为空")
+        private String date;
+
+        /**
+         * 源币别编码。
+         */
+        @NotBlank(message = "源币别编码不能为空")
+        private String sourceCurrencyCode;
+    }
+
+    /**
+     * 批量汇率查询出参。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchRateResultDTO {
+        /**
+         * 查询日期，格式为 yyyy-MM-dd。
+         */
+        private String date;
+
+        /**
+         * 源币别编码。
+         */
+        private String sourceCurrencyCode;
+
+        /**
+         * 匹配到的汇率；未命中有效汇率时为空。
+         */
+        private BigDecimal exchangeRate;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

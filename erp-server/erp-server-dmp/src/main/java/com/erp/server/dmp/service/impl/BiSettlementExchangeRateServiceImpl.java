@@ -43,6 +43,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,38 +87,76 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return this.listRedisByCurrencyCodeType(date, targetCurrencyCode, sourceCurrencyCode, false);
     }
 
+    @Override
+    public List<BiSettlementExchangeRateDTO.BatchRateResultDTO> findRates(List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params) {
+        if (CollectionUtils.isEmpty(params)) {
+            return Collections.emptyList();
+        }
+        String targetCurrencyCode = CurrencyEnum.CNY.getCurrencyCode();
+        Map<String, List<BiSettlementExchangeRateEntity>> ratesByCurrency = new HashMap<>();
+        // 先按日期和源币别去重，再按币别批量加载汇率明细。
+        Map<String, BiSettlementExchangeRateDTO.BatchRateParamDTO> uniqueParams = params.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(item -> item.getDate() + "|" + item.getSourceCurrencyCode(),
+                        Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
+        return uniqueParams.values().stream()
+                .map(item -> {
+                    // 同一币别只查一次数据库。
+                    List<BiSettlementExchangeRateEntity> rateList = ratesByCurrency.computeIfAbsent(item.getSourceCurrencyCode(),
+                            currency -> baseMapper.listByCurrencyCode(targetCurrencyCode, currency));
+                    BigDecimal exchangeRate = resolveRate(item.getDate(), targetCurrencyCode, item.getSourceCurrencyCode(), rateList, false);
+                    return new BiSettlementExchangeRateDTO.BatchRateResultDTO(item.getDate(), item.getSourceCurrencyCode(), exchangeRate);
+                })
+                .collect(Collectors.toList());
+    }
+
     private BigDecimal listRedisByCurrencyCodeType(String date, String targetCurrencyCode, String sourceCurrencyCode, boolean isMonth) {
-        //数据验证
+        // 从数据库加载当前源币别到目标币别的汇率明细。
+        List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
+        return resolveRate(date, targetCurrencyCode, sourceCurrencyCode, rateList, isMonth);
+    }
+
+    /**
+     * 从已加载的汇率明细中匹配指定日期的汇率。
+     *
+     * @param date 查询日期
+     * @param targetCurrencyCode 目标币别编码
+     * @param sourceCurrencyCode 源币别编码
+     * @param rateList 已加载的汇率明细
+     * @param isMonth 是否按月份匹配
+     * @return 命中的汇率；未命中时返回 null
+     */
+    private BigDecimal resolveRate(String date,
+                                   String targetCurrencyCode,
+                                   String sourceCurrencyCode,
+                                   List<BiSettlementExchangeRateEntity> rateList,
+                                   boolean isMonth) {
+        // 校验查询条件。
         checkNotBlank(date, targetCurrencyCode, sourceCurrencyCode);
-        //如果目标币别和来源币别一致则直接返回1
+        // 源币别与目标币别一致时汇率固定为 1。
         if (StrUtil.equals(targetCurrencyCode, sourceCurrencyCode)) {
             return BigDecimal.ONE;
         }
-        //查询redis中存储的成本信息
-        List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
         if (CollectionUtils.isEmpty(rateList)) {
             return null;
         }
-        //格式化日期
+        // 将查询日期转换为本地日期后进行区间匹配。
         LocalDate localDate = LocalDateUtil.parseStrToLocalDate(date);
-        //汇率
-        BigDecimal exchangeRate = null;
+        // 月度汇率按生效日期所在年月匹配，并取更新时间最新的一条。
         if (isMonth) {
             int year = localDate.getYear();
             int monthValue = localDate.getMonthValue();
-            exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().getYear() == year && obj.getSettlementDateBegin().getMonthValue() == monthValue)
-                    .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
-                    .map(BiSettlementExchangeRateEntity::getExchangeRate)
-                    .findFirst().orElse(null);
-        } else {
-            exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
-                            || obj.getSettlementDateEnd().isEqual(localDate)
-                            || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
+            return rateList.stream().filter(obj -> obj.getSettlementDateBegin().getYear() == year && obj.getSettlementDateBegin().getMonthValue() == monthValue)
                     .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
                     .map(BiSettlementExchangeRateEntity::getExchangeRate)
                     .findFirst().orElse(null);
         }
-        return exchangeRate;
+        return rateList.stream().filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
+                        || obj.getSettlementDateEnd().isEqual(localDate)
+                        || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
+                .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
+                .map(BiSettlementExchangeRateEntity::getExchangeRate)
+                .findFirst().orElse(null);
     }
 
     /**

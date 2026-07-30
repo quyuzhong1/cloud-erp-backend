@@ -35,7 +35,57 @@
         unit_cost,unit_currency,billing_weight
     </sql>
 
-<select id="paging" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
+    <sql id="smallBagPagingFrom">
+        FROM small_bag_cost_allocation_detail h
+        JOIN small_bag_cost_allocation g
+          ON g.id = h.main_id AND g.is_deleted = false
+        JOIN small_bag_cost_allocation_main t
+          ON t.id = g.main_id AND t.is_deleted = false
+        LEFT JOIN logistics_bill_cost j
+          ON t.cost_id = j.id AND j.is_deleted = false
+        LEFT JOIN logistics_bill k
+          ON j.logistics_bill_id = k.id AND k.is_deleted = false
+        LEFT JOIN logistics_bill_detail l
+          ON k.id = l.main_id AND l.is_deleted = false
+        LEFT JOIN dict_basic n
+          ON h.fee_type = n.code AND n.type = 'dictCostCategory'
+    </sql>
+
+    <sql id="smallBagPagingWhere">
+        <where>
+            h.is_deleted = false
+            AND ${params.sqlMap.default}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="smallBagPagingOrder">
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size() > 0">
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>,
+        </if>
+        t.id DESC, g.id, n.index ASC, h.id ASC
+    </sql>
+
+    <select id="pagingCount" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT h.id)
+        <include refid="smallBagPagingFrom"/>
+        <include refid="smallBagPagingWhere"/>
+    </select>
+
+    <select id="pagingDetailIds" resultType="java.lang.String">
+        SELECT h.id
+        <include refid="smallBagPagingFrom"/>
+        <include refid="smallBagPagingWhere"/>
+        <include refid="smallBagPagingOrder"/>
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="selectByDetailIds" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
         select
             t.id main_id,
             g.id,
@@ -83,27 +133,12 @@
             h.allocated_currency currency,
             k.platform_code as platformCode,
             k.sales_platform as salesPlatform
-        from small_bag_cost_allocation_main t
-        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
-        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
-        left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
-        left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
-        left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
-        left join dict_basic n on h.fee_type = n.code and n.type = 'dictCostCategory'
-        <where>
-            ${params.sqlMap.default}
-            and t.is_deleted = false
-            <if test="params.permissionSql!=null and params.permissionSql!=''">
-                ${params.permissionSql}
-            </if>
-        </where>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        t.id desc,g.id,n.index asc
+        <include refid="smallBagPagingFrom"/>
+        WHERE h.is_deleted = false
+          AND h.id IN
+          <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
+              #{detailId}
+          </foreach>
     </select>
     
 <select id="tabList" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$TabListDTO">

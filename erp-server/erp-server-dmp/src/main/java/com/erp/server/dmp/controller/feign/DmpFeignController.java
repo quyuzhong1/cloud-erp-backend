@@ -159,6 +159,17 @@ public class DmpFeignController extends BaseController {
     }
     
     /**
+     * 批量查询源币别在指定日期的人民币汇率。
+     *
+     * @param params 汇率查询条件，按日期和源币别去重
+     * @return 汇率查询结果，保持首次请求顺序
+     */
+    @PostMapping("/getRates")
+    public List<BiSettlementExchangeRateDTO.BatchRateResultDTO> getRates(@RequestBody @Valid List<BiSettlementExchangeRateDTO.BatchRateParamDTO> params) {
+        return biSettlementExchangeRateService.findRates(params);
+    }
+
+    /**
      * 获取月度汇率
      *
      * @param date
