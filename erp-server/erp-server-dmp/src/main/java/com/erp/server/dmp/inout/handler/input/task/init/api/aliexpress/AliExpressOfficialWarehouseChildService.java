@@ -598,7 +598,7 @@ public class AliExpressOfficialWarehouseChildService {
     }
 
     /**
-     * 按 SKU ID、商品 ID + SKU 编码、唯一 SKU 编码的顺序匹配货品。
+     * 按绑定 SKU ID、货品编码、商品 ID + SKU 编码、唯一 SKU 编码的顺序匹配货品。
      *
      * @param itemContext 订单明细
      * @param scItems 速卖通货品关系
@@ -616,6 +616,14 @@ public class AliExpressOfficialWarehouseChildService {
             return candidates.get(0);
         }
         assertNotAmbiguous(itemContext, candidates, "skuId");
+
+        candidates = scItems.stream()
+                .filter(item -> matchesSkuIdItemCode(itemContext.getSkuId(), item))
+                .collect(Collectors.toList());
+        if (candidates.size() == 1) {
+            return candidates.get(0);
+        }
+        assertNotAmbiguous(itemContext, candidates, "skuId=itemCode");
 
         candidates = findByRelation(scItems,
                 relation -> StrUtil.isNotBlank(itemContext.getProductId())
@@ -639,6 +647,19 @@ public class AliExpressOfficialWarehouseChildService {
                 itemContext.getProductId(),
                 itemContext.getSkuId(),
                 itemContext.getSkuCode()));
+    }
+
+    /**
+     * 兼容无 relation_list 时订单 SKU ID 与货品编码直接对应的返回结构。
+     *
+     * @param skuId 订单 SKU ID
+     * @param scItem 速卖通货品
+     * @return 订单 SKU ID 与 item_code 完全一致时返回 true
+     */
+    boolean matchesSkuIdItemCode(String skuId, ScItemDTO scItem) {
+        return StrUtil.isNotBlank(skuId)
+                && Objects.nonNull(scItem)
+                && skuId.equals(scItem.getItemCode());
     }
 
     /**
