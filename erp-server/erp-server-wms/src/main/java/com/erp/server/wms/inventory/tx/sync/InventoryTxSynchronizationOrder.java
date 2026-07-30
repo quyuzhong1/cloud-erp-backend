@@ -1,4 +1,4 @@
-package com.erp.server.wms.config;
+package com.erp.server.wms.inventory.tx.sync;
 
 /**
  * Spring 事务同步器优先级：{@code getSynchronizations()} 按 order 升序排序，

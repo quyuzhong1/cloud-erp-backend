@@ -33,11 +33,11 @@ public class InventoryXAUtil {
 			transactionId = xaXid.getGlobalXid().replace(":", "_");
 			logMsg = StringUtil.appendLogMsg("InventoryXAUtil的doXa", transactionId , status);
 	    	log.info("{}开始" , logMsg);
-			Class<?> forName = Class.forName("com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter");
+			Class<?> forName = Class.forName("com.erp.server.wms.inventory.tx.sync.InventoryTransactionSynchronizationAdapter");
 			Method method = forName.getMethod("doXa", String.class , Integer.class);
 			method.invoke(forName.newInstance(), transactionId , status);
 			
-			Class<?> virtualForName = Class.forName("com.erp.server.wms.config.VirtualInventoryTransactionSynchronizationAdapter");
+			Class<?> virtualForName = Class.forName("com.erp.server.wms.inventory.tx.sync.VirtualInventoryTransactionSynchronizationAdapter");
 			Method virtualMethod = virtualForName.getMethod("doXa", String.class , Integer.class);
 			virtualMethod.invoke(virtualForName.newInstance(), transactionId , status);
 		}catch(InvocationTargetException e1) {

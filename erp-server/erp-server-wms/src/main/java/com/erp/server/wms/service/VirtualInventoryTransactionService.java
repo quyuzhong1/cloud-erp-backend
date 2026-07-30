@@ -7,7 +7,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
-import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
+import com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateHelper;
 
 import cn.hutool.core.lang.Pair;
 

@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.model.wms.entity.InventoryTransactionEntity;
-import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
-import com.erp.server.wms.config.PgUnallocLockDeferredRegistry;
+import com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateHelper;
+import com.erp.server.wms.inventory.tx.lock.PgUnallocLockDeferredRegistry;
 import com.erp.server.wms.service.InventoryTransactionService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -76,9 +76,9 @@ public class InventoryTransactionJob {
 
     @XxlJob("inventoryCheckRollback")
     public ReturnT inventoryCheckRollback() {
-        int pendingLockCount = PgUnallocLockDeferredRegistry.retryAllPendingUnlocks();
         int[] timeouts = InventoryRedisTxCompensateHelper.resolveCompensateTimeouts(XxlJobHelper.getJobParam());
         int failureCount = inventoryTransactionService.inventoryCheckRollback(timeouts[0], timeouts[1]);
+        int pendingLockCount = PgUnallocLockDeferredRegistry.retryAllPendingUnlocks();
         if (failureCount > 0 || pendingLockCount > 0) {
             log.warn("inventoryCheckRollback 补偿存在失败 failureCount={} pendingLockCount={}",
                     failureCount, pendingLockCount);
