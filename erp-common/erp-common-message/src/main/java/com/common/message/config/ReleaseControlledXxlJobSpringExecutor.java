@@ -15,8 +15,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,6 +35,8 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     private static final String LOCAL_COLOR_KEY = "release.color";
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private static final String LOCAL_VERSION_KEY = "release.version";
+    private static final String SHUTDOWN_DRAIN_WAIT_MILLIS_KEY = "erp.xxl-job.shutdown-drain-wait-ms";
+    private static final long DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS = 60000L;
     // common-message 不直接绑定 spring-cloud-context；用类名识别 Nacos 刷新事件，避免公共消息模块新增传递依赖。
     private static final String ENVIRONMENT_CHANGE_EVENT = "org.springframework.cloud.context.environment.EnvironmentChangeEvent";
 
@@ -185,6 +190,11 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
             drainState = DrainState.FAILED;
             log.error(">>>>>>>>>>> xxl-job terminal drain failed; the external release gate must observe FAILED.",
                     ex);
+            /*
+             * Do not call super.destroy() from a failure/finally path. XXL-JOB 2.3.0 interrupts active
+             * JobThreads during destroy; a failed drain must remain visible to the release gate, which
+             * applies the bounded timeout and Pod replacement policy.
+             */
             if (ex instanceof Error) {
                 throw (Error) ex;
             }
@@ -238,7 +248,11 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
      */
     protected void waitForAcceptedJobs() throws Exception {
         int consecutiveIdleChecks = 0;
-        // Allow already accepted Netty tasks to enqueue before declaring the executor idle.
+        /*
+         * Intentionally no business-task deadline here: forcing the official destroy path on timeout
+         * interrupts active JobThreads. Jenkins owns the five-minute release deadline; destroy() itself
+         * has a bounded local wait so Spring shutdown cannot block forever.
+         */
         while (consecutiveIdleChecks < 5) {
             if (getBusyJobThreadCount() == 0) {
                 consecutiveIdleChecks++;
@@ -283,6 +297,15 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         return drainState.name();
     }
 
+    /**
+     * Returns the typed drain state for internal lifecycle decisions.
+     *
+     * @return current terminal drain state
+     */
+    public DrainState getDrainStateValue() {
+        return drainState;
+    }
+
     public String getDrainFailure() {
         return drainFailure;
     }
@@ -303,8 +326,9 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         if (future == null) {
             return;
         }
+        long shutdownWaitMillis = getShutdownDrainWaitMillis();
         try {
-            future.get();
+            future.get(shutdownWaitMillis, TimeUnit.MILLISECONDS);
             if (drainState != DrainState.DRAINED) {
                 throw new IllegalStateException("XXL-JOB terminal drain did not complete: " + drainFailure);
             }
@@ -313,10 +337,62 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
             throw new IllegalStateException("Interrupted while waiting for XXL-JOB terminal drain", ex);
         } catch (ExecutionException ex) {
             throw new IllegalStateException("XXL-JOB terminal drain failed", ex.getCause());
+        } catch (CancellationException ex) {
+            markDrainFailed("XXL-JOB terminal drain was cancelled");
+            throw new IllegalStateException("XXL-JOB terminal drain was cancelled", ex);
+        } catch (TimeoutException ex) {
+            if (!future.cancel(true) && drainState == DrainState.DRAINED) {
+                return;
+            }
+            markDrainFailed("XXL-JOB terminal drain timed out during Spring shutdown");
+            throw new IllegalStateException(
+                    "XXL-JOB terminal drain timed out during Spring shutdown after "
+                            + shutdownWaitMillis + "ms",
+                    ex);
         }
     }
 
-    enum DrainState {
+    /**
+     * Resolves the maximum time Spring shutdown waits for an already-running drain.
+     *
+     * @return positive shutdown wait in milliseconds
+     */
+    protected long getShutdownDrainWaitMillis() {
+        if (environment == null) {
+            return DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS;
+        }
+        String configured = environment.getProperty(SHUTDOWN_DRAIN_WAIT_MILLIS_KEY);
+        if (!hasText(configured)) {
+            return DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS;
+        }
+        try {
+            long timeout = Long.parseLong(configured.trim());
+            if (timeout > 0L) {
+                return timeout;
+            }
+        } catch (NumberFormatException ex) {
+            log.warn("Invalid {} value '{}'; using default {}ms",
+                    SHUTDOWN_DRAIN_WAIT_MILLIS_KEY, configured, DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS);
+            return DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS;
+        }
+        log.warn("Non-positive {} value '{}'; using default {}ms",
+                SHUTDOWN_DRAIN_WAIT_MILLIS_KEY, configured, DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS);
+        return DEFAULT_SHUTDOWN_DRAIN_WAIT_MILLIS;
+    }
+
+    /**
+     * Records a controlled terminal drain failure without exposing it through public HTTP responses.
+     *
+     * @param message internal failure detail
+     */
+    private void markDrainFailed(String message) {
+        drainFailure = message;
+        drainState = DrainState.FAILED;
+        log.error(">>>>>>>>>>> {}", message);
+    }
+
+    /** Terminal XXL-JOB drain states exposed to the release status endpoint by name. */
+    public enum DrainState {
         DISABLED,
         RUNNING,
         DRAINING,

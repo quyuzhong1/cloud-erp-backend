@@ -110,6 +110,26 @@ public class ReleaseControlledXxlJobSpringExecutorTest {
     }
 
     @Test
+    public void destroyShouldStopWaitingWhenDrainDoesNotComplete() throws Exception {
+        ThreadPoolTaskExecutor taskExecutor = asyncExecutor();
+        TestExecutor executor = new TestExecutor(taskExecutor);
+        executor.blockWait = true;
+        executor.shutdownDrainWaitMillis = 50L;
+        markStarted(executor);
+
+        try {
+            executor.destroy();
+            Assert.fail("Spring destroy must have a bounded drain wait");
+        } catch (IllegalStateException expected) {
+            Assert.assertTrue(expected.getMessage().contains("timed out during Spring shutdown"));
+        }
+
+        Assert.assertEquals("FAILED", executor.getDrainState());
+        Assert.assertFalse(executor.events.contains("destroy"));
+        taskExecutor.shutdown();
+    }
+
+    @Test
     public void shouldMatchXxlJob230PrivateDrainContract() throws Exception {
         Field embedServer = XxlJobExecutor.class.getDeclaredField("embedServer");
         Field jobThreadRepository = XxlJobExecutor.class.getDeclaredField("jobThreadRepository");
@@ -167,6 +187,7 @@ public class ReleaseControlledXxlJobSpringExecutorTest {
         private final CountDownLatch allowIdle = new CountDownLatch(1);
         private volatile boolean blockWait;
         private volatile RuntimeException stopFailure;
+        private volatile long shutdownDrainWaitMillis = 60000L;
 
         private TestExecutor(AsyncTaskExecutor lifecycleExecutor) {
             super(lifecycleExecutor);
@@ -192,6 +213,11 @@ public class ReleaseControlledXxlJobSpringExecutorTest {
         @Override
         protected void destroyExecutorAfterDrain() {
             events.add("destroy");
+        }
+
+        @Override
+        protected long getShutdownDrainWaitMillis() {
+            return shutdownDrainWaitMillis;
         }
     }
 }

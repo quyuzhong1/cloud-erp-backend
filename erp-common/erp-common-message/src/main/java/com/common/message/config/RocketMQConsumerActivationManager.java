@@ -37,6 +37,7 @@ public class RocketMQConsumerActivationManager {
     private final Environment environment;
     private final ListenerRegistrar listenerRegistrar;
     private final RocketMQConsumerLifecycleCoordinator lifecycleCoordinator;
+    private final RocketMQConsumerEnabledResolver.ConsumerSwitchState consumerSwitchState;
     private final boolean startupEnabled;
 
     private volatile ActivationState activationState;
@@ -82,14 +83,24 @@ public class RocketMQConsumerActivationManager {
         this.environment = environment;
         this.listenerRegistrar = listenerRegistrar;
         this.lifecycleCoordinator = lifecycleCoordinator;
-        this.startupEnabled = RocketMQConsumerEnabledResolver.isEnabled(environment);
-        this.activationState = startupEnabled ? ActivationState.NATIVE : ActivationState.DEFERRED;
+        this.consumerSwitchState = RocketMQConsumerEnabledResolver.resolve(environment);
+        this.startupEnabled =
+                consumerSwitchState == RocketMQConsumerEnabledResolver.ConsumerSwitchState.ENABLED;
+        if (startupEnabled) {
+            this.activationState = ActivationState.NATIVE;
+        } else if (consumerSwitchState == RocketMQConsumerEnabledResolver.ConsumerSwitchState.DEFERRED) {
+            this.activationState = ActivationState.DEFERRED;
+        } else {
+            this.activationState = ActivationState.INVALID;
+            this.failureMessage = "invalid RocketMQ consumer startup switch";
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public void activateOnApplicationReadyWhenColorIsActive() {
-        if (!startupEnabled && isColorEligible()) {
+        if (consumerSwitchState == RocketMQConsumerEnabledResolver.ConsumerSwitchState.DEFERRED
+                && isColorEligible()) {
             try {
                 activate();
             } catch (RocketMQConsumerLifecycleCoordinator.TerminalDrainStartedException ex) {
@@ -109,6 +120,10 @@ public class RocketMQConsumerActivationManager {
     private synchronized void activateUnderLifecycleLock() {
         if (startupEnabled || activationState == ActivationState.ACTIVE) {
             return;
+        }
+        if (activationState == ActivationState.INVALID) {
+            throw new InvalidConsumerSwitchException(
+                    "RocketMQ activation is blocked because the consumer startup switch is invalid");
         }
         if (activationState == ActivationState.FAILED) {
             throw new IllegalStateException("RocketMQ activation has failed and cannot be retried in this process: "
@@ -171,6 +186,15 @@ public class RocketMQConsumerActivationManager {
 
     public String getActivationState() {
         return activationState.name();
+    }
+
+    /**
+     * Returns the typed activation state for internal lifecycle decisions.
+     *
+     * @return current activation state
+     */
+    public ActivationState getActivationStateValue() {
+        return activationState;
     }
 
     public String getFailureMessage() {
@@ -254,9 +278,11 @@ public class RocketMQConsumerActivationManager {
         return value != null && !value.trim().isEmpty();
     }
 
-    enum ActivationState {
+    /** Internal listener activation states exposed to the release status endpoint by name. */
+    public enum ActivationState {
         NATIVE,
         DEFERRED,
+        INVALID,
         ACTIVATING,
         ACTIVE,
         FAILED
@@ -286,6 +312,18 @@ public class RocketMQConsumerActivationManager {
 
     public static class ActivationNotEligibleException extends IllegalStateException {
         public ActivationNotEligibleException(String message) {
+            super(message);
+        }
+    }
+
+    /** Rejects activation when the startup switch contains an unresolved or malformed value. */
+    public static class InvalidConsumerSwitchException extends IllegalStateException {
+        /**
+         * Creates a controlled rejection for an invalid consumer startup switch.
+         *
+         * @param message rejection detail retained in internal logs
+         */
+        public InvalidConsumerSwitchException(String message) {
             super(message);
         }
     }

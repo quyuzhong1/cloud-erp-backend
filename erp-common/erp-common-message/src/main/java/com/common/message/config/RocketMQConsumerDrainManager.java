@@ -24,8 +24,8 @@ public class RocketMQConsumerDrainManager {
 
     /*
      * RocketMQ 4.9.3 interrupts consumer tasks when its shutdown wait expires.
-     * Keep the library wait effectively unbounded; Jenkins may stop waiting,
-     * but it must never delete a Pod that has not reached DRAINED.
+     * Keep the library wait effectively unbounded so this process does not interrupt an in-flight
+     * handler. Jenkins owns the bounded release timeout and may eventually force Pod replacement.
      */
     private static final long TERMINAL_DRAIN_WAIT_MILLIS = Long.MAX_VALUE;
 
@@ -168,6 +168,15 @@ public class RocketMQConsumerDrainManager {
         return drainState.name();
     }
 
+    /**
+     * Returns the typed drain state for internal lifecycle decisions.
+     *
+     * @return current terminal drain state
+     */
+    public DrainState getDrainStateValue() {
+        return drainState;
+    }
+
     public int getTotalContainers() {
         return totalContainers;
     }
@@ -180,7 +189,8 @@ public class RocketMQConsumerDrainManager {
         return failureMessage;
     }
 
-    enum DrainState {
+    /** Terminal consumer drain states exposed to the release status endpoint by name. */
+    public enum DrainState {
         RUNNING,
         DRAINING,
         DRAINED,

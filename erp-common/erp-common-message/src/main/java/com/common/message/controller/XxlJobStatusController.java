@@ -97,14 +97,15 @@ public class XxlJobStatusController extends BaseController {
         try {
             controlled.beginDrain();
             XxlJobLifecycleStatusVO status = controlledStatus(controlled);
-            if ("DRAINING".equals(status.getStatus())) {
+            ReleaseControlledXxlJobSpringExecutor.DrainState drainState = controlled.getDrainStateValue();
+            if (drainState == ReleaseControlledXxlJobSpringExecutor.DrainState.DRAINING) {
                 return lifecycleResponse(
                         HttpStatus.ACCEPTED,
                         HttpStatus.ACCEPTED.value(),
                         "XXL-JOB terminal drain accepted",
                         status);
             }
-            if ("FAILED".equals(status.getStatus())) {
+            if (drainState == ReleaseControlledXxlJobSpringExecutor.DrainState.FAILED) {
                 status.setMessage(DRAIN_FAILED_MESSAGE);
                 return lifecycleResponse(
                         HttpStatus.CONFLICT,
@@ -131,7 +132,7 @@ public class XxlJobStatusController extends BaseController {
      */
     private XxlJobLifecycleStatusVO controlledStatus(ReleaseControlledXxlJobSpringExecutor controlled) {
         XxlJobLifecycleStatusVO status = new XxlJobLifecycleStatusVO();
-        status.setStatus(controlled.getDrainState());
+        status.setStatus(controlled.getDrainStateValue().name());
         status.setConfigured(true);
         status.setAcceptingTriggers(controlled.isAcceptingTriggers());
         status.setRegistryRemovalRequested(controlled.isRegistryRemovalRequested());

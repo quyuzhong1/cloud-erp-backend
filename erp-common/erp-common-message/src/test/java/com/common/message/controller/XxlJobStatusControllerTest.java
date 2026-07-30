@@ -21,7 +21,8 @@ public class XxlJobStatusControllerTest {
         ReleaseControlledXxlJobSpringExecutor executor =
                 Mockito.mock(ReleaseControlledXxlJobSpringExecutor.class);
         Mockito.when(provider.getIfAvailable()).thenReturn(executor);
-        Mockito.when(executor.getDrainState()).thenReturn("DRAINING");
+        Mockito.when(executor.getDrainStateValue())
+                .thenReturn(ReleaseControlledXxlJobSpringExecutor.DrainState.DRAINING);
         XxlJobStatusController controller = new XxlJobStatusController(provider);
         MockHttpServletRequest request = loopbackRequest();
 

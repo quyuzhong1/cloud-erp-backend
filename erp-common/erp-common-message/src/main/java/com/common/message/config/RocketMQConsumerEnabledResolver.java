@@ -15,6 +15,35 @@ final class RocketMQConsumerEnabledResolver {
     }
 
     /**
+     * Resolves the consumer switch into a state that preserves the difference between an intentional
+     * blue-green deferral and an invalid release placeholder.
+     *
+     * @param environment Spring environment, may be null during very early bootstrap
+     * @return resolved consumer switch state
+     */
+    static ConsumerSwitchState resolve(Environment environment) {
+        if (environment == null) {
+            return ConsumerSwitchState.ENABLED;
+        }
+
+        String configuredValue = environment.getProperty(
+                RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY);
+        if (configuredValue == null || configuredValue.trim().isEmpty()) {
+            return ConsumerSwitchState.ENABLED;
+        }
+        if ("true".equalsIgnoreCase(configuredValue.trim())) {
+            return ConsumerSwitchState.ENABLED;
+        }
+        if ("false".equalsIgnoreCase(configuredValue.trim())) {
+            return ConsumerSwitchState.DEFERRED;
+        }
+
+        LOGGER.error("Invalid {} value '{}'; RocketMQ consumers will remain disabled",
+                RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, configuredValue);
+        return ConsumerSwitchState.INVALID;
+    }
+
+    /**
      * Resolves the raw consumer switch without using Spring's strict Boolean converter.
      * Missing values preserve the historical enabled behavior; malformed release values fail closed.
      *
@@ -22,24 +51,12 @@ final class RocketMQConsumerEnabledResolver {
      * @return true when listeners may be registered at startup
      */
     static boolean isEnabled(Environment environment) {
-        if (environment == null) {
-            return true;
-        }
+        return resolve(environment) == ConsumerSwitchState.ENABLED;
+    }
 
-        String configuredValue = environment.getProperty(
-                RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY);
-        if (configuredValue == null || configuredValue.trim().isEmpty()) {
-            return true;
-        }
-        if ("true".equalsIgnoreCase(configuredValue.trim())) {
-            return true;
-        }
-        if ("false".equalsIgnoreCase(configuredValue.trim())) {
-            return false;
-        }
-
-        LOGGER.error("Invalid {} value '{}'; RocketMQ consumers will remain disabled",
-                RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, configuredValue);
-        return false;
+    enum ConsumerSwitchState {
+        ENABLED,
+        DEFERRED,
+        INVALID
     }
 }

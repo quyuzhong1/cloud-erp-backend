@@ -67,17 +67,23 @@ public class RocketMQConsumerActivationManagerTest {
     }
 
     @Test
-    public void shouldTreatMalformedStartupSwitchAsDeferredWithoutConversionFailure() {
+    public void shouldRejectActivationForMalformedStartupSwitch() {
         GenericApplicationContext context = new GenericApplicationContext();
         context.refresh();
         MockEnvironment environment = deferredEnvironment("green", "green")
                 .withProperty(RocketMQConsumerBootstrapPostProcessor.CONSUMER_ENABLED_PROPERTY, "mqEnabled");
 
         RocketMQConsumerActivationManager manager = new RocketMQConsumerActivationManager(
-                context, environment, () -> Assert.fail("registrar must not run during construction"));
+                context, environment, () -> Assert.fail("registrar must not run for an invalid switch"));
 
         Assert.assertFalse(manager.isStartupEnabled());
-        Assert.assertEquals("DEFERRED", manager.getActivationState());
+        Assert.assertEquals("INVALID", manager.getActivationState());
+        try {
+            manager.activate();
+            Assert.fail("malformed consumer switch must fail closed");
+        } catch (RocketMQConsumerActivationManager.InvalidConsumerSwitchException expected) {
+            Assert.assertTrue(expected.getMessage().contains("startup switch is invalid"));
+        }
         context.close();
     }
 

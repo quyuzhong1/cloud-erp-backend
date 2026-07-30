@@ -46,7 +46,7 @@ public class RocketMQConsumerBootstrapIntegrationTest {
             assertThat(context).doesNotHaveBean(ListenerContainerConfiguration.class);
             assertThat(context).doesNotHaveBean(DefaultRocketMQListenerContainer.class);
             assertThat(context.getBean(RocketMQConsumerActivationManager.class).getActivationState())
-                    .isEqualTo("DEFERRED");
+                    .isEqualTo("INVALID");
         });
     }
 

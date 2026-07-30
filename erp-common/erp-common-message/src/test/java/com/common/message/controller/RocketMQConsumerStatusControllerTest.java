@@ -22,8 +22,10 @@ public class RocketMQConsumerStatusControllerTest {
         context.refresh();
         RocketMQConsumerActivationManager activationManager = Mockito.mock(RocketMQConsumerActivationManager.class);
         RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
-        Mockito.when(activationManager.getActivationState()).thenReturn("DEFERRED");
-        Mockito.when(drainManager.getDrainState()).thenReturn("RUNNING");
+        Mockito.when(activationManager.getActivationStateValue())
+                .thenReturn(RocketMQConsumerActivationManager.ActivationState.DEFERRED);
+        Mockito.when(drainManager.getDrainStateValue())
+                .thenReturn(RocketMQConsumerDrainManager.DrainState.RUNNING);
         RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
                 context, activationManager, drainManager);
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -60,7 +62,10 @@ public class RocketMQConsumerStatusControllerTest {
         context.refresh();
         RocketMQConsumerActivationManager activationManager = Mockito.mock(RocketMQConsumerActivationManager.class);
         RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
-        Mockito.when(drainManager.getDrainState()).thenReturn("DRAINING");
+        Mockito.when(activationManager.getActivationStateValue())
+                .thenReturn(RocketMQConsumerActivationManager.ActivationState.DEFERRED);
+        Mockito.when(drainManager.getDrainStateValue())
+                .thenReturn(RocketMQConsumerDrainManager.DrainState.DRAINING);
         RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
                 context, activationManager, drainManager);
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -82,7 +87,10 @@ public class RocketMQConsumerStatusControllerTest {
         RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
         Mockito.doThrow(new IllegalStateException("internal consumer shutdown detail"))
                 .when(drainManager).beginDrain();
-        Mockito.when(drainManager.getDrainState()).thenReturn("FAILED");
+        Mockito.when(activationManager.getActivationStateValue())
+                .thenReturn(RocketMQConsumerActivationManager.ActivationState.DEFERRED);
+        Mockito.when(drainManager.getDrainStateValue())
+                .thenReturn(RocketMQConsumerDrainManager.DrainState.FAILED);
         Mockito.when(drainManager.getFailureMessage()).thenReturn("internal consumer shutdown detail");
         RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
                 context, activationManager, drainManager);
@@ -109,9 +117,11 @@ public class RocketMQConsumerStatusControllerTest {
         context.getBeanFactory().registerSingleton("stoppedRocketMQContainer", stoppedContainer);
         RocketMQConsumerActivationManager activationManager = Mockito.mock(RocketMQConsumerActivationManager.class);
         RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
-        Mockito.when(activationManager.getActivationState()).thenReturn("ACTIVE");
+        Mockito.when(activationManager.getActivationStateValue())
+                .thenReturn(RocketMQConsumerActivationManager.ActivationState.ACTIVE);
         Mockito.when(activationManager.isEffectivelyEnabled()).thenReturn(false);
-        Mockito.when(drainManager.getDrainState()).thenReturn("DRAINED");
+        Mockito.when(drainManager.getDrainStateValue())
+                .thenReturn(RocketMQConsumerDrainManager.DrainState.DRAINED);
         Mockito.when(drainManager.getTotalContainers()).thenReturn(1);
         Mockito.when(drainManager.getDrainedContainers()).thenReturn(1);
         RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
@@ -127,6 +137,31 @@ public class RocketMQConsumerStatusControllerTest {
         Assert.assertFalse(status.isEnabled());
         Assert.assertEquals(0, status.getRunningContainers());
         Assert.assertEquals("DRAINED", status.getDrainState());
+        context.close();
+    }
+
+    @Test
+    public void shouldRejectActivationForInvalidConsumerSwitch() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        RocketMQConsumerActivationManager activationManager = Mockito.mock(RocketMQConsumerActivationManager.class);
+        RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
+        Mockito.doThrow(new RocketMQConsumerActivationManager.InvalidConsumerSwitchException(
+                "internal invalid switch detail")).when(activationManager).activate();
+        Mockito.when(activationManager.getActivationStateValue())
+                .thenReturn(RocketMQConsumerActivationManager.ActivationState.INVALID);
+        Mockito.when(drainManager.getDrainStateValue())
+                .thenReturn(RocketMQConsumerDrainManager.DrainState.RUNNING);
+        RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
+                context, activationManager, drainManager);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("127.0.0.1");
+
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.activate(request);
+
+        Assert.assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        Assert.assertEquals("INVALID_CONFIGURATION", response.getBody().getData().getStatus());
+        Assert.assertEquals("RocketMQ consumer configuration is invalid", response.getBody().getMsg());
         context.close();
     }
 }

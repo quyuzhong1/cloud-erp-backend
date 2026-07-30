@@ -70,14 +70,15 @@ public class RocketMQConsumerStatusController extends BaseController {
         try {
             drainManager.beginDrain();
             RocketMQLifecycleStatusVO status = currentStatus();
-            if ("DRAINING".equals(status.getDrainState())) {
+            RocketMQConsumerDrainManager.DrainState drainState = drainManager.getDrainStateValue();
+            if (drainState == RocketMQConsumerDrainManager.DrainState.DRAINING) {
                 return lifecycleResponse(
                         HttpStatus.ACCEPTED,
                         HttpStatus.ACCEPTED.value(),
                         "RocketMQ terminal drain accepted",
                         status);
             }
-            if ("FAILED".equals(status.getDrainState())) {
+            if (drainState == RocketMQConsumerDrainManager.DrainState.FAILED) {
                 status.setMessage(DRAIN_FAILED_MESSAGE);
                 return lifecycleResponse(
                         HttpStatus.CONFLICT,
@@ -113,6 +114,16 @@ public class RocketMQConsumerStatusController extends BaseController {
         try {
             activationManager.activate();
             return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", currentStatus());
+        } catch (RocketMQConsumerActivationManager.InvalidConsumerSwitchException ex) {
+            LOGGER.error("RocketMQ activation rejected because the consumer switch is invalid", ex);
+            RocketMQLifecycleStatusVO conflict = currentStatus();
+            conflict.setStatus("INVALID_CONFIGURATION");
+            conflict.setMessage("RocketMQ consumer configuration is invalid");
+            return lifecycleResponse(
+                    HttpStatus.CONFLICT,
+                    HttpStatus.CONFLICT.value(),
+                    "RocketMQ consumer configuration is invalid",
+                    conflict);
         } catch (RocketMQConsumerLifecycleCoordinator.TerminalDrainStartedException ex) {
             LOGGER.warn("RocketMQ activation rejected because terminal drain has started", ex);
             RocketMQLifecycleStatusVO conflict = currentStatus();
@@ -171,17 +182,17 @@ public class RocketMQConsumerStatusController extends BaseController {
             status.getContainers().add(detail);
         }
 
-        String drainState = drainManager.getDrainState();
+        RocketMQConsumerDrainManager.DrainState drainState = drainManager.getDrainStateValue();
         status.setStatus(resolveStatus(enabled, containers.size(), running, drainState));
         status.setEnabled(enabled);
         status.setStartupEnabled(activationManager.isStartupEnabled());
-        status.setActivationState(activationManager.getActivationState());
+        status.setActivationState(activationManager.getActivationStateValue().name());
         status.setActivationFailure(hasText(activationManager.getFailureMessage())
                 ? ACTIVATION_FAILED_MESSAGE : null);
         status.setMqActiveColor(activationManager.getMqActiveColor());
         status.setLocalColor(activationManager.getLocalColor());
         status.setColorEligible(activationManager.isColorEligible());
-        status.setDrainState(drainState);
+        status.setDrainState(drainState.name());
         status.setDrainTotalContainers(drainManager.getTotalContainers());
         status.setDrainedContainers(drainManager.getDrainedContainers());
         status.setDrainFailure(hasText(drainManager.getFailureMessage())
@@ -207,14 +218,17 @@ public class RocketMQConsumerStatusController extends BaseController {
      * @param enabled effective consumer state
      * @param total listener container count
      * @param running running listener container count
-     * @param drainState terminal drain state
+     * @param drainState typed terminal drain state
      * @return primary lifecycle status
      */
-    private String resolveStatus(boolean enabled, int total, int running, String drainState) {
-        if ("DRAINING".equals(drainState)
-                || "DRAINED".equals(drainState)
-                || "FAILED".equals(drainState)) {
-            return drainState;
+    private String resolveStatus(boolean enabled,
+                                 int total,
+                                 int running,
+                                 RocketMQConsumerDrainManager.DrainState drainState) {
+        if (drainState == RocketMQConsumerDrainManager.DrainState.DRAINING
+                || drainState == RocketMQConsumerDrainManager.DrainState.DRAINED
+                || drainState == RocketMQConsumerDrainManager.DrainState.FAILED) {
+            return drainState.name();
         }
         if (!enabled) {
             return total == 0 ? "DISABLED" : "INVALID_DISABLED_STATE";
