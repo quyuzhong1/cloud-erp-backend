@@ -18,6 +18,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -90,5 +91,13 @@ public class BiSettlementExchangeRateServiceImplTest {
         entity.setSourceCurrencyCode(sourceCurrencyCode);
         entity.setTargetCurrencyCode("CNY");
         return entity;
+    }
+
+    @Test
+    public void findRatesReturnsEmptyListWhenAllParamsAreNull() {
+        List<BiSettlementExchangeRateDTO.BatchRateResultDTO> result = service.findRates(Arrays.asList(null, null));
+
+        assertEquals(0, result.size());
+        verifyNoInteractions(mapper);
     }
 }

@@ -299,8 +299,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	/**
-	 * 按汇率换算单价并截断保留 6 位小数。
-	 * <p>该方法只处理乘法后的尺度控制，不做四舍五入，避免金额被向上修正。</p>
+	 * 按汇率换算单价并保留 6 位小数。
 	 *
 	 * @param unitCost 原始单价
 	 * @param rate 汇率
@@ -310,7 +309,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		if (unitCost == null || rate == null) {
 			return unitCost;
 		}
-		return unitCost.multiply(rate).setScale(6, RoundingMode.DOWN);
+		return unitCost.multiply(rate).setScale(6, RoundingMode.HALF_UP);
 	}
 
 	/**

@@ -98,6 +98,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(item -> item.getDate() + "|" + item.getSourceCurrencyCode(),
                         Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
+        if (uniqueParams.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<String> sourceCurrencyCodes = uniqueParams.values().stream()
                 .map(BiSettlementExchangeRateDTO.BatchRateParamDTO::getSourceCurrencyCode)
                 .distinct()
