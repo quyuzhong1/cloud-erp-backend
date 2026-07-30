@@ -186,7 +186,7 @@ public class SoB2cReturnDTO implements Serializable {
         * 订单金额
         */
         @NotNull(message = "订单金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "订单金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal amount;
 
         /**

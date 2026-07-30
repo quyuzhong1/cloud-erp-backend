@@ -218,7 +218,7 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
 
         // 计算本位币金额：baseAmount = originalAmount * exchangeRate
         if (kolFeedbackCostEntity.getOriginalAmount() != null && kolFeedbackCostEntity.getExchangeRate() != null) {
-            BigDecimal baseAmount = MathUtil.multiplyWithTwo(kolFeedbackCostEntity.getOriginalAmount(), kolFeedbackCostEntity.getExchangeRate());
+            BigDecimal baseAmount = MathUtil.multiplyWithSix(kolFeedbackCostEntity.getOriginalAmount(), kolFeedbackCostEntity.getExchangeRate());
             kolFeedbackCostEntity.setBaseAmount(baseAmount);
         }
     }

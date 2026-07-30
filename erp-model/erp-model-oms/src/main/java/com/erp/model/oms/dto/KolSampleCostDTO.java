@@ -667,21 +667,21 @@ public class KolSampleCostDTO implements Serializable {
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
         * 总费用
         */
         @NotNull(message = "总费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "总费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "总费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalCost;
 
         /**
         * 材料成本
         */
         @NotNull(message = "材料成本不能为空")
-        @Digits(integer = 12, fraction = 4, message = "材料成本整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "材料成本整数位不能超过18位，小数位不能超过6位")
         private BigDecimal productCost;
 
         /**
@@ -700,21 +700,21 @@ public class KolSampleCostDTO implements Serializable {
         * 头程费用
         */
         @NotNull(message = "头程费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "头程费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "头程费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileShippingCost;
 
         /**
         * 清关税费
         */
         @NotNull(message = "清关税费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "清关税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "清关税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal clearanceCustomsTax;
 
         /**
         * 运费
         */
         @NotNull(message = "运费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingCost;
 
         /**
@@ -727,14 +727,14 @@ public class KolSampleCostDTO implements Serializable {
         * 关税
         */
         @NotNull(message = "关税不能为空")
-        @Digits(integer = 12, fraction = 4, message = "关税整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "关税整数位不能超过18位，小数位不能超过6位")
         private BigDecimal customsTax;
 
         /**
         * 其他费用
         */
         @NotNull(message = "其他费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "其他费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "其他费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal otherCost;
 
 

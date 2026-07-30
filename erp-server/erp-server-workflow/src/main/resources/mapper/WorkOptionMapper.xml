@@ -116,6 +116,8 @@
         <if test="params.status == 'waitHandle'">
             AND ptm.task_status = 'approveIng'
             and pm.approve_status = 'approveIng'
+            <!-- 已终止/已完成流程不进待办；脏数据可能 approve_status 仍为 approveIng -->
+            AND pm.process_status = 'running'
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">
@@ -127,6 +129,8 @@
         </if>
         <if test="params.status == 'initiate'">
             AND pm.create_user_id = #{params.userId}
+            <!-- 已终止不展示（含 approve_status 未收口的脏数据）；已完成仍可见 -->
+            AND pm.process_status &lt;&gt; 'termination'
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
@@ -195,6 +199,9 @@
         WHERE pm.is_deleted = FALSE
         <if test="params.status == 'waitHandle'">
             AND ptm.task_status = 'approveIng'
+            AND pm.approve_status = 'approveIng'
+            <!-- 与 approveView 一致：排除已终止/已完成，避免脏数据计入待办数量 -->
+            AND pm.process_status = 'running'
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">
@@ -206,6 +213,8 @@
         </if>
         <if test="params.status == 'initiate'">
             AND pm.create_user_id = #{params.userId}
+            <!-- 与 approveView 一致：我发起的排除已终止 -->
+            AND pm.process_status &lt;&gt; 'termination'
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">

@@ -163,7 +163,7 @@ public class InventorySkuCostDetailDTO implements Serializable {
         * 材料成本（6位小数）
         */
         @NotNull(message = "材料成本（6位小数）不能为空")
-        @Digits(integer = 12, fraction = 6, message = "材料成本（6位小数）整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "材料成本（6位小数）整数位不能超过18位，小数位不能超过6位")
         private String productCost;
         /**
          * 仓库id
@@ -177,12 +177,12 @@ public class InventorySkuCostDetailDTO implements Serializable {
         /**
          * 头程运费（6位小数）
          */
-        @Digits(integer = 12, fraction = 6, message = "头程运费（6位小数）整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "头程运费（6位小数）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstMileShippingCost;
         /**
          * 清关税费（6位小数）
          */
-        @Digits(integer = 12, fraction = 6, message = "清关税费（6位小数）整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "清关税费（6位小数）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal clearanceCustomsTax;
     }
 }

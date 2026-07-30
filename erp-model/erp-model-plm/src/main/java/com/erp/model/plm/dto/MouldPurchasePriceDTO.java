@@ -120,14 +120,14 @@ public class MouldPurchasePriceDTO implements Serializable {
         * 含税单价
         */
         @NotNull(message = "含税单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "含税单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxPrice;
 
         /**
         * 税率
         */
         @NotNull(message = "税率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "税率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxRate;
 
         /**

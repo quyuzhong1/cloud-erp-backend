@@ -184,14 +184,14 @@ public class AssetDisposalDetailDTO implements Serializable {
         * 清理费用
         */
 //        @NotNull(message = "清理费用不能为空")
-//        @Digits(integer = 13, fraction = 2, message = "清理费用整数位不能超过13位，小数位不能超过2位")
+//        @Digits(integer = 18, fraction = 6, message = "清理费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal cleanupCost;
 
         /**
         * 残值收入 含税
         */
 //        @NotNull(message = "残值收入 含税不能为空")
-//        @Digits(integer = 13, fraction = 2, message = "残值收入 含税整数位不能超过13位，小数位不能超过2位")
+//        @Digits(integer = 18, fraction = 6, message = "残值收入 含税整数位不能超过18位，小数位不能超过6位")
         private BigDecimal residualValue;
 
         /**
@@ -212,7 +212,7 @@ public class AssetDisposalDetailDTO implements Serializable {
         * 税额
         */
 //        @NotNull(message = "税额不能为空")
-//        @Digits(integer = 13, fraction = 2, message = "税额整数位不能超过13位，小数位不能超过2位")
+//        @Digits(integer = 18, fraction = 6, message = "税额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxAmount;
 
 

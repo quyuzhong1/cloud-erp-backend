@@ -978,9 +978,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (ObjectUtil.isNull(returnAmount)) {
             return BigDecimal.ZERO;
         }
-        return returnAmount
-                .multiply(exchangeRate)
-                .setScale(4, RoundingMode.DOWN)
+        return MathUtil.scaleToSix(returnAmount.multiply(exchangeRate), BigDecimal.ROUND_DOWN)
                 .stripTrailingZeros();
     }
 

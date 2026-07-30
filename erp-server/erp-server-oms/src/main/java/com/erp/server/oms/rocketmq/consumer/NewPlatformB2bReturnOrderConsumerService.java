@@ -11,6 +11,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -154,8 +155,8 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 			soReturnDetailEntity.setReturnQty(detail.getReturnQty());
 			soReturnDetailEntity.setReturnAmount(detail.getReturnAmount());
 			soReturnDetailEntity.setTaxReturnAmount(detail.getReturnAmount());
-			soReturnDetailEntity.setReturnAmountLocalCurrency(detail.getReturnAmount());
-			soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detail.getReturnAmount());
+			soReturnDetailEntity.setReturnAmountLocalCurrency(MathUtil.scaleToSix(detail.getReturnAmount(), BigDecimal.ROUND_DOWN));
+			soReturnDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.scaleToSix(detail.getReturnAmount(), BigDecimal.ROUND_DOWN));
 			soReturnDetailEntity.setExchangeRate(BigDecimal.ONE);
 			soReturnDetailEntity.setReturnReasonDict(ReturnReasonEnum.OTHER.getCode());
 			soReturnDetailEntity.setReturnTypeDict(detail.getReturnTypeDict());
