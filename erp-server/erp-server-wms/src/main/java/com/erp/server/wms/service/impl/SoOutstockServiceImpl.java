@@ -539,7 +539,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //未作废、待提交、审核不通过才可以提交
         if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 && !entity.getApproveStatus().getCode().equals(ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //查询是否冻结
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Collections.singletonList(entity.getSoId()));
