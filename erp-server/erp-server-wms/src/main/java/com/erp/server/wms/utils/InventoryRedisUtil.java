@@ -115,7 +115,7 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 
 	/**
 	 * 按原持锁 threadId 释放单把锁（跨线程/XA/补偿 Job 使用）。
-	 * 若锁已不存在，或已由其他线程持有，则视为无需再补偿并返回 true。
+	 * 若锁已不存在则视为无需再补偿并返回 true；跨 JVM 或持锁方已变更且锁仍存在时返回 false，保留补偿登记。
 	 *
 	 * @param lockKey  Redis 锁 key
 	 * @param threadId 加锁时 {@link Thread#getId()}
@@ -130,6 +130,10 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			if (!lock.isLocked()) {
 				return true;
 			}
+			if (!lock.isHeldByThread(threadId)) {
+				log.warn("未分配共享锁非本客户端原持锁线程，保留补偿 lockKey={} threadId={}", lockKey, threadId);
+				return false;
+			}
 			// Redisson 3.10.x RLock 无 unlock(long)，跨线程释放须用 unlockAsync(threadId)
 			lock.unlockAsync(threadId).get();
 			return true;
@@ -141,7 +145,8 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 			Throwable cause = e.getCause() != null ? e.getCause() : e;
 			if (cause instanceof IllegalMonitorStateException) {
 				if (lock.isLocked()) {
-					log.warn("未分配共享锁非原持锁线程，放弃补偿释放 lockKey={} threadId={}", lockKey, threadId);
+					log.warn("unlockByThreadId 持锁状态不匹配且锁仍存在，保留补偿 lockKey={} threadId={}", lockKey, threadId);
+					return false;
 				}
 				return true;
 			}

@@ -62,10 +62,12 @@ public class InventoryRedisTxCompensateRegistry {
         }
         String key = buildKey(kind, rollback, transactionId);
         AbstractRedisUtil redisUtil = resolveRedisUtil(kind);
-        if (redisUtil.get(key) != null) {
+        long ttlSeconds = resolveRegistryTtlSeconds(rollback, timeoutSeconds);
+        Object existing = redisUtil.get(key);
+        if (existing != null) {
+            renewRegistryTtlIfNeeded(redisUtil, key, ttlSeconds);
             return;
         }
-        long ttlSeconds = resolveRegistryTtlSeconds(rollback, timeoutSeconds);
         redisUtil.set(key, String.valueOf(System.currentTimeMillis()), ttlSeconds);
     }
 
@@ -216,5 +218,23 @@ public class InventoryRedisTxCompensateRegistry {
         long baseTtl = rollback ? DEFAULT_ROLLBACK_KEY_TTL_SECONDS : DEFAULT_COMMIT_KEY_TTL_SECONDS;
         long requiredTtl = (long) timeoutSeconds + REGISTRY_TTL_SAFETY_SECONDS;
         return Math.max(baseTtl, requiredTtl);
+    }
+
+    /**
+     * 已登记 key 在重复 touch 时续期 TTL，避免 timeout 到达前 key 过期导致首次发现时间被重置。
+     *
+     * @param redisUtil   Redis 工具
+     * @param key         补偿登记 key
+     * @param ttlSeconds  目标 TTL（秒）
+     */
+    private static void renewRegistryTtlIfNeeded(AbstractRedisUtil redisUtil, String key, long ttlSeconds) {
+        try {
+            long remainSeconds = redisUtil.getExpire(key);
+            if (remainSeconds < 0 || remainSeconds < ttlSeconds) {
+                redisUtil.expire(key, ttlSeconds);
+            }
+        } catch (Exception e) {
+            log.warn("补偿登记 TTL 续期失败 key={}", key, e);
+        }
     }
 }
