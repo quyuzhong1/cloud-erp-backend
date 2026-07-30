@@ -426,9 +426,7 @@
             SUM(i.qty) AS usableQty
         FROM inventory i
         WHERE i.is_deleted = FALSE
-        <if test="status != null and status != ''">
-            AND i.dict_inventory_status = #{status}
-        </if>
+            AND i.dict_inventory_status = 'usable'
         <if test="warehouseId != null and warehouseId != ''">
             AND i.warehouse_id = #{warehouseId}
         </if>
@@ -446,9 +444,7 @@
           AND tf.is_unapproved = FALSE
           AND tf.create_time &gt;= CURRENT_DATE
           AND tf.create_time &lt; CURRENT_DATE + INTERVAL '1 day'
-        <if test="status != null and status != ''">
-            AND tf.dict_inventory_status = #{status}
-        </if>
+          AND tf.dict_inventory_status = 'usable'
         <if test="warehouseId != null and warehouseId != ''">
             AND tf.warehouse_id = #{warehouseId}
         </if>

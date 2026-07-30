@@ -1081,12 +1081,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public InventoryDTO.PdaHomeInventoryBalanceDTO getInventoryByWarehouseId(String warehouseId) {
-        String usableStatus = InventoryStatusEnum.USABLE.getCode();
         // 拆成库存汇总 + 当日流水汇总，避免大表 JOIN；流水侧依赖覆盖索引加速
         List<InventoryDTO.PdaHomeInventoryBalanceDTO> usableList =
-                baseMapper.sumUsableQtyForPdaHome(warehouseId, usableStatus);
+                baseMapper.sumUsableQtyForPdaHome(warehouseId);
         List<InventoryDTO.PdaHomeInventoryBalanceDTO> todayFlowList =
-                baseMapper.sumTodayFlowForPdaHome(warehouseId, usableStatus);
+                baseMapper.sumTodayFlowForPdaHome(warehouseId);
         List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory =
                 mergePdaHomeInventoryBalance(usableList, todayFlowList);
 

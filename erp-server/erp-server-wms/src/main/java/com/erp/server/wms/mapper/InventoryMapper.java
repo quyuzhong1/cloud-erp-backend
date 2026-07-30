@@ -86,21 +86,17 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * PDA首页：按仓库汇总可用库存数量。
      *
      * @param warehouseId 仓库ID，空则按仓库分组返回全部
-     * @param status      库存状态（如 usable）
      * @return 各仓库可用库存汇总
      */
-    List<InventoryDTO.PdaHomeInventoryBalanceDTO> sumUsableQtyForPdaHome(@Param("warehouseId") String warehouseId,
-                                                                        @Param("status") String status);
+    List<InventoryDTO.PdaHomeInventoryBalanceDTO> sumUsableQtyForPdaHome(@Param("warehouseId") String warehouseId);
 
     /**
      * PDA首页：按仓库汇总当日出入库流水数量（create_time 落在当天）。
      *
      * @param warehouseId 仓库ID，空则按仓库分组返回全部
-     * @param status      库存状态（如 usable）
      * @return 各仓库今日入库/出库汇总
      */
-    List<InventoryDTO.PdaHomeInventoryBalanceDTO> sumTodayFlowForPdaHome(@Param("warehouseId") String warehouseId,
-                                                                        @Param("status") String status);
+    List<InventoryDTO.PdaHomeInventoryBalanceDTO> sumTodayFlowForPdaHome(@Param("warehouseId") String warehouseId);
 
     /**
      * 根据条件查询库存信息
