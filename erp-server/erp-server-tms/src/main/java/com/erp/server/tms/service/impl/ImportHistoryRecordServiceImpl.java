@@ -2060,7 +2060,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 updateList.add(updateDTO);
             }
         }
-        return mergeTmsCostDetail(updateList);
+        return mergeTmsCostDetail(updateList, errorMsgList, cfgCostList);
     }
 
     /**
