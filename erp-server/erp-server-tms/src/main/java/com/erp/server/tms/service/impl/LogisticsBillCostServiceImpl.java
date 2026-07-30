@@ -2463,17 +2463,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     		List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
     		for (AddDataDTO detailDTO : value) {
-    			TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
-    			add.setCfgCostId(detailDTO.getCfgCostId());
-    			add.setCostValue(detailDTO.getCostValue());
-    			add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-    			add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-    			add.setCurrency(detailDTO.getCurrency());
-    			costDetailList.add(add);
+    			BigDecimal actualValue = detailDTO.getCostValue();
+    			if (actualValue != null && actualValue.compareTo(BigDecimal.ZERO) != 0) {
+    				TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
+    				add.setCfgCostId(detailDTO.getCfgCostId());
+    				add.setCostValue(actualValue);
+    				add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+    				add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+    				add.setCurrency(detailDTO.getCurrency());
+    				costDetailList.add(add);
+    			}
 
     			BigDecimal estimatedValue = detailDTO.getEstimatedValue();
     			if (estimatedValue != null && estimatedValue.compareTo(BigDecimal.ZERO) != 0) {
-    				add = new TmsCostDetailDTO.AddDTO();
+    				TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
     				add.setCfgCostId(detailDTO.getCfgCostId());
     				add.setCostValue(estimatedValue);
     				add.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
