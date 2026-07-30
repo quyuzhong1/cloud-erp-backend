@@ -5,9 +5,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -25,6 +25,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.dmp.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
@@ -201,20 +202,109 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 	@Override
 	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
+		long pagingStart = System.nanoTime();
 		PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<ListDTO> pageData = this.baseMapper.paging(query, params);
-        List<ListDTO> records = pageData.getRecords();
-        if (CollectionUtils.isEmpty(records)) {
-            return new PagingVO(pageData);
+        long countStart = System.nanoTime();
+        long totalCount = this.baseMapper.pagingCount(params);
+        long countCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - countStart);
+        log.info("小包费用分摊分页总数查询耗时:{}ms, currPage={}, pageSize={}, totalCount={}",
+                countCostMs, dto.getCurrPage(), dto.getPageSize(), totalCount);
+        if (totalCount == 0L) {
+            log.info("小包费用分摊分页总耗时:{}ms, result=empty", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart));
+            return new PagingVO<>(Collections.emptyList(), 0, dto.getPageSize(), dto.getCurrPage());
         }
-        //数据赋值处理
+
+        long offset = ((long) dto.getCurrPage() - 1L) * dto.getPageSize();
+        long idQueryStart = System.nanoTime();
+        List<String> detailIds = this.baseMapper.pagingDetailIds(params, offset, dto.getPageSize());
+        long idQueryCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - idQueryStart);
+        log.info("小包费用分摊分页主键查询耗时:{}ms, offset={}, pageSize={}, idCount={}",
+                idQueryCostMs, offset, dto.getPageSize(), detailIds.size());
+        if (CollectionUtils.isEmpty(detailIds)) {
+            log.info("小包费用分摊分页总耗时:{}ms, result=emptyIds", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart));
+            return new PagingVO<>(Collections.emptyList(), (int) totalCount, dto.getPageSize(), dto.getCurrPage());
+        }
+
+        long detailQueryStart = System.nanoTime();
+        List<ListDTO> loaded = this.baseMapper.selectByDetailIds(detailIds);
+        long detailQueryCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - detailQueryStart);
+        log.info("小包费用分摊分页回表查询耗时:{}ms, detailIdCount={}, loadedCount={}",
+                detailQueryCostMs, detailIds.size(), loaded.size());
+        Map<String, ListDTO> byDetailId = loaded.stream()
+                .collect(Collectors.toMap(ListDTO::getDetailId, Function.identity(), (first, ignored) -> first));
+
+        List<ListDTO> records = detailIds.stream()
+                .map(byDetailId::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(records)) {
+            log.info("小包费用分摊分页总耗时:{}ms, result=emptyRecords", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart));
+            return new PagingVO<>(records, (int) totalCount, dto.getPageSize(), dto.getCurrPage());
+        }
+
+        long formatStart = System.nanoTime();
         handleDataPaging(records);
-        return new PagingVO(pageData);
+        long formatCostMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - formatStart);
+        log.info("小包费用分摊分页数据处理耗时:{}ms, recordCount={}", formatCostMs, records.size());
+        log.info("小包费用分摊分页总耗时:{}ms, currPage={}, pageSize={}, totalCount={}, recordCount={}",
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pagingStart), dto.getCurrPage(), dto.getPageSize(),
+                totalCount, records.size());
+        return new PagingVO<>(records, (int) totalCount, dto.getPageSize(), dto.getCurrPage());
 	}
 
-	private void handleDataPaging(List<ListDTO> records) {
+	/**
+	 * 批量加载当前分页记录需要的汇率。
+	 *
+	 * @param records 小包费用分摊分页记录
+	 * @return 按查询日期和源币别拼接键缓存的汇率
+	 */
+	protected Map<String, BigDecimal> loadBatchRates(List<ListDTO> records) {
+		List<BiSettlementExchangeRateDTO.BatchRateParamDTO> rateParams = records.stream()
+				.filter(item -> StringUtils.isNotBlank(item.getUnitCurrency()))
+				.filter(item -> !"CNY".equals(item.getUnitCurrency()))
+				.map(item -> new BiSettlementExchangeRateDTO.BatchRateParamDTO(item.getReportDate() + "-01", item.getUnitCurrency()))
+				.collect(Collectors.collectingAndThen(
+						Collectors.toMap(item -> item.getDate() + "_" + item.getSourceCurrencyCode(),
+								Function.identity(), (first, ignored) -> first, LinkedHashMap::new),
+						map -> new ArrayList<>(map.values())));
+		Map<String, BigDecimal> rateMap = Collections.emptyMap();
+		if (CollectionUtils.isNotEmpty(rateParams)) {
+			rateMap = new HashMap<>();
+			List<BiSettlementExchangeRateDTO.BatchRateResultDTO> rateResults = dmpTaskFeign.getRates(rateParams);
+			if (CollectionUtils.isNotEmpty(rateResults)) {
+				for (BiSettlementExchangeRateDTO.BatchRateResultDTO rateResult : rateResults) {
+					rateMap.put(rateResult.getDate() + "_" + rateResult.getSourceCurrencyCode(), rateResult.getExchangeRate());
+				}
+			}
+		}
+		return rateMap;
+	}
+
+	/**
+	 * 从批量汇率结果中解析单条分页记录使用的汇率。
+	 *
+	 * @param reportDate 报告月份
+	 * @param unitCurrency 源币别
+	 * @param rateMap 已加载的批量汇率
+	 * @return 解析后的汇率
+	 */
+	protected BigDecimal resolvePageRate(String reportDate, String unitCurrency, Map<String, BigDecimal> rateMap) {
+		String key = reportDate + "-01_" + unitCurrency;
+		BigDecimal rate = rateMap.get(key);
+		if (rate == null) {
+			log.error("币别 {} 未查询到有效汇率", unitCurrency);
+			throw new ServiceException("汇率为空，请维护汇率后再查询");
+		}
+		return rate;
+	}
+
+	/**
+	 * 格式化分页记录的展示字段。
+	 *
+	 * @param records 小包费用分摊分页记录
+	 */
+	protected void handleDataPaging(List<ListDTO> records) {
 		List<String> skuIds = records.stream().map(ListDTO::getSkuId).collect(Collectors.toList());
 		List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId,
 				skuIds).list();
@@ -226,6 +316,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		if(CollUtil.isNotEmpty(supplierIds)) {
 			supplierIdNameMap = logisticsSupplierService.listByIds(supplierIds).stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getShortName));
 		}
+		
+		Map<String, BigDecimal> rateMap = loadBatchRates(records);
 		Map<String, String> salesPlatformMap = new HashMap<>();
 		List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
 				.eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
@@ -235,7 +327,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 		}
 
-		Map<String, BigDecimal> rateMap = new HashMap<>();
 		DecimalFormat df2 = new DecimalFormat("0.00");
 		DecimalFormat df4 = new DecimalFormat("0.0000");
 		DecimalFormat df6 = new DecimalFormat("0.000000");
@@ -257,17 +348,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			if(unitCost != null) {
 				String unitCurrency = dto.getUnitCurrency();
 				if(StringUtils.isNotBlank(unitCurrency) && !"CNY".equals(unitCurrency)) {
-					String key = reportDate + "_" + unitCurrency;
-					BigDecimal rate = rateMap.get(key);
-					if(rate == null) {
-						rate = dmpTaskFeign.getRate(reportDate + "-01", unitCurrency);
-						if(ObjectUtil.isEmpty(rate)){
-				            log.error("币别【{}】,汇率为空，请维护汇率后再查询",unitCurrency);
-				            throw new ServiceException("汇率为空，请维护汇率后再查询");
-				        }
-						rateMap.put(key, rate);
-					}
-					unitCost = unitCost.multiply(rate).setScale(6, RoundingMode.HALF_UP);
+					BigDecimal rate = resolvePageRate(reportDate, unitCurrency, rateMap);
+					unitCost = unitCost.multiply(rate).setScale(6);
 				}
 				dto.setUnitCost(df6.format(unitCost));
 				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6, RoundingMode.HALF_UP)));
