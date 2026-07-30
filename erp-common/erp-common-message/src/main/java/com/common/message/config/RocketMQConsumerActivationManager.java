@@ -16,7 +16,11 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * One-way activation for RocketMQ listeners deferred during blue-green startup.
@@ -116,6 +120,7 @@ public class RocketMQConsumerActivationManager {
         }
 
         activationState = ActivationState.ACTIVATING;
+        Set<String> containersBeforeActivation = listenerContainerNames();
         try {
             listenerRegistrar.register();
             ContainerSummary summary = containerSummary();
@@ -131,8 +136,12 @@ public class RocketMQConsumerActivationManager {
             activationState = ActivationState.ACTIVE;
             LOGGER.info("RocketMQ listeners activated without restarting the application: total={}", summary.getTotal());
         } catch (RuntimeException | Error ex) {
+            String rollbackFailure = rollbackActivatedContainers(containersBeforeActivation);
             activationState = ActivationState.FAILED;
-            failureMessage = ex.getMessage();
+            failureMessage = activationFailureMessage(ex, rollbackFailure);
+            if (rollbackFailure != null) {
+                ex.addSuppressed(new IllegalStateException(rollbackFailure));
+            }
             throw ex;
         }
     }
@@ -142,7 +151,8 @@ public class RocketMQConsumerActivationManager {
     }
 
     public boolean isEffectivelyEnabled() {
-        return startupEnabled || activationState == ActivationState.ACTIVE;
+        return !lifecycleCoordinator.isTerminalDrainStarted()
+                && (startupEnabled || activationState == ActivationState.ACTIVE);
     }
 
     public boolean isColorEligible() {
@@ -177,6 +187,67 @@ public class RocketMQConsumerActivationManager {
             }
         }
         return new ContainerSummary(containers.size(), running);
+    }
+
+    /**
+     * Captures listener Bean names before deferred registration starts.
+     *
+     * @return listener Bean names that must not be touched by activation rollback
+     */
+    private Set<String> listenerContainerNames() {
+        return new HashSet<>(applicationContext.getBeansOfType(
+                DefaultRocketMQListenerContainer.class, false, false).keySet());
+    }
+
+    /**
+     * Stops every listener created by the failed activation attempt.
+     *
+     * @param containersBeforeActivation listener Bean names present before activation
+     * @return combined rollback failure, or null when every new listener is stopped
+     */
+    private String rollbackActivatedContainers(Set<String> containersBeforeActivation) {
+        Map<String, DefaultRocketMQListenerContainer> currentContainers = applicationContext.getBeansOfType(
+                DefaultRocketMQListenerContainer.class, false, false);
+        List<String> rollbackFailures = new ArrayList<>();
+        for (Map.Entry<String, DefaultRocketMQListenerContainer> entry : currentContainers.entrySet()) {
+            if (containersBeforeActivation.contains(entry.getKey())) {
+                continue;
+            }
+            DefaultRocketMQListenerContainer container = entry.getValue();
+            try {
+                if (container.isRunning()) {
+                    if (container.getConsumer() != null) {
+                        container.getConsumer().setAwaitTerminationMillisWhenShutdown(Long.MAX_VALUE);
+                    }
+                    container.stop();
+                }
+                if (container.isRunning()) {
+                    rollbackFailures.add(entry.getKey() + " remains running after stop");
+                }
+            } catch (RuntimeException | Error rollbackError) {
+                rollbackFailures.add(entry.getKey() + ": "
+                        + rollbackError.getClass().getSimpleName() + ": " + rollbackError.getMessage());
+            }
+        }
+        if (rollbackFailures.isEmpty()) {
+            LOGGER.warn("RocketMQ activation failed; all listeners created by this attempt were stopped");
+            return null;
+        }
+        String rollbackFailure = "RocketMQ activation rollback failed: " + String.join("; ", rollbackFailures);
+        LOGGER.error(rollbackFailure);
+        return rollbackFailure;
+    }
+
+    /**
+     * Combines the activation error with any rollback failure for status reporting.
+     *
+     * @param activationError original activation error
+     * @param rollbackFailure rollback failure, may be null
+     * @return persistent activation failure detail
+     */
+    private String activationFailureMessage(Throwable activationError, String rollbackFailure) {
+        String activationFailure = activationError.getClass().getSimpleName() + ": " + activationError.getMessage();
+        return rollbackFailure == null ? activationFailure : activationFailure + "; " + rollbackFailure;
     }
 
     private boolean hasText(String value) {

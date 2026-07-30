@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.config.RocketMQConsumerActivationManager;
 import com.common.message.config.RocketMQConsumerDrainManager;
 import com.common.message.controller.vo.RocketMQLifecycleStatusVO;
+import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.support.GenericApplicationContext;
@@ -70,6 +71,37 @@ public class RocketMQConsumerStatusControllerTest {
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals("DRAINING", response.getBody().getData().getDrainState());
         Mockito.verify(drainManager).beginDrain();
+        context.close();
+    }
+
+    @Test
+    public void shouldReportDrainedAsDisabledWithNoRunningContainers() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        DefaultRocketMQListenerContainer stoppedContainer =
+                Mockito.mock(DefaultRocketMQListenerContainer.class);
+        Mockito.when(stoppedContainer.isRunning()).thenReturn(false);
+        context.getBeanFactory().registerSingleton("stoppedRocketMQContainer", stoppedContainer);
+        RocketMQConsumerActivationManager activationManager = Mockito.mock(RocketMQConsumerActivationManager.class);
+        RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
+        Mockito.when(activationManager.getActivationState()).thenReturn("ACTIVE");
+        Mockito.when(activationManager.isEffectivelyEnabled()).thenReturn(false);
+        Mockito.when(drainManager.getDrainState()).thenReturn("DRAINED");
+        Mockito.when(drainManager.getTotalContainers()).thenReturn(1);
+        Mockito.when(drainManager.getDrainedContainers()).thenReturn(1);
+        RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
+                context, activationManager, drainManager);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("127.0.0.1");
+
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.status(request);
+
+        RocketMQLifecycleStatusVO status = response.getBody().getData();
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals("DRAINED", status.getStatus());
+        Assert.assertFalse(status.isEnabled());
+        Assert.assertEquals(0, status.getRunningContainers());
+        Assert.assertEquals("DRAINED", status.getDrainState());
         context.close();
     }
 }

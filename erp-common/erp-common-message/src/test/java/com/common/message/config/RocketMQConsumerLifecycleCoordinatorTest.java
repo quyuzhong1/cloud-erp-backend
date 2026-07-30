@@ -11,6 +11,7 @@ import org.springframework.mock.env.MockEnvironment;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RocketMQConsumerLifecycleCoordinatorTest {
@@ -22,8 +23,13 @@ public class RocketMQConsumerLifecycleCoordinatorTest {
         RocketMQConsumerLifecycleCoordinator coordinator = new RocketMQConsumerLifecycleCoordinator();
         CountDownLatch registrationStarted = new CountDownLatch(1);
         CountDownLatch allowRegistration = new CountDownLatch(1);
+        AtomicBoolean containerRunning = new AtomicBoolean(true);
         DefaultRocketMQListenerContainer container = Mockito.mock(DefaultRocketMQListenerContainer.class);
-        Mockito.when(container.isRunning()).thenReturn(true);
+        Mockito.when(container.isRunning()).thenAnswer(invocation -> containerRunning.get());
+        Mockito.doAnswer(invocation -> {
+            containerRunning.set(false);
+            return null;
+        }).when(container).stop();
 
         RocketMQConsumerActivationManager activationManager = new RocketMQConsumerActivationManager(
                 context,

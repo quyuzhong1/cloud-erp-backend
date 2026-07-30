@@ -155,6 +155,10 @@ public class RocketMQConsumerDrainManager {
             container.getConsumer().setAwaitTerminationMillisWhenShutdown(TERMINAL_DRAIN_WAIT_MILLIS);
         }
         container.stop();
+        if (container.isRunning()) {
+            throw new IllegalStateException("RocketMQ listener container remains running after stop: "
+                    + container.getConsumerGroup() + "/" + container.getTopic());
+        }
         synchronized (this) {
             drainedContainers++;
         }

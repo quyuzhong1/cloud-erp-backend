@@ -132,14 +132,16 @@ public class RocketMQConsumerStatusController extends BaseController {
             status.getContainers().add(detail);
         }
 
-        status.setStatus(resolveStatus(enabled, containers.size(), running));
+        String drainState = drainManager.getDrainState();
+        status.setStatus(resolveStatus(enabled, containers.size(), running, drainState));
         status.setEnabled(enabled);
         status.setStartupEnabled(activationManager.isStartupEnabled());
         status.setActivationState(activationManager.getActivationState());
+        status.setActivationFailure(activationManager.getFailureMessage());
         status.setMqActiveColor(activationManager.getMqActiveColor());
         status.setLocalColor(activationManager.getLocalColor());
         status.setColorEligible(activationManager.isColorEligible());
-        status.setDrainState(drainManager.getDrainState());
+        status.setDrainState(drainState);
         status.setDrainTotalContainers(drainManager.getTotalContainers());
         status.setDrainedContainers(drainManager.getDrainedContainers());
         status.setDrainFailure(drainManager.getFailureMessage());
@@ -148,7 +150,21 @@ public class RocketMQConsumerStatusController extends BaseController {
         return status;
     }
 
-    private String resolveStatus(boolean enabled, int total, int running) {
+    /**
+     * Resolves the primary release state, giving an irreversible drain precedence over listener counts.
+     *
+     * @param enabled effective consumer state
+     * @param total listener container count
+     * @param running running listener container count
+     * @param drainState terminal drain state
+     * @return primary lifecycle status
+     */
+    private String resolveStatus(boolean enabled, int total, int running, String drainState) {
+        if ("DRAINING".equals(drainState)
+                || "DRAINED".equals(drainState)
+                || "FAILED".equals(drainState)) {
+            return drainState;
+        }
         if (!enabled) {
             return total == 0 ? "DISABLED" : "INVALID_DISABLED_STATE";
         }

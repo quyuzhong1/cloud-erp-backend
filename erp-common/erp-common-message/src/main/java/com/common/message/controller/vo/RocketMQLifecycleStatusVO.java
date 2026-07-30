@@ -15,6 +15,7 @@ public class RocketMQLifecycleStatusVO {
     private boolean enabled;
     private boolean startupEnabled;
     private String activationState;
+    private String activationFailure;
     private String mqActiveColor;
     private String localColor;
     private boolean colorEligible;
