@@ -74,11 +74,15 @@ public final class PgUnallocLockDeferredRegistry {
             return;
         }
         String normalizedId = normalizeTransactionId(transactionId);
-        Map<String, Long> lockKeyToThreadId = mergeRetrySources(normalizedId, true);
-        if (CollUtil.isEmpty(lockKeyToThreadId)) {
+        MergeRetryResult mergeResult = mergeRetrySources(normalizedId, true);
+        if (CollUtil.isEmpty(mergeResult.getLockKeyToThreadId())) {
+            if (mergeResult.isRedisReadFailed()) {
+                log.warn("XA 释放时 Redis 补偿登记读取失败且无本机登记，保留 Redis transactionId={}", normalizedId);
+            }
             return;
         }
-        attemptUnlockAndPersist(normalizedId, lockKeyToThreadId, true, "XA");
+        attemptUnlockAndPersist(normalizedId, mergeResult.getLockKeyToThreadId(), true, "XA",
+                mergeResult.isRedisReadFailed());
     }
 
     /**
@@ -93,12 +97,19 @@ public final class PgUnallocLockDeferredRegistry {
         }
         int remaining = 0;
         for (String normalizedId : transactionIds) {
-            Map<String, Long> lockKeyToThreadId = mergeRetrySources(normalizedId, false);
-            if (CollUtil.isEmpty(lockKeyToThreadId)) {
-                clearAllRetryStores(normalizedId);
+            MergeRetryResult mergeResult = mergeRetrySources(normalizedId, false);
+            if (CollUtil.isEmpty(mergeResult.getLockKeyToThreadId())) {
+                if (mergeResult.isRedisReadFailed()) {
+                    log.warn("Job 重试时 Redis 补偿登记读取失败且无本机登记，保留 Redis transactionId={}", normalizedId);
+                    remaining++;
+                } else {
+                    clearAllRetryStores(normalizedId);
+                }
                 continue;
             }
-            if (attemptUnlockAndPersist(normalizedId, lockKeyToThreadId, false, "Job")) {
+            boolean stillPending = attemptUnlockAndPersist(normalizedId, mergeResult.getLockKeyToThreadId(), false, "Job",
+                    mergeResult.isRedisReadFailed());
+            if (stillPending || mergeResult.isRedisReadFailed()) {
                 remaining++;
             }
         }
@@ -107,22 +118,29 @@ public final class PgUnallocLockDeferredRegistry {
 
     private static Set<String> collectRetryTransactionIds() {
         Set<String> transactionIds = new HashSet<>(LOCAL_RETRY_UNLOCKS.keySet());
-        Collection<String> retryKeys = resolveRedisUtil().keys(RETRY_KEY_PREFIX + ":*");
-        if (CollUtil.isNotEmpty(retryKeys)) {
-            for (String retryKey : retryKeys) {
-                String normalizedId = extractTransactionId(retryKey);
-                if (StringUtils.isNotBlank(normalizedId)) {
-                    transactionIds.add(normalizedId);
+        try {
+            Collection<String> retryKeys = resolveRedisUtil().keys(RETRY_KEY_PREFIX + ":*");
+            if (CollUtil.isNotEmpty(retryKeys)) {
+                for (String retryKey : retryKeys) {
+                    String normalizedId = extractTransactionId(retryKey);
+                    if (StringUtils.isNotBlank(normalizedId)) {
+                        transactionIds.add(normalizedId);
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.warn("未分配共享锁 Redis keys 查询失败，仅扫描本机补偿 transactionId", e);
         }
         return transactionIds;
     }
 
     /**
+     * 合并本机等待/回退登记与 Redis 补偿登记。
+     *
      * @param includeWaiting true 时合并 {@link #WAITING_XA_UNLOCKS}（仅 XA 回调使用）
+     * @return 合并结果；{@link MergeRetryResult#isRedisReadFailed()} 为 true 且合并为空时，不得清理 Redis 登记
      */
-    private static Map<String, Long> mergeRetrySources(String normalizedId, boolean includeWaiting) {
+    private static MergeRetryResult mergeRetrySources(String normalizedId, boolean includeWaiting) {
         Map<String, Long> merged = new LinkedHashMap<>();
         if (includeWaiting) {
             Map<String, Long> waitingLocks = WAITING_XA_UNLOCKS.get(normalizedId);
@@ -134,31 +152,43 @@ public final class PgUnallocLockDeferredRegistry {
         if (CollUtil.isNotEmpty(localRetry)) {
             localRetry.forEach(merged::putIfAbsent);
         }
-        Map<String, Long> redisRetry = loadRetryLockMap(normalizedId);
-        if (CollUtil.isNotEmpty(redisRetry)) {
-            redisRetry.forEach(merged::putIfAbsent);
+        RetryLockMapLoadResult redisResult = loadRetryLockMapSafely(normalizedId);
+        if (!redisResult.isReadSuccess()) {
+            return new MergeRetryResult(merged, true);
         }
-        return merged;
+        if (CollUtil.isNotEmpty(redisResult.getLockKeyToThreadId())) {
+            redisResult.getLockKeyToThreadId().forEach(merged::putIfAbsent);
+        }
+        return new MergeRetryResult(merged, false);
     }
 
     /**
      * 尝试按 threadId 解锁，并将失败项持久化到 Redis；Redis 失败时写入本机回退 Map。
      *
      * @param removeWaitingAfterXa true 表示 XA 回调路径，成功后清除等待登记
+     * @param redisReadFailed      true 表示 Redis 登记未成功读取，禁止 del/set Redis 补偿 key
      * @return true 表示仍有未释放锁
      */
     private static boolean attemptUnlockAndPersist(String normalizedId, Map<String, Long> lockKeyToThreadId,
-                                                   boolean removeWaitingAfterXa, String phase) {
+                                                   boolean removeWaitingAfterXa, String phase,
+                                                   boolean redisReadFailed) {
         Map<String, Long> failed = doUnlockByThreadId(lockKeyToThreadId);
         if (CollUtil.isEmpty(failed)) {
             if (removeWaitingAfterXa) {
                 WAITING_XA_UNLOCKS.remove(normalizedId);
             }
-            clearAllRetryStores(normalizedId);
-            log.warn("{} 释放未分配共享锁成功 transactionId={} lockCount={}", phase, normalizedId, lockKeyToThreadId.size());
+            if (redisReadFailed) {
+                clearLocalRetryStoresOnly(normalizedId);
+                log.warn("{} 释放未分配共享锁成功(跳过Redis清理) transactionId={} lockCount={}",
+                        phase, normalizedId, lockKeyToThreadId.size());
+            } else {
+                clearAllRetryStores(normalizedId);
+                log.warn("{} 释放未分配共享锁成功 transactionId={} lockCount={}",
+                        phase, normalizedId, lockKeyToThreadId.size());
+            }
             return false;
         }
-        persistFailedUnlocks(normalizedId, failed);
+        persistFailedUnlocks(normalizedId, failed, redisReadFailed);
         if (removeWaitingAfterXa) {
             WAITING_XA_UNLOCKS.remove(normalizedId);
         }
@@ -172,10 +202,22 @@ public final class PgUnallocLockDeferredRegistry {
      *
      * @param normalizedId   归一化全局事务 ID
      * @param failedLockKeys 解锁失败的 lock key 及 threadId
+     * @param redisReadFailed true 时仅更新本机回退，禁止覆盖 Redis 登记
      */
-    private static void persistFailedUnlocks(String normalizedId, Map<String, Long> failedLockKeys) {
+    private static void persistFailedUnlocks(String normalizedId, Map<String, Long> failedLockKeys,
+                                             boolean redisReadFailed) {
         if (CollUtil.isEmpty(failedLockKeys)) {
-            clearAllRetryStores(normalizedId);
+            if (redisReadFailed) {
+                clearLocalRetryStoresOnly(normalizedId);
+            } else {
+                clearAllRetryStores(normalizedId);
+            }
+            return;
+        }
+        if (redisReadFailed) {
+            LOCAL_RETRY_UNLOCKS.put(normalizedId, new LinkedHashMap<>(failedLockKeys));
+            log.warn("未分配共享锁 Redis 读失败，仅回写本机补偿 transactionId={} lockCount={}",
+                    normalizedId, failedLockKeys.size());
             return;
         }
         if (saveRetryLockMapSafely(normalizedId, failedLockKeys)) {
@@ -187,9 +229,18 @@ public final class PgUnallocLockDeferredRegistry {
                 normalizedId, failedLockKeys.size());
     }
 
+    /**
+     * 仅清除本机补偿登记，不修改 Redis。
+     *
+     * @param normalizedId 归一化全局事务 ID
+     */
+    private static void clearLocalRetryStoresOnly(String normalizedId) {
+        LOCAL_RETRY_UNLOCKS.remove(normalizedId);
+    }
+
     private static void clearAllRetryStores(String normalizedId) {
         LOCAL_RETRY_UNLOCKS.remove(normalizedId);
-        clearRetryLockMap(normalizedId);
+        clearRetryLockMapSafely(normalizedId);
     }
 
     private static Map<String, Long> doUnlockByThreadId(Map<String, Long> lockKeyToThreadId) {
@@ -215,16 +266,37 @@ public final class PgUnallocLockDeferredRegistry {
 
     private static void saveRetryLockMap(String normalizedId, Map<String, Long> lockKeyToThreadId) {
         if (CollUtil.isEmpty(lockKeyToThreadId)) {
-            clearRetryLockMap(normalizedId);
+            clearRetryLockMapSafely(normalizedId);
             return;
         }
         resolveRedisUtil().set(buildRetryKey(normalizedId), JSON.toJSONString(lockKeyToThreadId), RETRY_KEY_TTL_SECONDS);
     }
 
-    private static Map<String, Long> loadRetryLockMap(String normalizedId) {
+    /**
+     * 读取 Redis 补偿登记；基础设施异常或 JSON 解析失败时 {@link RetryLockMapLoadResult#isReadSuccess()} 为 false。
+     *
+     * @param normalizedId 归一化全局事务 ID
+     * @return 读取结果，禁止将 readSuccess=false 当作「无登记」
+     */
+    private static RetryLockMapLoadResult loadRetryLockMapSafely(String normalizedId) {
+        try {
+            return loadRetryLockMap(normalizedId);
+        } catch (Exception e) {
+            log.warn("未分配共享锁 Redis 补偿登记读取失败 transactionId={}", normalizedId, e);
+            return RetryLockMapLoadResult.readFailed();
+        }
+    }
+
+    /**
+     * 从 Redis 读取单条补偿登记。
+     *
+     * @param normalizedId 归一化全局事务 ID
+     * @return key 不存在时 readSuccess=true 且空 Map；解析失败时 readSuccess=false
+     */
+    private static RetryLockMapLoadResult loadRetryLockMap(String normalizedId) {
         Object value = resolveRedisUtil().get(buildRetryKey(normalizedId));
         if (value == null || CharSequenceUtil.isBlank(value.toString())) {
-            return new LinkedHashMap<>();
+            return RetryLockMapLoadResult.success(new LinkedHashMap<>());
         }
         try {
             JSONObject jsonObject = JSON.parseObject(value.toString());
@@ -232,15 +304,19 @@ public final class PgUnallocLockDeferredRegistry {
             for (String lockKey : jsonObject.keySet()) {
                 lockKeyToThreadId.put(lockKey, jsonObject.getLongValue(lockKey));
             }
-            return lockKeyToThreadId;
+            return RetryLockMapLoadResult.success(lockKeyToThreadId);
         } catch (Exception e) {
             log.error("解析未分配共享锁补偿登记失败 transactionId={} value={}", normalizedId, value, e);
-            return new LinkedHashMap<>();
+            return RetryLockMapLoadResult.readFailed();
         }
     }
 
-    private static void clearRetryLockMap(String normalizedId) {
-        resolveRedisUtil().del(buildRetryKey(normalizedId));
+    private static void clearRetryLockMapSafely(String normalizedId) {
+        try {
+            resolveRedisUtil().del(buildRetryKey(normalizedId));
+        } catch (Exception e) {
+            log.warn("清除未分配共享锁 Redis 补偿登记失败 transactionId={}", normalizedId, e);
+        }
     }
 
     private static String buildRetryKey(String normalizedId) {
@@ -260,5 +336,64 @@ public final class PgUnallocLockDeferredRegistry {
 
     private static String normalizeTransactionId(String transactionId) {
         return transactionId == null ? "" : transactionId.replace(":", "_");
+    }
+
+    /**
+     * Redis 补偿登记读取结果，区分「无登记」与「读取/解析失败」。
+     */
+    private static final class RetryLockMapLoadResult {
+
+        private final Map<String, Long> lockKeyToThreadId;
+        private final boolean readSuccess;
+
+        private RetryLockMapLoadResult(Map<String, Long> lockKeyToThreadId, boolean readSuccess) {
+            this.lockKeyToThreadId = lockKeyToThreadId;
+            this.readSuccess = readSuccess;
+        }
+
+        /**
+         * @param lockKeyToThreadId 登记内容，允许为空 Map
+         * @return readSuccess=true 的读取结果
+         */
+        static RetryLockMapLoadResult success(Map<String, Long> lockKeyToThreadId) {
+            return new RetryLockMapLoadResult(lockKeyToThreadId, true);
+        }
+
+        /**
+         * @return readSuccess=false，调用方不得据此清理 Redis 登记
+         */
+        static RetryLockMapLoadResult readFailed() {
+            return new RetryLockMapLoadResult(new LinkedHashMap<>(), false);
+        }
+
+        Map<String, Long> getLockKeyToThreadId() {
+            return lockKeyToThreadId;
+        }
+
+        boolean isReadSuccess() {
+            return readSuccess;
+        }
+    }
+
+    /**
+     * 合并多来源补偿登记的结果；redisReadFailed 为 true 且 lockKeyToThreadId 为空时禁止清理 Redis。
+     */
+    private static final class MergeRetryResult {
+
+        private final Map<String, Long> lockKeyToThreadId;
+        private final boolean redisReadFailed;
+
+        private MergeRetryResult(Map<String, Long> lockKeyToThreadId, boolean redisReadFailed) {
+            this.lockKeyToThreadId = lockKeyToThreadId;
+            this.redisReadFailed = redisReadFailed;
+        }
+
+        Map<String, Long> getLockKeyToThreadId() {
+            return lockKeyToThreadId;
+        }
+
+        boolean isRedisReadFailed() {
+            return redisReadFailed;
+        }
     }
 }
