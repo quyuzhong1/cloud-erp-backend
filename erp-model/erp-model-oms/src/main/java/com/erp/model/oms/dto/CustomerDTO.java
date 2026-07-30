@@ -680,6 +680,11 @@ public class CustomerDTO implements Serializable {
         private String name;
 
         /**
+         * 是否关联店铺（关联则前端修改页客户名称置灰不可改）
+         */
+        private Boolean hasRelateShop;
+
+        /**
          * 客户简称
          */
         private String shortName;

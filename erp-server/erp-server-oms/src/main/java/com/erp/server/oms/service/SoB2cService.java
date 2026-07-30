@@ -366,7 +366,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-18 14:06
      */
-    Boolean platformWarehouseOrderHandle(String id , Map<String,Object> map);
+    Boolean platformWarehouseOrderHandle(String id);
 
 
     SoB2cDTO.RuleResultDTO warehouseRuleNotRequiresNew(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
@@ -378,7 +378,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-18 14:52
      */
-    Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
+    Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList);
 
     /** 
      * @description 获取规则需要的map

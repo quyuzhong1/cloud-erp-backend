@@ -40,4 +40,14 @@ public interface KolSubB2cApplicationService extends SuperService<KolSubB2cAppli
      * @return ApiResult<KolSubB2cApplicationDTO.ListDTO>>
      */
     List<KolSubB2cApplicationDTO.ListDTO> listSubBySourceId(String sourceId);
+
+    /**
+     * 按关联 B2C 销售订单汇总回写拆分单发货状态、跟踪号（支持拆单后多单、部分发货、多跟踪号逗号拼接）
+     */
+    void refreshDeliveryAndTrackBySoB2c(String kolSubId);
+
+    /**
+     * 批量按关联 B2C 销售订单汇总回写拆分单发货状态、跟踪号（避免 N+1）
+     */
+    void refreshDeliveryAndTrackBySoB2cBatch(List<String> kolSubIds);
 }

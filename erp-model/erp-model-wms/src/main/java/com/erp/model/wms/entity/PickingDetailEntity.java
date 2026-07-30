@@ -78,6 +78,13 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
      */
     @TableField("staging_location")
     private String stagingLocation;
+
+    /**
+     * 虚拟仓id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
+
     /**
      * 已拣货数量
      */

@@ -265,11 +265,16 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         return StringUtils.defaultIfBlank(responseMsg, "旺店通推送成功，OMS成功回调已补偿");
     }
 
+    /**
+     * 判断是否需要根据旺店通请求报文中的 tid 回调 KOL B2C 审批结果。
+     *
+     * @param dmpSyncTaskId DMP 同步任务 ID
+     * @return true 表示由请求报文定位拆分单并回调 OMS
+     */
     private boolean shouldNotifyKolB2cApproveByRequest(String dmpSyncTaskId) {
         if (StringUtils.isBlank(dmpSyncTaskId)) {
-            // dmpSyncTaskId 为空时无法确认推送任务来源，不触发审批回调，避免误通知
-            log.debug("shouldNotifyKolB2cApproveByRequest 跳过：dmpSyncTaskId 为空");
-            return false;
+            // 兼容旧链路及重试任务：没有任务 ID 时通过请求 tid 定位 KOL B2C 拆分单。
+            return true;
         }
         DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(dmpSyncTaskId);
         if (ObjectUtils.isEmpty(dmpPushTaskEntity)) {

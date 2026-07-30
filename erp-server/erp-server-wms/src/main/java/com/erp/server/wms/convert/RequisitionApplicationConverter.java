@@ -63,6 +63,7 @@ public interface RequisitionApplicationConverter {
 
     @Mappings({
             @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
+            @Mapping(target = "virtualWarehouseId", source = "fromVirtualWarehouseId"),
             @Mapping(target = "destWarehouseName", source = "toWarehouseName"),
             @Mapping(target = "countryId", source = "country")
     })

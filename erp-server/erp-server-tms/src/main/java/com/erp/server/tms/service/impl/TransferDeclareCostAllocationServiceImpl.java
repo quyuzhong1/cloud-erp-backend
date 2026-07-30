@@ -313,10 +313,10 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				        }
 						rateMap.put(key, rate);
 					}
-					unitCost = unitCost.multiply(rate).setScale(6);
+					unitCost = unitCost.multiply(rate).setScale(6, RoundingMode.HALF_UP);
 				}
 				dto.setUnitCost(df6.format(unitCost));
-				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6)));
+				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6, RoundingMode.HALF_UP)));
 			}
 			
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));

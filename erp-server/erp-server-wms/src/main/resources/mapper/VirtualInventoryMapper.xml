@@ -581,6 +581,7 @@
     <select id="listInventoryQtyByWarehouseId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseInventoryQtyDTO">
         select
             COALESCE(sum(vi.qty),0) as qty,
+            vi.virtual_warehouse_id,
             vi.warehouse_id,
             vi.sku_id
         from virtual_inventory vi
@@ -594,7 +595,7 @@
                 #{item}
             </foreach>
         </where>
-        group by vi.warehouse_id,vi.sku_id
+        group by vi.virtual_warehouse_id,vi.warehouse_id,vi.sku_id
     </select>
 
     <select id="getBySkuIdAndVwId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$CommonDTO">

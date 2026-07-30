@@ -198,10 +198,12 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
 
     /**
      * 修改审核数量（只有审核中的才能修改）
+     * 仅审核数量有实际变更时更新明细并写操作日志（含改前/改后数量）；无变更则不记日志。
+     *
      * @author wuhaotian
      * @date: 2025-08-21
-     * @param dto
-     * @return
+     * @param dto 主单 id + 明细审核数量列表
+     * @return 成功 true；无数量变更时也返回 true
      */
     Boolean updateAuditQty(SampleRecipientDTO.UpdateAuditQtyDTO dto);
     

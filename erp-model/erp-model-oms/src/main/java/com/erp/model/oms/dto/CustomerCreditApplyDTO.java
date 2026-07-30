@@ -343,7 +343,7 @@ public class CustomerCreditApplyDTO implements Serializable {
         * 授信额度
         */
         @NotNull(message = "授信额度不能为空")
-        @Digits(integer = 28, fraction = 4, message = "授信额度整数位不能超过28位，小数位不能超过4位")
+        @Digits(integer = 28, fraction = 6, message = "授信额度整数位不能超过28位，小数位不能超过6位")
         private BigDecimal creditAmount;
 
         /**

@@ -312,6 +312,10 @@ public class PickingDetailDTO implements Serializable {
          * 拣货仓库id
          */
         private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
 
         /**
          * 收货仓库名称
@@ -346,6 +350,7 @@ public class PickingDetailDTO implements Serializable {
         public static PickingDetailDTO.AddDTO getAddDTO(PickingDetailDTO.AddDTO detailAdd, String skuId, String skuNo, int qty) {
             PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
             detail.setWarehouseId(detailAdd.getWarehouseId());
+            detail.setVirtualWarehouseId(detailAdd.getVirtualWarehouseId());
             detail.setWarehouseName(detailAdd.getWarehouseName());
             detail.setSkuId(skuId);
             detail.setSkuNo(skuNo);

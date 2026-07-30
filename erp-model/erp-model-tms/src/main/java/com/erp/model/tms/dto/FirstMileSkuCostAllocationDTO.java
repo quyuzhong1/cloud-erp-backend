@@ -192,21 +192,21 @@ public class FirstMileSkuCostAllocationDTO implements Serializable {
         * 分摊重量
         */
         @NotNull(message = "分摊重量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "分摊重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "分摊重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allocatedWeight;
 
         /**
         * 单位成本
         */
         @NotNull(message = "单位成本不能为空")
-        @Digits(integer = 12, fraction = 6, message = "单位成本整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "单位成本整数位不能超过18位，小数位不能超过6位")
         private BigDecimal productCost;
 
         /**
         * 产品总成本
         */
         @NotNull(message = "产品总成本不能为空")
-        @Digits(integer = 12, fraction = 6, message = "产品总成本整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "产品总成本整数位不能超过18位，小数位不能超过6位")
         private BigDecimal productTotalCost;
 
         /**
