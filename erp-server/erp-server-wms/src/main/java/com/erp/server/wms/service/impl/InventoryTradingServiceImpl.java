@@ -114,7 +114,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             throw e;
         } catch (Exception e) {
             log.error("库存交易失败", e);
-            throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED, e.getMessage());
+            throw new ServiceException(ApiError.WAREHOUSE_INVENTORY_FAILED);
         } finally {
             stopwatch.stop();
             // 计时器-结束
@@ -142,7 +142,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
                 }
                 if (TransactionSynchronizationManager.isActualTransactionActive()) {
-                    PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil);
+                    PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil, unallocLockKeys);
                 } else {
                     unlockInFinally = true;
                 }

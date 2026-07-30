@@ -45,8 +45,12 @@ public final class InventoryRedisTxSynchronizationHelper {
         } catch (Exception e) {
             log.error("实体仓库存事务回调 Redis {} 失败 transactionId={}", operation, transactionId, e);
             if ("commit".equals(operation)) {
-                ApplicationContextUtils.getBean(InventoryRedisTxCompensateRegistry.class)
-                        .markCommitRetryFailed(InventoryRedisTxCompensateRegistry.TxKind.ENTITY, transactionId);
+                try {
+                    ApplicationContextUtils.getBean(InventoryRedisTxCompensateRegistry.class)
+                            .markCommitRetryFailed(InventoryRedisTxCompensateRegistry.TxKind.ENTITY, transactionId);
+                } catch (Exception registryEx) {
+                    log.error("实体仓 commit 补偿登记失败 transactionId={}", transactionId, registryEx);
+                }
             }
             sendCallbackFailureWarn(transactionId, operation, "inventory_transaction", e);
         }
@@ -74,8 +78,12 @@ public final class InventoryRedisTxSynchronizationHelper {
         } catch (Exception e) {
             log.error("虚拟仓库存事务回调 Redis {} 失败 transactionId={}", operation, transactionId, e);
             if ("commit".equals(operation)) {
-                ApplicationContextUtils.getBean(InventoryRedisTxCompensateRegistry.class)
-                        .markCommitRetryFailed(InventoryRedisTxCompensateRegistry.TxKind.VIRTUAL, transactionId);
+                try {
+                    ApplicationContextUtils.getBean(InventoryRedisTxCompensateRegistry.class)
+                            .markCommitRetryFailed(InventoryRedisTxCompensateRegistry.TxKind.VIRTUAL, transactionId);
+                } catch (Exception registryEx) {
+                    log.error("虚拟仓 commit 补偿登记失败 transactionId={}", transactionId, registryEx);
+                }
             }
             sendCallbackFailureWarn(transactionId, operation, "virtual_inventory_transaction", e);
         }

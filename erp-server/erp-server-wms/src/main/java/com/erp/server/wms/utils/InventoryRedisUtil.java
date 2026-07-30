@@ -1,9 +1,11 @@
 package com.erp.server.wms.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +99,96 @@ public class InventoryRedisUtil extends AbstractRedisUtil{
 		if(redissonMultiLock != null) {
 			redissonMultiLock.unlock();
 		}
+	}
+
+	/**
+	 * 强制释放 Redisson 锁（无条件删除 key）；勿用于延迟补偿，误释其他事务新持有锁的风险见 {@link #safeUnlockByThreadId(String, long)}。
+	 *
+	 * @param lockKey Redis 锁 key
+	 */
+	public void forceUnlock(String lockKey) {
+		if (StringUtils.isBlank(lockKey)) {
+			return;
+		}
+		inventoryRedisson.getLock(lockKey).forceUnlock();
+	}
+
+	/**
+	 * 按原持锁 threadId 释放单把锁（跨线程/XA/补偿 Job 使用）。
+	 * 若锁已不存在，或已由其他线程持有，则视为无需再补偿并返回 true。
+	 *
+	 * @param lockKey  Redis 锁 key
+	 * @param threadId 加锁时 {@link Thread#getId()}
+	 * @return true 表示无需再重试；false 表示释放失败且可重试
+	 */
+	public boolean safeUnlockByThreadId(String lockKey, long threadId) {
+		if (StringUtils.isBlank(lockKey)) {
+			return true;
+		}
+		RLock lock = inventoryRedisson.getLock(lockKey);
+		try {
+			if (!lock.isLocked()) {
+				return true;
+			}
+			// Redisson 3.10.x RLock 无 unlock(long)，跨线程释放须用 unlockAsync(threadId)
+			lock.unlockAsync(threadId).get();
+			return true;
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			log.warn("unlockByThreadId 被中断 lockKey={} threadId={}", lockKey, threadId, e);
+			return false;
+		} catch (Exception e) {
+			Throwable cause = e.getCause() != null ? e.getCause() : e;
+			if (cause instanceof IllegalMonitorStateException) {
+				if (lock.isLocked()) {
+					log.warn("未分配共享锁非原持锁线程，放弃补偿释放 lockKey={} threadId={}", lockKey, threadId);
+				}
+				return true;
+			}
+			log.warn("unlockByThreadId 失败 lockKey={} threadId={}", lockKey, threadId, e);
+			return false;
+		}
+	}
+
+	/**
+	 * 批量按原持锁 threadId 释放 Redisson 锁。
+	 *
+	 * @param lockKeyToThreadId lock key 与加锁 threadId 映射
+	 * @return 仍需补偿重试的 lock key 及 threadId
+	 */
+	public Map<String, Long> unlockByThreadId(Map<String, Long> lockKeyToThreadId) {
+		if (lockKeyToThreadId == null || lockKeyToThreadId.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		Map<String, Long> failed = new LinkedHashMap<>();
+		for (Map.Entry<String, Long> entry : lockKeyToThreadId.entrySet()) {
+			if (!safeUnlockByThreadId(entry.getKey(), entry.getValue())) {
+				failed.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return failed;
+	}
+
+	/**
+	 * 批量强制释放 Redisson 锁。
+	 *
+	 * @param lockKeys Redis 锁 key 列表
+	 * @return 释放失败的 lock key 列表
+	 */
+	public List<String> forceUnlock(List<String> lockKeys) {
+		if (lockKeys == null || lockKeys.isEmpty()) {
+			return new ArrayList<>();
+		}
+		List<String> failedKeys = new ArrayList<>();
+		for (String lockKey : lockKeys) {
+			try {
+				forceUnlock(lockKey);
+			} catch (Exception e) {
+				log.warn("forceUnlock 失败 lockKey={}", lockKey, e);
+				failedKeys.add(lockKey);
+			}
+		}
+		return failedKeys;
 	}
 	
 	public void execute(InventoryRedisOpEnum inventoryRedisOpEnum , Object... args) {

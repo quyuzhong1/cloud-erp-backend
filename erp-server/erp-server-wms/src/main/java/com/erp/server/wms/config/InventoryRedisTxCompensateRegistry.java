@@ -32,6 +32,9 @@ public class InventoryRedisTxCompensateRegistry {
     /** 孤儿 rollback 登记默认 TTL（秒） */
     public static final long DEFAULT_ROLLBACK_KEY_TTL_SECONDS = 172800L;
 
+    /** 登记 TTL 相对 timeout 的安全余量（秒），避免 key 在达到执行条件前过期 */
+    public static final long REGISTRY_TTL_SAFETY_SECONDS = 3600L;
+
     private static final String KEY_PREFIX = "inventory:tx:compensate";
 
     public enum TxKind {
@@ -50,9 +53,10 @@ public class InventoryRedisTxCompensateRegistry {
      *
      * @param kind          实体仓或虚拟仓
      * @param transactionId Redis 事务 ID
-     * @param rollback      true 登记孤儿 TRY 回滚；false 登记 commit 重试
+     * @param rollback       true 登记孤儿 TRY 回滚；false 登记 commit 重试
+     * @param timeoutSeconds 补偿等待秒数，用于计算登记 TTL（timeout + 安全余量）
      */
-    public void touchPending(TxKind kind, String transactionId, boolean rollback) {
+    public void touchPending(TxKind kind, String transactionId, boolean rollback, int timeoutSeconds) {
         if (StringUtils.isBlank(transactionId)) {
             return;
         }
@@ -61,7 +65,7 @@ public class InventoryRedisTxCompensateRegistry {
         if (redisUtil.get(key) != null) {
             return;
         }
-        long ttlSeconds = rollback ? DEFAULT_ROLLBACK_KEY_TTL_SECONDS : DEFAULT_COMMIT_KEY_TTL_SECONDS;
+        long ttlSeconds = resolveRegistryTtlSeconds(rollback, timeoutSeconds);
         redisUtil.set(key, String.valueOf(System.currentTimeMillis()), ttlSeconds);
     }
 
@@ -72,7 +76,7 @@ public class InventoryRedisTxCompensateRegistry {
      * @param transactionId Redis 事务 ID
      */
     public void markCommitRetryFailed(TxKind kind, String transactionId) {
-        touchPending(kind, transactionId, false);
+        touchPending(kind, transactionId, false, InventoryRedisTxCompensateHelper.DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS);
     }
 
     /**
@@ -85,7 +89,7 @@ public class InventoryRedisTxCompensateRegistry {
      * @return 超时后可执行补偿
      */
     public boolean isDue(TxKind kind, String transactionId, int timeoutSeconds, boolean rollback) {
-        if (StringUtils.isBlank(transactionId)) {
+        if (StringUtils.isBlank(transactionId) || timeoutSeconds <= 0) {
             return false;
         }
         Object value = resolveRedisUtil(kind).get(buildKey(kind, rollback, transactionId));
@@ -199,5 +203,18 @@ public class InventoryRedisTxCompensateRegistry {
         }
         int lastColon = key.lastIndexOf(':');
         return lastColon < 0 ? key : key.substring(lastColon + 1);
+    }
+
+    /**
+     * 根据补偿等待时间计算登记 key TTL，确保 timeout 到达前 key 不会过期。
+     *
+     * @param rollback       true 孤儿回滚；false commit 重试
+     * @param timeoutSeconds 补偿等待秒数（须为正数）
+     * @return Redis key TTL（秒）
+     */
+    static long resolveRegistryTtlSeconds(boolean rollback, int timeoutSeconds) {
+        long baseTtl = rollback ? DEFAULT_ROLLBACK_KEY_TTL_SECONDS : DEFAULT_COMMIT_KEY_TTL_SECONDS;
+        long requiredTtl = (long) timeoutSeconds + REGISTRY_TTL_SAFETY_SECONDS;
+        return Math.max(baseTtl, requiredTtl);
     }
 }

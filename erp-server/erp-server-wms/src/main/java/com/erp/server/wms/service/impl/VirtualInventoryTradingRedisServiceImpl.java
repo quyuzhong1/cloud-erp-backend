@@ -79,7 +79,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
                 }
                 if (TransactionSynchronizationManager.isActualTransactionActive()) {
-                    PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil);
+                    PgUnallocLockSynchronizationAdapter.registerUnlockAfterTx(unallocLock, inventoryRedisUtil, unallocLockKeys);
                 } else {
                     unlockInFinally = true;
                 }
@@ -89,7 +89,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             throw e;
         } catch (Exception e) {
             log.error("redis虚拟仓库存交易失败", e);
-            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED, e.getMessage());
+            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
         } finally {
             if (unlockInFinally && unallocLock != null) {
                 inventoryRedisUtil.unLock(unallocLock);
@@ -139,7 +139,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             throw e;
         } catch (Exception e) {
             log.error("redis虚拟仓库存交易失败", e);
-            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED, e.getMessage());
+            throw new ServiceException(ApiError.VIRTUAL_WAREHOUSE_INVENTORY_FAILED);
         }
     }
 

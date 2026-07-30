@@ -14,6 +14,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
 import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
+import com.erp.server.wms.config.PgUnallocLockDeferredRegistry;
 import com.erp.server.wms.service.VirtualInventoryTransactionService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -71,28 +72,14 @@ public class VirtualInventoryTransactionJob {
 
     @XxlJob("virtualInventoryCheckRollback")
     public ReturnT virtualInventoryCheckRollback() {
-        int orphanRollbackTimeout = InventoryRedisTxCompensateHelper.DEFAULT_ORPHAN_ROLLBACK_TIMEOUT_SECONDS;
-        int commitRetryTimeout = InventoryRedisTxCompensateHelper.DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS;
-        String jobParam = XxlJobHelper.getJobParam();
-        if(StringUtils.isNotBlank(jobParam)) {
-        	try {
-				JSONObject parseObject = JSON.parseObject(jobParam);
-				if (parseObject.containsKey("timeout")) {
-				    orphanRollbackTimeout = parseObject.getIntValue("timeout");
-				}
-				if (parseObject.containsKey("orphanRollbackTimeout")) {
-				    orphanRollbackTimeout = parseObject.getIntValue("orphanRollbackTimeout");
-				}
-				if (parseObject.containsKey("commitRetryTimeout")) {
-				    commitRetryTimeout = parseObject.getIntValue("commitRetryTimeout");
-				}
-			} catch (Exception e) {
-				log.error("inventoryCheckRollback转换参数失败");
-			}
+        int pendingLockCount = PgUnallocLockDeferredRegistry.retryAllPendingUnlocks();
+        int[] timeouts = InventoryRedisTxCompensateHelper.resolveCompensateTimeouts(XxlJobHelper.getJobParam());
+        int failureCount = virtualInventoryTransactionService.inventoryCheckRollback(timeouts[0], timeouts[1]);
+        if (failureCount > 0 || pendingLockCount > 0) {
+            log.warn("virtualInventoryCheckRollback 补偿存在失败 failureCount={} pendingLockCount={}",
+                    failureCount, pendingLockCount);
+            return ReturnT.FAIL;
         }
-        
-        virtualInventoryTransactionService.inventoryCheckRollback(orphanRollbackTimeout, commitRetryTimeout);
-        
         return ReturnT.SUCCESS;
     }
     

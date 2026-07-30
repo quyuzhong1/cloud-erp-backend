@@ -723,16 +723,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     }
 
 	@Override
-	public void inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds) {
+	public int inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds) {
 		Collection<String> keys = inventoryRedisUtil.keys(
 				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
-		InventoryRedisTxCompensateHelper.compensate(keys,
+		return InventoryRedisTxCompensateHelper.compensate(keys,
 				this::loadExistingDbTransactionIds,
 				transactionId -> this.commitRedis(transactionId, false),
 				this::rollbackRedis,
 				InventoryRedisTxCompensateRegistry.TxKind.ENTITY,
 				orphanRollbackTimeoutSeconds,
-				commitRetryTimeoutSeconds);
+				commitRetryTimeoutSeconds).getTotalFailureCount();
 	}
 
 	/**
