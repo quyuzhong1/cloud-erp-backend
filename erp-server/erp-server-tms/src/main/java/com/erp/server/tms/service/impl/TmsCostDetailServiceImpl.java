@@ -406,11 +406,11 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 entity.setId(oldDetailEntity.getId());
                 oldDetailList.remove(oldDetailEntity);
             }
-            //操作日志
+            // 操作日志挂主单 id，与新增日志一致，保证费用单操作日志页可查到
             if (StringUtils.isNotBlank(entity.getId())) {
                 operateLogService.addModuleOperateLog(
                         CharSequenceUtil.format("编辑了一个费用【{}】", buildEditCostAmountLogValue(entity, oldDetailEntity)),
-                        ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getId(), "编辑操作");
+                        ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), mainId, "编辑操作");
             }
         }
     }
@@ -649,8 +649,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 entity.setId(oldDetailEntity.getId());
                 oldDetailMap.remove(oldKey);
             }
+            // 操作日志挂主单 id，与新增日志一致，保证费用单操作日志页可查到
             if (StringUtils.isNotBlank(entity.getId())) {
-                logPairs.add(new Pair<>(entity.getId(), buildEditCostAmountLogValue(entity, oldDetailEntity)));
+                logPairs.add(new Pair<>(mainId, buildEditCostAmountLogValue(entity, oldDetailEntity)));
             }
         }
         if (CollectionUtils.isNotEmpty(logPairs)) {
