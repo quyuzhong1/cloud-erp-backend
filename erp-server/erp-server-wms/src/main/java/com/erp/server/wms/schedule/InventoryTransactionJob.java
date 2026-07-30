@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.model.wms.entity.InventoryTransactionEntity;
+import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
 import com.erp.server.wms.service.InventoryTransactionService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -74,18 +75,27 @@ public class InventoryTransactionJob {
 
     @XxlJob("inventoryCheckRollback")
     public ReturnT inventoryCheckRollback() {
-        int timeout = 1800;
+        int orphanRollbackTimeout = InventoryRedisTxCompensateHelper.DEFAULT_ORPHAN_ROLLBACK_TIMEOUT_SECONDS;
+        int commitRetryTimeout = InventoryRedisTxCompensateHelper.DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS;
         String jobParam = XxlJobHelper.getJobParam();
         if(StringUtils.isNotBlank(jobParam)) {
         	try {
 				JSONObject parseObject = JSON.parseObject(jobParam);
-				timeout = parseObject.getIntValue("timeout");
+				if (parseObject.containsKey("timeout")) {
+				    orphanRollbackTimeout = parseObject.getIntValue("timeout");
+				}
+				if (parseObject.containsKey("orphanRollbackTimeout")) {
+				    orphanRollbackTimeout = parseObject.getIntValue("orphanRollbackTimeout");
+				}
+				if (parseObject.containsKey("commitRetryTimeout")) {
+				    commitRetryTimeout = parseObject.getIntValue("commitRetryTimeout");
+				}
 			} catch (Exception e) {
 				log.error("inventoryCheckRollback转换参数失败");
 			}
         }
         
-        inventoryTransactionService.inventoryCheckRollback(timeout);
+        inventoryTransactionService.inventoryCheckRollback(orphanRollbackTimeout, commitRetryTimeout);
         
         return ReturnT.SUCCESS;
     }
