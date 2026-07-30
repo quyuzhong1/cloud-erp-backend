@@ -781,6 +781,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				thirdCode, matchedList.size(), matchedQty, unmatchedSkuCount, unmatchedQty);
 		SoReturnPrestockDTO.Add prestockAdd = CollectionUtils.isNotEmpty(unmatchedList)
 				? buildPrestockAddDtoForDetails(dto, warehouseEntity, unmatchedList) : null;
+		if (CollectionUtils.isNotEmpty(unmatchedList) && Objects.isNull(prestockAdd)) {
+			log.warn("[海外仓退货入库-参考单号匹配] thirdCode={} 未匹配订单的{}个SKU全部无有效ERP对照已丢弃，不生成预入库单",
+					thirdCode, unmatchedSkuCount);
+		}
 		new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
 			// matchedList 可能整批为空（参考单号匹配到订单，但订单里一个SKU都对不上）：
 			// 此时跳过退货入库单生成，全部明细改走预入库单，不写零明细的空退货入库单
@@ -799,7 +803,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	private void createSoReturnPrestockHeadless(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
 		SoReturnPrestockDTO.Add addDTO = buildPrestockAddDtoForDetails(dto, warehouseEntity, dto.getProductDetailList());
 		if (Objects.isNull(addDTO)) {
-			log.warn("[海外仓退货入库-无头件] 明细为空，跳过：thirdCode={}", dto.getPlatformReturnOrderNo());
+			log.warn("[海外仓退货入库-无头件] 无可落库明细（为空或全部无有效SKU对照已丢弃），跳过：thirdCode={}",
+					dto.getPlatformReturnOrderNo());
 			return;
 		}
 		soReturnPrestockService.createFromOverseasWhHeadless(addDTO);
@@ -878,7 +883,15 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 
 	/**
-	 * 由平台退货入库明细构建预入库单明细行；未匹配到 SKU 映射时保留原始平台 SKU，不丢弃、不中断，交给运营人工核对
+	 * 由平台退货入库明细构建预入库单明细行。
+	 * <p>
+	 * 仅保留存在有效 ERP SKU 对照（match_result=true 且 productSkuId 非空）的明细；
+	 * 无有效对照的平台 SKU 直接丢弃，不占位落预入库单。
+	 * </p>
+	 *
+	 * @param dto     平台退货入库消息
+	 * @param details 待生成预入库的明细
+	 * @return 可落库的预入库明细；全部无映射时返回空列表
 	 */
 	private List<SoReturnPrestockDetailDTO.Add> buildPrestockDetailList(PlatformReturnInstockDTO dto, List<PlatformReturnInstockDTO.Detail> details) {
 		if (CollectionUtils.isEmpty(details)) {
@@ -892,15 +905,23 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
-		return details.stream().map(detail -> {
+		List<SoReturnPrestockDetailDTO.Add> result = new ArrayList<>();
+		for (PlatformReturnInstockDTO.Detail detail : details) {
 			SkuMappingDTO.MappingSkuViewDTO skuViewDTO = mappingSkuViewDTOList.stream()
-					.filter(v -> v.getPlatformSkuNo().equals(detail.getProductSku()))
-					.findFirst().orElse(null);
+					.filter(v -> StringUtils.isNotBlank(v.getPlatformSkuNo())
+							&& v.getPlatformSkuNo().equals(detail.getProductSku())
+							&& StringUtils.isNotBlank(v.getProductSkuId()))
+					.findFirst()
+					.orElse(null);
+			if (Objects.isNull(skuViewDTO)) {
+				log.warn("[海外仓退货入库] thirdCode={} 平台SKU={} 无有效ERP对照，明细丢弃不生成预入库",
+						dto.getPlatformReturnOrderNo(), detail.getProductSku());
+				continue;
+			}
 			SoReturnPrestockDetailDTO.Add detailDTO = new SoReturnPrestockDetailDTO.Add();
-			detailDTO.setSkuId(Objects.nonNull(skuViewDTO) ? skuViewDTO.getProductSkuId() : "");
-			// 未匹配到映射时，仍用平台SKU占位落库，不丢消息，等运营人工在预入库单里核对
-			detailDTO.setSkuNo(Objects.nonNull(skuViewDTO) ? skuViewDTO.getProductSkuNo() : detail.getProductSku());
-			detailDTO.setProductName(Objects.nonNull(skuViewDTO) ? skuViewDTO.getProductName() : "");
+			detailDTO.setSkuId(skuViewDTO.getProductSkuId());
+			detailDTO.setSkuNo(skuViewDTO.getProductSkuNo());
+			detailDTO.setProductName(skuViewDTO.getProductName());
 			Integer receiveQty = detail.getReceiveQty();
 			if (Objects.isNull(receiveQty) || receiveQty <= 0) {
 				receiveQty = detail.getRealQty();
@@ -912,8 +933,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			// 平台订单号、平台字典值均为【关联】相关字段，不代表本行数据来源渠道，此处无头件尚未关联，不写入
 			detailDTO.setRemark(dto.getReason());
 			detailDTO.setDefectiveProductFlag(Boolean.TRUE.equals(detail.getDefectiveProductFlag()));
-			return detailDTO;
-		}).collect(Collectors.toList());
+			result.add(detailDTO);
+		}
+		return result;
 	}
 
 	/**
