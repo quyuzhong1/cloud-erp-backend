@@ -21,7 +21,7 @@ import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.server.wms.config.PgUnallocLockSynchronizationAdapter;
+import com.erp.server.wms.inventory.tx.lock.PgUnallocLockSynchronizationAdapter;
 import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryRedisUtil;

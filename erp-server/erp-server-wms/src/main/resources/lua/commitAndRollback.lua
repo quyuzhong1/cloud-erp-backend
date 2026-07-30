@@ -145,7 +145,10 @@ local function compute_new_current_value(currvalue, txn, opType)
             uqty = baseQty;
         else
             local segTxn, segOpId, segQty = parse_try_segment(sku);
-            if segTxn == txn and segQty ~= nil then
+            if segTxn == nil or segQty == nil then
+                return nil;
+            end
+            if segTxn == txn then
                 if opType == 'commit' then
                     uqty = uqty + segQty;
                 end
