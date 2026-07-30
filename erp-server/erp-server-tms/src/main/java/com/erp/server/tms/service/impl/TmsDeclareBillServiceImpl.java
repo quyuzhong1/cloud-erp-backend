@@ -223,6 +223,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private static final int DECLARE_MULTI_EXPORT_LIMIT = 100;
 
     /**
+     * 报关单 sheet0 明细首行的 POI 行下标，对应 Excel 第 18 行。
+     */
+    private static final int DECLARE_DETAIL_FIRST_ROW_INDEX = 17;
+
+    /**
+     * Excel 列宽的字符单位换算值。
+     */
+    private static final int EXCEL_CHARACTER_WIDTH_UNIT = 256;
+
+    /**
      * ZIP 批量导出存在单条渲染失败时置 true，供前端下载完成后提示用户
      */
     private static final String HEADER_EXPORT_PARTIAL_FAILURE = "X-Export-Partial-Failure";
@@ -1568,6 +1578,32 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .stream()
                 .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (v1, v2) -> v1));
 
+        // 批量结果一次性建立索引，避免每张报关单、每条明细重复扫描完整列表。
+        Map<String, List<TmsDeclareBillDTO.ExportProductDetail>> detailsByMainId = allExportProductDetailList.stream()
+                .filter(detail -> StringUtils.isNotBlank(detail.getMainId()))
+                .collect(Collectors.groupingBy(TmsDeclareBillDTO.ExportProductDetail::getMainId,
+                        LinkedHashMap::new, Collectors.toList()));
+        Map<String, LogisticsBillEntity> logisticsByOutstockCode = new HashMap<>();
+        Map<String, Integer> logisticsOrderByOutstockCode = new HashMap<>();
+        for (int index = 0; index < logisticsBillEntityList.size(); index++) {
+            LogisticsBillEntity logisticsBill = logisticsBillEntityList.get(index);
+            if (Objects.isNull(logisticsBill) || StringUtils.isBlank(logisticsBill.getOutstockCode())
+                    || logisticsByOutstockCode.containsKey(logisticsBill.getOutstockCode())) {
+                continue;
+            }
+            logisticsByOutstockCode.put(logisticsBill.getOutstockCode(), logisticsBill);
+            logisticsOrderByOutstockCode.put(logisticsBill.getOutstockCode(), index);
+        }
+        Map<String, String> declareDictNameMap = dictBasicEntityList.stream()
+                .filter(dict -> Objects.nonNull(dict) && StringUtils.isNotBlank(dict.getType())
+                        && StringUtils.isNotBlank(dict.getCode()))
+                .collect(Collectors.toMap(dict -> buildDeclareDictKey(dict.getType(), dict.getCode()),
+                        dict -> Objects.toString(dict.getName(), ""), (first, ignored) -> first));
+        Map<String, String> declareUnitNameMap = sysDictBasicEntityList.stream()
+                .filter(dict -> Objects.nonNull(dict) && StringUtils.isNotBlank(dict.getValue()))
+                .collect(Collectors.toMap(BasicDictEntity::getValue,
+                        dict -> Objects.toString(dict.getName(), ""), (first, ignored) -> first));
+
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
             exportDTO.setShippingFeeStr(Objects.isNull(exportDTO.getShippingFee()) || exportDTO.getShippingFee().compareTo(BigDecimal.ZERO) == 0
                     ? "" : exportDTO.getShippingFee().toPlainString());
@@ -1592,21 +1628,28 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
 
             List<String> rowSourceCodes = splitCommaValues(exportDTO.getSourceCode());
-            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream()
-                    .filter(v -> rowSourceCodes.contains(v.getOutstockCode()))
-                    .findFirst()
-                    .orElse(new LogisticsBillEntity());
+            LogisticsBillEntity logisticsBillEntity = findFirstDeclareLogistics(
+                    rowSourceCodes, logisticsByOutstockCode, logisticsOrderByOutstockCode);
             exportDTO.setShippingMethodName(LogisticsMethodEnum.getName(logisticsBillEntity.getShippingMethod()));
             if(exportDTO.getType().equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
                 exportDTO.setTransportNo(logisticsBillEntity.getCounterNo());
             }
 
-            exportDTO.setDictSupervisionMethodName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType())&&v.getCode().equals(exportDTO.getDictSupervisionMethod())).map(DictBasicEntity::getName).findFirst().orElse(""));
-            exportDTO.setDictNatureLevyName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_NATURE_LEVY.getType())&&v.getCode().equals(exportDTO.getDictNatureLevy())).map(DictBasicEntity::getName).findFirst().orElse(""));
-            exportDTO.setDictPackTypeName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_PACK_TYPE.getType())&&v.getCode().equals(exportDTO.getDictPackType())).map(DictBasicEntity::getName).findFirst().orElse(""));
-            exportDTO.setDictTransactionMethodName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_TRANSACTION_METHOD.getType())&&v.getCode().equals(exportDTO.getDictTransactionMethod())).map(DictBasicEntity::getName).findFirst().orElse(""));
+            exportDTO.setDictSupervisionMethodName(declareDictNameMap.getOrDefault(
+                    buildDeclareDictKey(DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType(),
+                            exportDTO.getDictSupervisionMethod()), ""));
+            exportDTO.setDictNatureLevyName(declareDictNameMap.getOrDefault(
+                    buildDeclareDictKey(DictBasicEnum.DECLARE_NATURE_LEVY.getType(),
+                            exportDTO.getDictNatureLevy()), ""));
+            exportDTO.setDictPackTypeName(declareDictNameMap.getOrDefault(
+                    buildDeclareDictKey(DictBasicEnum.DECLARE_PACK_TYPE.getType(),
+                            exportDTO.getDictPackType()), ""));
+            exportDTO.setDictTransactionMethodName(declareDictNameMap.getOrDefault(
+                    buildDeclareDictKey(DictBasicEnum.DECLARE_TRANSACTION_METHOD.getType(),
+                            exportDTO.getDictTransactionMethod()), ""));
 
-            List<TmsDeclareBillDTO.ExportProductDetail> exportProductDetailList = allExportProductDetailList.stream().filter(v->v.getMainId().equals(exportDTO.getId())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.ExportProductDetail> exportProductDetailList =
+                    detailsByMainId.getOrDefault(exportDTO.getId(), Collections.emptyList());
             for (int i = 0; i < exportProductDetailList.size(); i++) {
                 TmsDeclareBillDTO.ExportProductDetail detail = exportProductDetailList.get(i);
                 detail.setRowNum(i+1);
@@ -1617,8 +1660,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 }
                 DictCurrencyEntity currency = currencyMap.get(detail.getDeclareCurrency());
                 detail.setDeclareCurrencyName(Objects.isNull(currency) ? "" : Objects.toString(currency.getName(), ""));
-                BasicDictEntity unitDTO = sysDictBasicEntityList.stream().filter(v->v.getValue().equals(detail.getDeclareUnit())).findFirst().orElse(new BasicDictEntity());
-                detail.setDeclareUnitName(unitDTO.getName());
+                detail.setDeclareUnitName(declareUnitNameMap.getOrDefault(detail.getDeclareUnit(), ""));
                 detail.setSourceCountryName(sourceCountryMap.get(detail.getSourceCountry()));
                 detail.setToCountryName(exportDTO.getCountryName());
                 detail.setBusinessCode(exportDTO.getBusinessCode());
@@ -1627,6 +1669,40 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             exportDTO.setTotalPrice(exportProductDetailList.stream().map(TmsDeclareBillDTO.ExportProductDetail::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
             exportDTO.setProductDetailList(exportProductDetailList);
         }
+    }
+
+    /**
+     * 构建报关字典类型和编码的联合索引键。
+     *
+     * @param type 字典类型
+     * @param code 字典编码
+     * @return 联合索引键
+     */
+    private String buildDeclareDictKey(String type, String code) {
+        return Objects.toString(type, "") + "|" + Objects.toString(code, "");
+    }
+
+    /**
+     * 按原物流列表顺序返回当前来源单号集合中首个命中的物流单。
+     *
+     * @param sourceCodes 当前报关单来源单号
+     * @param logisticsByCode 物流单号索引
+     * @param orderByCode 物流单原列表位置索引
+     * @return 首个命中的物流单，无命中返回空实体
+     */
+    private LogisticsBillEntity findFirstDeclareLogistics(List<String> sourceCodes,
+                                                           Map<String, LogisticsBillEntity> logisticsByCode,
+                                                           Map<String, Integer> orderByCode) {
+        String firstCode = null;
+        int firstOrder = Integer.MAX_VALUE;
+        for (String sourceCode : sourceCodes) {
+            Integer order = orderByCode.get(sourceCode);
+            if (Objects.nonNull(order) && order < firstOrder) {
+                firstOrder = order;
+                firstCode = sourceCode;
+            }
+        }
+        return Objects.isNull(firstCode) ? new LogisticsBillEntity() : logisticsByCode.get(firstCode);
     }
 
     /**
@@ -3058,11 +3134,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         int detailSize = CollectionUtils.isEmpty(exportDTO.getProductDetailList()) ? 0 : exportDTO.getProductDetailList().size();
         try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsxBytes));
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            if (detailSize > 1) {
+            if (detailSize > 0) {
                 Sheet declareSheet = workbook.getSheetAt(0);
-                removeBlankDeclareDetailRows(declareSheet, detailSize);
-                mergeDeclareDetailRows(declareSheet, detailSize);
-                mergeInvoiceMarkNo(workbook.getSheetAt(2), detailSize);
+                if (detailSize > 1) {
+                    removeBlankDeclareDetailRows(declareSheet, detailSize);
+                    mergeDeclareDetailRows(declareSheet, detailSize);
+                    mergeInvoiceMarkNo(workbook.getSheetAt(2), detailSize);
+                }
+                setDeclareDetailRowHeights(declareSheet, detailSize);
             }
             int packingListDetailSize = Objects.isNull(exportDTO.getPackingListInfo())
                     || CollectionUtils.isEmpty(exportDTO.getPackingListInfo().getItemList())
@@ -3075,6 +3154,340 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             workbook.write(outputStream);
             return outputStream.toByteArray();
+        }
+    }
+
+    /**
+     * 根据 sheet0 明细单元格内容设置每条报关明细行的行高。
+     *
+     * <p>模板第18行的原始行高作为最小值；同一行多个字段只取所需行数的最大值，
+     * 横向合并区域按合并后的总列宽计算。</p>
+     *
+     * @param sheet 报关单 sheet0
+     * @param detailSize 明细数量
+     */
+    private void setDeclareDetailRowHeights(Sheet sheet, int detailSize) {
+        if (Objects.isNull(sheet) || detailSize <= 0) {
+            return;
+        }
+        short defaultHeight = resolveDeclareDetailDefaultRowHeight(sheet);
+        List<DeclareDetailColumnRange> templateColumnRanges = buildDeclareDetailColumnRanges(sheet);
+        DataFormatter formatter = new DataFormatter();
+        Map<Short, CellStyle> wrapStyleCache = new HashMap<>();
+        int lastRowIndex = DECLARE_DETAIL_FIRST_ROW_INDEX + detailSize;
+        for (int rowIndex = DECLARE_DETAIL_FIRST_ROW_INDEX; rowIndex < lastRowIndex; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            if (Objects.isNull(row)) {
+                continue;
+            }
+            enableDeclareDetailWrapText(sheet.getWorkbook(), row, wrapStyleCache);
+            long contentHeight = calculateDeclareDetailRequiredHeight(
+                    sheet, row, templateColumnRanges, formatter);
+            row.setHeight((short) Math.min(Short.MAX_VALUE, Math.max(defaultHeight, contentHeight)));
+        }
+    }
+
+    /**
+     * 读取模板第18行的原始行高，作为明细行高下限。
+     *
+     * @param sheet 报关单 sheet0
+     * @return 正数行高，单位为 twips
+     */
+    private short resolveDeclareDetailDefaultRowHeight(Sheet sheet) {
+        Row templateRow = sheet.getRow(DECLARE_DETAIL_FIRST_ROW_INDEX);
+        short height = Objects.isNull(templateRow) ? -1 : templateRow.getHeight();
+        if (height > 0) {
+            return height;
+        }
+        short defaultHeight = sheet.getDefaultRowHeight();
+        return defaultHeight > 0 ? defaultHeight : (short) 255;
+    }
+
+    /**
+     * 为明细行非空文本单元格启用自动换行，相同原样式只克隆一次以控制样式数量。
+     *
+     * @param workbook 当前工作簿
+     * @param row 明细行
+     * @param wrapStyleCache 原样式下标到自动换行样式的缓存
+     */
+    private void enableDeclareDetailWrapText(Workbook workbook,
+                                             Row row,
+                                             Map<Short, CellStyle> wrapStyleCache) {
+        for (Cell cell : row) {
+            if (cell.getCellTypeEnum() == CellType.BLANK) {
+                continue;
+            }
+            CellStyle originalStyle = cell.getCellStyle();
+            if (originalStyle.getWrapText()) {
+                continue;
+            }
+            short styleIndex = originalStyle.getIndex();
+            CellStyle wrapStyle = wrapStyleCache.computeIfAbsent(styleIndex, key -> {
+                CellStyle newStyle = workbook.createCellStyle();
+                newStyle.cloneStyleFrom(originalStyle);
+                newStyle.setWrapText(true);
+                return newStyle;
+            });
+            cell.setCellStyle(wrapStyle);
+        }
+    }
+
+    /**
+     * 计算当前明细行内容所需的真实行高，使用模板第18行各字段的单行高度作为基准。
+     *
+     * @param sheet 报关单 sheet0
+     * @param row 当前明细行
+     * @param columnRanges 第18行横向合并区域
+     * @param formatter 数据格式化器
+     * @return 内容所需高度，单位为 twips
+     */
+    private long calculateDeclareDetailRequiredHeight(Sheet sheet,
+                                                       Row row,
+                                                       List<DeclareDetailColumnRange> columnRanges,
+                                                       DataFormatter formatter) {
+        if (Objects.isNull(row) || row.getFirstCellNum() < 0) {
+            return 0L;
+        }
+        long requiredHeight = 0L;
+        int firstCell = row.getFirstCellNum();
+        int lastCell = row.getLastCellNum();
+        for (int column = firstCell; column < lastCell; column++) {
+            Cell cell = row.getCell(column);
+            String text = formatDeclareDetailCell(cell, formatter);
+            if (StringUtils.isBlank(text)) {
+                continue;
+            }
+            DeclareDetailColumnRange mergedRange = findDeclareDetailColumnRange(columnRanges, column);
+            if (Objects.nonNull(mergedRange) && column != mergedRange.getFirstColumn()) {
+                continue;
+            }
+            int availableWidth = Objects.isNull(mergedRange)
+                    ? resolveColumnWidth(sheet, column)
+                    : mergedRange.getWidth();
+            double fontWidthScale = resolveDeclareDetailFontWidthScale(sheet, row, column);
+            int lines = calculateWrappedLineCount(text, availableWidth, fontWidthScale);
+            int lineHeight = resolveDeclareDetailCellLineHeight(sheet, row, column);
+            requiredHeight = Math.max(requiredHeight, (long) lineHeight * lines);
+        }
+        return requiredHeight;
+    }
+
+    /**
+     * 根据当前字段字体与工作簿默认字体字号计算字符宽度比例。
+     *
+     * @param sheet 报关单 sheet0
+     * @param row 当前明细行
+     * @param column 列下标
+     * @return 字符宽度缩放比例
+     */
+    private double resolveDeclareDetailFontWidthScale(Sheet sheet, Row row, int column) {
+        Cell cell = row.getCell(column);
+        if (Objects.isNull(cell)) {
+            return 1D;
+        }
+        Font cellFont = sheet.getWorkbook().getFontAt(cell.getCellStyle().getFontIndex());
+        Font defaultFont = sheet.getWorkbook().getFontAt((short) 0);
+        if (Objects.isNull(cellFont) || Objects.isNull(defaultFont) || defaultFont.getFontHeightInPoints() <= 0) {
+            return 1D;
+        }
+        return Math.max(1D, (double) cellFont.getFontHeightInPoints() / defaultFont.getFontHeightInPoints());
+    }
+
+    /**
+     * 读取模板第18行对应字段的单行高度，优先使用当前明细行样式字体字号。
+     *
+     * @param sheet 报关单 sheet0
+     * @param row 当前明细行
+     * @param column 列下标
+     * @return 单行高度，单位为 twips
+     */
+    private int resolveDeclareDetailCellLineHeight(Sheet sheet, Row row, int column) {
+        Cell templateCell = sheet.getRow(DECLARE_DETAIL_FIRST_ROW_INDEX) == null
+                ? null : sheet.getRow(DECLARE_DETAIL_FIRST_ROW_INDEX).getCell(column);
+        CellStyle style = Objects.nonNull(templateCell) ? templateCell.getCellStyle() : row.getCell(column).getCellStyle();
+        if (Objects.nonNull(style)) {
+            Font font = sheet.getWorkbook().getFontAt(style.getFontIndex());
+            if (Objects.nonNull(font) && font.getFontHeight() > 0) {
+                // WPS“最适合的行高”按 sheet 默认行高作为每个显示行的基准；字体更高时再扩容。
+                return Math.max(Math.max(1, sheet.getDefaultRowHeight()),
+                        Math.round(font.getFontHeight() * 1.15F));
+            }
+        }
+        return Math.max(1, sheet.getDefaultRowHeight());
+    }
+
+    /**
+     * 读取模板第18行的横向合并区域及真实列宽，后续新增明细行复用同一列布局。
+     *
+     * @param sheet 报关单 sheet0
+     * @return 第18行横向合并区域列表
+     */
+    private List<DeclareDetailColumnRange> buildDeclareDetailColumnRanges(Sheet sheet) {
+        List<DeclareDetailColumnRange> ranges = new ArrayList<>();
+        for (CellRangeAddress mergedRegion : sheet.getMergedRegions()) {
+            if (mergedRegion.getFirstRow() != DECLARE_DETAIL_FIRST_ROW_INDEX
+                    || mergedRegion.getLastRow() != DECLARE_DETAIL_FIRST_ROW_INDEX
+                    || mergedRegion.getFirstColumn() >= mergedRegion.getLastColumn()) {
+                continue;
+            }
+            int width = 0;
+            for (int column = mergedRegion.getFirstColumn(); column <= mergedRegion.getLastColumn(); column++) {
+                width += resolveColumnWidth(sheet, column);
+            }
+            ranges.add(new DeclareDetailColumnRange(
+                    mergedRegion.getFirstColumn(), mergedRegion.getLastColumn(),
+                    Math.max(EXCEL_CHARACTER_WIDTH_UNIT, width)));
+        }
+        return ranges;
+    }
+
+    /**
+     * 读取模板单列的真实 Excel 宽度，异常时回退到模板自身默认列宽。
+     *
+     * @param sheet 报关单 sheet0
+     * @param columnIndex 列下标
+     * @return 列宽，单位为 Excel 字符宽度的 1/256
+     */
+    private int resolveColumnWidth(Sheet sheet, int columnIndex) {
+        int templateDefaultWidth = Math.max(1, sheet.getDefaultColumnWidth()) * EXCEL_CHARACTER_WIDTH_UNIT;
+        try {
+            int width = sheet.getColumnWidth(columnIndex);
+            return width > 0 ? width : templateDefaultWidth;
+        } catch (RuntimeException exception) {
+            return templateDefaultWidth;
+        }
+    }
+
+    /**
+     * 查找包含指定列的横向合并区域。
+     *
+     * @param columnRanges 本行横向合并区域
+     * @param column 列下标
+     * @return 命中的合并区域，未命中返回 null
+     */
+    private DeclareDetailColumnRange findDeclareDetailColumnRange(List<DeclareDetailColumnRange> columnRanges,
+                                                                   int column) {
+        for (DeclareDetailColumnRange range : columnRanges) {
+            if (column >= range.getFirstColumn() && column <= range.getLastColumn()) {
+                return range;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 按显式换行和近似字符宽度计算文本需要的显示行数。
+     *
+     * @param text 单元格文本
+     * @param availableWidth 可用宽度，单位为 Excel 字符宽度的 1/256
+     * @param fontWidthScale 当前字体相对工作簿默认字体的宽度比例
+     * @return 显示行数
+     */
+    private int calculateWrappedLineCount(String text, int availableWidth, double fontWidthScale) {
+        if (StringUtils.isBlank(text)) {
+            return 1;
+        }
+        int width = Math.max(EXCEL_CHARACTER_WIDTH_UNIT, availableWidth);
+        String[] lines = text.split("\\r\\n|\\r|\\n", -1);
+        int result = 0;
+        for (String line : lines) {
+            long lineWidth = Math.round(calculateTextWidth(line) * Math.max(1D, fontWidthScale));
+            result += Math.max(1, (int) ((lineWidth + width - 1) / width));
+        }
+        return Math.max(1, result);
+    }
+
+    /**
+     * 使用中英文字符宽度近似值计算文本宽度。
+     *
+     * @param text 单元格文本
+     * @return 文本宽度，单位为 Excel 字符宽度的 1/256
+     */
+    private int calculateTextWidth(String text) {
+        int width = 0;
+        for (int i = 0; i < text.length(); i++) {
+            width += isWideDeclareCharacter(text.charAt(i))
+                    ? EXCEL_CHARACTER_WIDTH_UNIT * 2
+                    : EXCEL_CHARACTER_WIDTH_UNIT;
+        }
+        return width;
+    }
+
+    /**
+     * 判断字符是否按全角/宽字符处理。
+     *
+     * @param character 待判断字符
+     * @return 宽字符返回 true
+     */
+    private boolean isWideDeclareCharacter(char character) {
+        return (character >= 0x1100 && character <= 0x11FF)
+                || (character >= 0x2E80 && character <= 0xA4CF)
+                || (character >= 0xAC00 && character <= 0xD7AF)
+                || (character >= 0xF900 && character <= 0xFAFF)
+                || (character >= 0xFE10 && character <= 0xFE19)
+                || (character >= 0xFE30 && character <= 0xFE6F)
+                || (character >= 0xFF01 && character <= 0xFF60)
+                || (character >= 0xFFE0 && character <= 0xFFEE);
+    }
+
+    /**
+     * 将单元格按 Excel 展示格式转换为文本，异常单元格按空值处理。
+     *
+     * @param cell 单元格
+     * @param formatter 数据格式化器
+     * @return 展示文本
+     */
+    private String formatDeclareDetailCell(Cell cell, DataFormatter formatter) {
+        if (Objects.isNull(cell)) {
+            return "";
+        }
+        try {
+            return formatter.formatCellValue(cell);
+        } catch (RuntimeException exception) {
+            return "";
+        }
+    }
+
+    /**
+     * 报关明细横向合并区域及其可用宽度。
+     */
+    private static final class DeclareDetailColumnRange {
+        private final int firstColumn;
+        private final int lastColumn;
+        private final int width;
+
+        /**
+         * 创建横向合并区域宽度模型。
+         *
+         * @param firstColumn 起始列
+         * @param lastColumn 结束列
+         * @param width 合并后的可用宽度
+         */
+        private DeclareDetailColumnRange(int firstColumn, int lastColumn, int width) {
+            this.firstColumn = firstColumn;
+            this.lastColumn = lastColumn;
+            this.width = width;
+        }
+
+        /**
+         * @return 起始列
+         */
+        private int getFirstColumn() {
+            return firstColumn;
+        }
+
+        /**
+         * @return 结束列
+         */
+        private int getLastColumn() {
+            return lastColumn;
+        }
+
+        /**
+         * @return 可用宽度
+         */
+        private int getWidth() {
+            return width;
         }
     }
 
