@@ -8,6 +8,8 @@ import com.common.message.config.RocketMQConsumerLifecycleCoordinator;
 import com.common.message.controller.vo.RocketMQContainerStatusVO;
 import com.common.message.controller.vo.RocketMQLifecycleStatusVO;
 import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,10 @@ import java.util.Map;
 @RequestMapping("/internal/rocketmq")
 @ConditionalOnWebApplication
 public class RocketMQConsumerStatusController extends BaseController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RocketMQConsumerStatusController.class);
+    private static final String DRAIN_FAILED_MESSAGE = "RocketMQ terminal drain failed";
+    private static final String ACTIVATION_FAILED_MESSAGE = "RocketMQ activation failed";
 
     private final ApplicationContext applicationContext;
     private final RocketMQConsumerActivationManager activationManager;
@@ -50,7 +56,8 @@ public class RocketMQConsumerStatusController extends BaseController {
     }
 
     /**
-     * Starts the irreversible RocketMQ terminal drain.
+     * Starts the irreversible RocketMQ terminal drain. HTTP 202 means accepted, not completed.
+     * The release pipeline polls for DRAINED, fails on FAILED, and owns any bounded-timeout policy.
      *
      * @param request current HTTP request
      * @return typed lifecycle state
@@ -62,12 +69,33 @@ public class RocketMQConsumerStatusController extends BaseController {
         }
         try {
             drainManager.beginDrain();
-            return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", currentStatus());
+            RocketMQLifecycleStatusVO status = currentStatus();
+            if ("DRAINING".equals(status.getDrainState())) {
+                return lifecycleResponse(
+                        HttpStatus.ACCEPTED,
+                        HttpStatus.ACCEPTED.value(),
+                        "RocketMQ terminal drain accepted",
+                        status);
+            }
+            if ("FAILED".equals(status.getDrainState())) {
+                status.setMessage(DRAIN_FAILED_MESSAGE);
+                return lifecycleResponse(
+                        HttpStatus.CONFLICT,
+                        HttpStatus.CONFLICT.value(),
+                        DRAIN_FAILED_MESSAGE,
+                        status);
+            }
+            return lifecycleResponse(HttpStatus.OK, HttpStatus.OK.value(), "请求成功！", status);
         } catch (RuntimeException ex) {
+            LOGGER.error("RocketMQ terminal drain request failed", ex);
             RocketMQLifecycleStatusVO failed = currentStatus();
             failed.setStatus("DRAIN_FAILED");
-            failed.setMessage(ex.getMessage());
-            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), failed);
+            failed.setMessage(DRAIN_FAILED_MESSAGE);
+            return lifecycleResponse(
+                    HttpStatus.CONFLICT,
+                    HttpStatus.CONFLICT.value(),
+                    DRAIN_FAILED_MESSAGE,
+                    failed);
         }
     }
 
@@ -86,23 +114,34 @@ public class RocketMQConsumerStatusController extends BaseController {
             activationManager.activate();
             return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", currentStatus());
         } catch (RocketMQConsumerLifecycleCoordinator.TerminalDrainStartedException ex) {
+            LOGGER.warn("RocketMQ activation rejected because terminal drain has started", ex);
             RocketMQLifecycleStatusVO conflict = currentStatus();
             conflict.setStatus("TERMINAL_DRAIN_STARTED");
-            conflict.setMessage(ex.getMessage());
-            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), conflict);
+            conflict.setMessage("RocketMQ terminal drain has already started");
+            return lifecycleResponse(
+                    HttpStatus.CONFLICT,
+                    HttpStatus.CONFLICT.value(),
+                    "RocketMQ terminal drain has already started",
+                    conflict);
         } catch (RocketMQConsumerActivationManager.ActivationNotEligibleException ex) {
+            LOGGER.warn("RocketMQ activation rejected because this Pod is not eligible", ex);
             RocketMQLifecycleStatusVO conflict = currentStatus();
             conflict.setStatus("NOT_ELIGIBLE");
-            conflict.setMessage(ex.getMessage());
-            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), conflict);
+            conflict.setMessage("RocketMQ activation is not eligible for this Pod");
+            return lifecycleResponse(
+                    HttpStatus.CONFLICT,
+                    HttpStatus.CONFLICT.value(),
+                    "RocketMQ activation is not eligible for this Pod",
+                    conflict);
         } catch (RuntimeException ex) {
+            LOGGER.error("RocketMQ activation request failed", ex);
             RocketMQLifecycleStatusVO failed = currentStatus();
             failed.setStatus("ACTIVATION_FAILED");
-            failed.setMessage(ex.getMessage());
+            failed.setMessage(ACTIVATION_FAILED_MESSAGE);
             return lifecycleResponse(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    ex.getMessage(),
+                    ACTIVATION_FAILED_MESSAGE,
                     failed);
         }
     }
@@ -137,17 +176,29 @@ public class RocketMQConsumerStatusController extends BaseController {
         status.setEnabled(enabled);
         status.setStartupEnabled(activationManager.isStartupEnabled());
         status.setActivationState(activationManager.getActivationState());
-        status.setActivationFailure(activationManager.getFailureMessage());
+        status.setActivationFailure(hasText(activationManager.getFailureMessage())
+                ? ACTIVATION_FAILED_MESSAGE : null);
         status.setMqActiveColor(activationManager.getMqActiveColor());
         status.setLocalColor(activationManager.getLocalColor());
         status.setColorEligible(activationManager.isColorEligible());
         status.setDrainState(drainState);
         status.setDrainTotalContainers(drainManager.getTotalContainers());
         status.setDrainedContainers(drainManager.getDrainedContainers());
-        status.setDrainFailure(drainManager.getFailureMessage());
+        status.setDrainFailure(hasText(drainManager.getFailureMessage())
+                ? DRAIN_FAILED_MESSAGE : null);
         status.setTotalContainers(containers.size());
         status.setRunningContainers(running);
         return status;
+    }
+
+    /**
+     * Checks whether an internal failure detail is present without exposing it.
+     *
+     * @param value internal failure detail
+     * @return true when a failure was recorded
+     */
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     /**

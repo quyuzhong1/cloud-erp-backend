@@ -61,6 +61,23 @@ public class ReleaseControlledXxlJobSpringExecutorTest {
     }
 
     @Test
+    public void destroyShouldPropagateDrainFailure() throws Exception {
+        TestExecutor executor = new TestExecutor(directExecutor());
+        executor.stopFailure = new IllegalStateException("registry stop failed");
+        markStarted(executor);
+
+        try {
+            executor.destroy();
+            Assert.fail("Spring destroy must observe terminal drain failure");
+        } catch (IllegalStateException expected) {
+            Assert.assertEquals("XXL-JOB terminal drain failed", expected.getMessage());
+            Assert.assertTrue(expected.getCause().getMessage().contains("registry stop failed"));
+        }
+
+        Assert.assertEquals("FAILED", executor.getDrainState());
+    }
+
+    @Test
     public void repeatedDrainIsIdempotent() throws Exception {
         TestExecutor executor = new TestExecutor(directExecutor());
         markStarted(executor);

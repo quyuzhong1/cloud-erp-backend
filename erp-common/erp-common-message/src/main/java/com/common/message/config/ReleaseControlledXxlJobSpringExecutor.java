@@ -76,6 +76,12 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
 
     @Override
     public void destroy() {
+        /*
+         * Propagating a drain failure makes Spring shutdown diagnostics accurate, but it cannot cancel
+         * Kubernetes Pod termination by itself. The release pipeline is the actual safety gate: it calls
+         * /internal/xxljob/drain, blocks on FAILED, and applies its explicit bounded-timeout policy while
+         * polling for DRAINED before scaling or deleting the old Pod.
+         */
         beginDrain();
         awaitDrainCompletion();
     }
@@ -162,6 +168,10 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         }
     }
 
+    /**
+     * Runs the terminal drain and preserves failure in both the lifecycle state and submitted Future.
+     * The external release pipeline, rather than this Spring destroy callback, controls Pod removal.
+     */
     private void drainExecutor() {
         try {
             stopAcceptingTriggersAndUnregister();
@@ -173,7 +183,15 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         } catch (Throwable ex) {
             drainFailure = ex.getClass().getSimpleName() + ": " + ex.getMessage();
             drainState = DrainState.FAILED;
-            log.error(">>>>>>>>>>> xxl-job terminal drain failed; Pod removal must be blocked.", ex);
+            log.error(">>>>>>>>>>> xxl-job terminal drain failed; the external release gate must observe FAILED.",
+                    ex);
+            if (ex instanceof Error) {
+                throw (Error) ex;
+            }
+            if (ex instanceof RuntimeException) {
+                throw (RuntimeException) ex;
+            }
+            throw new IllegalStateException("XXL-JOB terminal drain failed", ex);
         }
     }
 
@@ -277,6 +295,9 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         return registryRemovalRequested;
     }
 
+    /**
+     * Waits for the local drain task and propagates any failure to Spring shutdown diagnostics.
+     */
     private void awaitDrainCompletion() {
         Future<?> future = drainFuture;
         if (future == null) {
@@ -284,11 +305,14 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         }
         try {
             future.get();
+            if (drainState != DrainState.DRAINED) {
+                throw new IllegalStateException("XXL-JOB terminal drain did not complete: " + drainFailure);
+            }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            log.warn(">>>>>>>>>>> interrupted while waiting for XXL-JOB terminal drain.");
+            throw new IllegalStateException("Interrupted while waiting for XXL-JOB terminal drain", ex);
         } catch (ExecutionException ex) {
-            log.warn(">>>>>>>>>>> XXL-JOB terminal drain coordinator completed exceptionally.", ex.getCause());
+            throw new IllegalStateException("XXL-JOB terminal drain failed", ex.getCause());
         }
     }
 

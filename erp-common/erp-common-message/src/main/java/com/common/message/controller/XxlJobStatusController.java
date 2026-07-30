@@ -5,6 +5,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.config.ReleaseControlledXxlJobSpringExecutor;
 import com.common.message.controller.vo.XxlJobLifecycleStatusVO;
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/internal/xxljob")
 @ConditionalOnWebApplication
 public class XxlJobStatusController extends BaseController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(XxlJobStatusController.class);
+    private static final String DRAIN_FAILED_MESSAGE = "XXL-JOB terminal drain failed";
 
     private final ObjectProvider<XxlJobSpringExecutor> executorProvider;
 
@@ -47,15 +52,25 @@ public class XxlJobStatusController extends BaseController {
                     HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), "unsupported xxl-job executor", status);
         }
 
-        return lifecycleResponse(
-                HttpStatus.OK,
-                200,
-                "请求成功！",
-                controlledStatus((ReleaseControlledXxlJobSpringExecutor) executor));
+        try {
+            return lifecycleResponse(
+                    HttpStatus.OK,
+                    200,
+                    "请求成功！",
+                    controlledStatus((ReleaseControlledXxlJobSpringExecutor) executor));
+        } catch (RuntimeException ex) {
+            LOGGER.error("XXL-JOB lifecycle status inspection failed", ex);
+            return lifecycleResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "XXL-JOB lifecycle status inspection failed",
+                    failedStatus("XXL-JOB lifecycle status inspection failed"));
+        }
     }
 
     /**
-     * Starts the irreversible XXL-JOB terminal drain.
+     * Starts the irreversible XXL-JOB terminal drain. HTTP 202 means accepted, not completed.
+     * The release pipeline polls for DRAINED, fails on FAILED, and owns any bounded-timeout policy.
      *
      * @param request current HTTP request
      * @return typed lifecycle state
@@ -81,12 +96,30 @@ public class XxlJobStatusController extends BaseController {
         ReleaseControlledXxlJobSpringExecutor controlled = (ReleaseControlledXxlJobSpringExecutor) executor;
         try {
             controlled.beginDrain();
-            return lifecycleResponse(HttpStatus.OK, 200, "请求成功！", controlledStatus(controlled));
+            XxlJobLifecycleStatusVO status = controlledStatus(controlled);
+            if ("DRAINING".equals(status.getStatus())) {
+                return lifecycleResponse(
+                        HttpStatus.ACCEPTED,
+                        HttpStatus.ACCEPTED.value(),
+                        "XXL-JOB terminal drain accepted",
+                        status);
+            }
+            if ("FAILED".equals(status.getStatus())) {
+                status.setMessage(DRAIN_FAILED_MESSAGE);
+                return lifecycleResponse(
+                        HttpStatus.CONFLICT,
+                        HttpStatus.CONFLICT.value(),
+                        DRAIN_FAILED_MESSAGE,
+                        status);
+            }
+            return lifecycleResponse(HttpStatus.OK, HttpStatus.OK.value(), "请求成功！", status);
         } catch (RuntimeException ex) {
-            XxlJobLifecycleStatusVO failed = controlledStatus(controlled);
-            failed.setStatus("FAILED");
-            failed.setMessage(ex.getMessage());
-            return lifecycleResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.value(), ex.getMessage(), failed);
+            LOGGER.error("XXL-JOB terminal drain request failed", ex);
+            return lifecycleResponse(
+                    HttpStatus.CONFLICT,
+                    HttpStatus.CONFLICT.value(),
+                    DRAIN_FAILED_MESSAGE,
+                    failedStatus(DRAIN_FAILED_MESSAGE));
         }
     }
 
@@ -103,8 +136,33 @@ public class XxlJobStatusController extends BaseController {
         status.setAcceptingTriggers(controlled.isAcceptingTriggers());
         status.setRegistryRemovalRequested(controlled.isRegistryRemovalRequested());
         status.setBusyJobThreads(controlled.getBusyJobThreadCount());
-        status.setFailure(controlled.getDrainFailure());
+        status.setFailure(hasText(controlled.getDrainFailure()) ? DRAIN_FAILED_MESSAGE : null);
         return status;
+    }
+
+    /**
+     * Builds a sanitized failure response without invoking reflection-backed status inspection again.
+     *
+     * @param message controlled failure message
+     * @return sanitized failed lifecycle state
+     */
+    private XxlJobLifecycleStatusVO failedStatus(String message) {
+        XxlJobLifecycleStatusVO failed = new XxlJobLifecycleStatusVO();
+        failed.setStatus("FAILED");
+        failed.setConfigured(true);
+        failed.setMessage(message);
+        failed.setFailure(message);
+        return failed;
+    }
+
+    /**
+     * Checks whether an internal failure detail is present without exposing it.
+     *
+     * @param value internal failure detail
+     * @return true when a failure was recorded
+     */
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     /**

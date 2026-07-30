@@ -68,9 +68,34 @@ public class RocketMQConsumerStatusControllerTest {
 
         ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.drain(request);
 
-        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
         Assert.assertEquals("DRAINING", response.getBody().getData().getDrainState());
         Mockito.verify(drainManager).beginDrain();
+        context.close();
+    }
+
+    @Test
+    public void shouldNotExposeDrainExceptionMessage() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        RocketMQConsumerActivationManager activationManager = Mockito.mock(RocketMQConsumerActivationManager.class);
+        RocketMQConsumerDrainManager drainManager = Mockito.mock(RocketMQConsumerDrainManager.class);
+        Mockito.doThrow(new IllegalStateException("internal consumer shutdown detail"))
+                .when(drainManager).beginDrain();
+        Mockito.when(drainManager.getDrainState()).thenReturn("FAILED");
+        Mockito.when(drainManager.getFailureMessage()).thenReturn("internal consumer shutdown detail");
+        RocketMQConsumerStatusController controller = new RocketMQConsumerStatusController(
+                context, activationManager, drainManager);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("127.0.0.1");
+
+        ResponseEntity<ApiResult<RocketMQLifecycleStatusVO>> response = controller.drain(request);
+
+        Assert.assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        Assert.assertEquals("RocketMQ terminal drain failed", response.getBody().getMsg());
+        Assert.assertEquals("RocketMQ terminal drain failed", response.getBody().getData().getMessage());
+        Assert.assertEquals("RocketMQ terminal drain failed", response.getBody().getData().getDrainFailure());
+        Assert.assertFalse(response.getBody().getMsg().contains("internal consumer shutdown detail"));
         context.close();
     }
 
