@@ -949,7 +949,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY+":{}", entity.getSoId()));
         Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
-            if(isNotOutbound){
+            if(Objects.nonNull(soB2cEntity) && (soB2cEntity.getIsNotOutbound() || isNotOutbound)){
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
             }else{
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
@@ -999,15 +999,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(virtualInOutStockList)) {
             return;
         }
-        // 是否不出库发货以 SO_B2C_NOT_OUTBOUND_KEY 为准，不写死标识
-        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", entity.getSoId()));
-        boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj);
-
         String businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
-        if (isNotOutbound) {
-            // 不出库发货：虚拟仓一次扣可用
-            businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
-        } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
+//        if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
+//            businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
+//        }else
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
             businessType = VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode();
             //历史流水
             List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
