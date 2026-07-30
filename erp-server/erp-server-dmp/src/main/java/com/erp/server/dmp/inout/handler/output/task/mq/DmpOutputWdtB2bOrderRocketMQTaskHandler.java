@@ -6,6 +6,7 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -13,8 +14,10 @@ import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -35,6 +38,11 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
+
+	/**
+	 * 同一次推送任务内缓存字典默认税率，避免按单重复 Feign 查字典。
+	 */
+	private BigDecimal cachedDefaultTaxRate;
 
 	@Resource
 	private ThirdMappingService thirdMappingService;
@@ -148,6 +156,8 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		platformB2bOrderDTO.setShopId(shopInfo.getId());
 		platformB2bOrderDTO.setCustomerOrderNo(dmpSoInfoEntity.getPlatformCode());
 		platformB2bOrderDTO.setPlatformWarehouseId(dmpSoInfoEntity.getWarehouseId());
+		// 京东自营 B2B 按含税处理，税率缺省时使用可配置默认值
+		platformB2bOrderDTO.setIsTax(true);
 
 		String orderStatus = dmpSoInfoEntity.getOrderStatus();
 		platformB2bOrderDTO.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -158,6 +168,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		}
 		Map<String,List<DmpSoDetailEntity>> combineDetailMap = dmpSoDetailEntityList.stream().filter(v-> StringUtils.isNotBlank(v.getSuiteNo())).collect(Collectors.groupingBy(this::getCombineDetailGroupKey));
 		List<PlatformB2bOrderDetailDTO> details = new ArrayList<>();
+		BigDecimal taxRate = resolveWdtJdB2bTaxRate(dmpSoInfoEntity.getTaxRate());
 
 		//订单详情 ERP-15125 如果是组合品，推送组合品明细
 		for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
@@ -170,11 +181,11 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
 			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
 			detailDTO.setQty(dmpSoDetailEntity.getQty());
-			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
+			detailDTO.setTaxRate(taxRate);
 			detailDTO.setTaxPrice(dmpSoDetailEntity.getSellPriceOrigin());
 			detailDTO.setCustomerPO(dmpSoInfoEntity.getPlatformCode());
 			detailDTO.setToCountry(dmpSoInfoEntity.getSellRemark());
-			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
+			detailDTO.setPrice(calcPriceExcludeTax(detailDTO.getTaxPrice(), taxRate));
 			details.add(detailDTO);
 		}
 		combineDetailMap.forEach((groupKey,list)->{
@@ -187,13 +198,73 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
 			Integer totalQty = dmpSoDetailEntity.getSuiteQty();
 			detailDTO.setQty(totalQty);
-			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
+			detailDTO.setTaxRate(taxRate);
 			detailDTO.setTaxPrice(getCombineDetailTaxPrice(dmpSoDetailEntity, list));
-			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
+			detailDTO.setPrice(calcPriceExcludeTax(detailDTO.getTaxPrice(), taxRate));
 			details.add(detailDTO);
 		});
 		platformB2bOrderDTO.setDetail(details);
 		return platformB2bOrderDTO;
+	}
+
+	/**
+	 * 解析旺店通京东自营 B2B 税率：源税率为空或≤0 时，取 OMS 字典 {@code wdtJdB2bDefaultTaxRate} 的 value。
+	 *
+	 * @param sourceTaxRate 旺店通原单税率（百分比）
+	 * @return 有效税率（百分比）
+	 */
+	private BigDecimal resolveWdtJdB2bTaxRate(BigDecimal sourceTaxRate) {
+		if (sourceTaxRate != null && sourceTaxRate.compareTo(BigDecimal.ZERO) > 0) {
+			return sourceTaxRate;
+		}
+		return getDefaultTaxRateFromDict();
+	}
+
+	/**
+	 * 从 OMS 字典表读取旺店通京东 B2B 默认税率；查不到或非法时兜底 13。
+	 *
+	 * @return 默认税率（百分比）
+	 */
+	private BigDecimal getDefaultTaxRateFromDict() {
+		if (cachedDefaultTaxRate != null) {
+			return cachedDefaultTaxRate;
+		}
+		BigDecimal fallback = new BigDecimal("13");
+		try {
+			List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class)
+					.eq(DictBasicEntity::getType, DictBasicTypeEnum.WDT_JD_B2B_DEFAULT_TAX_RATE.getType())
+					.eq(DictBasicEntity::getStatus, true)
+					.list();
+			if (CollUtil.isNotEmpty(dictList) && StringUtils.isNotBlank(dictList.get(0).getValue())) {
+				BigDecimal rate = new BigDecimal(dictList.get(0).getValue().trim());
+				if (rate.compareTo(BigDecimal.ZERO) > 0) {
+					cachedDefaultTaxRate = rate;
+					return cachedDefaultTaxRate;
+				}
+			}
+			log.warn("旺店通京东B2B默认税率字典未配置或非法，type={}，使用兜底{}",
+					DictBasicTypeEnum.WDT_JD_B2B_DEFAULT_TAX_RATE.getType(), fallback);
+		} catch (Exception e) {
+			log.warn("读取旺店通京东B2B默认税率字典失败，使用兜底{}", fallback, e);
+		}
+		cachedDefaultTaxRate = fallback;
+		return cachedDefaultTaxRate;
+	}
+
+	/**
+	 * 根据含税单价与税率反算不含税单价：price = taxPrice / (1 + taxRate/100)。
+	 *
+	 * @param taxPrice 含税单价（旺店通原价）
+	 * @param taxRate  税率（百分比，如 13）
+	 * @return 不含税单价，保留 2 位小数
+	 */
+	private BigDecimal calcPriceExcludeTax(BigDecimal taxPrice, BigDecimal taxRate) {
+		if (taxPrice == null) {
+			return BigDecimal.ZERO;
+		}
+		BigDecimal rate = taxRate == null ? BigDecimal.ZERO : taxRate;
+		BigDecimal onePlusTax = BigDecimal.ONE.add(rate.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP));
+		return taxPrice.divide(onePlusTax, 2, RoundingMode.HALF_UP);
 	}
 
 	private String getCombineDetailGroupKey(DmpSoDetailEntity dmpSoDetailEntity) {
