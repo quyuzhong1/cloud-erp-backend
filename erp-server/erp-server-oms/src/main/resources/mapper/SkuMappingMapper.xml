@@ -345,69 +345,134 @@
         </if>
     </select>
 
-    <!--根据平台sku查询sku映射信息-->
+    <!--根据平台sku查询sku映射信息。
+         当按 platformSkuNo / platformSpuNo 查询时，用 MATERIALIZED CTE 强制先筛 listing_info，
+         避免优化器从 sku_mapping 全表扫再回表过滤（测试环境实测可从约10s降到毫秒级）。
+         仅按 skuIdList / shopIdList 等 mapping 侧条件查询时，保留原驱动顺序。-->
     <select id="listByPlatformSkuNoAndPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$MappingSkuViewDTO">
-        SELECT li.id AS listingId,
-        sm.id,
-        sm.warehouse_id as warehouseId,
-        li.auth_id as authId,
-        sm.product_sku_id,
-        sm.product_sku_no,
-        sm.product_name as productName,
-        li.platform_sku_no AS platformSkuNo,
-        li.platform_sku_id as platformSkuId,
-        li.platform_sku_name AS platformProductName,
-        li.platform_spu_no AS platformSpuNo,
-        li.platform_spu_name AS platformSpuName,
-        li.platform_fn_sku AS platformFnSku
-        FROM sku_mapping sm
-        INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
-        WHERE sm.is_deleted = FALSE
-        AND sm.is_expire=FALSE
-        <!--映射关系状态：仅取启用中的，业务流程不得使用已禁用的映射关系-->
-        AND sm.status = 'enable'
-        <!--skuId 列表-->
-        <if test="params.skuIdList !=null and params.skuIdList.size>0">
-            AND sm.product_sku_id IN
-            <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.type !=null and params.type!=''">
-            AND sm.type =#{params.type}
-        </if>
-        <!--平台sku no 列表-->
-        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
-            AND li.platform_sku_no IN
-            <foreach collection="params.platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
-                #{platformSkuNo}
-            </foreach>
-        </if>
-        <!--平台sku no 列表-->
-        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
-            AND li.platform_spu_no IN
-            <foreach collection="params.platformSpuNoList" item="platformSpuNo" open="(" separator="," close=")">
-                #{platformSpuNo}
-            </foreach>
-        </if>
-        <!--平台-->
-        <if test="params.platform != null and params.platform != ''">
-            AND li.platform = #{params.platform}
-            AND sm.dict_platform = #{params.platform}
-        </if>
-        <if test="params.authId != null and params.authId != ''">
-            AND li.auth_id = #{params.authId}
-        </if>
-        <!--匹配结果吧true 已匹配 false 未匹配-->
-        <if test="params.matchResult != null and params.matchResult != ''">
-            AND li.match_result = #{params.matchResult}
-        </if>
-        <if test="params.shopIdList !=null and params.shopIdList.size>0">
-            AND sm.shop_id IN
-            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                #{shopId}
-            </foreach>
-        </if>
+        <choose>
+            <when test="(params.platformSkuNoList != null and params.platformSkuNoList.size > 0)
+                     or (params.platformSpuNoList != null and params.platformSpuNoList.size > 0)">
+                WITH li AS MATERIALIZED (
+                    SELECT li.id,
+                           li.auth_id,
+                           li.platform_sku_no,
+                           li.platform_sku_id,
+                           li.platform_sku_name,
+                           li.platform_spu_no,
+                           li.platform_spu_name,
+                           li.platform_fn_sku
+                    FROM listing_info li
+                    WHERE li.is_deleted = FALSE
+                    <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
+                        AND li.platform_sku_no IN
+                        <foreach collection="params.platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                            #{platformSkuNo}
+                        </foreach>
+                    </if>
+                    <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+                        AND li.platform_spu_no IN
+                        <foreach collection="params.platformSpuNoList" item="platformSpuNo" open="(" separator="," close=")">
+                            #{platformSpuNo}
+                        </foreach>
+                    </if>
+                    <if test="params.platform != null and params.platform != ''">
+                        AND li.platform = #{params.platform}
+                    </if>
+                    <if test="params.authId != null and params.authId != ''">
+                        AND li.auth_id = #{params.authId}
+                    </if>
+                    <if test="params.matchResult != null and params.matchResult != ''">
+                        AND li.match_result = #{params.matchResult}
+                    </if>
+                )
+                SELECT li.id AS listingId,
+                       sm.id,
+                       sm.warehouse_id as warehouseId,
+                       li.auth_id as authId,
+                       sm.product_sku_id,
+                       sm.product_sku_no,
+                       sm.product_name as productName,
+                       li.platform_sku_no AS platformSkuNo,
+                       li.platform_sku_id as platformSkuId,
+                       li.platform_sku_name AS platformProductName,
+                       li.platform_spu_no AS platformSpuNo,
+                       li.platform_spu_name AS platformSpuName,
+                       li.platform_fn_sku AS platformFnSku
+                FROM li
+                INNER JOIN sku_mapping sm ON sm.listing_id = li.id
+                WHERE sm.is_deleted = FALSE
+                  AND sm.is_expire = FALSE
+                  AND sm.status = 'enable'
+                <if test="params.skuIdList !=null and params.skuIdList.size>0">
+                    AND sm.product_sku_id IN
+                    <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.type !=null and params.type!=''">
+                    AND sm.type = #{params.type}
+                </if>
+                <if test="params.platform != null and params.platform != ''">
+                    AND sm.dict_platform = #{params.platform}
+                </if>
+                <if test="params.shopIdList !=null and params.shopIdList.size>0">
+                    AND sm.shop_id IN
+                    <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                        #{shopId}
+                    </foreach>
+                </if>
+            </when>
+            <otherwise>
+                SELECT li.id AS listingId,
+                sm.id,
+                sm.warehouse_id as warehouseId,
+                li.auth_id as authId,
+                sm.product_sku_id,
+                sm.product_sku_no,
+                sm.product_name as productName,
+                li.platform_sku_no AS platformSkuNo,
+                li.platform_sku_id as platformSkuId,
+                li.platform_sku_name AS platformProductName,
+                li.platform_spu_no AS platformSpuNo,
+                li.platform_spu_name AS platformSpuName,
+                li.platform_fn_sku AS platformFnSku
+                FROM sku_mapping sm
+                INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
+                WHERE sm.is_deleted = FALSE
+                AND sm.is_expire=FALSE
+                <!--映射关系状态：仅取启用中的，业务流程不得使用已禁用的映射关系-->
+                AND sm.status = 'enable'
+                <!--skuId 列表-->
+                <if test="params.skuIdList !=null and params.skuIdList.size>0">
+                    AND sm.product_sku_id IN
+                    <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.type !=null and params.type!=''">
+                    AND sm.type =#{params.type}
+                </if>
+                <!--平台-->
+                <if test="params.platform != null and params.platform != ''">
+                    AND li.platform = #{params.platform}
+                    AND sm.dict_platform = #{params.platform}
+                </if>
+                <if test="params.authId != null and params.authId != ''">
+                    AND li.auth_id = #{params.authId}
+                </if>
+                <!--匹配结果吧true 已匹配 false 未匹配-->
+                <if test="params.matchResult != null and params.matchResult != ''">
+                    AND li.match_result = #{params.matchResult}
+                </if>
+                <if test="params.shopIdList !=null and params.shopIdList.size>0">
+                    AND sm.shop_id IN
+                    <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                        #{shopId}
+                    </foreach>
+                </if>
+            </otherwise>
+        </choose>
     </select>
 
     <select id="listStockSkuNoByProductSkuIds" resultType="com.erp.model.oms.dto.SkuMappingDTO$ListStockSkuNoByProductSkuIdView">

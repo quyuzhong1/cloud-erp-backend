@@ -378,6 +378,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = details.stream().map(PlatformReturnInstockDTO.Detail::getProductSku).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -903,6 +904,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = details.stream().map(PlatformReturnInstockDTO.Detail::getProductSku).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1089,6 +1091,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v -> v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1133,6 +1136,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v -> v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1660,7 +1664,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	private SoReturnInstockEntity buildJiTuSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,SoOutstockEntity soOutstock){
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		CustomerInfoEntity customerInfo = null;
-		
+
 		// 默认自动提交并审核通过
 		if(StringUtils.isNotBlank(warehouseEntity.getId())){
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
@@ -1760,7 +1764,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 			soReturnInstockEntity.setCurrencySymbol("¥");
 		}
-		
+
 		// 销售部门和销售员
 		if(Objects.nonNull(soOutstock)){
 			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
@@ -1778,10 +1782,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setSellerId(customerInfo.getSellerId());
 			soReturnInstockEntity.setSellerName(customerInfo.getSellerName());
 		}
-		
+
 		return soReturnInstockEntity;
 	}
-	
+
 	/**
 	 * 构建极兔退货入库单明细
 	 */
@@ -1791,15 +1795,16 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<SoDetailEntity> soDetails = new ArrayList<>();
 		List<SoB2cReturnDetailEntity> soB2cReturnDetails = new ArrayList<>();
 		List<SoReturnDetailEntity> soReturnDetails = new ArrayList<>();
-		
+
 		if(CollectionUtils.isEmpty(details)){
 			throw new ServiceException("明细为空");
 		}
-		
+
 		// 获取SKU映射
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v->v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1832,7 +1837,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 			// B2C订单
 			soB2cDetails.addAll(soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId())));
-			
+
 			// 获取退货订单明细
 			List<SoB2cReturnEntity> soB2cReturnEntities = FeignQuery.create(SoB2cReturnEntity.class)
 					.eq(SoB2cReturnEntity::getSoId, soB2cEntity.getId())
@@ -1854,7 +1859,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 			// B2B订单
 			soDetails.addAll(soInfoFeign.listSoDetailByMainId(soInfoEntity.getId()));
-			
+
 			// 获取退货订单明细
 			List<SoReturnEntity> soReturnEntities = FeignQuery.create(SoReturnEntity.class)
 					.eq(SoReturnEntity::getSourceId, soInfoEntity.getId())
@@ -1866,12 +1871,12 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.list());
 			}
 		}
-		
+
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
-		
+
 		for (PlatformReturnInstockDTO.Detail detail : details) {
 			SkuMappingDTO.MappingSkuViewDTO skuViewDTO = skuMappingMap.get(detail.getProductSku());
-			
+
 			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
 			soReturnInstockDetailEntity.setSkuId(skuViewDTO.getProductSkuId());
 			soReturnInstockDetailEntity.setSkuNo(skuViewDTO.getProductSkuNo());
@@ -1885,7 +1890,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
 			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
 			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
-			
+
 			// 计算数量
 			int shouldReturnQty = 0; // 应退数量
 			int actualQty = detail.getReceiveQty() != null ? detail.getReceiveQty() : 0;
@@ -1897,13 +1902,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soB2cDetailEntity)) {
-					
+
 					// 应退数量
 					shouldReturnQty = soB2cReturnDetails.stream()
 							.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
 							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
 							.sum();
-					
+
 					// 计算退货金额和含税退货金额
 					// 取销售订单的订单金额*订单明细的真实售价占比*（上架数量/销售数量）
 					BigDecimal amount = MathUtil.multiplyWithSix(soB2cDetailEntity.getPrice(), BigDecimal.valueOf(actualQty));
@@ -1926,13 +1931,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soDetailEntity)) {
-					
+
 					// 应退数量
 					shouldReturnQty = soReturnDetails.stream()
 							.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
 							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
 							.sum();
-					
+
 					BigDecimal returnAmount = MathUtil.multiplyWithSix(soDetailEntity.getPrice(), BigDecimal.valueOf(actualQty));
 					soReturnInstockDetailEntity.setReturnAmount(returnAmount);
 					// 取销售订单的含税单价*退货数量
@@ -1955,14 +1960,14 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				soReturnInstockDetailEntity.setReturnAmountLocalCurrency(BigDecimal.ZERO);
 				soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
 			}
-			
+
 			soReturnInstockDetailEntity.setMustQty(shouldReturnQty);
 			soReturnInstockDetailEntity.setReceiveQty(actualQty);
 			soReturnInstockDetailEntity.setRealQty(actualQty);
 			soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
-		
+
 		return detailEntityList;
 	}
 

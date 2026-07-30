@@ -1385,6 +1385,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        paramDTO.setPlatform(dto.getPlatform());
         paramDTO.setAuthId(dto.getAuthId());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         return CollUtil.emptyIfNull(skuMappingFeign.listByPlatformSkuNoAndPlatform(paramDTO)).stream()
@@ -4650,6 +4651,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> skuIds = detailEntityList.stream().map(v -> v.getSkuId()).collect(Collectors.toList());
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setAuthId(overseasProviderEntity.getId());
+        listingInfoParamDTO.setPlatform(overseasProviderEntity.getCode());
         listingInfoParamDTO.setSkuIdList(skuIds);
         List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
