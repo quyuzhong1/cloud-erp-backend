@@ -29,7 +29,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.utils.RedisUtil;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
@@ -187,8 +186,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private WarehouseService warehouseService;
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
-    @Resource
-    private RedisUtil redisUtil;
 
     @Resource
     private WaveListService waveListService;
@@ -275,12 +272,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
 
-        // 不出库发货（Redis: SO_B2C_NOT_OUTBOUND_KEY）跳过「可用→冻结」，由销售出库一次扣虚拟仓可用
-        if (!isNotOutboundByRedis(soB2cDeliveryEntity.getSourceId())) {
-            freezeVirtualInventory(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
-        } else {
-            log.warn("不出库发货跳过虚拟仓冻结，发货单号={}", soB2cDeliveryEntity.getCode());
-        }
+        //冻结虚拟库存
+        freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
 
         return soB2cDeliveryEntity;
     }
@@ -1272,28 +1265,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      */
     @Override
     public void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList) {
-        if (CollectionUtils.isEmpty(deliveryEntityList)) {
-            return;
-        }
-        // 不出库发货未做虚拟仓冻结，可用已由出库单 OUT_USABLE 反审回补；此处再 IN_USABLE 会双倍加回
-        List<String> soIds = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getSourceId)
-                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        Set<String> notOutboundSoIds = CollUtil.isEmpty(soIds) ? Collections.emptySet()
-                : soB2cFeign.listByIds(soIds).stream()
-                .filter(so -> Boolean.TRUE.equals(so.getIsNotOutbound()))
-                .map(SoB2cEntity::getId)
-                .collect(Collectors.toSet());
-        List<SoB2cDeliveryEntity> needReturnList = deliveryEntityList.stream()
-                .filter(d -> !notOutboundSoIds.contains(d.getSourceId()))
-                .filter(d -> !Boolean.TRUE.equals(d.getIsNotOutbound()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(needReturnList)) {
-            log.warn("不出库发货跳过发货单虚拟仓可用回补，deliveryIds={}",
-                    deliveryEntityList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList()));
-            return;
-        }
-
-        List<String> mainIdList = needReturnList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+        List<String> mainIdList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(mainIdList);
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
             throw new ServiceException("未找到发货单明细");
@@ -1304,7 +1276,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<VirtualInventoryStockDTO.OutInStockDTO> unShippedparamList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
 
-            SoB2cDeliveryEntity entity = needReturnList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.SO_DELIVERY_B2C_NOT_EXISTS);
             }
@@ -1718,11 +1690,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException("已生成B2C发货单，不允许操作手动发货");
         }
         soB2cDelivery.setIsMatchTransferRule(true);
-        // 是否不出库发货以 OMS 写入的 SO_B2C_NOT_OUTBOUND_KEY 为准，不写死标识
-        boolean isNotOutbound = isNotOutboundByRedis(soB2cEntity.getId());
-        soB2cDelivery.setIsNotOutbound(isNotOutbound);
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
-        soB2cDeliveryEntity.setIsNotOutbound(isNotOutbound);
+        soB2cDeliveryEntity.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         //生成直接调拨单
         if (!Boolean.TRUE.equals(soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryEntity))) {
             throw new ServiceException(ApiError.WH_GENERATE_TRANSFER_OUT_FAILED);
@@ -1762,7 +1731,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         generateB2cDTO.setBillDate(dto.getDeliveryTime().toLocalDate());
         generateB2cDTO.setTrackNo(soB2cLogisticsEntity.getCode());
         generateB2cDTO.setBatchNo(soB2cDeliveryEntity.getBatchNo());
-        generateB2cDTO.setIsNotOutbound(isNotOutbound);
+        generateB2cDTO.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
         soB2cEntity = soB2cFeign.getById(soB2cEntity.getId());
         if(soB2cEntity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
@@ -3342,17 +3311,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param entity
      * @param soB2cDeliveryDetailList
      */
-    /**
-     * 是否不出库发货：以 OMS 写入的 Redis 标记为准（{@link RedisCacheConstants#SO_B2C_NOT_OUTBOUND_KEY}）
-     */
-    private boolean isNotOutboundByRedis(String soId) {
-        if (CharSequenceUtil.isBlank(soId)) {
-            return false;
-        }
-        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", soId));
-        return Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj);
-    }
-
     private void freezeVirtualInventory (SoB2cDeliveryEntity entity,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
 
         List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
