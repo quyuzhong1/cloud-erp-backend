@@ -6,6 +6,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.task.support.TaskExecutorAdapter;
 
 public class RocketMQConsumerDrainManagerTest {
 
@@ -17,7 +19,7 @@ public class RocketMQConsumerDrainManagerTest {
         DefaultRocketMQListenerContainer container = Mockito.mock(DefaultRocketMQListenerContainer.class);
         Mockito.when(container.getConsumer()).thenReturn(consumer);
         context.getBeanFactory().registerSingleton("testRocketMQContainer", container);
-        RocketMQConsumerDrainManager manager = new RocketMQConsumerDrainManager(context);
+        RocketMQConsumerDrainManager manager = manager(context);
 
         manager.beginDrain();
         waitForState(manager, "DRAINED");
@@ -33,7 +35,7 @@ public class RocketMQConsumerDrainManagerTest {
     public void shouldImmediatelyDrainWhenNoContainersExist() {
         GenericApplicationContext context = new GenericApplicationContext();
         context.refresh();
-        RocketMQConsumerDrainManager manager = new RocketMQConsumerDrainManager(context);
+        RocketMQConsumerDrainManager manager = manager(context);
 
         manager.beginDrain();
 
@@ -50,5 +52,14 @@ public class RocketMQConsumerDrainManagerTest {
             Thread.sleep(10);
         }
         Assert.fail("Timed out waiting for drain state " + expected + ", actual=" + manager.getDrainState());
+    }
+
+    private RocketMQConsumerDrainManager manager(GenericApplicationContext context) {
+        AsyncTaskExecutor directExecutor = new TaskExecutorAdapter(Runnable::run);
+        return new RocketMQConsumerDrainManager(
+                context,
+                new RocketMQConsumerLifecycleCoordinator(),
+                directExecutor,
+                directExecutor);
     }
 }
