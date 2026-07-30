@@ -1245,7 +1245,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 }
                 String key = buildSourceBoxSkuKey(sourceDetail);
                 if (!sourceKeySet.add(key)) {
-                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_DUPLICATE, 1);
+                    String businessCode = CharSequenceUtil.blankToDefault(sourceDetail.getBusinessCode(),
+                            CharSequenceUtil.blankToDefault(sourceDetail.getSourceCode(), "-"));
+                    String skuNo = CharSequenceUtil.blankToDefault(sourceDetail.getSkuNo(),
+                            CharSequenceUtil.blankToDefault(sourceDetail.getSkuId(), "-"));
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_DUPLICATE, businessCode, skuNo);
                 }
             }
         }
