@@ -856,9 +856,27 @@ public class NfeInvoiceService {
             throw new ServiceException("开票清单不存在");
         }
         String uuid = invoiceInfoEntity.getQueryId();
-        CfgInvoiceSettingDetailEntity settingDetail = cfgInvoiceSettingDetailService.getById(invoiceInfoEntity.getCfgId());
-        String companyToken = Objects.nonNull(settingDetail) ? settingDetail.getToken() : null;
+        // cfg_id 存的是明细 id；token 在主表 cfg_invoice_setting，明细 entity 的 token 为 exist=false，getById 取不到
+        String companyToken = resolveCompanyTokenByCfgDetailId(invoiceInfoEntity.getCfgId());
         return generateAndUploadPdfFromDanfe(invoiceId, uuid, companyToken);
+    }
+
+    /**
+     * 按发票设置明细 id 解析公司 token（从主表 cfg_invoice_setting 读取）。
+     *
+     * @param cfgDetailId 开票清单 cfg_id（明细主键）
+     * @return 公司 token，找不到或为空时返回 null
+     */
+    private String resolveCompanyTokenByCfgDetailId(String cfgDetailId) {
+        if (CharSequenceUtil.isBlank(cfgDetailId)) {
+            return null;
+        }
+        CfgInvoiceSettingDetailEntity settingDetail = cfgInvoiceSettingDetailService.getById(cfgDetailId);
+        if (settingDetail == null || CharSequenceUtil.isBlank(settingDetail.getMainId())) {
+            return null;
+        }
+        CfgInvoiceSettingEntity settingEntity = cfgInvoiceSettingService.getById(settingDetail.getMainId());
+        return settingEntity != null ? settingEntity.getToken() : null;
     }
 
     /**
