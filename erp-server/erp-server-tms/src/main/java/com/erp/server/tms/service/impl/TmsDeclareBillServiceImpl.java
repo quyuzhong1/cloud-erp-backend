@@ -41,6 +41,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -4841,10 +4842,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED, maxDetailCount);
         }
         validateDuplicateSkuRows(mergeDetailList);
-        Set<String> sourceDetailKeySet = new HashSet<>();
+        // 先一次性汇总全部明细必填项缺失，再校验来源明细，避免「修一个又冒一个」。
+        Set<String> requiredErrorSet = new LinkedHashSet<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
             applyMergeDeclareDetailDefaults(detailDTO);
-            validateDeclareDetailRequired(detailDTO);
+            collectDeclareDetailRequiredErrors(detailDTO, requiredErrorSet);
+        }
+        if (CollUtil.isNotEmpty(requiredErrorSet)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED_BATCH,
+                    String.join("；", requiredErrorSet));
+        }
+        Set<String> sourceDetailKeySet = new HashSet<>();
+        for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
             validateDeclareDetailSources(detailDTO, sourceDetailKeySet);
         }
         // 汇总各合并行的来源明细做「按业务单号校验国家」；来源行 countryId 可能为空，
@@ -4872,28 +4881,54 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 校验报关明细必填项
-     * @author will
-     * @date 2026/5/7 14:08
-     * @param detailDTO
+     * 收集报关明细必填项缺失提示（不抛错），供合并保存链路一次性汇总展示。
      */
-    private void validateDeclareDetailRequired(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
+    private void collectDeclareDetailRequiredErrors(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO,
+                                                    Set<String> errorSet) {
+        if (Objects.isNull(detailDTO) || Objects.isNull(errorSet)) {
+            return;
+        }
         String businessCode = resolveMergeDetailBusinessCode(detailDTO);
         String skuNo = resolveMergeDetailSkuNo(detailDTO);
-        requireNotBlank(detailDTO.getSkuNo(), businessCode, skuNo, "SKU");
-        requireNotBlank(detailDTO.getHsCode(), businessCode, skuNo, "中国海关编码");
-        requireNotBlank(detailDTO.getProductNameCn(), businessCode, skuNo, "商品名称");
-        requireNotBlank(detailDTO.getDeclareElement(), businessCode, skuNo, "申报要素");
-        requireNotBlank(detailDTO.getUnit(), businessCode, skuNo, "单位");
-        requireNotNull(detailDTO.getUnitPrice(), businessCode, skuNo, "单价");
-        requirePositive(detailDTO.getQty(), businessCode, skuNo, "数量");
-        requireNotBlank(detailDTO.getDeclareCurrency(), businessCode, skuNo, "币制");
-        requireNotBlank(detailDTO.getSourceCountry(), businessCode, skuNo, "原产国(地区)");
-        requireNotBlank(detailDTO.getToCountry(), businessCode, skuNo, "最终目的国(地区)");
-        requireNotBlank(detailDTO.getSourceCargo(), businessCode, skuNo, "境内货源地");
-        requireNotBlank(detailDTO.getExemption(), businessCode, skuNo, "征免");
+        appendBlankFieldError(errorSet, detailDTO.getSkuNo(), businessCode, skuNo, "SKU");
+        appendBlankFieldError(errorSet, detailDTO.getHsCode(), businessCode, skuNo, "中国海关编码");
+        appendBlankFieldError(errorSet, detailDTO.getProductNameCn(), businessCode, skuNo, "商品名称");
+        appendBlankFieldError(errorSet, detailDTO.getDeclareElement(), businessCode, skuNo, "申报要素");
+        appendBlankFieldError(errorSet, detailDTO.getUnit(), businessCode, skuNo, "单位");
+        appendNullFieldError(errorSet, detailDTO.getUnitPrice(), businessCode, skuNo, "单价");
+        appendNonPositiveFieldError(errorSet, detailDTO.getQty(), businessCode, skuNo, "数量");
+        appendBlankFieldError(errorSet, detailDTO.getDeclareCurrency(), businessCode, skuNo, "币制");
+        appendBlankFieldError(errorSet, detailDTO.getSourceCountry(), businessCode, skuNo, "原产国(地区)");
+        appendBlankFieldError(errorSet, detailDTO.getToCountry(), businessCode, skuNo, "最终目的国(地区)");
+        appendBlankFieldError(errorSet, detailDTO.getSourceCargo(), businessCode, skuNo, "境内货源地");
+        appendBlankFieldError(errorSet, detailDTO.getExemption(), businessCode, skuNo, "征免");
         if (CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_REQUIRED, businessCode, skuNo);
+            errorSet.add(MessageUtils.getMessage(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_REQUIRED,
+                    businessCode, skuNo));
+        }
+    }
+
+    private void appendBlankFieldError(Set<String> errorSet, String value, String businessCode, String skuNo,
+                                       String fieldName) {
+        if (StringUtils.isBlank(value)) {
+            errorSet.add(MessageUtils.getMessage(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED,
+                    businessCode, skuNo, fieldName));
+        }
+    }
+
+    private void appendNullFieldError(Set<String> errorSet, Object value, String businessCode, String skuNo,
+                                      String fieldName) {
+        if (Objects.isNull(value)) {
+            errorSet.add(MessageUtils.getMessage(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED,
+                    businessCode, skuNo, fieldName));
+        }
+    }
+
+    private void appendNonPositiveFieldError(Set<String> errorSet, Integer value, String businessCode, String skuNo,
+                                             String fieldName) {
+        if (Objects.isNull(value) || value <= 0) {
+            errorSet.add(MessageUtils.getMessage(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_POSITIVE_REQUIRED,
+                    businessCode, skuNo, fieldName));
         }
     }
 
