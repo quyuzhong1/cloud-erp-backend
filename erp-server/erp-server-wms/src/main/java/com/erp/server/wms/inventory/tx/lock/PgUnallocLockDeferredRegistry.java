@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -91,6 +92,7 @@ public final class PgUnallocLockDeferredRegistry {
 
     /**
      * 本地 Spring 事务路径：Redis 回调失败或 unlock 异常时登记补偿，并绑定关联 Redis transactionId。
+     * 每次登记使用唯一 retryId，避免不同持锁方因 lock key 哈希或合并串台。
      *
      * @param lockKeys 未分配共享锁 Redis key 列表
      * @param threadId 加锁时 {@link Thread#getId()}
@@ -108,25 +110,21 @@ public final class PgUnallocLockDeferredRegistry {
         if (lockKeyToThreadId.isEmpty()) {
             return;
         }
-        String localRetryId = buildLocalRetryId(lockKeyToThreadId.keySet());
-        RetryUnlockPayload incoming = RetryUnlockPayload.ofLocal(lockKeyToThreadId,
+        String localRetryId = buildLocalRetryId();
+        RetryUnlockPayload payload = RetryUnlockPayload.ofLocal(lockKeyToThreadId,
                 InventoryRedisTxCallbackContext.getRegisteredRedisTransactionIds());
-        MergeRetryResult existing = mergeRetrySources(localRetryId, false);
-        RetryUnlockPayload merged = existing.getPayload().merge(incoming);
-        persistFailedUnlocks(localRetryId, merged, existing.isRedisReadFailed());
+        persistFailedUnlocks(localRetryId, payload, false);
         log.warn("本地未分配共享锁解锁失败，转入补偿登记 retryId={} lockCount={} redisTxIds={}",
-                localRetryId, lockKeyToThreadId.size(), merged.getRedisTransactionIds());
+                localRetryId, lockKeyToThreadId.size(), payload.getRedisTransactionIds());
     }
 
     /**
-     * 为本地补偿生成稳定 retryId（按 lock key 排序后哈希）。
+     * 为本地补偿生成唯一 retryId（UUID），不与历史登记合并。
      *
-     * @param lockKeys 锁 key 集合
-     * @return local$ 前缀 retryId
+     * @return local$ 前缀 + UUID
      */
-    private static String buildLocalRetryId(Set<String> lockKeys) {
-        String joined = lockKeys.stream().sorted().collect(java.util.stream.Collectors.joining("$"));
-        return "local$" + Math.abs(joined.hashCode());
+    private static String buildLocalRetryId() {
+        return "local$" + UUID.randomUUID();
     }
 
     /**
