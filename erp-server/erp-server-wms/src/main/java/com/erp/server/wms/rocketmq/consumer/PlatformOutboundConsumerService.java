@@ -368,7 +368,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         soB2cFeign.updateStatus(mainEntity);
                     }
 
-                    platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto, "");
+                    platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto, "", "");
                 }
 
                 if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
@@ -1281,6 +1281,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
             thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
+            thirdWarehouseDeliveryDetailEntity.setVirtualWarehouseId("");
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(dto.getWarehouseCode());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
@@ -1304,7 +1305,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
     @DistributeLocker(keyName = "dto.referenceNo")
-    public void generateSoOut(SoB2cEntity mainEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, PlatformOutboundDTO dto,String warehouseId) {
+    public void generateSoOut(SoB2cEntity mainEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, PlatformOutboundDTO dto,String warehouseId,String virtualWarehouseId) {
         // 校验是否已生成销售出库单
         boolean exist = soOutstockService.checkExist(mainEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
         if (exist) {
@@ -1333,6 +1334,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
                     if(StringUtils.isNotBlank(warehouseId)){
                         addDTO.setWarehouseId(warehouseId);
+                        addDTO.setVirtualWarehouseId(virtualWarehouseId);
+                    }else {
+                        addDTO.setWarehouseId(thirdWarehouseDeliveryDetailEntity.getWarehouseId());
+                        addDTO.setVirtualWarehouseId(thirdWarehouseDeliveryDetailEntity.getVirtualWarehouseId());
                     }
                     if(StringUtils.isNotBlank(thirdWarehouseDeliveryEntity.getActualDeliveryCode())){
                         addDTO.setRemark(thirdWarehouseDeliveryEntity.getActualDeliveryCode());

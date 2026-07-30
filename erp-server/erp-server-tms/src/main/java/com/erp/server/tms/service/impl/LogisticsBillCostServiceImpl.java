@@ -782,10 +782,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     /**
-     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * 导入确认前校验目标费用单合并导入明细后的费用分类确认金额是否不全部为 0。
      * <p>仅在对账状态为账单确认（CONFIRMED）或暂估确认（ESTIMATE_CONFIRM）时生效；
-     * 分别校验实际金额、暂估金额合计。供物流商模板导入（confirmImport）及标准导入勾选确认场景使用，
+     * 账单确认校验实际金额，暂估确认校验暂估金额。供物流商模板导入（confirmImport）及标准导入勾选确认场景使用，
      * 返回错误文案供行级收集，不抛异常。</p>
+     * <p>业务规则：目标类型费用明细为空时返回“费用明细为空”；存在明细时按费用分类汇总，
+     * 只要任一费用分类金额不等于 0 即通过，只有全部存在分类金额均等于 0 才返回错误。</p>
      *
      * @param logisticsCostId      目标物流费用单 ID
      * @param importList           本次导入待合并的费用明细，可为 null（仅校验库内已有明细）
@@ -794,13 +796,44 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     @Override
     public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus) {
-        return validateImportConfirmAmountMsg(logisticsCostId, importList, reconciliationStatus, null);
+        return validateImportConfirmAmountMsg(logisticsCostId, importList, reconciliationStatus, null, null);
     }
 
+    /**
+     * 导入确认前校验目标费用单合并导入明细后的费用分类确认金额是否不全部为 0。
+     * <p>传入 {@code existingDetailMap} 时复用预查询明细，避免导入批量处理场景按单据循环查库；
+     * 未传入时方法内部按目标费用单查询库内明细。</p>
+     *
+     * @param logisticsCostId      目标物流费用单 ID
+     * @param importList           本次导入待合并的费用明细，可为 null
+     * @param reconciliationStatus 目标对账状态，非确认类状态直接返回 null
+     * @param existingDetailMap    预查询的费用明细，key 为费用单 ID；可为 null
+     * @return 费用明细为空或全部存在分类金额均为 0 时返回错误文案，否则返回 null
+     */
     @Override
     public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
                                                  String reconciliationStatus,
                                                  Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
+        return validateImportConfirmAmountMsg(logisticsCostId, importList, reconciliationStatus, existingDetailMap, null);
+    }
+
+    /**
+     * 导入确认前校验目标费用单合并导入明细后的费用分类确认金额是否不全部为 0。
+     * <p>传入 {@code existingDetailMap} 时复用预查询明细，避免导入批量处理场景按单据循环查库；
+     * 传入 {@code cfgCategoryCache} 时复用批量预取的费用配置分类缓存，避免按单据重复查询配置表。</p>
+     *
+     * @param logisticsCostId      目标物流费用单 ID
+     * @param importList           本次导入待合并的费用明细，可为 null
+     * @param reconciliationStatus 目标对账状态，非确认类状态直接返回 null
+     * @param existingDetailMap    预查询的费用明细，key 为费用单 ID；可为 null
+     * @param cfgCategoryCache     预查询的费用配置分类缓存，key 为费用配置 ID；可为 null
+     * @return 费用明细为空或全部存在分类金额均为 0 时返回错误文案，否则返回 null
+     */
+    private String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
+                                                 String reconciliationStatus,
+                                                 Map<String, List<TmsCostDetailEntity>> existingDetailMap,
+                                                 Map<String, String> cfgCategoryCache) {
+        // 非确认类状态不进入后续确认流程，无需校验确认金额。
         if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
                 && !ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
             return null;
@@ -811,20 +844,21 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String costType = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
                 ? LogisticsBillCostTypeEnum.ACTUAL.getCode()
                 : LogisticsBillCostTypeEnum.ESTIMATED.getCode();
-        BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, importList, costType, existingDetailMap);
-        if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
-            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
-                return "账单确认总计实际金额必须大于0";
-            }
-            return "暂估确认总计暂估金额必须大于0";
-        }
-        return null;
+        ApiError confirmAmountError = validateProjectedConfirmAmountByCategory(
+                logisticsCostId, importList, costType, existingDetailMap, cfgCategoryCache, reconciliationStatus);
+        return buildConfirmAmountCategoryMsg(confirmAmountError);
     }
 
     /**
-     * 确认状态会进入后续对账、分摊和付款流程，目标状态对应金额合计必须大于 0。
+     * 状态变更确认前校验目标状态对应费用分类金额是否不全部为 0。
+     * <p>该方法用于同步 ID 分支，也会被异步任务明细执行链路复用；
+     * 校验失败时抛出 {@link ServiceException}，由同步批量结果或异步明细失败原因承接。</p>
+     *
+     * @param logisticsCostIdList  待变更状态的物流费用单 ID 集合
+     * @param reconciliationStatus 目标对账状态，非确认类状态直接跳过
      */
     private void validateConfirmAmount(List<String> logisticsCostIdList, String reconciliationStatus) {
+        // 只有账单确认和暂估确认会进入确认金额校验。
         if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
                 && !ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
             return;
@@ -835,6 +869,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String costType = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
                 ? LogisticsBillCostTypeEnum.ACTUAL.getCode()
                 : LogisticsBillCostTypeEnum.ESTIMATED.getCode();
+        // 批量预取目标类型明细，避免逐单据重复查询。
         List<TmsCostDetailEntity> detailList = tmsCostDetailService.lambdaQuery()
                 .in(TmsCostDetailEntity::getMainId, logisticsCostIdList)
                 .eq(TmsCostDetailEntity::getType, costType)
@@ -842,24 +877,87 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Map<String, List<TmsCostDetailEntity>> existingDetailMap = CollUtil.isEmpty(detailList)
                 ? Collections.emptyMap()
                 : detailList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
+        // 基于批量明细一次性预取费用配置分类，避免后续逐单据校验时重复查询配置表。
+        Map<String, String> cfgCategoryCache = buildCfgCostCategoryCache(detailList);
         for (String logisticsCostId : logisticsCostIdList) {
-            BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, null, costType, existingDetailMap);
-            if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
-                if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
-                    throw new ServiceException("账单确认总计实际金额必须大于0");
-                }
-                throw new ServiceException("暂估确认总计暂估金额必须大于0");
+            ApiError confirmAmountError = validateProjectedConfirmAmountByCategory(
+                    logisticsCostId, null, costType, existingDetailMap, cfgCategoryCache, reconciliationStatus);
+            if (confirmAmountError != null) {
+                // 同步分支返回批量失败原因；异步分支写入任务明细失败原因。
+                throw new ServiceException(confirmAmountError);
             }
         }
     }
 
-    private BigDecimal calcProjectedConfirmAmount(String logisticsCostId,
-                                                  List<TmsCostDetailDTO.UpdateDTO> importList,
-                                                  String costType,
-                                                  Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
+    /**
+     * 校验目标费用单在合并导入明细后的费用分类确认金额是否不全部为 0。
+     * <p>方法先以费用配置 ID 为维度得到预计金额，再解析每个费用配置所属的费用分类，
+     * 最后按费用分类汇总并校验。这样可以覆盖同一费用分类下存在多个费用名称的场景。</p>
+     * <p>业务规则：目标类型费用明细为空时返回“费用明细为空”；存在明细时按费用分类汇总，
+     * 只要任一费用分类金额不等于 0 即通过，只有全部存在分类金额均等于 0 才返回错误。</p>
+     *
+     * @param logisticsCostId      目标物流费用单 ID
+     * @param importList           本次导入待合并的费用明细，可为空
+     * @param costType             确认状态对应的费用类型
+     * @param existingDetailMap    预查询的费用明细，key 为费用单 ID；可为空
+     * @param cfgCategoryCache     批量预取的费用配置分类缓存，key 为费用配置 ID；可为空
+     * @param reconciliationStatus 目标对账状态
+     * @return 费用明细为空或全部存在分类金额均为 0 时返回标准错误信息，否则返回 null
+     */
+    private ApiError validateProjectedConfirmAmountByCategory(String logisticsCostId,
+                                                              List<TmsCostDetailDTO.UpdateDTO> importList,
+                                                              String costType,
+                                                              Map<String, List<TmsCostDetailEntity>> existingDetailMap,
+                                                              Map<String, String> cfgCategoryCache,
+                                                              String reconciliationStatus) {
+        Map<String, BigDecimal> cfgAmountMap = buildProjectedConfirmCfgAmountMap(
+                logisticsCostId, importList, costType, existingDetailMap);
+        if (CollUtil.isEmpty(cfgAmountMap)) {
+            // 当前单据没有目标类型费用明细时，确认状态不能继续流转。
+            return ApiError.LOGISTICS_BILL_COST_DETAIL_EMPTY;
+        }
+        Map<String, String> cfgCategoryMap = resolveCfgCostCategoryMap(
+                cfgAmountMap.keySet(), importList, costType, cfgCategoryCache);
+        Map<String, BigDecimal> categoryAmountMap = new LinkedHashMap<>();
+        for (Map.Entry<String, BigDecimal> entry : cfgAmountMap.entrySet()) {
+            String dictCostCategory = cfgCategoryMap.get(entry.getKey());
+            if (CharSequenceUtil.isBlank(dictCostCategory)) {
+                // 费用配置缺少分类时保留 cfgCostId，避免金额明细被静默丢弃。
+                dictCostCategory = entry.getKey();
+            }
+            BigDecimal costValue = ObjectUtil.defaultIfNull(entry.getValue(), BigDecimal.ZERO);
+            // 同一费用分类下可能包含多个费用名称，需要按分类汇总后再判断。
+            categoryAmountMap.merge(dictCostCategory, costValue, BigDecimal::add);
+        }
+        for (Map.Entry<String, BigDecimal> entry : categoryAmountMap.entrySet()) {
+            if (entry.getValue().compareTo(BigDecimal.ZERO) != 0) {
+                // 任一存在的费用分类金额不等于 0，即满足确认条件。
+                return null;
+            }
+        }
+        // 走到这里说明存在目标类型明细，但所有存在的费用分类金额都等于 0。
+        return resolveConfirmAmountCategoryApiError(reconciliationStatus);
+    }
+
+    /**
+     * 构建费用配置维度的预计确认金额。
+     * <p>库内明细代表当前已保存金额；本次导入明细代表即将覆盖保存的金额。
+     * 当二者存在相同费用配置 ID 时，以导入明细金额为准，模拟导入落库后的确认金额。</p>
+     *
+     * @param logisticsCostId   目标物流费用单 ID
+     * @param importList        本次导入待合并的费用明细，可为空
+     * @param costType          确认状态对应的费用类型
+     * @param existingDetailMap 预查询的费用明细，key 为费用单 ID；可为空
+     * @return key 为费用配置 ID、value 为预计确认金额的有序映射
+     */
+    private Map<String, BigDecimal> buildProjectedConfirmCfgAmountMap(String logisticsCostId,
+                                                                      List<TmsCostDetailDTO.UpdateDTO> importList,
+                                                                      String costType,
+                                                                      Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
         Map<String, BigDecimal> cfgAmountMap = new LinkedHashMap<>();
         List<TmsCostDetailEntity> existingList;
         if (existingDetailMap != null) {
+            // 批量导入场景优先使用调用方预查询结果，避免循环查库。
             existingList = existingDetailMap.getOrDefault(logisticsCostId, Collections.emptyList());
         } else {
             existingList = tmsCostDetailService.lambdaQuery()
@@ -870,6 +968,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollUtil.isNotEmpty(existingList)) {
             for (TmsCostDetailEntity detailEntity : existingList) {
                 if (!CharSequenceUtil.equals(costType, detailEntity.getType())) {
+                    // 预查询结果可能包含其他类型明细，目标确认类型以 costType 为准。
                     continue;
                 }
                 cfgAmountMap.put(detailEntity.getCfgCostId(),
@@ -879,12 +978,135 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollUtil.isNotEmpty(importList)) {
             for (TmsCostDetailDTO.UpdateDTO updateDTO : importList) {
                 if (CharSequenceUtil.equals(costType, updateDTO.getType())) {
+                    // 导入明细覆盖同费用配置的库内金额，用于提前校验导入后的状态。
                     cfgAmountMap.put(updateDTO.getCfgCostId(),
                             ObjectUtil.defaultIfNull(updateDTO.getCostValue(), BigDecimal.ZERO));
                 }
             }
         }
-        return cfgAmountMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        return cfgAmountMap;
+    }
+
+    /**
+     * 批量构建费用配置分类缓存。
+     * <p>状态批量变更时，费用明细已按批次查出；这里复用明细中的费用配置 ID 一次性查询费用配置，
+     * 后续逐单据校验只读缓存，避免形成单据数量级的 N+1 配置查询。</p>
+     *
+     * @param detailList 批量预取的目标类型费用明细
+     * @return key 为费用配置 ID、value 为费用分类 code 的缓存映射
+     */
+    private Map<String, String> buildCfgCostCategoryCache(List<TmsCostDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptyMap();
+        }
+        List<String> cfgCostIds = detailList.stream()
+                .map(TmsCostDetailEntity::getCfgCostId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgCostIds)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> cfgCategoryCache = new HashMap<>();
+        for (String cfgCostId : cfgCostIds) {
+            // 先记录已查询的费用配置 ID；即使配置缺失，也避免单据循环内再次兜底查询。
+            cfgCategoryCache.put(cfgCostId, "");
+        }
+        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByIds(cfgCostIds);
+        if (CollUtil.isEmpty(cfgCostList)) {
+            return cfgCategoryCache;
+        }
+        for (TmsCfgCostEntity cfgCostEntity : cfgCostList) {
+            if (CharSequenceUtil.isNotBlank(cfgCostEntity.getId())
+                    && CharSequenceUtil.isNotBlank(cfgCostEntity.getDictCostCategory())) {
+                cfgCategoryCache.put(cfgCostEntity.getId(), cfgCostEntity.getDictCostCategory());
+            }
+        }
+        return cfgCategoryCache;
+    }
+
+    /**
+     * 解析费用配置对应的费用分类。
+     * <p>导入明细自带费用分类时优先使用导入值；批量状态变更场景优先使用预取缓存；
+     * 仍未命中的费用配置 ID 再从费用配置表补齐。
+     * 该优先级可以保证导入场景在落库前也能按本次导入识别出的费用分类校验。</p>
+     *
+     * @param cfgCostIds       费用配置 ID 集合
+     * @param importList       本次导入待合并的费用明细，可为空
+     * @param costType         确认状态对应的费用类型
+     * @param cfgCategoryCache 批量预取的费用配置分类缓存，可为空
+     * @return key 为费用配置 ID、value 为费用分类 code 的映射
+     */
+    private Map<String, String> resolveCfgCostCategoryMap(Collection<String> cfgCostIds,
+                                                          List<TmsCostDetailDTO.UpdateDTO> importList,
+                                                          String costType,
+                                                          Map<String, String> cfgCategoryCache) {
+        Map<String, String> cfgCategoryMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(importList)) {
+            for (TmsCostDetailDTO.UpdateDTO updateDTO : importList) {
+                if (CharSequenceUtil.equals(costType, updateDTO.getType())
+                        && CharSequenceUtil.isNotBlank(updateDTO.getCfgCostId())
+                        && CharSequenceUtil.isNotBlank(updateDTO.getDictCostCategory())) {
+                    // 导入场景可能尚未落库，优先采用本次解析出的费用分类。
+                    cfgCategoryMap.put(updateDTO.getCfgCostId(), updateDTO.getDictCostCategory());
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(cfgCategoryCache)) {
+            for (String cfgCostId : cfgCostIds) {
+                if (CharSequenceUtil.isBlank(cfgCategoryMap.get(cfgCostId))
+                        && CharSequenceUtil.isNotBlank(cfgCategoryCache.get(cfgCostId))) {
+                    // 批量校验场景优先复用预取缓存，避免单据循环内重复查询。
+                    cfgCategoryMap.put(cfgCostId, cfgCategoryCache.get(cfgCostId));
+                }
+            }
+        }
+        // 仅查询导入明细和批量缓存都无法提供分类的费用配置，减少不必要的配置表访问。
+        List<String> missingCategoryCfgIds = cfgCostIds.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .filter(cfgCostId -> CharSequenceUtil.isBlank(cfgCategoryMap.get(cfgCostId)))
+                .filter(cfgCostId -> cfgCategoryCache == null || !cfgCategoryCache.containsKey(cfgCostId))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingCategoryCfgIds)) {
+            return cfgCategoryMap;
+        }
+        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByIds(missingCategoryCfgIds);
+        if (CollUtil.isNotEmpty(cfgCostList)) {
+            for (TmsCfgCostEntity cfgCostEntity : cfgCostList) {
+                if (CharSequenceUtil.isNotBlank(cfgCostEntity.getId())
+                        && CharSequenceUtil.isNotBlank(cfgCostEntity.getDictCostCategory())) {
+                    cfgCategoryMap.put(cfgCostEntity.getId(), cfgCostEntity.getDictCostCategory());
+                }
+            }
+        }
+        return cfgCategoryMap;
+    }
+
+    /**
+     * 根据目标对账状态选择确认金额校验错误码。
+     *
+     * @param reconciliationStatus 目标对账状态
+     * @return 账单确认或暂估确认对应的标准错误码
+     */
+    private ApiError resolveConfirmAmountCategoryApiError(String reconciliationStatus) {
+        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
+            return ApiError.LOGISTICS_BILL_COST_ACTUAL_CONFIRM_AMOUNT_CATEGORIES_ALL_ZERO;
+        }
+        return ApiError.LOGISTICS_BILL_COST_ESTIMATED_CONFIRM_AMOUNT_CATEGORIES_ALL_ZERO;
+    }
+
+    /**
+     * 生成费用分类确认金额校验提示。
+     * <p>用于导入行级校验结果收集；同步状态变更分支直接使用 {@link ServiceException} 承载同一错误码。</p>
+     *
+     * @param confirmAmountError 标准错误码
+     * @return 校验提示；无错误时返回 null
+     */
+    private String buildConfirmAmountCategoryMsg(ApiError confirmAmountError) {
+        if (confirmAmountError == null) {
+            return null;
+        }
+        return MessageUtils.getMessage(confirmAmountError);
     }
 
     @Override
@@ -1399,6 +1621,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
             }
         }
+        Map<String, String> cfgCategoryCache = Collections.emptyMap();
+        if (Boolean.TRUE.equals(confirmStatus)) {
+            cfgCategoryCache = new HashMap<>(buildCfgCostCategoryCache(mainIdListMap.values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList())));
+            if (CollUtil.isNotEmpty(tmsCfgCostList)) {
+                for (TmsCfgCostEntity cfgCostEntity : tmsCfgCostList) {
+                    if (CharSequenceUtil.isBlank(cfgCostEntity.getId())) {
+                        continue;
+                    }
+                    cfgCategoryCache.put(cfgCostEntity.getId(),
+                            CharSequenceUtil.isBlank(cfgCostEntity.getDictCostCategory())
+                                    ? "" : cfgCostEntity.getDictCostCategory());
+                }
+            }
+        }
 
         for ( Map.Entry<String, List<LogisticsBillCostExcelDTO>> entry : map.entrySet()) {
             List<LogisticsBillCostExcelDTO> value = entry.getValue();
@@ -1523,7 +1761,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     continue;
                 }
                 // 勾选导入确认时，校验合并明细后实际金额合计大于 0
-                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, mainIdListMap, errorMsgList);
+                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, mainIdListMap, cfgCategoryCache, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                     errorList.addAll(importSuccessList);
@@ -1556,7 +1794,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
-                // 新增物流单分支：勾选导入确认时校验实际金额合计
+                // 新增物流单分支：勾选导入确认时按费用分类校验实际金额。
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateDetailList,
                             ReconciliationStatusEnum.CONFIRMED.getCode(), Collections.emptyMap());
@@ -1580,21 +1818,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     /**
      * 标准导入勾选确认时，对匹配到的多张物流费用单逐单校验账单确认金额。
-     * <p>未勾选确认（confirmStatus=false）时直接跳过。</p>
+     * <p>未勾选确认（confirmStatus=false）时直接跳过；勾选确认时复用批次费用配置分类缓存，避免逐单据重复查询配置表。</p>
      */
     private void appendImportConfirmAmountErrors(Boolean confirmStatus,
                                                  List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList,
                                                  Map<String, List<TmsCostDetailDTO.UpdateDTO>> targetUpdateMap,
                                                  Map<String, List<TmsCostDetailEntity>> mainIdListMap,
+                                                 Map<String, String> cfgCategoryCache,
                                                  List<String> errorMsgList) {
         if (!Boolean.TRUE.equals(confirmStatus) || CollUtil.isEmpty(targetPairList)) {
             return;
         }
         for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
-            // 合并库内已有明细与本次导入明细后校验实际金额合计
+            // 合并库内已有明细与本次导入明细后，按费用分类校验实际金额。
             String confirmMsg = validateImportConfirmAmountMsg(targetPair.getValue().getId(),
                     targetUpdateMap.get(targetPair.getKey().getDetailId()),
-                    ReconciliationStatusEnum.CONFIRMED.getCode(), mainIdListMap);
+                    ReconciliationStatusEnum.CONFIRMED.getCode(), mainIdListMap, cfgCategoryCache);
             if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                 errorMsgList.add(confirmMsg);
                 return;

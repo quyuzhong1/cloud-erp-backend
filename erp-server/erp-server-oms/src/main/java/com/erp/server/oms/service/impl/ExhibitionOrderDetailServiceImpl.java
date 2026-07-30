@@ -115,12 +115,12 @@ public class ExhibitionOrderDetailServiceImpl extends SuperServiceImpl<Exhibitio
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate,4));
+            item.setPriceLc(MathUtil.multiplyWithSix(price, exchangeRate));
             //含税单价
             BigDecimal taxPrice = item.getTaxPrice();
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
+            item.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
 
             SkuVO skuVO = skuMap.getOrDefault(skuId, null);
             if(Objects.nonNull(skuVO)){

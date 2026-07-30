@@ -958,13 +958,13 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 总物流费用
          */
-        @Digits(integer = 12, fraction = 4, message = "总物流费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "总物流费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalLogisticsCost;
 
         /**
          * 实际重量
          */
-        @Digits(integer = 12, fraction = 4, message = "实际重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "实际重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualWeight;
 
         /**
@@ -976,7 +976,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 体积重
          */
-        @Digits(integer = 12, fraction = 4, message = "体积重整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "体积重整数位不能超过18位，小数位不能超过6位")
         private BigDecimal volumeWeight;
 
         /**
@@ -988,7 +988,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 计费重
          */
-        @Digits(integer = 12, fraction = 4, message = "计费重整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "计费重整数位不能超过18位，小数位不能超过6位")
         private BigDecimal billingWeight;
 
         /**
@@ -1000,7 +1000,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 物流运费用
          */
-        @Digits(integer = 12, fraction = 4, message = "实际物流运费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "实际物流运费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingCost;
         
         /**
@@ -1011,7 +1011,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 报关费用
          */
-        @Digits(integer = 12, fraction = 4, message = "实际报关费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "实际报关费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal declareCost;
         
         /**
@@ -1022,7 +1022,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 其他费用
          */
-        @Digits(integer = 12, fraction = 4, message = "实际其他费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "实际其他费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal otherCost;
         
         /**
@@ -1033,7 +1033,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 其他税费
          */
-        @Digits(integer = 12, fraction = 4, message = "实际其他税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "实际其他税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal otherTaxCost;
         
         /**

@@ -575,11 +575,10 @@
         AND wcd.sku_id = fmdd.sku_id
         AND ((fmdd.fn_sku != '' and  wcd.fn_sku = fmdd.fn_sku) or fmdd.platform_sku_no = wcd.fn_sku)
         LEFT JOIN fba_shipment_packing fsp ON fsp.carton_id = wc.ID
-        AND fsp.is_deleted =
-        FALSE LEFT JOIN first_mile_delivery_detail fmdd2 ON fmdd2.main_id = fmd.ID
-        AND fmdd2.is_deleted =
-        FALSE LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fmd.ID
+        AND fsp.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fmd.ID
         AND owi.is_deleted = FALSE
+        AND owi.instock_status != 'canceled'
         where ${params.sqlMap.default} and fmd.is_deleted = false
           AND wcd.pack_qty > 0
         <if test="ids != null and ids.size > 0">
@@ -1163,14 +1162,18 @@
         INNER JOIN fba_shipment fs on fmdd.fba_shipment_code = fs.code and fs.is_deleted = false
         where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
         ) as fba on fba.main_id = fmd.id
-        LEFT JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
         LEFT JOIN fpl_cache fpl_parent
         ON fpl_parent.sku_id = cd.sku_id
         where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        AND (hb.bom_id IS NULL OR fpl_parent.combination_declare_type = 'combine')
+        -- has_bom 只做存在性判断：无 BOM 或 combine 保留父件。
+        -- 禁止 LEFT JOIN 子件行，否则多子件会把同一箱父件 qty 按子件数放大。
+        AND (
+            NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = cd.sku_id)
+            OR fpl_parent.combination_declare_type = 'combine'
+        )
         UNION ALL
         SELECT
         fmd.id as sourceId,

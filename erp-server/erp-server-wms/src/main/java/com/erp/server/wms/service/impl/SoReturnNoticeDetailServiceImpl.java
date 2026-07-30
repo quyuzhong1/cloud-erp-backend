@@ -272,7 +272,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         if (Objects.isNull(exchangeRate)) {
             throw new ServiceException(ApiError.SO_RETURN_EXCHANGE_RATE_REQUIRED, soB2cDetailEntity.getId());
         }
-        BigDecimal lineReturnAmountLocalCurrency = MathUtil.multiplyWithFour(lineReturnAmount, exchangeRate);
+        BigDecimal lineReturnAmountLocalCurrency = MathUtil.multiplyWithSix(lineReturnAmount, exchangeRate, BigDecimal.ROUND_DOWN);
         BigDecimal returnAmountLocalCurrency;
         BigDecimal taxReturnAmountLocalCurrency;
         if (isLastBatch) {
@@ -281,8 +281,8 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             taxReturnAmountLocalCurrency = subtractPushedReturnAmount(lineReturnAmountLocalCurrency, detailDto.getSourceDetailId(), noticeDetailEntities,
                     SoReturnNoticeDetailEntity::getTaxReturnAmountLocalCurrency);
         } else {
-            returnAmountLocalCurrency = MathUtil.multiplyWithFour(returnAmount, exchangeRate);
-            taxReturnAmountLocalCurrency = MathUtil.multiplyWithFour(returnAmount, exchangeRate);
+            returnAmountLocalCurrency = MathUtil.multiplyWithSix(returnAmount, exchangeRate, BigDecimal.ROUND_DOWN);
+            taxReturnAmountLocalCurrency = MathUtil.multiplyWithSix(returnAmount, exchangeRate, BigDecimal.ROUND_DOWN);
         }
         detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
         detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
