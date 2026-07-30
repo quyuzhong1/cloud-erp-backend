@@ -34,26 +34,29 @@ public class BiSettlementExchangeRateServiceImplTest {
     }
 
     @Test
-    public void findRatesUsesLatestUpdateTimeAndDeduplicatesRequests() {
-        when(mapper.listByCurrencyCode("CNY", "USD")).thenReturn(Arrays.asList(
-            rate(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 31), new BigDecimal("7.1000"), LocalDateTime.of(2026, 7, 1, 10, 0)),
-            rate(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 31), new BigDecimal("7.2000"), LocalDateTime.of(2026, 7, 1, 11, 0))
+    public void findRatesUsesLatestUpdateTimeAndSingleBatchQuery() {
+        when(mapper.listByCurrencyCodes("CNY", Arrays.asList("USD", "EUR"))).thenReturn(Arrays.asList(
+            rate("USD", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 31), new BigDecimal("7.1000"), LocalDateTime.of(2026, 7, 1, 10, 0)),
+            rate("USD", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 31), new BigDecimal("7.2000"), LocalDateTime.of(2026, 7, 1, 11, 0)),
+            rate("EUR", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 31), new BigDecimal("8.1000"), LocalDateTime.of(2026, 7, 1, 11, 30))
         ));
 
         List<BiSettlementExchangeRateDTO.BatchRateResultDTO> result = service.findRates(Arrays.asList(
             new BiSettlementExchangeRateDTO.BatchRateParamDTO("2026-07-01", "USD"),
+            new BiSettlementExchangeRateDTO.BatchRateParamDTO("2026-07-01", "EUR"),
             new BiSettlementExchangeRateDTO.BatchRateParamDTO("2026-07-01", "USD")
         ));
 
-        assertEquals(1, result.size());
+        assertEquals(2, result.size());
         assertEquals(new BigDecimal("7.2000"), result.get(0).getExchangeRate());
-        verify(mapper, times(1)).listByCurrencyCode("CNY", "USD");
+        assertEquals(new BigDecimal("8.1000"), result.get(1).getExchangeRate());
+        verify(mapper, times(1)).listByCurrencyCodes("CNY", Arrays.asList("USD", "EUR"));
     }
 
     @Test
     public void findRatesReturnsNullWhenNoActiveRangeMatches() {
-        when(mapper.listByCurrencyCode("CNY", "USD")).thenReturn(Collections.singletonList(
-            rate(LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 31), new BigDecimal("7.1000"), LocalDateTime.of(2026, 5, 1, 10, 0))
+        when(mapper.listByCurrencyCodes("CNY", Collections.singletonList("USD"))).thenReturn(Collections.singletonList(
+            rate("USD", LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 31), new BigDecimal("7.1000"), LocalDateTime.of(2026, 5, 1, 10, 0))
         ));
 
         List<BiSettlementExchangeRateDTO.BatchRateResultDTO> result = service.findRates(Collections.singletonList(
@@ -62,7 +65,7 @@ public class BiSettlementExchangeRateServiceImplTest {
 
         assertEquals(1, result.size());
         assertNull(result.get(0).getExchangeRate());
-        verify(mapper, times(1)).listByCurrencyCode("CNY", "USD");
+        verify(mapper, times(1)).listByCurrencyCodes("CNY", Collections.singletonList("USD"));
     }
 
     /**
@@ -74,7 +77,8 @@ public class BiSettlementExchangeRateServiceImplTest {
      * @param updateTime 用于校验优先级的更新时间
      * @return 汇率实体
      */
-    private BiSettlementExchangeRateEntity rate(LocalDate begin,
+    private BiSettlementExchangeRateEntity rate(String sourceCurrencyCode,
+                                                LocalDate begin,
                                                 LocalDate end,
                                                 BigDecimal exchangeRate,
                                                 LocalDateTime updateTime) {
@@ -83,7 +87,7 @@ public class BiSettlementExchangeRateServiceImplTest {
         entity.setSettlementDateEnd(end);
         entity.setExchangeRate(exchangeRate);
         entity.setUpdateTime(updateTime);
-        entity.setSourceCurrencyCode("USD");
+        entity.setSourceCurrencyCode(sourceCurrencyCode);
         entity.setTargetCurrencyCode("CNY");
         return entity;
     }

@@ -127,6 +127,13 @@ public class SmallBagCostAllocationServiceImplTest {
         throw new AssertionError("Expected ServiceException");
     }
 
+	@Test
+	public void multiplyUnitCostTruncatesToSixDecimals() {
+		BigDecimal actual = service.multiplyUnitCost(new BigDecimal("1.234567"), new BigDecimal("7.2"));
+
+		assertEquals(new BigDecimal("8.888882"), actual);
+	}
+
     /**
      * 构造测试用分页请求。
      *

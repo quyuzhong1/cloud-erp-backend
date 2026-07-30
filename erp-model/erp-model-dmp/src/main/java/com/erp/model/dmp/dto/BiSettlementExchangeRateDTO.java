@@ -14,10 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * @author lei.nie
- * @version 1.0
-
- * @date 2026/04/13
+ * 汇率相关 DTO。
  */
 @NoArgsConstructor
 @Data
@@ -26,9 +23,8 @@ public class BiSettlementExchangeRateDTO {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO {
-
         /**
-         * 币别集合
+         * 币别集合。
          */
         private List<String> currencyList;
     }
@@ -36,7 +32,6 @@ public class BiSettlementExchangeRateDTO {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
         /**
          * 主键id
          */
@@ -74,7 +69,7 @@ public class BiSettlementExchangeRateDTO {
          */
         private LocalDate settlementDateEnd;
         /**
-         * 是否禁用（true是，false否）
+         * 是否禁用，true是，false否
          */
         private Boolean disabled;
         /**
@@ -90,7 +85,6 @@ public class BiSettlementExchangeRateDTO {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
         /**
          * 生效日期
          */
@@ -146,16 +140,14 @@ public class BiSettlementExchangeRateDTO {
          */
         @NotBlank(message = "金蝶id不能为空")
         private String kingdeeId;
-
     }
 
     @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
         /**
-         * 审核日期
+         * 审核时间
          */
         private LocalDateTime approveTime;
     }
@@ -164,12 +156,10 @@ public class BiSettlementExchangeRateDTO {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
-
         /**
          * 主键id
          */
         private String id;
-
     }
 
     @Data
@@ -182,7 +172,7 @@ public class BiSettlementExchangeRateDTO {
         /**
          * 币别
          */
-        @NotBlank(message = "币别")
+        @NotBlank(message = "币别不能为空")
         private String currency;
     }
 
@@ -224,7 +214,7 @@ public class BiSettlementExchangeRateDTO {
         private String sourceCurrencyCode;
 
         /**
-         * 匹配到的汇率；未命中有效汇率时为空。
+         * 匹配到的汇率，未命中有效汇率时为空。
          */
         private BigDecimal exchangeRate;
     }
@@ -238,11 +228,13 @@ public class BiSettlementExchangeRateDTO {
          */
         @NotBlank(message = "汇率类型不能为空")
         private String type;
+
         /**
          * 结算开始日期
          */
         @NotNull(message = "结算开始日期不能为空")
         private LocalDate settlementDateBegin;
+
         /**
          * 结算结束日期
          */

@@ -53,4 +53,21 @@
         </where>
     </select>
 
+    <!-- 根据目标币别和来源币别集合批量查询已审核启用的汇率信息 -->
+    <select id="listByCurrencyCodes" resultType="com.erp.model.dmp.entity.BiSettlementExchangeRateEntity">
+        select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
+        from bi_settlement_exchange_rate
+        <where>
+            target_currency_code = #{targetCurrencyCode}
+            and source_currency_code in
+            <foreach collection="sourceCurrencyCodeList" item="sourceCurrencyCode" open="(" separator="," close=")">
+                #{sourceCurrencyCode}
+            </foreach>
+            and approve_status = 'approve'
+            and disabled = false
+            and type = 'HLTX01_SYS'
+            and is_deleted = false
+        </where>
+    </select>
+
 </mapper>

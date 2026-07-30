@@ -93,18 +93,24 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             return Collections.emptyList();
         }
         String targetCurrencyCode = CurrencyEnum.CNY.getCurrencyCode();
-        Map<String, List<BiSettlementExchangeRateEntity>> ratesByCurrency = new HashMap<>();
         // 先按日期和源币别去重，再按币别批量加载汇率明细。
         Map<String, BiSettlementExchangeRateDTO.BatchRateParamDTO> uniqueParams = params.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(item -> item.getDate() + "|" + item.getSourceCurrencyCode(),
                         Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
+        List<String> sourceCurrencyCodes = uniqueParams.values().stream()
+                .map(BiSettlementExchangeRateDTO.BatchRateParamDTO::getSourceCurrencyCode)
+                .distinct()
+                .collect(Collectors.toList());
+        List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCodes(targetCurrencyCode, sourceCurrencyCodes);
+        Map<String, List<BiSettlementExchangeRateEntity>> ratesByCurrency = CollectionUtils.isEmpty(rateList)
+                ? Collections.emptyMap()
+                : rateList.stream().collect(Collectors.groupingBy(BiSettlementExchangeRateEntity::getSourceCurrencyCode));
         return uniqueParams.values().stream()
                 .map(item -> {
-                    // 同一币别只查一次数据库。
-                    List<BiSettlementExchangeRateEntity> rateList = ratesByCurrency.computeIfAbsent(item.getSourceCurrencyCode(),
-                            currency -> baseMapper.listByCurrencyCode(targetCurrencyCode, currency));
-                    BigDecimal exchangeRate = resolveRate(item.getDate(), targetCurrencyCode, item.getSourceCurrencyCode(), rateList, false);
+                    List<BiSettlementExchangeRateEntity> currentRateList = ratesByCurrency.getOrDefault(item.getSourceCurrencyCode(),
+                            Collections.emptyList());
+                    BigDecimal exchangeRate = resolveRate(item.getDate(), targetCurrencyCode, item.getSourceCurrencyCode(), currentRateList, false);
                     return new BiSettlementExchangeRateDTO.BatchRateResultDTO(item.getDate(), item.getSourceCurrencyCode(), exchangeRate);
                 })
                 .collect(Collectors.toList());
