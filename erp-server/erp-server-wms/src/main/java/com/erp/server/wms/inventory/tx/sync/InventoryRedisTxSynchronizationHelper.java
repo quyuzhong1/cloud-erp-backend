@@ -1,4 +1,4 @@
-package com.erp.server.wms.config;
+package com.erp.server.wms.inventory.tx.sync;
 
 import org.springframework.transaction.support.TransactionSynchronization;
 
@@ -7,6 +7,8 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateRegistry;
+import com.erp.server.wms.inventory.tx.support.InventoryRedisTxCallbackContext;
 import com.erp.server.wms.service.InventoryTransactionService;
 import com.erp.server.wms.service.VirtualInventoryTransactionService;
 
@@ -29,11 +31,13 @@ public final class InventoryRedisTxSynchronizationHelper {
      * @param transactionId Redis 事务 ID（全局事务下为 Seata XID）
      * @param status          {@link TransactionSynchronization#STATUS_COMMITTED} 或 {@link TransactionSynchronization#STATUS_ROLLED_BACK}
      * @param needCommit      为 false 时 commit 回调跳过（分布式事务等待 XA 最终提交）
+     * @return true 表示 Redis 回调成功或无需执行；false 表示 commit/rollback 失败
      */
-    public static void afterEntityCompletion(String transactionId, int status, boolean needCommit) {
+    public static boolean afterEntityCompletion(String transactionId, int status, boolean needCommit) {
         String operation = resolveOperation(status, needCommit);
         if (operation == null) {
-            return;
+            InventoryRedisTxCallbackContext.setEntityCallbackSuccess(true);
+            return true;
         }
         try {
             InventoryTransactionService service = ApplicationContextUtils.getBean(InventoryTransactionService.class);
@@ -42,6 +46,8 @@ public final class InventoryRedisTxSynchronizationHelper {
             } else {
                 service.rollbackRedis(transactionId);
             }
+            InventoryRedisTxCallbackContext.setEntityCallbackSuccess(true);
+            return true;
         } catch (Exception e) {
             log.error("实体仓库存事务回调 Redis {} 失败 transactionId={}", operation, transactionId, e);
             if ("commit".equals(operation)) {
@@ -53,6 +59,8 @@ public final class InventoryRedisTxSynchronizationHelper {
                 }
             }
             sendCallbackFailureWarn(transactionId, operation, "inventory_transaction", e);
+            InventoryRedisTxCallbackContext.setEntityCallbackSuccess(false);
+            return false;
         }
     }
 
@@ -62,11 +70,13 @@ public final class InventoryRedisTxSynchronizationHelper {
      * @param transactionId Redis 事务 ID
      * @param status          事务完成状态
      * @param needCommit      为 false 时 commit 回调跳过
+     * @return true 表示 Redis 回调成功或无需执行；false 表示 commit/rollback 失败
      */
-    public static void afterVirtualCompletion(String transactionId, int status, boolean needCommit) {
+    public static boolean afterVirtualCompletion(String transactionId, int status, boolean needCommit) {
         String operation = resolveOperation(status, needCommit);
         if (operation == null) {
-            return;
+            InventoryRedisTxCallbackContext.setVirtualCallbackSuccess(true);
+            return true;
         }
         try {
             VirtualInventoryTransactionService service = ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class);
@@ -75,6 +85,8 @@ public final class InventoryRedisTxSynchronizationHelper {
             } else {
                 service.rollbackRedis(transactionId);
             }
+            InventoryRedisTxCallbackContext.setVirtualCallbackSuccess(true);
+            return true;
         } catch (Exception e) {
             log.error("虚拟仓库存事务回调 Redis {} 失败 transactionId={}", operation, transactionId, e);
             if ("commit".equals(operation)) {
@@ -86,6 +98,8 @@ public final class InventoryRedisTxSynchronizationHelper {
                 }
             }
             sendCallbackFailureWarn(transactionId, operation, "virtual_inventory_transaction", e);
+            InventoryRedisTxCallbackContext.setVirtualCallbackSuccess(false);
+            return false;
         }
     }
 

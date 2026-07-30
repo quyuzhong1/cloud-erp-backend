@@ -1,4 +1,6 @@
-package com.erp.server.wms.config;
+package com.erp.server.wms.inventory.tx.compensate;
+
+import com.erp.server.wms.inventory.tx.support.SeataGlobalTxStatusHelper;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -287,8 +289,9 @@ public final class InventoryRedisTxCompensateHelper {
                     return;
                 }
                 if (!registry.hasRedisTransactionKey(kind, transactionId)) {
-                    log.warn("inventoryCheckCommitRetry 跳过补偿提交 kind={} transactionId={} reason=transactionKeyMissing",
+                    log.warn("inventoryCheckCommitRetry 清理 commit 补偿登记 kind={} transactionId={} reason=transactionKeyMissing",
                             kind, transactionId);
+                    registry.clearPending(kind, transactionId, false);
                     return;
                 }
                 log.warn("inventoryCheckCommitRetry 自动补偿提交开始 kind={} transactionId={}", kind, transactionId);
@@ -321,6 +324,9 @@ public final class InventoryRedisTxCompensateHelper {
         }
         orphanTransactions.forEach(transactionId -> {
             try {
+                if (SeataGlobalTxStatusHelper.shouldDeferOrphanRollback(transactionId)) {
+                    return;
+                }
                 registry.touchPending(kind, transactionId, true, orphanRollbackTimeoutSeconds);
                 if (!registry.isDue(kind, transactionId, orphanRollbackTimeoutSeconds, true)) {
                     return;

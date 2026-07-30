@@ -1,4 +1,4 @@
-package com.erp.server.wms.config;
+package com.erp.server.wms.inventory.tx.compensate;
 
 import java.util.Collections;
 import java.util.Set;
@@ -138,6 +138,37 @@ public class InventoryRedisTxCompensateRegistry {
         }
         String transactionKey = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId);
         return resolveRedisUtil(kind).hasKey(transactionKey);
+    }
+
+    /**
+     * 判断指定 transactionId 是否仍存在 Redis 库存补偿（TRY key 或 commit/rollback 登记）。
+     * Job 释放未分配共享锁前调用，避免 Redis 补偿未完成时提前解锁。
+     *
+     * @param transactionId Redis 事务 ID
+     * @return true 表示仍有待补偿的 Redis 库存状态
+     */
+    public boolean isRedisInventoryCompensationPending(String transactionId) {
+        if (StringUtils.isBlank(transactionId)) {
+            return false;
+        }
+        return hasRedisTransactionKey(TxKind.ENTITY, transactionId)
+                || hasRedisTransactionKey(TxKind.VIRTUAL, transactionId)
+                || hasPendingRegistration(TxKind.ENTITY, false, transactionId)
+                || hasPendingRegistration(TxKind.ENTITY, true, transactionId)
+                || hasPendingRegistration(TxKind.VIRTUAL, false, transactionId)
+                || hasPendingRegistration(TxKind.VIRTUAL, true, transactionId);
+    }
+
+    /**
+     * 是否存在 commit 重试或孤儿 rollback 补偿登记。
+     *
+     * @param kind          实体仓或虚拟仓
+     * @param rollback      true 孤儿 rollback；false commit 重试
+     * @param transactionId Redis 事务 ID
+     * @return 登记 key 是否存在
+     */
+    private boolean hasPendingRegistration(TxKind kind, boolean rollback, String transactionId) {
+        return resolveRedisUtil(kind).get(buildKey(kind, rollback, transactionId)) != null;
     }
 
     /**

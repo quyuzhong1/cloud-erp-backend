@@ -50,9 +50,9 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
-import com.erp.server.wms.config.InventoryRedisTxCompensateRegistry;
-import com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter;
+import com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateHelper;
+import com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateRegistry;
+import com.erp.server.wms.inventory.tx.sync.InventoryTransactionSynchronizationAdapter;
 import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.mapper.InventoryTransactionMapper;
 import com.erp.server.wms.service.InventoryHisService;
@@ -354,6 +354,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			}
 			throw e;
 		}
+		InventoryTransactionSynchronizationAdapter.register(transactionId);
 		
 		List<InventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
 		for(TransactionFlowEntity transactionFlowEntity : transactionFlowEntityList) {
@@ -378,7 +379,6 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			inventoryTransactionEntityList.add(inventoryTransactionEntity);
 		}
 		this.saveBatch(inventoryTransactionEntityList);
-		InventoryTransactionSynchronizationAdapter.register(transactionId);
 		log.info("{}结束" , logMsg);
 	}
 

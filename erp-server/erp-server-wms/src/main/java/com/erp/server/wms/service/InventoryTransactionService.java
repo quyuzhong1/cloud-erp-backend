@@ -7,7 +7,7 @@ import java.util.Map;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryTransactionEntity;
-import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
+import com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateHelper;
 
 import cn.hutool.core.lang.Pair;
 
@@ -86,7 +86,7 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
     int inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds);
 
     /**
-     * 兼容旧 Job 参数：commit 重试默认 {@link com.erp.server.wms.config.InventoryRedisTxCompensateHelper#DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS}s。
+     * 兼容旧 Job 参数：commit 重试默认 {@link com.erp.server.wms.inventory.tx.compensate.InventoryRedisTxCompensateHelper#DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS}s。
      *
      * @param timeout 孤儿 TRY 回滚等待秒数
      * @return 补偿失败项合计
