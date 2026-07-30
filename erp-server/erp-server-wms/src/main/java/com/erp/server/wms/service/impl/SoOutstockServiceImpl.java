@@ -964,6 +964,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (CharSequenceUtil.isBlank(member.getWarehouseLocation())){
                 member.setWarehouseLocation(null);
             }
+            //不出库发货不传虚拟仓
+            if(Objects.nonNull(soB2cEntity) && (soB2cEntity.getIsNotOutbound() || isNotOutbound)){
+                member.setVirtualWarehouseId(null);
+            }
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //处理虚拟仓库存
