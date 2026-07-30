@@ -4883,6 +4883,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 收集报关明细必填项缺失提示（不抛错），供合并保存链路一次性汇总展示。
+     *
+     * @param detailDTO 报关明细行
+     * @param errorSet  错误信息集合（有序去重）
      */
     private void collectDeclareDetailRequiredErrors(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO,
                                                     Set<String> errorSet) {
@@ -4909,6 +4912,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    /**
+     * 字符串为空时追加必填项缺失提示到错误集合（不抛错）。
+     *
+     * @param errorSet     错误信息集合
+     * @param value        待校验字符串
+     * @param businessCode 业务单号（用于提示文案）
+     * @param skuNo        SKU（用于提示文案）
+     * @param fieldName    字段中文名
+     */
     private void appendBlankFieldError(Set<String> errorSet, String value, String businessCode, String skuNo,
                                        String fieldName) {
         if (StringUtils.isBlank(value)) {
@@ -4917,6 +4929,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    /**
+     * 对象为 null 时追加必填项缺失提示到错误集合（不抛错）。
+     *
+     * @param errorSet     错误信息集合
+     * @param value        待校验对象
+     * @param businessCode 业务单号（用于提示文案）
+     * @param skuNo        SKU（用于提示文案）
+     * @param fieldName    字段中文名
+     */
     private void appendNullFieldError(Set<String> errorSet, Object value, String businessCode, String skuNo,
                                       String fieldName) {
         if (Objects.isNull(value)) {
@@ -4925,6 +4946,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    /**
+     * 数量为空或非正数时追加提示到错误集合（不抛错）。
+     *
+     * @param errorSet     错误信息集合
+     * @param value        待校验数量
+     * @param businessCode 业务单号（用于提示文案）
+     * @param skuNo        SKU（用于提示文案）
+     * @param fieldName    字段中文名
+     */
     private void appendNonPositiveFieldError(Set<String> errorSet, Integer value, String businessCode, String skuNo,
                                              String fieldName) {
         if (Objects.isNull(value) || value <= 0) {
@@ -5631,6 +5661,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return CharSequenceUtil.blankToDefault(detailDTO.getBusinessDesc(), "-");
     }
 
+    /**
+     * 解析合并明细 SKU：优先取明细 skuNo，否则从来源明细 skuNo/skuId 回退。
+     *
+     * @param detailDTO 报关明细行
+     * @return SKU 展示值，无法解析时返回 "-"
+     */
     private String resolveMergeDetailSkuNo(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
         if (StringUtils.isNotBlank(detailDTO.getSkuNo())) {
             return detailDTO.getSkuNo();
