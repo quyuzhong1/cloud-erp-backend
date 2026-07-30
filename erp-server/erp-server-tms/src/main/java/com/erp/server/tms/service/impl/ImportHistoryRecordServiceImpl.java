@@ -3313,14 +3313,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         for(Map.Entry<String, List<LogisticsBillCostDTO.AddDataDTO>> sourceIdDtoMap : sourceIdDtoMaps.entrySet()) {
             List<LogisticsBillCostDTO.AddDataDTO> value = sourceIdDtoMap.getValue();
 
-            value.forEach(v -> {
-                if(CharSequenceUtil.isBlank(v.getCurrency())) {
-                    v.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            // 导入链路：币别未填且配置无默认值时直接报错，不再默认 CNY
+            for (LogisticsBillCostDTO.AddDataDTO v : value) {
+                if (CharSequenceUtil.isBlank(v.getCurrency())) {
+                    throw new ServiceException(ApiError.LOGISTICS_COST_CURRENCY_REQUIRED);
                 }
-                if(CharSequenceUtil.isBlank(v.getEstimatedCurrency())) {
-                    v.setEstimatedCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                boolean hasEstimated = v.getEstimatedValue() != null && v.getEstimatedValue().compareTo(BigDecimal.ZERO) != 0;
+                if (hasEstimated && CharSequenceUtil.isBlank(v.getEstimatedCurrency())) {
+                    throw new ServiceException(ApiError.LOGISTICS_COST_CURRENCY_REQUIRED);
                 }
-            });
+            }
 
             Map<String, List<LogisticsBillCostDTO.AddDataDTO>> cfgCostIdMaps = value.stream()
                     .collect(Collectors.groupingBy(LogisticsBillCostDTO.AddDataDTO::getCfgCostId));
@@ -3330,11 +3332,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 LogisticsBillCostDTO.AddDataDTO v = groupValue.get(0);
                 String estimatedCurrency = v.getEstimatedCurrency();
                 String currency = v.getCurrency();
-                if (groupValue.stream().anyMatch(g -> !estimatedCurrency.equals(g.getEstimatedCurrency()))) {
+                if (groupValue.stream().anyMatch(g -> !Objects.equals(estimatedCurrency, g.getEstimatedCurrency()))) {
                     throw new ServiceException(ApiError.LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY,
                             tmsCfgCostService.getById(cfgCostIdMap.getKey()).getCostName());
                 }
-                if (groupValue.stream().anyMatch(g -> !currency.equals(g.getCurrency()))) {
+                if (groupValue.stream().anyMatch(g -> !Objects.equals(currency, g.getCurrency()))) {
                     throw new ServiceException(ApiError.LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY,
                             tmsCfgCostService.getById(cfgCostIdMap.getKey()).getCostName());
                 }
@@ -3358,11 +3360,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             addDTO.setBillingWeightLogistics(ObjectUtil.defaultIfNull(dto.getBillingWeightLogistics(),
                     logisticsBillCostEntity.getBillingWeightLogistics()));
             addDTO.setConfirmTime(importDataDTO.getConfirmTime());
-            String currency = dto.getCurrency();
-            if (org.apache.commons.lang3.StringUtils.isBlank(currency)) {
-                currency = CurrencyEnum.CNY.getCurrencyCode();
+            if (CharSequenceUtil.isBlank(dto.getCurrency())) {
+                throw new ServiceException(ApiError.LOGISTICS_COST_CURRENCY_REQUIRED);
             }
-            addDTO.setCurrency(currency);
+            addDTO.setCurrency(dto.getCurrency());
 
             addDTO.setTrackNo(logisticsBillCostEntity.getTrackNo());
             addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
@@ -3376,18 +3377,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             addDTO.setThirdActualWeight(dto.getThirdActualWeight());
 
             for (LogisticsBillCostDTO.AddDataDTO detailDTO : value) {
-                TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
-                add.setMainId(addDTO.getId());
-                add.setCfgCostId(detailDTO.getCfgCostId());
-                add.setCostValue(detailDTO.getCostValue());
-                add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-                add.setSourceType(sourceType);
-                add.setCurrency(detailDTO.getCurrency());
-                addCfgCostList.add(add);
+                BigDecimal actualValue = detailDTO.getCostValue();
+                if (actualValue != null && actualValue.compareTo(BigDecimal.ZERO) != 0) {
+                    TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
+                    add.setMainId(addDTO.getId());
+                    add.setCfgCostId(detailDTO.getCfgCostId());
+                    add.setCostValue(actualValue);
+                    add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                    add.setSourceType(sourceType);
+                    add.setCurrency(detailDTO.getCurrency());
+                    addCfgCostList.add(add);
+                }
 
                 BigDecimal estimatedValue = detailDTO.getEstimatedValue();
                 if (estimatedValue != null && estimatedValue.compareTo(BigDecimal.ZERO) != 0) {
-                    add = new TmsCostDetailDTO.AddDTO();
+                    TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
                     add.setMainId(addDTO.getId());
                     add.setCfgCostId(detailDTO.getCfgCostId());
                     add.setCostValue(estimatedValue);
