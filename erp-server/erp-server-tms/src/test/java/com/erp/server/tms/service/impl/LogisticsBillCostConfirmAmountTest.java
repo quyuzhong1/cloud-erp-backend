@@ -1,8 +1,11 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.lang.Pair;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.enums.DictCostCategoryEnum;
@@ -16,16 +19,20 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class LogisticsBillCostConfirmAmountTest {
@@ -214,6 +221,52 @@ public class LogisticsBillCostConfirmAmountTest {
 
         assertNull(actualMsg);
         verify(tmsCfgCostService, times(1)).listByIds(Collections.singletonList("cfg-shipping"));
+    }
+
+    @Test
+    public void appendImportConfirmAmountErrors_confirmStatus_usesBatchCfgCategoryCache() {
+        LogisticsBillDTO.LogisticsBillVo firstBillVo = new LogisticsBillDTO.LogisticsBillVo();
+        firstBillVo.setId("bill-1");
+        firstBillVo.setDetailId("detail-1");
+        LogisticsBillCostEntity firstBillCost = new LogisticsBillCostEntity();
+        firstBillCost.setId("cost-1");
+
+        LogisticsBillDTO.LogisticsBillVo secondBillVo = new LogisticsBillDTO.LogisticsBillVo();
+        secondBillVo.setId("bill-2");
+        secondBillVo.setDetailId("detail-2");
+        LogisticsBillCostEntity secondBillCost = new LogisticsBillCostEntity();
+        secondBillCost.setId("cost-2");
+
+        List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList = Arrays.asList(
+                new Pair<>(firstBillVo, firstBillCost),
+                new Pair<>(secondBillVo, secondBillCost)
+        );
+        Map<String, List<UpdateDTO>> targetUpdateMap = new HashMap<>();
+        targetUpdateMap.put("detail-1", Collections.singletonList(
+                updateDetail("cfg-shipping", null, BigDecimal.ONE, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        ));
+        targetUpdateMap.put("detail-2", Collections.singletonList(
+                updateDetail("cfg-declare", "", BigDecimal.TEN, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        ));
+
+        Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
+        mainIdListMap.put("cost-1", Collections.singletonList(
+                costDetail("cost-1", "cfg-shipping", BigDecimal.ZERO, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        ));
+        mainIdListMap.put("cost-2", Collections.singletonList(
+                costDetail("cost-2", "cfg-declare", BigDecimal.ZERO, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+        ));
+
+        Map<String, String> cfgCategoryCache = new HashMap<>();
+        cfgCategoryCache.put("cfg-shipping", DictCostCategoryEnum.SHIPPING_COST.getCode());
+        cfgCategoryCache.put("cfg-declare", DictCostCategoryEnum.DECLARE_COST.getCode());
+
+        List<String> errorMsgList = new ArrayList<>();
+        ReflectionTestUtils.invokeMethod(service, "appendImportConfirmAmountErrors",
+                Boolean.TRUE, targetPairList, targetUpdateMap, mainIdListMap, cfgCategoryCache, errorMsgList);
+
+        assertTrue(errorMsgList.isEmpty());
+        verifyNoInteractions(tmsCfgCostService);
     }
 
     private TmsCostDetailEntity costDetail(String mainId, String cfgCostId, BigDecimal costValue, String type) {
