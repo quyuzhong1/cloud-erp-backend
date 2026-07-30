@@ -16,6 +16,14 @@ public enum CfgLogisticsCostImportEtlRuleTypeEnum implements EnumMessage {
     SUBSTRING("substring", "字段截取"),
     TO_POSITIVE("toPositive", "转化数值为正数"),
     TO_NEGATIVE("toNegative", "转化数值为负数"),
+    /**
+     * 正数转为负数；与 {@link #NEGATIVE_TO_POSITIVE} 为或级，按字段值符号最多生效其一，与其它规则为并级。
+     */
+    POSITIVE_TO_NEGATIVE("positiveToNegative", "正数转为负数"),
+    /**
+     * 负数转为正数；与 {@link #POSITIVE_TO_NEGATIVE} 为或级，按字段值符号最多生效其一，与其它规则为并级。
+     */
+    NEGATIVE_TO_POSITIVE("negativeToPositive", "负数转为正数"),
     FILL_EMPTY("fillEmpty", "为空填充"),
     ;
 
