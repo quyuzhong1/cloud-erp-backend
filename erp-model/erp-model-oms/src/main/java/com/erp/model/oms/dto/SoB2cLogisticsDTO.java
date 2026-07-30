@@ -166,7 +166,7 @@ public class SoB2cLogisticsDTO implements Serializable {
         /**
          * 预估运费
          */
-        @Digits(integer = 12, fraction = 4, message = "预估运费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "预估运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal estimatedShippingCost;
 
         /**
@@ -178,7 +178,7 @@ public class SoB2cLogisticsDTO implements Serializable {
         /**
          * 实际运费
          */
-        @Digits(integer = 12, fraction = 4, message = "实际运费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "实际运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal actualShippingCost;
 
         /**
@@ -190,7 +190,7 @@ public class SoB2cLogisticsDTO implements Serializable {
         /**
          * 包装重量
          */
-        @Digits(integer = 12, fraction = 4, message = "包装重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包装重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal weight;
 
         /**
@@ -207,13 +207,13 @@ public class SoB2cLogisticsDTO implements Serializable {
         /**
          * 包装辅料净重
          */
-        @Digits(integer = 12, fraction = 4, message = "包装辅料净重整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包装辅料净重整数位不能超过18位，小数位不能超过6位")
         private BigDecimal accessoriesNw;
 
         /**
          * 包装辅料费
          */
-        @Digits(integer = 12, fraction = 4, message = "包装辅料费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包装辅料费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal accessoriesCost;
 
         /**
@@ -225,19 +225,19 @@ public class SoB2cLogisticsDTO implements Serializable {
         /**
          * 长
          */
-        @Digits(integer = 12, fraction = 4, message = "长整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "长整数位不能超过18位，小数位不能超过6位")
         private BigDecimal length;
 
         /**
          * 宽
          */
-        @Digits(integer = 12, fraction = 4, message = "宽整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "宽整数位不能超过18位，小数位不能超过6位")
         private BigDecimal width;
 
         /**
          * 高
          */
-        @Digits(integer = 12, fraction = 4, message = "高整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "高整数位不能超过18位，小数位不能超过6位")
         private BigDecimal height;
         /**
          * ioss税号

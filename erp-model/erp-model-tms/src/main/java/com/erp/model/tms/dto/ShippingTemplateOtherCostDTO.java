@@ -154,7 +154,7 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         /**
         * 费用设置值
         */
-        @Digits(integer = 12, fraction = 4, message = "费用设置值整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "费用设置值整数位不能超过18位，小数位不能超过6位")
         private BigDecimal costSettingValue;
 
         /**

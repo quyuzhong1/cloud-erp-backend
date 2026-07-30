@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.job;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
@@ -18,27 +17,28 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class DmpInputCreateJob {
+	private static final String INPUT_CREATE_LOCK_PREFIX = "dmp:input:create:system:lock:";
+
 	@Autowired
 	private DmpInputCreateFactory dmpInputCreateFactory;
 	
 	@Autowired
 	private DmpCfgInputService dmpCfgInputService;
 	
-	@Resource
-    private RedisTemplate<String,Object> redisTemplate;
+	@Autowired
+	private RedissonClient redissonClient;
 	
 	/**
 	 * 创建正常任务
@@ -73,40 +73,47 @@ public class DmpInputCreateJob {
 	@XxlJob("createInputTaskBySystem")
 	public ReturnT createInputTaskBySystem(){
 		String systemId = XxlJobHelper.getJobParam();
-		String redisKey = "dmp:input:create:system:" + systemId;
-		
-		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
-			try {
-				List<DmpCfgInputEntity> list = dmpCfgInputService.lambdaQuery()
-						.eq(DmpCfgInputEntity::getSystemId, systemId)
-						.eq(DmpCfgInputEntity::getDisabled, false)
-						.select(DmpCfgInputEntity::getId)
-						.list();
-				if(CollUtil.isNotEmpty(list)) {
-					DmpInputCreateRequest dmpRequest = null;
-					for(DmpCfgInputEntity l : list) {
-						String id = l.getId();
-						
-						dmpRequest = new DmpInputCreateRequest();
-						dmpRequest.setCfgInputId(id);
-						dmpInputCreateFactory.createNormalInputTask(dmpRequest);
-						
-						dmpRequest = new DmpInputCreateRequest();
-						dmpRequest.setCfgInputId(id);
-						dmpInputCreateFactory.createCompensateInputTask(dmpRequest);
-						
-						dmpRequest = new DmpInputCreateRequest();
-						dmpRequest.setCfgInputId(id);
-						dmpInputCreateFactory.createHistoryInputTask(dmpRequest);
-					}
+		RLock lock = redissonClient.getLock(INPUT_CREATE_LOCK_PREFIX + systemId);
+		if (!lock.tryLock()) {
+			log.warn("输入任务生成正在执行中，跳过本次调度，systemId={}", systemId);
+			return ReturnT.SUCCESS;
+		}
+
+		long startMillis = System.currentTimeMillis();
+		int cfgInputCount = 0;
+		try {
+			List<DmpCfgInputEntity> list = dmpCfgInputService.lambdaQuery()
+					.eq(DmpCfgInputEntity::getSystemId, systemId)
+					.eq(DmpCfgInputEntity::getDisabled, false)
+					.select(DmpCfgInputEntity::getId)
+					.list();
+			cfgInputCount = list.size();
+			if(CollUtil.isNotEmpty(list)) {
+				DmpInputCreateRequest dmpRequest = null;
+				for(DmpCfgInputEntity l : list) {
+					String id = l.getId();
+
+					dmpRequest = new DmpInputCreateRequest();
+					dmpRequest.setCfgInputId(id);
+					dmpInputCreateFactory.createNormalInputTask(dmpRequest);
+
+					dmpRequest = new DmpInputCreateRequest();
+					dmpRequest.setCfgInputId(id);
+					dmpInputCreateFactory.createCompensateInputTask(dmpRequest);
+
+					dmpRequest = new DmpInputCreateRequest();
+					dmpRequest.setCfgInputId(id);
+					dmpInputCreateFactory.createHistoryInputTask(dmpRequest);
 				}
-			} catch (Exception e) {
-				log.error("输入任务生成错误systemId={}" , systemId , e);
-			} finally {
-				redisTemplate.delete(redisKey);
 			}
-		}else {
-			log.error("输入任务生成正在执行中systemId={}" , systemId);
+		} catch (Exception e) {
+			log.error("输入任务生成错误systemId={}" , systemId , e);
+		} finally {
+			if (lock.isHeldByCurrentThread()) {
+				lock.unlock();
+			}
+			log.info("输入任务生成结束，systemId={}，配置数量={}，耗时={}ms",
+					systemId, cfgInputCount, System.currentTimeMillis() - startMillis);
 		}
 		
 		return ReturnT.SUCCESS;
@@ -141,14 +148,17 @@ public class DmpInputCreateJob {
 			return ReturnT.FAIL;
 		}
 
-		String redisKey = "dmp:input:create:system:" + systemId;
-		if(Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS))) {
+		RLock lock = redissonClient.getLock(INPUT_CREATE_LOCK_PREFIX + systemId);
+		if (!lock.tryLock()) {
 			XxlJobHelper.log("【任务结束】任务正在执行中 jobParam:{}",jobParam);
 			return ReturnT.FAIL;
 		}
 
+		long startMillis = System.currentTimeMillis();
+		int cfgInputCount = 0;
 		try {
 			List<String> taskIdlist = dmpCfgInputService.listBySystemIdAndTaskType(systemId, taskTypeList);
+			cfgInputCount = taskIdlist.size();
 			if (CollectionUtils.isEmpty(taskIdlist)){
 				XxlJobHelper.log("【任务结束】无可执行的任务");
 				return ReturnT.SUCCESS;
@@ -181,9 +191,15 @@ public class DmpInputCreateJob {
 			log.error("【任务结束】输入任务生成错误:systemId={}, error={}" , systemId , ExceptionUtil.stacktraceToString(e));
 			XxlJobHelper.log("【任务结束】输入任务生成错误:systemId={},jobParam={}, error={}",jobParam, ExceptionUtil.stacktraceToString(e));
 		} finally {
-			redisTemplate.delete(redisKey);
+			if (lock.isHeldByCurrentThread()) {
+				lock.unlock();
+			}
+			long elapsedMillis = System.currentTimeMillis() - startMillis;
+			log.info("按参数生成输入任务结束，systemId={}，配置数量={}，耗时={}ms",
+					systemId, cfgInputCount, elapsedMillis);
+			XxlJobHelper.log("【任务结束】任务执行结束 systemId:{},配置数量:{},耗时:{}ms",
+					systemId, cfgInputCount, elapsedMillis);
 		}
-		XxlJobHelper.log("【任务结束】任务执行结束");
 		return ReturnT.SUCCESS;
 	}
 }

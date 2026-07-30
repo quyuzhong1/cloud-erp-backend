@@ -421,12 +421,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate,4));
+            item.setPriceLc(MathUtil.multiplyWithSix(price, exchangeRate));
             //含税单价
             BigDecimal taxPrice = item.getTaxPrice();
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
+            item.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
 
             //历史价格
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
@@ -1511,7 +1511,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
-                saleAmount = MathUtil.multiplyWithTwo(rate, saleAmount, 2);
+                saleAmount = MathUtil.multiplyWithSix(rate, saleAmount);
             }
             // 销售金额（本位币）
             item.setAmountLocalCurrency(saleAmount);
@@ -1522,7 +1522,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
                 item.setAllAmountLocalCurrency(BigDecimal.ZERO);
             } else {
-                item.setAllAmountLocalCurrency(MathUtil.multiplyWithTwo(item.getExchangeRate(), taxAmount, 2));
+                item.setAllAmountLocalCurrency(MathUtil.multiplyWithSix(item.getExchangeRate(), taxAmount));
             }
         }
         SoUtils.updateSoDetailCost(item, purchasePrice);

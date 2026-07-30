@@ -265,14 +265,14 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         * 税率
         */
         @NotNull(message = "税率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "税率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxRate;
 
         /**
         * 采购数量
         */
         @NotNull(message = "采购数量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "采购数量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "采购数量整数位不能超过18位，小数位不能超过6位")
         @DecimalMin(value = "0.0", inclusive = false, message = "采购数量必须大于0")
         private BigDecimal purchaseQty;
 

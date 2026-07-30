@@ -338,7 +338,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
-                saleAmount = MathUtil.multiplyWithTwo(rate, saleAmount, 2);
+                saleAmount = MathUtil.multiplyWithSix(rate, saleAmount);
             }
             // 销售金额（本位币）
             item.setAmountLocalCurrency(saleAmount);
@@ -349,7 +349,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             if (Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
                 item.setAllAmountLocalCurrency(BigDecimal.ZERO);
             } else {
-                item.setAllAmountLocalCurrency(MathUtil.multiplyWithTwo(item.getExchangeRate(), taxAmount, 2));
+                item.setAllAmountLocalCurrency(MathUtil.multiplyWithSix(item.getExchangeRate(), taxAmount));
             }
         }
         updateSoDetailCost(item, purchasePrice);
@@ -542,7 +542,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         costParam.setSkuId(item.getSkuId());
         //该值应该为数量*单价*汇率
         BigDecimal amount = MathUtil.multiplyWithTwo(item.getPrice(), item.getQty());
-        BigDecimal saleAmount = MathUtil.multiplyWithTwo(amount, item.getExchangeRate());
+        BigDecimal saleAmount = MathUtil.multiplyWithSix(amount, item.getExchangeRate());
         //销售毛利=销售金额(折后)*汇率-总成本
         //销售金额(折后)*汇率
         BigDecimal amountLocalCurrency = item.getAmountLocalCurrency();
@@ -1619,14 +1619,14 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             //销售单价
             BigDecimal price = item.getPrice();
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
+            item.setPriceLc(MathUtil.multiplyWithSix(price, exchangeRate));
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
             BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
 
             //销售部门
             String deptName = deptMap.getOrDefault(item.getSalesDeptId(), "");
