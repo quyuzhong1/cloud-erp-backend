@@ -1556,6 +1556,10 @@ public final class ApiError implements Serializable {
     public static final ApiError LOGISTICS_AIYA_CHANNEL_QUERY_FAILED = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_QUERY_FAILED;
     public static final ApiError LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY;
     public static final ApiError LOGISTICS_AIYA_SERVICE_NOT_OPEN = ApiErrorTms.LOGISTICS_AIYA_SERVICE_NOT_OPEN;
+    public static final ApiError LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY = ApiErrorTms.LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY;
+    public static final ApiError LOGISTICS_COST_CURRENCY_REQUIRED = ApiErrorTms.LOGISTICS_COST_CURRENCY_REQUIRED;
+    public static final ApiError LOGISTICS_COST_CURRENCY_NOT_EXIST = ApiErrorTms.LOGISTICS_COST_CURRENCY_NOT_EXIST;
+    public static final ApiError LOGISTICS_COST_CURRENCY_RATE_NOT_EXIST = ApiErrorTms.LOGISTICS_COST_CURRENCY_RATE_NOT_EXIST;
 
     /** Plm service error constants. */
     public static final ApiError BOM_REQUIRED = ApiErrorPlm.BOM_REQUIRED;

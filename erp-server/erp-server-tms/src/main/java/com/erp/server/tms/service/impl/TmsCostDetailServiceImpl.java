@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -350,6 +351,22 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
         Map<String, String> costMap = CollUtil.isEmpty(tmsCfgCostList) ? new HashMap<>() : tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getCostName));
 
+        // 同费用项同类型不允许多币种
+        Map<String, Set<String>> feeCurrencyMap = new HashMap<>();
+        for (TmsCostDetailEntity entity : list) {
+            String costCurrency = StringUtils.isBlank(entity.getCurrency()) ? currency : entity.getCurrency();
+            String type = CharSequenceUtil.blankToDefault(entity.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            feeCurrencyMap.computeIfAbsent(entity.getCfgCostId() + "_" + type, k -> new HashSet<>())
+                    .add(CharSequenceUtil.blankToDefault(costCurrency, ""));
+        }
+        for (Map.Entry<String, Set<String>> entry : feeCurrencyMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                String cfgCostId = entry.getKey().substring(0, entry.getKey().lastIndexOf('_'));
+                throw new ServiceException(ApiError.LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY,
+                        costMap.getOrDefault(cfgCostId, cfgCostId));
+            }
+        }
+
         Map<String, BigDecimal> rateMap = new HashMap<>();
         rateMap.put(CurrencyEnum.CNY.getCurrencyCode(), BigDecimal.ONE);
         for (TmsCostDetailEntity entity : list) {
@@ -377,11 +394,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
             //费用名称
             entity.setCostName(costMap.get(entity.getCfgCostId()));
-            // 按费用项+类型+币种匹配旧明细，避免同费用多币种互相覆盖
-            String finalCostCurrency = costCurrency;
+            // 按费用项+类型匹配旧明细；币种变化时覆盖更新（以最新币种为准）
             TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
                     && CharSequenceUtil.equals(entity.getType(), obj.getType())
-                    && CharSequenceUtil.equals(CharSequenceUtil.blankToDefault(obj.getCurrency(), ""), finalCostCurrency)
             ).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());
@@ -531,7 +546,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
     /**
-     * 批量查询旧数据并转换为map，key为cfgCostId_type_currency，value为费用明细实体
+     * 批量查询旧数据并转换为map，key为cfgCostId_type，value为费用明细实体（同键多条时保留一条，导入更新以最新币种覆盖）。
      */
     private Map<String, Map<String, TmsCostDetailEntity>> buildOldDetailMap(Set<String> mainIds, List<String> cfgCostIdList) {
         if (CollectionUtils.isEmpty(cfgCostIdList) || CollectionUtils.isEmpty(mainIds)) {
@@ -543,8 +558,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .list();
         Map<String, Map<String, TmsCostDetailEntity>> oldDetailMap = new HashMap<>();
         for (TmsCostDetailEntity entity : oldDetailList) {
-            String key = entity.getCfgCostId() + "_" + entity.getType() + "_"
-                    + CharSequenceUtil.blankToDefault(entity.getCurrency(), "");
+            String key = entity.getCfgCostId() + "_" + entity.getType();
             oldDetailMap.computeIfAbsent(entity.getMainId(), k -> new HashMap<>())
                     .put(key, entity);
         }
@@ -555,6 +569,21 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                                  Map<String, String> costNameMap, Map<String, TmsCostDetailEntity> oldDetailMap) {
         if (CollectionUtils.isEmpty(list)) {
             return;
+        }
+        // 同一批待落库数据：同费用项同类型不允许多币种
+        Map<String, Set<String>> feeCurrencyMap = new HashMap<>();
+        for (TmsCostDetailEntity entity : list) {
+            String costCurrency = StringUtils.isBlank(entity.getCurrency()) ? currency : entity.getCurrency();
+            String type = CharSequenceUtil.blankToDefault(entity.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            String feeKey = entity.getCfgCostId() + "_" + type;
+            feeCurrencyMap.computeIfAbsent(feeKey, k -> new HashSet<>()).add(CharSequenceUtil.blankToDefault(costCurrency, ""));
+        }
+        for (Map.Entry<String, Set<String>> entry : feeCurrencyMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                String cfgCostId = entry.getKey().substring(0, entry.getKey().lastIndexOf('_'));
+                String costName = costNameMap.getOrDefault(cfgCostId, cfgCostId);
+                throw new ServiceException(ApiError.LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY, costName);
+            }
         }
         Set<String> currencySet = list.stream()
                 .map(e -> StringUtils.isBlank(e.getCurrency()) ? currency : e.getCurrency())
@@ -576,7 +605,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             fillLocalCurrencyFields(entity);
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
             entity.setCostName(costNameMap.get(entity.getCfgCostId()));
-            String oldKey = entity.getCfgCostId() + "_" + entity.getType() + "_" + costCurrency;
+            String oldKey = entity.getCfgCostId() + "_" + entity.getType();
             TmsCostDetailEntity oldDetailEntity = oldDetailMap.get(oldKey);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());

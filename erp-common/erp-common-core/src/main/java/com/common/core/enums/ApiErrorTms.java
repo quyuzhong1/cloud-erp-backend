@@ -353,4 +353,8 @@ public final class ApiErrorTms {
     public static final ApiError LOGISTICS_AIYA_CHANNEL_QUERY_FAILED = new ApiError("LOGISTICS_AIYA_CHANNEL_QUERY_FAILED", 13734, "AIYA查询派送渠道失败: {0}");
     public static final ApiError LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY = new ApiError("LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY", 13735, "AIYA查询仓库列表为空，无法同步派送渠道");
     public static final ApiError LOGISTICS_AIYA_SERVICE_NOT_OPEN = new ApiError("LOGISTICS_AIYA_SERVICE_NOT_OPEN", 13736, "AIYA物流服务功能暂未开放");
+    public static final ApiError LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY = new ApiError("LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY", 13726, "【{0}】相同费用项不能存在不同币种");
+    public static final ApiError LOGISTICS_COST_CURRENCY_REQUIRED = new ApiError("LOGISTICS_COST_CURRENCY_REQUIRED", 13727, "币别不能为空");
+    public static final ApiError LOGISTICS_COST_CURRENCY_NOT_EXIST = new ApiError("LOGISTICS_COST_CURRENCY_NOT_EXIST", 13728, "币别不存在");
+    public static final ApiError LOGISTICS_COST_CURRENCY_RATE_NOT_EXIST = new ApiError("LOGISTICS_COST_CURRENCY_RATE_NOT_EXIST", 13729, "币别对应汇率不存在");
 }
