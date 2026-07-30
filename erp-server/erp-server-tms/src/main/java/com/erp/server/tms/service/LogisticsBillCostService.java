@@ -84,8 +84,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
 
     /**
-     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * 导入确认前校验目标费用单合并导入明细后的确认金额是否不全部为 0。
      * <p>仅在对账状态为账单确认或暂估确认时生效；供 confirmImport 及标准导入勾选确认场景行级校验使用。</p>
+     * <p>目标类型费用明细为空时返回“费用明细为空”；存在明细时按费用分类汇总，只要任一分类金额不等于 0 即通过。</p>
      *
      * @param logisticsCostId      目标物流费用单 ID
      * @param importList           本次导入待合并的费用明细，可为 null
@@ -95,10 +96,15 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus);
 
     /**
-     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * 导入确认前校验目标费用单合并导入明细后的确认金额是否不全部为 0。
      * <p>传入 {@code existingDetailMap} 时复用预查明细，避免循环内逐单查库。</p>
+     * <p>目标类型费用明细为空时返回“费用明细为空”；存在明细时按费用分类汇总，只要任一分类金额不等于 0 即通过。</p>
      *
-     * @param existingDetailMap 预查的费用明细，key 为费用单 ID；可为 null
+     * @param logisticsCostId      目标物流费用单 ID
+     * @param importList           本次导入待合并的费用明细，可为 null
+     * @param reconciliationStatus 目标对账状态
+     * @param existingDetailMap    预查的费用明细，key 为费用单 ID；可为 null
+     * @return 不满足时返回错误文案，否则返回 null
      */
     String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
                                           String reconciliationStatus, Map<String, List<TmsCostDetailEntity>> existingDetailMap);

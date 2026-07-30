@@ -31,8 +31,10 @@ import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.WarehouseAreaTypeEnum;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -1123,7 +1125,17 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         if(CharSequenceUtil.isBlank(warehouseId)||CharSequenceUtil.isBlank(skuNo)){
             return null;
         }
-        return warehouseLocationMapper.getOneWareInventoryQty(warehouseId,skuNo);
+        return warehouseLocationMapper.getOneWareInventoryQty(warehouseId, skuNo,
+                WarehouseAreaTypeEnum.PICKING_AREA.getCode(), InventoryStatusEnum.USABLE.getCode());
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.WareInventoryQtyDTO> listWareInventoryQtyBySkuNos(String warehouseId, List<String> skuNos) {
+        if (CharSequenceUtil.isBlank(warehouseId) || CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        return warehouseLocationMapper.listWareInventoryQtyBySkuNos(warehouseId, skuNos,
+                WarehouseAreaTypeEnum.PICKING_AREA.getCode(), InventoryStatusEnum.USABLE.getCode());
     }
 
     @Override

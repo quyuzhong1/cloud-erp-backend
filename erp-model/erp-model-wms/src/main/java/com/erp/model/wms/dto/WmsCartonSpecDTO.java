@@ -923,7 +923,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 包装重量
          */
         @NotNull(message = "箱子包装重量必填不能为空")
-        @Digits(integer = 10, fraction = 2, message = "箱子包装重量必填整数位不能超过10位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "箱子包装重量必填整数位不能超过18位，小数位不能超过6位")
         private BigDecimal packageWeight;
         /**
          * 重量单位 kg
@@ -933,19 +933,19 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱规长
          */
         @NotNull(message = "箱规长必填不能为空")
-        @Digits(integer = 10, fraction = 2, message = "箱规长必填整数位不能超过10位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "箱规长必填整数位不能超过18位，小数位不能超过6位")
         private BigDecimal boxLength;
         /**
          * 箱规宽
          */
         @NotNull(message = "箱规宽必填不能为空")
-        @Digits(integer = 10, fraction = 2, message = "箱规宽必填整数位不能超过10位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "箱规宽必填整数位不能超过18位，小数位不能超过6位")
         private BigDecimal boxWidth;
         /**
          * 箱规高
          */
         @NotNull(message = "箱规高必填不能为空")
-        @Digits(integer = 10, fraction = 2, message = "箱规高必填整数位不能超过10位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "箱规高必填整数位不能超过18位，小数位不能超过6位")
         private BigDecimal boxHeight;
         /**
          * 尺寸单位 cm

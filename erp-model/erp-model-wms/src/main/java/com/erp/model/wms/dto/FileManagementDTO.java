@@ -330,7 +330,7 @@ public class FileManagementDTO implements Serializable {
         /**
          * 文件大小
          */
-        @Digits(integer = 12, fraction = 4, message = "文件大小整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "文件大小整数位不能超过18位，小数位不能超过6位")
         private BigDecimal attachSize;
 
         /**

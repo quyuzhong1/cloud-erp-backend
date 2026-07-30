@@ -468,14 +468,4 @@ public class WarehouseController extends BaseController {
         PagingVO<WarehouseDTO.PagingProductViewDTO> pagingVO = warehouseService.pagingProduct(dto);
         return success(pagingVO);
     }
-
-    /**
-     * 查询所有仓库信息(不带权限控制)
-     */
-    @GetMapping("/listWarehouseWithCaches")
-    public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseWithCaches(){
-        List<WarehouseEntity> warehouseEntities = warehouseService.listWarehouseWithCaches();
-        List<WarehouseDTO.ListDTO> listDTOS = BeanMapper.copyList(warehouseEntities, WarehouseDTO.ListDTO.class);
-        return success(listDTOS);
-    }
 }

@@ -1628,7 +1628,7 @@ public class SoB2cDTO implements Serializable {
          * 订单金额
          */
         @NotNull(message = "订单金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "订单金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal amount;
         /**
          * 运费
@@ -2706,6 +2706,11 @@ public class SoB2cDTO implements Serializable {
          * 是否记录日志
          */
         private boolean addOperationLog = false ;
+
+        /**
+         * 是否强制覆盖物流单号/跟踪号（渠道未推送海外仓面单且仓回传跟踪号与订单不一致时；WMS 消费者置 true）
+         */
+        private boolean forceUpdateLogisticsTrack = false;
 
     }
 
@@ -4209,6 +4214,11 @@ public class SoB2cDTO implements Serializable {
          * WMS 校验阶段已解析的 ERP 物流渠道名称
          */
         private String resolvedLogisticsChannelName;
+
+        /**
+         * 是否强制覆盖物流单号/跟踪号（渠道未推送海外仓面单且仓回传跟踪号与订单不一致时由 WMS 消费者置 true）
+         */
+        private boolean forceUpdateLogisticsTrack = false;
     }
 
     @Data

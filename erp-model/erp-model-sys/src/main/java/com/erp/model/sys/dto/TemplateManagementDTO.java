@@ -173,14 +173,14 @@ public class TemplateManagementDTO implements Serializable {
         * 模板长度(mm)
         */
         @NotNull(message = "模板长度(mm)不能为空")
-        @Digits(integer = 12, fraction = 4, message = "模板长度(mm)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "模板长度(mm)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal length;
 
         /**
         * 模板宽度(mm)
         */
         @NotNull(message = "模板宽度(mm)不能为空")
-        @Digits(integer = 12, fraction = 4, message = "模板宽度(mm)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "模板宽度(mm)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal width;
 
         /**

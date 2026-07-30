@@ -58,7 +58,8 @@
             oi.return_logistic_code as returnLogisticCode,
             oi.type,
             oi.source_code as sourceCode,
-            oid.remark as detailRemark
+            oid.remark as detailRemark,
+            oid.defective_product_flag as defectiveProductFlag
         from other_instock oi
         inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>
@@ -137,7 +138,8 @@
             oi.return_logistic_code as returnLogisticCode,
             oi.type,
             oi.source_code as sourceCode,
-            oid.remark as detailRemark
+            oid.remark as detailRemark,
+            oid.defective_product_flag as defectiveProductFlag
         from other_instock oi
         inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>
@@ -211,7 +213,8 @@
             oi.remark,
             oi.return_logistic_code as returnLogisticCode,
             oi.type,
-            oid.remark as detailRemark
+            oid.remark as detailRemark,
+            oid.defective_product_flag as defectiveProductFlag
         from other_instock oi
         left join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>

@@ -20,6 +20,7 @@ public final class ApiErrorOms {
     public static final ApiError CUSTOMER_DISABLE_FORBIDDEN = new ApiError("CUSTOMER_DISABLE_FORBIDDEN", 13008, "客户已被使用，无法停用");
     public static final ApiError CUSTOMER_SKU_INTERVAL_OVERLAP = new ApiError("CUSTOMER_SKU_INTERVAL_OVERLAP", 13009, "客户SKU价格区间存在重叠，不允许提交");
     public static final ApiError CUSTOMER_NAME_DUPLICATE = new ApiError("CUSTOMER_NAME_DUPLICATE", 13010, "客户名称不能重复");
+    public static final ApiError CUSTOMER_NAME_RELATE_SHOP_FORBIDDEN = new ApiError("CUSTOMER_NAME_RELATE_SHOP_FORBIDDEN", 13011, "客户已关联店铺，不允许修改客户名称");
     public static final ApiError SALES_DEMAND_NOT_FOUND = new ApiError("SALES_DEMAND_NOT_FOUND", 9000, "未找到备货申请单");
     public static final ApiError SALES_DEMAND_DETAIL_NOT_FOUND = new ApiError("SALES_DEMAND_DETAIL_NOT_FOUND", 9001, "未找到备货申请单明细");
     public static final ApiError SALES_DEMAND_SKU_QTY_EXCEEDS = new ApiError("SALES_DEMAND_SKU_QTY_EXCEEDS", 9002, "备货申请单SKU【{0}】数量不能超过【{1}】");
@@ -303,6 +304,10 @@ public final class ApiErrorOms {
     public static final ApiError SO_RETURN_INSTOCK_IMPORT_TASK_FAILED = new ApiError("SO_RETURN_INSTOCK_IMPORT_TASK_FAILED", 10775, "销售退货入库单导入失败");
     public static final ApiError SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE = new ApiError("SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE", 10776, "存在多个同名客户【{0}】，请人工确认");
     public static final ApiError SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED = new ApiError("SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED", 10777, "单据已创建但SKU占用状态更新失败");
+    /** 预入库-关联售后单查询：单据类型非法（非 B2B/B2C） */
+    public static final ApiError SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_INVALID = new ApiError("SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_INVALID", 10810, "单据类型参数非法");
+    /** 预入库-关联售后单查询：单据类型集合混传多个值 */
+    public static final ApiError SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_MULTI_FORBIDDEN = new ApiError("SO_RETURN_LINK_AFTER_SALE_BILL_TYPE_MULTI_FORBIDDEN", 10811, "单据类型参数非法：关联售后单查询仅支持单一单据类型");
     public static final ApiError SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED = new ApiError("SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED", 10753, "不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试");
     public static final ApiError SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED = new ApiError("SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED", 10754, "不出库发货失败：销售订单物流信息更新失败，请刷新后重试");
     public static final ApiError SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED = new ApiError("SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED", 10755, "不出库发货失败：销售订单状态更新失败，请刷新后重试");

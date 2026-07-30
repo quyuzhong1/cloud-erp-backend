@@ -8,6 +8,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundResponse;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateHbOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.*;
@@ -146,6 +147,28 @@ public class TongYouService {
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
+    }
+
+    /**
+     * B2B 换标/混装创建出库单
+     */
+    public TongYouBaseResp<TongYouOutboundResp> createHbOutboundBill(@Valid TongYouCreateHbOutboundReq request) {
+        String path = "hwc_api/add_order_hb.php";
+        Map<String, String> headerMap = new HashMap<>();
+        Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+        request.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
+        // 与 add_order.php 一致：通邮该接口要求 JSON 数组体，单对象会返回空响应
+        String jsonString = JSONObject.toJSONString(Collections.singletonList(request));
+        log.warn("通邮 createHbOutboundBill request:{}", maskTokenJson(jsonString));
+        ThirdWarehouseContext.setRequestJson(maskTokenJson(jsonString));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, jsonString, headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        // 空报文不走解析抛异常链路，直接返回明确失败，便于 Handler 转业务失败而非 NPE/系统重试
+        if (ObjectUtil.isEmpty(bodyStr)) {
+            log.warn("通邮 createHbOutboundBill empty response, url={}", getPreUrl() + path);
+            return TongYouBaseResp.error("通邮创建出库单未收到有效响应");
+        }
+        return TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
     }
 
     /**

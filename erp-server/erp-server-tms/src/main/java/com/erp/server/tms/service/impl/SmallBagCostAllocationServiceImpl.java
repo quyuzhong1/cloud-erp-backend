@@ -341,7 +341,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 					unitCost = unitCost.multiply(rate).setScale(6);
 				}
 				dto.setUnitCost(df6.format(unitCost));
-				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6)));
+				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6, RoundingMode.HALF_UP)));
 			}
 			
 			dto.setFeeSource(SmallBagCostAllocationMainFeeSourceEnum.getName(dto.getFeeSource()));

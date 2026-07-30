@@ -91,17 +91,17 @@ public class CfgSettingValueDTO implements Serializable {
         /**
          * 含税采购价（>）
          */
-        @Digits(integer = 12, fraction = 4, message = "含税采购价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "含税采购价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal startPrice;
         /**
          * 含税采购价(<=)
          */
-        @Digits(integer = 12, fraction = 4, message = "含税采购价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "含税采购价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal endPrice;
         /**
          * 比例
          */
-        @Digits(integer = 12, fraction = 2, message = "比例整数位不能超过12位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "比例整数位不能超过18位，小数位不能超过6位")
         private BigDecimal rate;
     }
 

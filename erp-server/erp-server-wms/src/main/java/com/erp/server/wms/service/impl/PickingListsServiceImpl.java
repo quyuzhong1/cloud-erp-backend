@@ -202,6 +202,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
                 detail.setSourceDetailId(resultDTO.getSourceDetailId());
                 detail.setStagingLocation(pickingStaging.getWarehouseLocation());
+                detail.setVirtualWarehouseId(resultDTO.getVirtualWarehouseId());
                 entities.add(detail);
                 moveDto.setWarehouseId(resultDTO.getWarehouseId());
                 WarehouseLocationMoveDetailDTO.AddDTO addDTO = WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
@@ -1429,6 +1430,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 return new ArrayList<>(resultData.getSecond().keySet());
             }
         }
+        //发货单中一个实体仓只会有一个虚拟仓对应
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> entry : resultMap.entrySet()) {
             PickingListsEntity entity = new PickingListsEntity();
@@ -1437,6 +1439,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             entity.setId(IdWorker.getIdStr());
             entity.setCode(code);
             entity.setWarehouseId(entry.getKey());
+            //一张拣货单只能一个虚拟仓
+            entity.setVirtualWarehouseId(entry.getValue().stream().map(LocationInventoryResultDTO::getVirtualWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().findFirst().orElse(""));
             entity.setWarehouseName(warehouseMap.get(entry.getKey()));
             entity.setSourceId(soB2cDeliveryEntity.getId());
             entity.setSourceCode(soB2cDeliveryEntity.getCode());
@@ -1469,6 +1473,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 inOutStockDTO.setSkuId(detail.getSkuId());
                 inOutStockDTO.setQty(detail.getQty());
                 inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+                inOutStockDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 inOutStockList.add(inOutStockDTO);
             }
