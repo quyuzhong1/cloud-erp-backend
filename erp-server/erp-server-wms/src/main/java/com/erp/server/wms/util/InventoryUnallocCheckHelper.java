@@ -179,6 +179,69 @@ public final class InventoryUnallocCheckHelper {
     }
 
     /**
+     * UAT {@code checkVirtualInventoryList} 预检 filter 单条判定，与 UAT 线上一致。
+     *
+     * @param transaction 库存交易明细
+     * @return true 表示需参与 UAT 虚拟仓/未分配 Java 预检
+     */
+    public static boolean needUatVirtualInventoryCheck(InventoryTransactionDTO transaction) {
+        if (transaction == null || transaction.isIgnoreTransaction()) {
+            return false;
+        }
+        return MathUtil.compareTo(transaction.getQty(), MathUtil.ZERO) < MathUtil.ZERO
+                && (!(transaction.isSameInventoryStatus() && transaction.isSameWarehouse())
+                || !InventorySourceTypeEnum.MACHINE_INFO.getCode().equals(transaction.getSourceType()))
+                && (InventoryStatusEnum.USABLE.getCode().equals(transaction.getInventoryStatus())
+                || InventoryStatusEnum.FROZEN.getCode().equals(transaction.getInventoryStatus()));
+    }
+
+    /**
+     * UAT {@code checkVirtualInventoryList} 预检 filter，供预检方法与锁范围共用。
+     *
+     * @param transactionList 原始交易列表
+     * @return UAT 预检范围内的明细
+     */
+    public static List<InventoryTransactionDTO> filterUatVirtualInventoryCheckList(
+            List<InventoryTransactionDTO> transactionList) {
+        if (transactionList == null || transactionList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return transactionList.stream()
+                .filter(InventoryUnallocCheckHelper::needUatVirtualInventoryCheck)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 判断本批交易是否需要获取 UAT 预检对齐的仓+SKU 共享锁。
+     *
+     * @param transactionList 库存交易列表
+     * @return true 表示需加锁
+     */
+    public static boolean needsUatPreCheckLock(List<InventoryTransactionDTO> transactionList) {
+        return !filterUatVirtualInventoryCheckList(transactionList).isEmpty();
+    }
+
+    /**
+     * 基于 UAT 预检 filter 生成仓+SKU 维度 Redisson 锁 key。
+     *
+     * @param transactionList 库存交易列表
+     * @return 锁 key 列表（去重、字典序）
+     */
+    public static List<String> buildUatPreCheckLockKeys(List<InventoryTransactionDTO> transactionList) {
+        List<InventoryTransactionDTO> lockScopeList = filterUatVirtualInventoryCheckList(transactionList);
+        if (lockScopeList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> keys = new LinkedHashSet<>();
+        for (List<InventoryTransactionDTO> group : groupByWarehouseSku(lockScopeList).values()) {
+            InventoryTransactionDTO first = group.get(0);
+            keys.add(InventoryRedisOpKeyEnum.getWhSkuKey(
+                    InventoryRedisOpKeyEnum.WHSKU_UNALLOC_LOCK, first.getWarehouseId(), first.getSkuId()));
+        }
+        return keys.stream().sorted().collect(Collectors.toList());
+    }
+
+    /**
      * 筛出需「实体仓未分配」校验的明细：白名单出库且未指定虚拟仓。
      * <p>指定 {@code virtualWarehouseId} 的明细仅做虚拟仓分配预检，不参与 {@code try.lua} 未分配 TRY。</p>
      *

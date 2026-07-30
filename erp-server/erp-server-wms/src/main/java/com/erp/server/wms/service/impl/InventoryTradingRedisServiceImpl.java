@@ -14,12 +14,13 @@ import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.config.PgUnallocLockSynchronizationAdapter;
 import com.erp.server.wms.util.InventoryUnallocCheckHelper;
@@ -129,8 +130,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         RedissonMultiLock unallocLock = null;
         boolean unlockInFinally = false;
         try {
-            if (InventoryUnallocCheckHelper.needsUnallocSharedLock(transactionList)) {
-                List<String> unallocLockKeys = InventoryUnallocCheckHelper.buildUnallocLockKeys(transactionList);
+            if (InventoryUnallocCheckHelper.needsUatPreCheckLock(transactionList)) {
+                List<String> unallocLockKeys = InventoryUnallocCheckHelper.buildUatPreCheckLockKeys(transactionList);
                 unallocLock = inventoryRedisUtil.tryLock(unallocLockKeys, InventoryUnallocCheckHelper.UNALLOC_LOCK_WAIT_SECONDS);
                 if (unallocLock == null) {
                     ServiceException.runError(ApiError.WH_UNALLOC_LOCK_FAILED);
@@ -355,7 +356,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
      * @date 2024/8/8 16:00
      * @param transactionList
      */
-    private void checkVirtualInventoryList(List<InventoryTransactionDTO> transactionList) {
+    private void checkVirtualInventoryList (List<InventoryTransactionDTO> transactionList) {
         if (CollectionUtils.isEmpty(transactionList)) {
             return;
         }
@@ -374,22 +375,17 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         if (CollectionUtils.isEmpty(checkTransactionList)) {
             return;
         }
-        List<InventoryTransactionDTO> allCheckList = new ArrayList<>();
-        allCheckList.addAll(virtualWarehouseCheckList);
-        allCheckList.addAll(entityUnallocCheckList);
-        List<String> warehouseIdList = allCheckList.stream().map(InventoryTransactionDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<String> skuIdList = allCheckList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
+        //仓库id集合
+        List<String> warehouseIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        //skuId集合
+        List<String> skuIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
 
+        //虚拟仓库存
         VirtualInventoryDTO.RedisVirtualInventoryParamDTO redisParamDTO = new VirtualInventoryDTO.RedisVirtualInventoryParamDTO();
         redisParamDTO.setSkuIdList(skuIdList);
         redisParamDTO.setWarehouseIdList(warehouseIdList);
         List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> redisVirtualInventoryList = virtualInventoryService.getRedisVirtualInventory(redisParamDTO);
 
-        InventoryDTO.RedisInventoryParamDTO entityParam = new InventoryDTO.RedisInventoryParamDTO();
-        entityParam.setWarehouseIdList(warehouseIdList);
-        entityParam.setSkuIdList(skuIdList);
-        entityParam.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
-        List<InventoryDTO.RedisInventoryReturnDTO> redisEntityInventoryList = inventoryService.listRedisInventoryMeta(entityParam);
 
         //实体仓可用库存
         InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
@@ -438,40 +434,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             }
         }
 
-        if (CollectionUtils.isEmpty(entityUnallocCheckList)) {
-            return;
-        }
-        Set<String> entityInventoryIds = new LinkedHashSet<>();
-        for (List<InventoryTransactionDTO> group :
-                InventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).values()) {
-            entityInventoryIds.addAll(InventoryUnallocCheckHelper.filterInventoryIdsByWarehouseSku(
-                    redisEntityInventoryList, group.get(0).getWarehouseId(), group.get(0).getSkuId()));
-        }
-        Map<String, Integer> baseQtyMap = inventoryTransactionService.getRedisBaseQtyByInventoryBatch(entityInventoryIds);
 
-        for (Map.Entry<String, List<InventoryTransactionDTO>> entry :
-                InventoryUnallocCheckHelper.groupByWarehouseSku(entityUnallocCheckList).entrySet()) {
-            List<InventoryTransactionDTO> value = entry.getValue();
-            String skuId = value.get(0).getSkuId();
-            String warehouseId = value.get(0).getWarehouseId();
-            Integer virtualQty = InventoryUnallocCheckHelper.sumVirtualQty(redisVirtualInventoryList, warehouseId, skuId);
-            if (MathUtil.compareTo(virtualQty, MathUtil.ZERO) == MathUtil.ZERO) {
-                continue;
-            }
-            List<String> inventoryIds = InventoryUnallocCheckHelper.filterInventoryIdsByWarehouseSku(
-                    redisEntityInventoryList, warehouseId, skuId);
-            int realInventoryTotal = InventoryUnallocCheckHelper.sumEntityBaseQtyFromMap(inventoryIds, baseQtyMap);
-            int pendingReserve = inventoryTransactionService.getUnallocPendingReserveQty(
-                    warehouseId, skuId, excludeTransactionId, excludeOperationId);
-            Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            int allowedUnalloc = realInventoryTotal - virtualQty - pendingReserve;
-            log.warn("未分配预检 仓库【{}】SKU【{}】已分配【{}】Redis实体【{}】在途预占【{}】",
-                    value.get(0).getWarehouseName(), value.get(0).getSkuNo(), virtualQty, realInventoryTotal, pendingReserve);
-            if (Math.abs(qty) > allowedUnalloc) {
-                ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY, value.get(0).getSkuNo(), value.get(0).getWarehouseName(),
-                        virtualQty, Math.max(allowedUnalloc, 0));
-            }
-        }
     }
 
     /**

@@ -195,6 +195,7 @@ public final class ApiErrorWms {
     public static final ApiError VM_THIRD_VIRTUAL_WAREHOUSE_BINDED = new ApiError("VM_THIRD_VIRTUAL_WAREHOUSE_BINDED", 12520, "旺店通虚拟仓【{0}】已与仓库【{1}】关联");
     public static final ApiError VM_NO_SYNC_INFO = new ApiError("VM_NO_SYNC_INFO", 12521, "暂无可同步信息");
     public static final ApiError VM_CHECK_OUT_VIRTUAL_INVENTORY = new ApiError("VM_CHECK_OUT_VIRTUAL_INVENTORY", 12522, "SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】");
+    public static final ApiError WH_UNALLOC_LOCK_FAILED = new ApiError("WH_UNALLOC_LOCK_FAILED", 12526, "未分配库存校验获取锁失败，请稍后重试");
     public static final ApiError VM_CHANNEL_RELATION_ERROR = new ApiError("VM_CHANNEL_RELATION_ERROR", 12523, "平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n");
     public static final ApiError VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR = new ApiError("VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR", 12525, "实体仓【{0}】下虚拟仓【{1}】已配置平台【{2}】，同一实体仓的不同虚拟仓不可重复配置");
     public static final ApiError VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER = new ApiError("VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER", 12524, "虚拟仓【{0}】库存不足");
