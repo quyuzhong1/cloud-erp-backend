@@ -999,15 +999,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(virtualInOutStockList)) {
             return;
         }
-        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", entity.getSoId()));
-        boolean isNotOutbound = (Objects.nonNull(soB2cEntity) && Boolean.TRUE.equals(soB2cEntity.getIsNotOutbound()))
-                || (Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj));
-
         String businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
-        if (isNotOutbound) {
-            // 不出库发货：跳过先冻再扣，虚拟仓一次扣可用（组合品由 approve→splitBom 拆分）
-            businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
-        } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
+//        if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
+//            businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
+//        }else
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
             businessType = VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode();
             //历史流水
             List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
