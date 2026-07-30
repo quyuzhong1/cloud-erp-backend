@@ -637,14 +637,14 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 货值
          */
-        @Digits(integer = 14, fraction = 2, message = "货值整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "货值整数位不能超过18位，小数位不能超过6位")
         @Min(value = 0, message = "货值金额不能小于0")
         private BigDecimal totalPrice;
 
         /**
          * 维修金额
          */
-        @Digits(integer = 14, fraction = 2, message = "维修金额整数位不能超过14位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "维修金额整数位不能超过18位，小数位不能超过6位")
         @Min(value = 0, message = "维修金额不能小于0")
         private BigDecimal totalRepairAmount;
 

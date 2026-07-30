@@ -100,9 +100,14 @@ public class B2bThirdDeliveryDetailDTO implements Serializable {
         private String boxSpecNo;
 
         /**
-        * 序号
-        */
+         * 序号
+         */
         private Integer sort;
+
+        /**
+         * 换标SKU
+         */
+        private String relabelSku;
 
 
     }
@@ -219,6 +224,12 @@ public class B2bThirdDeliveryDetailDTO implements Serializable {
         */
         @NotNull(message = "序号不能为空")
         private Integer sort;
+
+        /**
+         * 换标SKU（通邮，换标=是时必填）
+         */
+        @Size(max = 50, message = "换标SKU最大长度不能超过50位")
+        private String relabelSku;
 
 
     }

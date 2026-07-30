@@ -328,42 +328,42 @@ public class DmpSoDetailDTO implements Serializable {
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
         * 商品原始售价(折扣前单价)
         */
         @NotNull(message = "商品原始售价(折扣前单价)不能为空")
-        @Digits(integer = 12, fraction = 4, message = "商品原始售价(折扣前单价)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品原始售价(折扣前单价)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal sellPriceOrigin;
 
         /**
         * 折扣金额
         */
         @NotNull(message = "折扣金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "折扣金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "折扣金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal discountAmount;
 
         /**
         * 商品售价(折扣后单价)
         */
         @NotNull(message = "商品售价(折扣后单价)不能为空")
-        @Digits(integer = 12, fraction = 4, message = "商品售价(折扣后单价)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品售价(折扣后单价)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal sellPrice;
 
         /**
         * 折扣后订单总金额
         */
         @NotNull(message = "折扣后订单总金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "折扣后订单总金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "折扣后订单总金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal afterAmount;
 
         /**
         * 运费
         */
         @NotNull(message = "运费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingCost;
 
         /**

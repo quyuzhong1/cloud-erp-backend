@@ -121,7 +121,7 @@ public class TransferDeclareCostAllocationDetailDTO implements Serializable {
         * 账单金额
         */
         @NotNull(message = "账单金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "账单金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "账单金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal billAmount;
 
         /**
@@ -142,7 +142,7 @@ public class TransferDeclareCostAllocationDetailDTO implements Serializable {
         * 分摊金额
         */
         @NotNull(message = "分摊金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "分摊金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "分摊金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allocatedAmount;
 
         /**
@@ -156,7 +156,7 @@ public class TransferDeclareCostAllocationDetailDTO implements Serializable {
         * 费用分摊方式
         */
         @NotNull(message = "费用分摊方式不能为空")
-        @Digits(integer = 12, fraction = 4, message = "费用分摊方式整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "费用分摊方式整数位不能超过18位，小数位不能超过6位")
         private BigDecimal productAllocatedAmount;
 
         /**

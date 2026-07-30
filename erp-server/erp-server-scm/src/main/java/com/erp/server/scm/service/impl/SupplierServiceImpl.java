@@ -543,9 +543,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         /**
-         * 添加修改日志
+         * 添加修改日志（税率按前端百分比展示，如 0.13 → 13）
+         * 使用独立副本传参，避免修改 old/supplier 快照导致税率被放大后影响后续逻辑
          */
-        moduleOperateLogService.addModuleOperateLogByObj(old, supplier, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
+        SupplierEntity oldForLog = BeanUtil.toBean(old, SupplierEntity.class);
+        SupplierEntity newForLog = BeanUtil.toBean(supplier, SupplierEntity.class);
+        oldForLog.setTaxRate(MathUtil.multiplyWithTwo(oldForLog.getTaxRate(), MathUtil.BigDecimal_100));
+        newForLog.setTaxRate(MathUtil.multiplyWithTwo(newForLog.getTaxRate(), MathUtil.BigDecimal_100));
+        moduleOperateLogService.addModuleOperateLogByObj(oldForLog, newForLog, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
 
         //联系人的
         supplierContactService.updateSupplierContact(contactList, supplierId);
@@ -622,7 +627,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -1727,7 +1732,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.HTTP_UNKNOWN);
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         // 按 businessId 预分组，循环内直接取值，避免 O(N*M) 扫描

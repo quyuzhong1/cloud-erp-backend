@@ -109,6 +109,11 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     @TableField("delivery_warehouse_id")
     private String deliveryWarehouseId;
     /**
+     * 虚拟仓id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
+    /**
     * 发货仓名称
     */
     @TableField("delivery_warehouse_name")

@@ -129,62 +129,62 @@ public class SoB2cFinanceDTO implements Serializable {
         /**
         * 运费收入
         */
-        @Digits(integer = 12, fraction = 4, message = "运费收入整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费收入整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingCost;
 
         /**
         * 商品成本
         */
-        @Digits(integer = 12, fraction = 4, message = "商品成本整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品成本整数位不能超过18位，小数位不能超过6位")
         private BigDecimal itemCost;
 
         /**
         * 物流成本
         */
-        @Digits(integer = 12, fraction = 4, message = "物流成本整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "物流成本整数位不能超过18位，小数位不能超过6位")
         private BigDecimal logisticsCost;
 
         /**
         * 平台费
         */
-        @Digits(integer = 12, fraction = 4, message = "平台费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "平台费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal platformCost;
 
         /**
         * 转账费
         */
-        @Digits(integer = 12, fraction = 4, message = "转账费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "转账费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal transferCost;
 
         /**
         * 包装辅料费
         */
-        @Digits(integer = 12, fraction = 4, message = "包装辅料费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包装辅料费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal accessoriesCost;
 
         /**
         * VAT税费
         */
-        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "VAT税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal vatCost;
 
 
         /**
          * 平台费率
          */
-        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "VAT税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal platformRate;
 
         /**
          * vat 费率
          */
-        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "VAT税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal vatRate;
 
         /**
          * 转账费率
          */
-        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "VAT税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal transferRate;
 
 

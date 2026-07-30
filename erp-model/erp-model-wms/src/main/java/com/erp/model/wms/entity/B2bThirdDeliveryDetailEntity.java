@@ -90,10 +90,16 @@ public class B2bThirdDeliveryDetailEntity extends BaseEntity<B2bThirdDeliveryDet
     @TableField("box_spec_no")
     private String boxSpecNo;
     /**
-    * 序号
-    */
+     * 序号
+     */
     @TableField("sort")
     private Integer sort;
+
+    /**
+     * 换标SKU（通邮B2B）
+     */
+    @TableField("relabel_sku")
+    private String relabelSku;
     /**
      * 状态(主单)
      */

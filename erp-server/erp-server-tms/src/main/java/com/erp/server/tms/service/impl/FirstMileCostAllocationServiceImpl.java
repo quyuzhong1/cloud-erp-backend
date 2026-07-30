@@ -2169,7 +2169,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_TEMPLATE_DOWNLOAD);
         }
     }
 

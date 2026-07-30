@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 
@@ -160,6 +161,11 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
                                  List<String> errorNoList, 
                                  List<AssetNoticeImportExcelDTO> errorList2, 
                                  String importType);
+
+    /**
+     * 导入单条开模通知单（独立事务，避免同批次部分失败导致 PG 事务 aborted）
+     */
+    void saveImportSerialNumber(AssetNoticeDetailDTO.MoldImportDTO moldImportDTO);
 
     /**
      *

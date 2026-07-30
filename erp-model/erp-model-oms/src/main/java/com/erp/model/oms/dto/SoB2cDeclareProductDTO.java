@@ -185,7 +185,7 @@ public class SoB2cDeclareProductDTO implements Serializable {
         * 目的国申报价
         */
         @NotNull(message = "目的国申报价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "目的国申报价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "目的国申报价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal toDeclarePrice;
 
         /**
@@ -219,7 +219,7 @@ public class SoB2cDeclareProductDTO implements Serializable {
         * 申报重量（取sku毛重）
         */
         @NotNull(message = "申报重量（取sku毛重）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "申报重量（取sku毛重）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "申报重量（取sku毛重）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal weight;
 
         /**
@@ -236,7 +236,7 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 真实售价
          */
         @NotNull(message = "申报重真实售价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "申报重真实售价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "申报重真实售价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal price;
         /**
          * 售价币种

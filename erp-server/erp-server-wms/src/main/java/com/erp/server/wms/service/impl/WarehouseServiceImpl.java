@@ -482,11 +482,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-//    @Cacheable(cacheNames = "cache:wms:listWarehouseWithCaches",keyGenerator = "myKeyGenerator")
-    public List<WarehouseEntity> listWarehouseWithCaches() {
-        return this.list();
-    }
-    @Override
     public PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据

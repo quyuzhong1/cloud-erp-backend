@@ -100,13 +100,14 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
                 if (defect) {
                     continue;//只更新正品类型的数据
                 }
-                //库存量
+                //库存量：数臣可用 vs 旺店通总库存
                 BigDecimal stockNum = Objects.nonNull(detail) ? detail.getStockNum() : BigDecimal.ZERO;
                 int erpUsableQty = Objects.nonNull(inventoryDTO) ? inventoryDTO.getQty() : 0;
-                //- 差异等于0：无需处理
+                // 一致：无需处理
                 if (erpUsableQty == stockNum.intValue()) {
                     continue;
                 }
+                // 不一致：数臣多→其他入库；数臣少→其他出库（出库再按旺店通可用细分）
                 buildMap(detail, erpWarehouseId, inventoryDTO, updateDmpDataMaps, mongoData);
             }
             dmpInputDataDmpRelationMap.setValue(updateDmpDataMaps);
@@ -183,16 +184,19 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         String skuId = Objects.nonNull(inventoryDTO) ? inventoryDTO.getSkuId() : "";
         int erpUsableQty = Objects.nonNull(inventoryDTO) ? inventoryDTO.getQty() : 0;
         //可用库存数量
-        BigDecimal availableSendStock = Objects.nonNull(detail) ? detail.getAvailableSendStock() : BigDecimal.ZERO;
+        BigDecimal availableNum = Objects.nonNull(detail) && Objects.nonNull(detail.getAvailableNum()) ? detail.getAvailableNum() : BigDecimal.ZERO;
         //库存量
-        BigDecimal stockNum = Objects.nonNull(detail) ? detail.getStockNum() : BigDecimal.ZERO;
+        BigDecimal stockNum = Objects.nonNull(detail) && Objects.nonNull(detail.getStockNum()) ? detail.getStockNum() : BigDecimal.ZERO;
         //锁定量
-        BigDecimal lockNum = Objects.nonNull(detail) ? detail.getLockNum() : BigDecimal.ZERO;
+        BigDecimal lockNum = Objects.nonNull(detail) && Objects.nonNull(detail.getLockNum()) ? detail.getLockNum() : BigDecimal.ZERO;
         //第三方skuNo
         String thirdSkuNo = Objects.nonNull(detail) && CharSequenceUtil.isNotBlank(detail.getSpecNo()) ? detail.getSpecNo() : skuNo;
         if (CharSequenceUtil.isBlank(thirdSkuNo)) {
             return;//erp和旺店通都没有sku就不处理
         }
+
+        int wdtStockQty = stockNum.intValue();
+        int wdtUsableQty = availableNum.intValue();
 
         TreeMap<String, Object> dmpDataMap = new TreeMap<>();
         dmpDataMap.put("sourcePlatform", ThirdSysTypeEnum.WDT.getCode());
@@ -206,28 +210,41 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         dmpDataMap.put("thirdWarehouseCode", thirdWarehouseCode);
         dmpDataMap.put("thirdWarehouseName", thirdWarehouseName);
         dmpDataMap.put("thirdSkuNo", thirdSkuNo);
-        dmpDataMap.put("thirdStockQty", stockNum.intValue());
+        dmpDataMap.put("thirdStockQty", wdtStockQty);
         dmpDataMap.put("thirdFreezeQty", lockNum.intValue());
-        dmpDataMap.put("thirdUsableQty", availableSendStock.intValue());
+        dmpDataMap.put("thirdUsableQty", wdtUsableQty);
         dmpDataMap.put("inputTaskId", inputTaskId);
         dmpDataMap.put("convertId", convertId);
         dmpDataMap.put("nextLevelId", nextLevelId);
         dmpDataMap.put("batchNo", batchNo);
         dmpDataMap.put("remark", "数大臣库存对比差异执行库存调整");
-        if (erpUsableQty > stockNum.intValue()) {
-            //其他入库
+
+        if (erpUsableQty > wdtStockQty) {
+            // 数臣多于旺店通：按调整数量同步其他入库
             dmpDataMap.put("orderType", InventoryOrderTypeEnum.IN_STOCK.getCode());
-            dmpDataMap.put("qty", erpUsableQty - stockNum.intValue());
-        } else if (erpUsableQty < stockNum.intValue()) {
-            //其他出库
-            int qty = stockNum.intValue() - erpUsableQty;
+            dmpDataMap.put("qty", erpUsableQty - wdtStockQty);
+        } else {
+            // 数臣少于旺店通：按调整数量同步其他出库
+            int adjustQty = wdtStockQty - erpUsableQty;
             dmpDataMap.put("orderType", InventoryOrderTypeEnum.OUT_STOCK.getCode());
-            dmpDataMap.put("qty", qty);
-            if (availableSendStock.intValue() < qty) {
+            if (wdtUsableQty <= 0) {
+                // 旺店通可用为0：标记失败并预警，不做实际出库
+                dmpDataMap.put("qty", adjustQty);
                 dmpDataMap.put("billStatus", InventoryBillStatusEnum.FAILED.getCode());
-                dmpDataMap.put("remark", CharSequenceUtil.format("【{}】【{}】调整数量【{}】大于旺店通可用库存【{}】:旺店通总库存数量【{}】数大臣可用库存数量【{}】", skuNo, erpWarehouseName, qty,availableSendStock.intValue(), stockNum.intValue(), erpUsableQty));
+                dmpDataMap.put("remark", CharSequenceUtil.format(
+                        "【{}】【{}】旺店通可用库存为0，无法出库调整。调整数量【{}】旺店通总库存【{}】数臣可用【{}】",
+                        skuNo, erpWarehouseName, adjustQty, wdtStockQty, erpUsableQty));
+            } else if (wdtUsableQty < adjustQty) {
+                // 可用不足：按旺店通可用数量做出库
+                dmpDataMap.put("qty", wdtUsableQty);
+                dmpDataMap.put("remark", CharSequenceUtil.format(
+                        "按可用数量出库：旺店通可用库存【{}】调整数量【{}】", wdtUsableQty, adjustQty));
+            } else {
+                // 可用充足：按调整数量直接出库
+                dmpDataMap.put("qty", adjustQty);
             }
         }
+
         //重置pkey
         dmpDataMap.put("pkey", batchNo + "_" + thirdWarehouseCode + "_" + erpWarehouseId + "_" + thirdSkuNo);
         dmpDataMap.put("uniqueEncrypt", Md5Util.getMd5("all" + "_" + thirdWarehouseCode + "_" + thirdSkuNo + "_" + batchNo));

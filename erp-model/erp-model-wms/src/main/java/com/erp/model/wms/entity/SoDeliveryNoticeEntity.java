@@ -266,6 +266,12 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     private String transferWarehouseIds;
 
     /**
+     *  报关状态
+     */
+    @TableField("declare_status")
+    private String declareStatus;
+
+    /**
      * 是否展会订单
      */
     @TableField(exist = false)

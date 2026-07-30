@@ -1,6 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.vo.BomVersionVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -19,5 +20,9 @@ public interface ProductBomHistoryMapper extends BaseMapper<ProductBomHistoryEnt
 
 
     List<BomVersionVO> getVersionList(@Param("bomId") String bomId);
+
+    List<BomChildrenSkuDTO> listBomHistoryByIds(@Param("bomHistoryIds") List<String> bomHistoryIds);
+
+    List<BomChildrenSkuDTO> listBomHistoryByParentSkuIds(@Param("parentSkuIds") List<String> parentSkuIds);
 }
 

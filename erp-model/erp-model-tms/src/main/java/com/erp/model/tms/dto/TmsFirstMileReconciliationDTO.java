@@ -543,13 +543,13 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         /**
          * 汇率
          */
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
          * 费用合计
          */
-        @Digits(integer = 12, fraction = 4, message = "费用合计整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "费用合计整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalCost;
 
         /**

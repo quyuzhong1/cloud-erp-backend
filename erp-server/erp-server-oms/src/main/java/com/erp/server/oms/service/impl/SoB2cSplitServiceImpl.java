@@ -80,6 +80,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Resource
     private SoB2cService soB2cService;
+    @Lazy
+    @Resource
+    private KolSubB2cApplicationService kolSubB2cApplicationService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -243,15 +246,16 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     viewDTO.setAdvicePrice(BigDecimal.ZERO);
                 }else{
                     //原捆绑商品真实售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的真实售价金额
-                    BigDecimal amount = viewDTO.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
+                    BigDecimal allocationRate = viewDTO.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP);
+                    BigDecimal amount = MathUtil.scaleToSix(allocationRate.multiply(detailEntity.getAmount()), BigDecimal.ROUND_HALF_UP);
                     viewDTO.setAmount(amount);
                     remainAmount = remainAmount.subtract(amount);
                     //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
-                    BigDecimal advancePrice = viewDTO.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                    BigDecimal advancePrice = MathUtil.scaleToSix(allocationRate.multiply(detailEntity.getAdvicePrice()), BigDecimal.ROUND_HALF_UP);
                     viewDTO.setAdvicePrice(advancePrice);
                     remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                 }
-                viewDTO.setPrice(viewDTO.getAmount().divide(new BigDecimal(viewDTO.getQty()),4, RoundingMode.HALF_UP));
+                viewDTO.setPrice(viewDTO.getAmount().divide(new BigDecimal(viewDTO.getQty()), MathUtil.scaleSix, RoundingMode.HALF_UP));
             }
         }
         return resultList;
@@ -486,15 +490,16 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         soB2cDetailEntity.setAdvicePrice(BigDecimal.ZERO);
                     }else{
                         //原捆绑商品真实售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的真实售价金额
-                        BigDecimal amount = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
+                        BigDecimal allocationRate = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP);
+                        BigDecimal amount = MathUtil.scaleToSix(allocationRate.multiply(detailEntity.getAmount()), BigDecimal.ROUND_HALF_UP);
                         soB2cDetailEntity.setAmount(amount);
                         remainAmount = remainAmount.subtract(amount);
                         //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
-                        BigDecimal advancePrice = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                        BigDecimal advancePrice = MathUtil.scaleToSix(allocationRate.multiply(detailEntity.getAdvicePrice()), BigDecimal.ROUND_HALF_UP);
                         soB2cDetailEntity.setAdvicePrice(advancePrice);
                         remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                     }
-                    soB2cDetailEntity.setPrice(soB2cDetailEntity.getAmount().divide(new BigDecimal(soB2cDetailEntity.getQty()),4, RoundingMode.HALF_UP));
+                    soB2cDetailEntity.setPrice(soB2cDetailEntity.getAmount().divide(new BigDecimal(soB2cDetailEntity.getQty()), MathUtil.scaleSix, RoundingMode.HALF_UP));
                 }
 
                 //封装平台sku信息
@@ -846,13 +851,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         logisticsRuleResult.setAutoGetTrackNo(false);
                         log.error("{}物流规则异常",entity.getCode(),e);
                     }
-                    Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                    Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                    Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                    if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                            || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                        soB2cRuleService.handleAutoSubmitDelivery(entity.getId(), logisticsRuleResult.getName());
-                    }
+                    soB2cRuleService.handleAutoLogisticsAction(entity.getId(), logisticsRuleResult);
 
                 }
                 //自动计算预估运费到订单的预估运费字段
@@ -954,7 +953,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
-            addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+            // 寄样来源拆单后保留来源，便于回写拆分单状态/跟踪号；其它来源仍记为手工新增
+            if (!CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())) {
+                addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+            }
             if (CollectionUtils.isNotEmpty(soB2cRefCategoryList)) {
                 List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).collect(Collectors.toList());
                 addDTO.setCategoryIdList(categoryIdList);
@@ -1134,6 +1136,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         //操作日志
         String msg = "从【{}】拆分出新订单";
         operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
+        if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                && CharSequenceUtil.isNotBlank(entity.getSourceId())) {
+            kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2c(entity.getSourceId());
+        }
         SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = new SoB2cDTO.SplitSaveResultDTO();
         splitSaveResultDTO.setSoB2cIds(soIdList);
         splitSaveResultDTO.setSoCodeList(soCodeList);
@@ -1170,9 +1176,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
      * @date: 2023/8/23 15:12
      */
     private void checkSplitData(SoB2cEntity entity, List<SoB2cRefEntity> soB2cRefList, Boolean checkTikTok) {
-        if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())) {
-            throw new ServiceException(ApiError.SO_B2C_SPLIT_KOL_FORBIDDEN);
-        }
+        // B2C寄样单来源允许拆单（拆后子单保留 KOL_B2C_APPLICATION + sourceId，便于回写发货状态/跟踪号）
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {

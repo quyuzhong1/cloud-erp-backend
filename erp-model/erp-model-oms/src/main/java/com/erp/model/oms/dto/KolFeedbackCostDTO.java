@@ -297,20 +297,20 @@ public class KolFeedbackCostDTO implements Serializable {
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 10, fraction = 6, message = "汇率整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
         * 金额（原币）
         */
         @NotNull(message = "金额（原币）不能为空")
-        @Digits(integer = 12, fraction = 6, message = "金额（原币）整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "金额（原币）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal originalAmount;
 
         /**
         * 金额（本位币）
         */
-        @Digits(integer = 12, fraction = 6, message = "金额（本位币）整数位不能超过12位，小数位不能超过6位")
+        @Digits(integer = 18, fraction = 6, message = "金额（本位币）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal baseAmount;
 
         /**

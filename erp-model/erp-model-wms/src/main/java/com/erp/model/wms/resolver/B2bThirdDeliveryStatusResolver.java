@@ -40,7 +40,25 @@ public final class B2bThirdDeliveryStatusResolver {
         if ("eccang".equalsIgnoreCase(providerCode) || "spt".equalsIgnoreCase(providerCode)) {
             return resolveAntuStatus(rawStatus);
         }
+        if (PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)) {
+            return resolveTongYouStatus(rawStatus);
+        }
         return null;
+    }
+
+    private static String resolveTongYouStatus(String rawStatus) {
+        if (StringUtils.isBlank(rawStatus)) {
+            return null;
+        }
+        switch (rawStatus.trim()) {
+            case "4":
+            case "6":
+                return ThirdDeliveryStatusEnum.SHIPPED.getCode();
+            case "7":
+                return ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode();
+            default:
+                return null;
+        }
     }
 
     private static String resolveZhongBaoStatus(String rawStatus) {

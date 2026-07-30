@@ -428,35 +428,35 @@ public class DmpSoBillDetailDTO implements Serializable {
         * 包装费用
         */
         @NotNull(message = "包装费用不能为空")
-        @Digits(integer = 12, fraction = 4, message = "包装费用整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包装费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal giftWrapPrice;
 
         /**
         * 包装费用税
         */
         @NotNull(message = "包装费用税不能为空")
-        @Digits(integer = 12, fraction = 4, message = "包装费用税整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包装费用税整数位不能超过18位，小数位不能超过6位")
         private BigDecimal giftWrapTax;
 
         /**
         * 明细价格
         */
         @NotNull(message = "明细价格不能为空")
-        @Digits(integer = 12, fraction = 4, message = "明细价格整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "明细价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal sellPrice;
 
         /**
         * 明细折扣价格
         */
         @NotNull(message = "明细折扣价格不能为空")
-        @Digits(integer = 12, fraction = 4, message = "明细折扣价格整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "明细折扣价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal discountAmount;
 
         /**
         * 明细税费
         */
         @NotNull(message = "明细税费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "明细税费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "明细税费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxAmount;
 
         /**
@@ -493,14 +493,14 @@ public class DmpSoBillDetailDTO implements Serializable {
         * 运费价格
         */
         @NotNull(message = "运费价格不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费价格整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费价格整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingPrice;
 
         /**
         * 运费税
         */
         @NotNull(message = "运费税不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费税整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费税整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingTax;
 
         /**

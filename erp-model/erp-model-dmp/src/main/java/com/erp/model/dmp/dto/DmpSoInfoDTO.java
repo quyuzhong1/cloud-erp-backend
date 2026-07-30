@@ -371,49 +371,49 @@ public class DmpSoInfoDTO implements Serializable {
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
         * 税率
         */
         @NotNull(message = "税率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "税率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxRate;
 
         /**
         * 订单总金额
         */
         @NotNull(message = "订单总金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单总金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "订单总金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal payAmount;
 
         /**
         * 商品总售价
         */
         @NotNull(message = "商品总售价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "商品总售价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品总售价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allAmount;
 
         /**
         * 运费收入
         */
         @NotNull(message = "运费收入不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费收入整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费收入整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingAmount;
 
         /**
         * 平台费
         */
         @NotNull(message = "平台费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "平台费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "平台费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal platformCost;
 
         /**
         * 补贴金额
         */
         @NotNull(message = "补贴金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "补贴金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "补贴金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal subsidyAmount;
 
         /**

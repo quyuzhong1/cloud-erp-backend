@@ -34,35 +34,4 @@ public final class ApiErrorSrm {
     public static final ApiError SUPPLIER_CONFIG_ALREADY_EXISTS = new ApiError("SUPPLIER_CONFIG_ALREADY_EXISTS", 8523, "供应商配置信息已存在");
     public static final ApiError SUPPLIER_REF_NOT_FOUND = new ApiError("SUPPLIER_REF_NOT_FOUND", 8524, "查询不到关联供应商");
     public static final ApiError SUPPLIER_MODIFY_FORBIDDEN = new ApiError("SUPPLIER_MODIFY_FORBIDDEN", 8525, "供应商不允许修改");
-
-    static ApiError[] values() {
-        return new ApiError[]{
-                SUPPLIER_LEVEL_NAME_EXISTS,
-                SUPPLIER_LEVEL_IN_USE,
-                SUPPLIER_STAGE_NOT_FOUND,
-                SUPPLIER_STAGE_INVALID,
-                SUPPLIER_NAME_EMPTY,
-                SUPPLIER_NAME_EXISTS,
-                SUPPLIER_NOT_FOUND,
-                SUPPLIER_INFO_REQUIRED,
-                SUPPLIER_CONTACT_NOT_FOUND,
-                SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE,
-                SUPPLIER_QUALIFICATION_DATE_INVALID,
-                SUPPLIER_CERT_NAME_EXISTS,
-                SUPPLIER_UN_APPROVE,
-                SUPPLIER_DISABLE,
-                SUPPLIER_SRM_DISABLE,
-                SUPPLIER_USER_NOT_REL,
-                SUPPLIER_DOC_USER_MISMATCH,
-                SUPPLIER_INTERVAL_OVERLAP,
-                SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL,
-                SUPPLIER_ACCOUNT_NOT_FOUND,
-                SUPPLIER_REF_WAREHOUSE_EXIST,
-                SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS,
-                SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
-                SUPPLIER_CONFIG_ALREADY_EXISTS,
-                SUPPLIER_REF_NOT_FOUND,
-                SUPPLIER_MODIFY_FORBIDDEN,
-        };
-    }
 }

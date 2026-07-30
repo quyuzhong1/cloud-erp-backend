@@ -132,6 +132,7 @@
                COALESCE(na.all_notice_qty, 0) AS allNoticeQty,
                COALESCE(sdnd.delivery_qty, 0) AS currentNoticeQty,
                COALESCE(pa.picked_qty, 0) AS pickedQty,
+               COALESCE(sd.frozen_qty, 0) AS frozenQty,
                sd.remark
         FROM so_delivery_notice_change sdnc
                  INNER JOIN so_delivery_notice_change_detail sdncd ON sdnc.id = sdncd.main_id
@@ -157,6 +158,7 @@
         (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sd.id and a.is_deleted = false) as allNoticeQty,
         COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
         sdnd.picking_qty as pickedQty,
+        COALESCE(sd.frozen_qty, 0) as frozenQty,
         sd.remark
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false

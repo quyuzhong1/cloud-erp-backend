@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.threadlocal.UserContext;
@@ -21,17 +22,21 @@ import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.enums.B2bPackingTypeEnum;
+import com.erp.model.wms.enums.B2bThirdDeliveryAttachmentTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.service.*;
@@ -59,6 +64,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private DmpMqFeign dmpMqFeign;
     @Resource
     private SoInfoFeign soInfoFeign;
+    @Resource
+    private CustomerFeign customerFeign;
     @Resource
     private FileFeign fileFeign;
 
@@ -122,9 +129,23 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         if (Objects.isNull(overseasProviderEntity)){
             throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
+        boolean tongYouWarehouse = PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderEntity.getCode());
+        // 非通邮：订单附件需兼容历史 type=ModuleTypeEnum.B2B_THIRD_DELIVERY(157)
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()));
+        if (!tongYouWarehouse) {
+            String newType = B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode();
+            String legacyType = ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode();
+            attachmentList = CollUtil.isEmpty(attachmentList) ? Collections.emptyList() : attachmentList.stream()
+                    .filter(item -> newType.equals(item.getType()) || legacyType.equals(item.getType()))
+                    .collect(Collectors.toList());
+        }
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
-        fillPackingForOutboundReq(req, entity);
+        if (tongYouWarehouse) {
+            fillTongYouOutboundReq(req, entity, attachmentList);
+        } else {
+            fillPackingForOutboundReq(req, entity);
+            fillAttachmentInfo(req, attachmentList);
+        }
 
         OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(entity.getDeliveryWarehouseId());
         if (Objects.nonNull(overseasProviderWarehouse)) {
@@ -177,8 +198,58 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             }
         }
         req.setOwnerCode(overseasProviderEntity.getOwnerCode());
-        fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
+    }
+
+    private void fillTongYouOutboundReq(ThirdWarehouseCreateFbaOutboundReq req,
+                                        B2bThirdDeliveryEntity entity,
+                                        List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
+        fillTongYouEmail(req, entity);
+        if (CollUtil.isNotEmpty(attachmentList)) {
+            String orderAttachmentUrl = null;
+            String legacyOrderAttachmentUrl = null;
+            for (WmsAttachmentDTO.UpdateDTO attachment : attachmentList) {
+                if (Objects.isNull(attachment) || StrUtil.isBlank(attachment.getAttachUrl())) {
+                    continue;
+                }
+                String publicUrl = buildPublicPdfUrl(attachment);
+                if (B2bThirdDeliveryAttachmentTypeEnum.PRODUCT_LABEL.getCode().equals(attachment.getType())) {
+                    req.setProductLabelFileUrl(publicUrl);
+                } else if (B2bThirdDeliveryAttachmentTypeEnum.OUTER_BOX_LABEL.getCode().equals(attachment.getType())) {
+                    req.setOuterBoxLabelFileUrl(publicUrl);
+                } else if (B2bThirdDeliveryAttachmentTypeEnum.ORDER_ATTACHMENT.getCode().equals(attachment.getType())) {
+                    // 新类型优先
+                    orderAttachmentUrl = publicUrl;
+                } else if (ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode().equals(attachment.getType())) {
+                    // 历史 type=157 仅作回退，避免覆盖新类型
+                    legacyOrderAttachmentUrl = publicUrl;
+                }
+            }
+            req.setOrderAttachmentFileUrl(StrUtil.blankToDefault(orderAttachmentUrl, legacyOrderAttachmentUrl));
+        }
+    }
+
+    private void fillTongYouEmail(ThirdWarehouseCreateFbaOutboundReq req, B2bThirdDeliveryEntity entity) {
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
+        if (Objects.isNull(soInfoEntity) || StrUtil.isBlank(soInfoEntity.getReceiveAddressId())) {
+            throw new ServiceException("B2B销售订单收货地址为空，无法推送通邮");
+        }
+        List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(
+                Collections.singletonList(soInfoEntity.getReceiveAddressId()));
+        String email = CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getEmail() : null;
+        if (StrUtil.isBlank(email)) {
+            throw new ServiceException("B2B销售订单收货地址邮箱为空，无法推送通邮");
+        }
+        req.setEmail(email.trim());
+    }
+
+    private String buildPublicPdfUrl(WmsAttachmentDTO.UpdateDTO attachment) {
+        String extension = StrUtil.blankToDefault(FileUtil.getFileExtension(attachment.getAttachName()),
+                FileUtil.getFileExtension(attachment.getAttachUrl()));
+        if (!"pdf".equalsIgnoreCase(extension)) {
+            throw new ServiceException("通邮附件仅支持PDF格式，附件：{}", attachment.getAttachName());
+        }
+        return FastDFSClientUtil.publicUrl + attachment.getAttachUrl();
     }
 
     private void fillAttachmentInfo(ThirdWarehouseCreateFbaOutboundReq req, List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
