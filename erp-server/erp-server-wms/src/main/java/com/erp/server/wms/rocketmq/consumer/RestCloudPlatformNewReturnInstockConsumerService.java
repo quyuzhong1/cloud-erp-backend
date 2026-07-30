@@ -378,6 +378,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = details.stream().map(PlatformReturnInstockDTO.Detail::getProductSku).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -886,6 +887,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = details.stream().map(PlatformReturnInstockDTO.Detail::getProductSku).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1072,6 +1074,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v -> v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1113,6 +1116,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v -> v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
@@ -1423,6 +1427,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v -> v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setPlatform(dto.getPlatform());
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
