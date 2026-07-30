@@ -97,6 +97,12 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
     private String uploadStatus;
 
     /**
+     * 获取发票状态:success=成功,failed=失败,空=未获取/不适用  枚举：InvoiceInfoGetInvoiceStatusEnum
+     */
+    @TableField("get_invoice_status")
+    private String getInvoiceStatus;
+
+    /**
      * 查询id，用来查询发票结果的Id
      */
     @TableField("query_id")

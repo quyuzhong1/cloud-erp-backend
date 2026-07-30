@@ -3140,6 +3140,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setInvoiceData(logisticsBase64);
     }
 
+    /**
+     * 三方仓提交发货前校验：渠道开启推送发票时，订单须已有 NF-e PDF 附件，否则拦截提交。
+     *
+     * @param entity        B2C 销售订单
+     * @param channelEntity 物流渠道
+     */
+    private void assertInvoicePdfReadyForSubmitDelivery(SoB2cEntity entity, LogisticsChannelEntity channelEntity) {
+        if (ObjectUtil.isEmpty(channelEntity) || !Boolean.TRUE.equals(channelEntity.getIsSendInvoice())) {
+            return;
+        }
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(
+                entity.getId(),
+                InvoiceInfoInvoiceTypeEnum.NFE.getCode(),
+                AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
+        if (ObjectUtil.isEmpty(attachDTO) || CharSequenceUtil.isBlank(attachDTO.getAttachUrl())) {
+            throw new ServiceException("未获取到发票，请获取后再提交");
+        }
+    }
+
     private String getOrCreateInvoicePngBase64(SoB2cEntity entity, InvoiceInfoDTO.AttachDTO pdfAttachDTO, String pdfBase64) {
         if (ObjectUtil.isEmpty(pdfAttachDTO) || CharSequenceUtil.isBlank(pdfAttachDTO.getId())) {
             throw new ServiceException("发票附件信息不完整，无法生成安兔PNG缓存");
@@ -3850,6 +3869,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //查询配置是否推送面单
         autoPushLogisticsLabel(entity, overseasProviderWarehouse, channelEntity, soB2cLabelEntity, createOutboundReq);
+        // 三方仓 + 渠道需推送发票时，提交发货前必须已有 NF-e PDF 附件
+        assertInvoicePdfReadyForSubmitDelivery(entity, channelEntity);
         //上传发票
         autoPushInvoice(entity, overseasProviderWarehouse, channelEntity, createOutboundReq);
 

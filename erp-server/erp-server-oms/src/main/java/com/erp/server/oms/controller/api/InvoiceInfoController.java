@@ -307,4 +307,17 @@ public class InvoiceInfoController extends BaseController {
         invoiceInfoService.initNfeInvoiceKey();
         return success();
     }
+
+    /**
+     * 重新获取 NF-e 发票附件（仅 get_invoice_status=failed）
+     *
+     * @param dto 开票清单 id 列表
+     * @return 批量结果
+     */
+    @PostMapping("/getInvoice")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "获取发票")
+    public ApiResult<List<BatchResultDTO>> getInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchGetInvoice(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

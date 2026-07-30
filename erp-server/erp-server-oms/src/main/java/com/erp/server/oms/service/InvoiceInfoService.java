@@ -229,4 +229,12 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return ZIP文件URL
      */
     String buildInvoiceAttachZip(InvoiceInfoDTO.PagingParamDTO dto, String type);
+
+    /**
+     * 批量重新获取 NF-e 发票附件（仅处理 get_invoice_status=failed 的清单）。
+     *
+     * @param ids 开票清单 id 列表
+     * @return 批量结果
+     */
+    List<BatchResultDTO> batchGetInvoice(List<String> ids);
 }

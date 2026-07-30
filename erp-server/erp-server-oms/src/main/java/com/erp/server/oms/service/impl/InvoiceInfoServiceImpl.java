@@ -474,6 +474,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (!CfgVatInvoiceTemplateTypeEnum.ERP.getCode().equals(cfgVatInvoiceEntity.getTemplateType())){
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,未对接{}",CfgVatInvoiceTemplateTypeEnum.getName(cfgVatInvoiceEntity.getTemplateType())));
+            invoiceInfoEntity.setGetInvoiceStatus("");
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
             return;
         }
@@ -497,6 +498,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         } else {
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark("生成发票失败,财务配送报告及买家信息均不存在");
+            invoiceInfoEntity.setGetInvoiceStatus("");
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
             return;
         }
@@ -554,11 +556,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             invoiceInfoEntity.setFileUrl(fileUrl);
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode());
             invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode());
+            // VAT 开票成功后标记获取发票为成功
+            invoiceInfoEntity.setGetInvoiceStatus(InvoiceInfoGetInvoiceStatusEnum.SUCCESS.getCode());
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.WAIT_UPLOAD.getCode());
         }catch (Exception e){
             log.error("生成发票失败",e);
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,{}",e.getMessage()));
+            invoiceInfoEntity.setGetInvoiceStatus("");
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
         }
     }
@@ -1491,6 +1496,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             pagingViewDTO.setTemplateTypeName(InvoiceInfoTemplateTypeEnum.getName(pagingViewDTO.getTemplateType()));
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setUploadStatusName(InvoiceInfoUploadStatusEnum.getName(pagingViewDTO.getUploadStatus()));
+            pagingViewDTO.setGetInvoiceStatusName(InvoiceInfoGetInvoiceStatusEnum.getName(pagingViewDTO.getGetInvoiceStatus()));
             if(isExport && StringUtils.isNotBlank(pagingViewDTO.getFileUrl())){
                 pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
             }
@@ -1721,5 +1727,48 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return nameWithoutExt + "_" + count + ext;
     }
 
+    /**
+     * 批量重新获取 NF-e 发票附件：仅处理获取发票状态为 failed 的清单。
+     *
+     * @param ids 开票清单 id 列表
+     * @return 批量结果
+     */
+    @Override
+    public List<BatchResultDTO> batchGetInvoice(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED);
+        }
+        List<InvoiceInfoEntity> entityList = listByIds(ids);
+        if (CollUtil.isEmpty(entityList)) {
+            throw new ServiceException("开票清单不存在");
+        }
+        boolean hasNfe = entityList.stream()
+                .anyMatch(e -> InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(e.getInvoiceType()));
+        if (!hasNfe) {
+            throw new ServiceException("只有NFE发票才能获取发票!");
+        }
+        List<InvoiceInfoEntity> failedList = entityList.stream()
+                .filter(e -> InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(e.getInvoiceType()))
+                .filter(e -> InvoiceInfoGetInvoiceStatusEnum.FAILED.getCode().equals(e.getGetInvoiceStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(failedList)) {
+            throw new ServiceException("只有获取发票文档失败的开票清单允许获取");
+        }
+        List<BatchResultDTO> resultList = new ArrayList<>(failedList.size());
+        for (InvoiceInfoEntity entity : failedList) {
+            try {
+                boolean ok = nfeInvoiceService.refetchInvoicePdf(entity.getId());
+                if (ok) {
+                    resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode()));
+                } else {
+                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "获取发票失败"));
+                }
+            } catch (Exception e) {
+                log.error("获取发票失败, invoiceId:{}", entity.getId(), e);
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e));
+            }
+        }
+        return resultList;
+    }
 
 }

@@ -53,6 +53,9 @@ public enum DictBasicTypeEnum {
     VM_CHANNEL_SKIP_CHECK_PLATFORM("vmChannelSkipCheckPlatform", "虚拟仓渠道跳过重复校验平台"),
     SKU_NO("skuNo", "skuNo"),
 
+    /** 旺店通拉取京东自营 B2B 订单缺省税率（value=百分比，如 13） */
+    WDT_JD_B2B_DEFAULT_TAX_RATE("wdtJdB2bDefaultTaxRate", "旺店通京东B2B默认税率"),
+
     ;
 
 
