@@ -1376,7 +1376,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
             // B2C销售出库单出库等待时间20秒
             member.setLockWaitTime(20L);
-            // 空仓位 code 为 ""，库存按空串匹配；勿将 blank 转 null
+            if (CharSequenceUtil.isBlank(member.getWarehouseLocation())){
+                member.setWarehouseLocation(null);
+            }
+            //不出库发货不传虚拟仓
+            if(Objects.nonNull(soB2cEntity) && (soB2cEntity.getIsNotOutbound() || isNotOutbound)){
+                member.setVirtualWarehouseId(null);
+            }
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //处理虚拟仓库存
