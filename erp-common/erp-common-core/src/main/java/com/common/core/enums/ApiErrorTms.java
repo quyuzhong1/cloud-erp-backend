@@ -334,4 +334,8 @@ public final class ApiErrorTms {
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE = new ApiError("LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE", 13676, "没有可回退为待确认的已确认数据");
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN = new ApiError("LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN", 13677, "存在已确认关联数据，但物流费用核算状态非待生成或支付状态非未支付（待付款/待退款），无法回退为待确认");
     public static final ApiError LOGISTICS_SALES_PLATFORM_REQUIRED = new ApiError("LOGISTICS_SALES_PLATFORM_REQUIRED", 13649, "销售平台不能为空");
+    public static final ApiError LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY = new ApiError("LOGISTICS_COST_SAME_ITEM_MULTI_CURRENCY", 13726, "【{0}】相同费用项不能存在不同币种");
+    public static final ApiError LOGISTICS_COST_CURRENCY_REQUIRED = new ApiError("LOGISTICS_COST_CURRENCY_REQUIRED", 13727, "币别不能为空");
+    public static final ApiError LOGISTICS_COST_CURRENCY_NOT_EXIST = new ApiError("LOGISTICS_COST_CURRENCY_NOT_EXIST", 13728, "币别不存在");
+    public static final ApiError LOGISTICS_COST_CURRENCY_RATE_NOT_EXIST = new ApiError("LOGISTICS_COST_CURRENCY_RATE_NOT_EXIST", 13729, "币别对应汇率不存在");
 }
