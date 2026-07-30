@@ -129,6 +129,8 @@
         </if>
         <if test="params.status == 'initiate'">
             AND pm.create_user_id = #{params.userId}
+            <!-- 已终止不展示（含 approve_status 未收口的脏数据）；已完成仍可见 -->
+            AND pm.process_status &lt;&gt; 'termination'
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
@@ -211,6 +213,8 @@
         </if>
         <if test="params.status == 'initiate'">
             AND pm.create_user_id = #{params.userId}
+            <!-- 与 approveView 一致：我发起的排除已终止 -->
+            AND pm.process_status &lt;&gt; 'termination'
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
