@@ -7,6 +7,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.MessageUtils;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +39,8 @@ import java.util.stream.Collectors;
 /**
  * 实体仓「未分配库存」出库校验白名单与聚合工具。
  * <p>
- * 未分配 = 实体仓(可用+冻结) − 虚拟仓已分配 − 在途预占；仅白名单内单据在出「可用」库存时需校验。
- * Redis TRY 阶段按仓库+SKU 原子预占，最终以 try.lua 为准；Java 预检需扣除 pending。
+ * 未分配 = 实体仓(可用+冻结) − 虚拟仓已分配；方案 D 下 Java 预检对齐 UAT（不计 pending），
+ * try.lua TRY 另扣在途预占。未分配 TRY 仅对白名单内「出可用」单据生效。
  * 未分配校验中「实体」取 Redis current 基量（不含 TRY 在途段），在途出库仅通过 {@code reserve} 扣减一次，
  * 避免与 {@code inventory:current} 上 TRY 负向段重复扣减。
  * </p>
@@ -135,10 +137,11 @@ public final class InventoryUnallocCheckHelper {
     }
 
     /**
-     * 判断单条库存交易是否属于「出可用且需未分配校验」白名单。
+     * 判断单条库存交易是否属于 {@code try.lua} 未分配 TRY 白名单（仅出可用，不含同仓跳过规则）。
+     * <p>Java {@code checkVirtualInventoryList} 预检与锁范围见 {@link #needUatVirtualInventoryCheck}（方案 D）。</p>
      *
      * @param transaction 库存交易明细
-     * @return true 表示需参与未分配校验/预占
+     * @return true 表示需参与 try.lua 未分配 TRY
      */
     public static boolean needUnallocCheck(InventoryTransactionDTO transaction) {
         if (transaction == null || transaction.isIgnoreTransaction()) {
@@ -167,7 +170,7 @@ public final class InventoryUnallocCheckHelper {
      * 从交易列表中筛出需未分配校验的明细。
      *
      * @param transactionList 原始交易列表
-     * @return 白名单内的出库可用明细
+     * @return try.lua 白名单内的出可用明细
      */
     public static List<InventoryTransactionDTO> filterNeedUnallocCheck(List<InventoryTransactionDTO> transactionList) {
         if (transactionList == null || transactionList.isEmpty()) {
@@ -179,7 +182,7 @@ public final class InventoryUnallocCheckHelper {
     }
 
     /**
-     * UAT {@code checkVirtualInventoryList} 预检 filter 单条判定，与 UAT 线上一致。
+     * UAT {@code checkVirtualInventoryList} 预检 filter 单条判定，与 UAT 线上一致（方案 D Java 预检/锁共用）。
      *
      * @param transaction 库存交易明细
      * @return true 表示需参与 UAT 虚拟仓/未分配 Java 预检
@@ -196,7 +199,7 @@ public final class InventoryUnallocCheckHelper {
     }
 
     /**
-     * UAT {@code checkVirtualInventoryList} 预检 filter，供预检方法与锁范围共用。
+     * UAT 预检 filter，供 {@code checkVirtualInventoryList} 与 UAT 对齐锁范围共用。
      *
      * @param transactionList 原始交易列表
      * @return UAT 预检范围内的明细
@@ -212,7 +215,33 @@ public final class InventoryUnallocCheckHelper {
     }
 
     /**
-     * 判断本批交易是否需要获取 UAT 预检对齐的仓+SKU 共享锁。
+     * 从 UAT 预检范围筛出需「指定虚拟仓已分配量」校验的明细。
+     *
+     * @param transactionList 原始交易列表
+     * @return 指定虚拟仓的出库明细
+     */
+    public static List<InventoryTransactionDTO> filterUatVirtualWarehouseCheck(
+            List<InventoryTransactionDTO> transactionList) {
+        return filterUatVirtualInventoryCheckList(transactionList).stream()
+                .filter(t -> CharSequenceUtil.isNotBlank(t.getVirtualWarehouseId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 从 UAT 预检范围筛出需「实体仓未分配」Java 预检的明细（未指定虚拟仓）。
+     *
+     * @param transactionList 原始交易列表
+     * @return 需实体仓未分配 Java 预检的明细
+     */
+    public static List<InventoryTransactionDTO> filterUatEntityUnallocCheck(
+            List<InventoryTransactionDTO> transactionList) {
+        return filterUatVirtualInventoryCheckList(transactionList).stream()
+                .filter(t -> CharSequenceUtil.isBlank(t.getVirtualWarehouseId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 判断本批交易是否需要获取 UAT 预检对齐的仓+SKU 共享锁（方案 D）。
      *
      * @param transactionList 库存交易列表
      * @return true 表示需加锁
@@ -222,7 +251,7 @@ public final class InventoryUnallocCheckHelper {
     }
 
     /**
-     * 基于 UAT 预检 filter 生成仓+SKU 维度 Redisson 锁 key。
+     * 基于 UAT 预检 filter 生成仓+SKU 维度 Redisson 锁 key（方案 D）。
      *
      * @param transactionList 库存交易列表
      * @return 锁 key 列表（去重、字典序）
@@ -598,6 +627,154 @@ public final class InventoryUnallocCheckHelper {
                         && CharSequenceUtil.equals(obj.getSkuId(), skuId))
                 .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty)
                 .reduce(MathUtil.ZERO, Integer::sum);
+    }
+
+    /**
+     * 构建仓+SKU+虚拟仓索引 key（与 {@link #groupByWarehouseSkuVirtualWarehouse} 分组 key 一致）。
+     *
+     * @param skuId               SKU ID
+     * @param warehouseId         仓库 ID
+     * @param virtualWarehouseId  虚拟仓 ID
+     * @return 索引 key
+     */
+    public static String buildWarehouseSkuVirtualWarehouseKey(String skuId, String warehouseId, String virtualWarehouseId) {
+        return buildWarehouseSkuGroupKey(skuId, warehouseId)
+                + WAREHOUSE_SKU_GROUP_KEY_DELIMITER
+                + CharSequenceUtil.blankToDefault(virtualWarehouseId, "");
+    }
+
+    /**
+     * 将 Redis 虚拟库存列表索引为「仓+SKU+虚拟仓 → 已分配量」，供预检 O(1) 取值。
+     *
+     * @param virtualInventoryList Redis 虚拟库存查询结果
+     * @return 索引 map，key 同 {@link #buildWarehouseSkuVirtualWarehouseKey}
+     */
+    public static Map<String, Integer> indexRedisVirtualQtyByWarehouseSkuVirtualWarehouse(
+            List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> virtualInventoryList) {
+        if (virtualInventoryList == null || virtualInventoryList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> qtyMap = new HashMap<>();
+        for (VirtualInventoryDTO.RedisVirtualInventoryReturnDTO item : virtualInventoryList) {
+            if (item == null) {
+                continue;
+            }
+            String key = buildWarehouseSkuVirtualWarehouseKey(item.getSkuId(), item.getWarehouseId(), item.getVirtualWarehouseId());
+            qtyMap.merge(key, item.getQty() == null ? MathUtil.ZERO : item.getQty(), Integer::sum);
+        }
+        return qtyMap;
+    }
+
+    /**
+     * 将 Redis 虚拟库存列表按「仓+SKU」汇总已分配量，供实体未分配预检 O(1) 取值。
+     *
+     * @param virtualInventoryList Redis 虚拟库存查询结果
+     * @return 索引 map，key 同 {@link #buildWarehouseSkuGroupKey}
+     */
+    public static Map<String, Integer> indexRedisVirtualQtyByWarehouseSku(
+            List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> virtualInventoryList) {
+        if (virtualInventoryList == null || virtualInventoryList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> qtyMap = new HashMap<>();
+        for (VirtualInventoryDTO.RedisVirtualInventoryReturnDTO item : virtualInventoryList) {
+            if (item == null) {
+                continue;
+            }
+            String key = buildWarehouseSkuGroupKey(item.getSkuId(), item.getWarehouseId());
+            qtyMap.merge(key, item.getQty() == null ? MathUtil.ZERO : item.getQty(), Integer::sum);
+        }
+        return qtyMap;
+    }
+
+    /**
+     * 将 PG 虚拟库存列表索引为「仓+SKU+虚拟仓 → 已分配量」，供预检 O(1) 取值。
+     *
+     * @param warehouseInventoryQtyList PG 虚拟库存查询结果
+     * @return 索引 map，key 同 {@link #buildWarehouseSkuVirtualWarehouseKey}
+     */
+    public static Map<String, Integer> indexPgVirtualQtyByWarehouseSkuVirtualWarehouse(
+            List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList) {
+        if (warehouseInventoryQtyList == null || warehouseInventoryQtyList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> qtyMap = new HashMap<>();
+        for (VirtualInventoryDTO.WarehouseInventoryQtyDTO item : warehouseInventoryQtyList) {
+            if (item == null) {
+                continue;
+            }
+            String key = buildWarehouseSkuVirtualWarehouseKey(item.getSkuId(), item.getWarehouseId(), item.getVirtualWarehouseId());
+            qtyMap.merge(key, item.getQty() == null ? MathUtil.ZERO : item.getQty(), Integer::sum);
+        }
+        return qtyMap;
+    }
+
+    /**
+     * 将 PG 虚拟库存列表按「仓+SKU」汇总已分配量，供实体未分配预检 O(1) 取值。
+     *
+     * @param warehouseInventoryQtyList PG 虚拟库存查询结果
+     * @return 索引 map，key 同 {@link #buildWarehouseSkuGroupKey}
+     */
+    public static Map<String, Integer> indexPgVirtualQtyByWarehouseSku(
+            List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList) {
+        if (warehouseInventoryQtyList == null || warehouseInventoryQtyList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> qtyMap = new HashMap<>();
+        for (VirtualInventoryDTO.WarehouseInventoryQtyDTO item : warehouseInventoryQtyList) {
+            if (item == null) {
+                continue;
+            }
+            String key = buildWarehouseSkuGroupKey(item.getSkuId(), item.getWarehouseId());
+            qtyMap.merge(key, item.getQty() == null ? MathUtil.ZERO : item.getQty(), Integer::sum);
+        }
+        return qtyMap;
+    }
+
+    /**
+     * 将 PG 实体库存汇总列表索引为「仓+SKU → 可用+冻结总量」，供预检 O(1) 取值。
+     *
+     * @param skuInventoryTotalList PG 实体库存汇总结果
+     * @return 索引 map，key 同 {@link #buildWarehouseSkuGroupKey}
+     */
+    public static Map<String, Integer> indexPgEntityTotalByWarehouseSku(
+            List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList) {
+        if (skuInventoryTotalList == null || skuInventoryTotalList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> qtyMap = new HashMap<>();
+        for (InventoryQtyDTO.SkuInventoryStatusTotalDTO item : skuInventoryTotalList) {
+            if (item == null) {
+                continue;
+            }
+            String key = buildWarehouseSkuGroupKey(item.getSkuId(), item.getWarehouseId());
+            qtyMap.merge(key, item.getInventoryTotal() == null ? MathUtil.ZERO : item.getInventoryTotal(), Integer::sum);
+        }
+        return qtyMap;
+    }
+
+    /**
+     * 将 Redis 实体库存 meta 索引为「仓+SKU → inventoryId 列表」（去重、保序），供预检批量取值。
+     *
+     * @param entityInventoryList Redis 实体库存查询结果
+     * @return 索引 map，key 同 {@link #buildWarehouseSkuGroupKey}
+     */
+    public static Map<String, List<String>> indexInventoryIdsByWarehouseSku(
+            List<InventoryDTO.RedisInventoryReturnDTO> entityInventoryList) {
+        if (entityInventoryList == null || entityInventoryList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, LinkedHashSet<String>> temp = new HashMap<>();
+        for (InventoryDTO.RedisInventoryReturnDTO item : entityInventoryList) {
+            if (item == null || CharSequenceUtil.isBlank(item.getInventoryId())) {
+                continue;
+            }
+            String key = buildWarehouseSkuGroupKey(item.getSkuId(), item.getWarehouseId());
+            temp.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(item.getInventoryId());
+        }
+        Map<String, List<String>> result = new HashMap<>(temp.size());
+        temp.forEach((key, ids) -> result.put(key, new ArrayList<>(ids)));
+        return result;
     }
 
     /**
