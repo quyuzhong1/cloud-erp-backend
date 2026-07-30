@@ -28,7 +28,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.utils.RedisUtil;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
@@ -185,8 +184,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private WarehouseService warehouseService;
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
-    @Resource
-    private RedisUtil redisUtil;
 
     @Resource
     private WaveListService waveListService;
@@ -272,8 +269,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
 
-        // 不出库发货（Redis: SO_B2C_NOT_OUTBOUND_KEY）跳过「可用→冻结」，由销售出库一次扣虚拟仓可用
-        if (!isNotOutboundByRedis(soB2cDeliveryEntity.getSourceId())) {
+        // 不出库发货跳过「可用→冻结」，由销售出库一次扣虚拟仓可用；正常发货仍冻结
+        if (!Boolean.TRUE.equals(soB2cDeliveryEntity.getIsNotOutbound())) {
             freezeVirtualInventory(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
         } else {
             log.warn("不出库发货跳过虚拟仓冻结，发货单号={}", soB2cDeliveryEntity.getCode());
@@ -1711,11 +1708,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException("已生成B2C发货单，不允许操作手动发货");
         }
         soB2cDelivery.setIsMatchTransferRule(true);
-        // 是否不出库发货以 OMS 写入的 SO_B2C_NOT_OUTBOUND_KEY 为准，不写死标识
-        boolean isNotOutbound = isNotOutboundByRedis(soB2cEntity.getId());
-        soB2cDelivery.setIsNotOutbound(isNotOutbound);
+        // 须在 add 前透传：add 内会按此标志决定是否跳过虚拟仓冻结
+        soB2cDelivery.setIsNotOutbound(Boolean.TRUE.equals(soB2cEntity.getIsNotOutbound()));
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
-        soB2cDeliveryEntity.setIsNotOutbound(isNotOutbound);
+        soB2cDeliveryEntity.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         //生成直接调拨单
         if (!Boolean.TRUE.equals(soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryEntity))) {
             throw new ServiceException(ApiError.WH_GENERATE_TRANSFER_OUT_FAILED);
@@ -1755,7 +1751,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         generateB2cDTO.setBillDate(dto.getDeliveryTime().toLocalDate());
         generateB2cDTO.setTrackNo(soB2cLogisticsEntity.getCode());
         generateB2cDTO.setBatchNo(soB2cDeliveryEntity.getBatchNo());
-        generateB2cDTO.setIsNotOutbound(isNotOutbound);
+        generateB2cDTO.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
         soB2cEntity = soB2cFeign.getById(soB2cEntity.getId());
         if(soB2cEntity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
@@ -3288,17 +3284,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param entity
      * @param soB2cDeliveryDetailList
      */
-    /**
-     * 是否不出库发货：以 OMS 写入的 Redis 标记为准（{@link RedisCacheConstants#SO_B2C_NOT_OUTBOUND_KEY}）
-     */
-    private boolean isNotOutboundByRedis(String soId) {
-        if (CharSequenceUtil.isBlank(soId)) {
-            return false;
-        }
-        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", soId));
-        return Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj);
-    }
-
     private void freezeVirtualInventory (SoB2cDeliveryEntity entity,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
 
         List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
