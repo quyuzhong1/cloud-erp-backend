@@ -600,10 +600,17 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resultList);
     }
 
+    /**
+     * 组装通邮 B2B 出库单查询失败占位结果。
+     * <p>不写 platformOrderCode：上游 createFbaOutboundBill 会把非空平台单号当成「通邮已有单」而跳过真实创建。
+     *
+     * @param erpOrderCode ERP 单号（deliver_no）
+     * @param errorReason  失败原因
+     * @return 仅含 code / errorReason 的失败项
+     */
     private ThirdWarehouseQueryFbaOutboundResponse buildQueryFbaFailResponse(String erpOrderCode, String errorReason) {
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
         response.setCode(erpOrderCode);
-        response.setPlatformOrderCode(erpOrderCode);
         response.setPlatform(PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode());
         response.setErrorReason(errorReason);
         return response;

@@ -1108,10 +1108,20 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return null;
     }
 
-    // 提取平台订单号的辅助方法
+    /**
+     * 从三方仓查询结果提取平台订单号。
+     * <p>带 errorReason 的项视为查询失败占位，不能当作已创建成功（否则会跳过真实推单）。
+     *
+     * @param result 三方仓 FBA 出库单查询结果
+     * @return 平台订单号；查询失败或无数据时返回 null
+     */
     private String getPlatformOrderCode(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> result) {
         if (result.isSuccess() && CollUtil.isNotEmpty(result.getData())) {
-            return result.getData().get(0).getPlatformOrderCode();
+            ThirdWarehouseQueryFbaOutboundResponse first = result.getData().get(0);
+            if (CharSequenceUtil.isNotBlank(first.getErrorReason())) {
+                return null;
+            }
+            return first.getPlatformOrderCode();
         }
         return null;
     }
