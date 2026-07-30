@@ -89,14 +89,11 @@ public class RocketMQConsumerStatusController extends BaseController {
             return lifecycleResponse(HttpStatus.OK, HttpStatus.OK.value(), "请求成功！", status);
         } catch (RuntimeException ex) {
             LOGGER.error("RocketMQ terminal drain request failed", ex);
-            RocketMQLifecycleStatusVO failed = currentStatus();
-            failed.setStatus("DRAIN_FAILED");
-            failed.setMessage(DRAIN_FAILED_MESSAGE);
             return lifecycleResponse(
                     HttpStatus.CONFLICT,
                     HttpStatus.CONFLICT.value(),
                     DRAIN_FAILED_MESSAGE,
-                    failed);
+                    drainFailedStatus());
         }
     }
 
@@ -182,11 +179,13 @@ public class RocketMQConsumerStatusController extends BaseController {
             status.getContainers().add(detail);
         }
 
+        RocketMQConsumerActivationManager.ActivationState activationState =
+                activationManager.getActivationStateValue();
         RocketMQConsumerDrainManager.DrainState drainState = drainManager.getDrainStateValue();
-        status.setStatus(resolveStatus(enabled, containers.size(), running, drainState));
+        status.setStatus(resolveStatus(enabled, containers.size(), running, activationState, drainState));
         status.setEnabled(enabled);
         status.setStartupEnabled(activationManager.isStartupEnabled());
-        status.setActivationState(activationManager.getActivationStateValue().name());
+        status.setActivationState(activationState.name());
         status.setActivationFailure(hasText(activationManager.getFailureMessage())
                 ? ACTIVATION_FAILED_MESSAGE : null);
         status.setMqActiveColor(activationManager.getMqActiveColor());
@@ -213,22 +212,46 @@ public class RocketMQConsumerStatusController extends BaseController {
     }
 
     /**
+     * Builds a minimal failure response without querying listener Beans again from an exception handler.
+     *
+     * @return stable terminal drain failure status
+     */
+    private RocketMQLifecycleStatusVO drainFailedStatus() {
+        RocketMQLifecycleStatusVO failed = new RocketMQLifecycleStatusVO();
+        failed.setStatus("DRAIN_FAILED");
+        failed.setMessage(DRAIN_FAILED_MESSAGE);
+        failed.setDrainState(RocketMQConsumerDrainManager.DrainState.FAILED.name());
+        failed.setDrainFailure(DRAIN_FAILED_MESSAGE);
+        failed.setDrainTotalContainers(drainManager.getTotalContainers());
+        failed.setDrainedContainers(drainManager.getDrainedContainers());
+        return failed;
+    }
+
+    /**
      * Resolves the primary release state, giving an irreversible drain precedence over listener counts.
      *
      * @param enabled effective consumer state
      * @param total listener container count
      * @param running running listener container count
+     * @param activationState typed listener activation state
      * @param drainState typed terminal drain state
      * @return primary lifecycle status
      */
     private String resolveStatus(boolean enabled,
                                  int total,
                                  int running,
+                                 RocketMQConsumerActivationManager.ActivationState activationState,
                                  RocketMQConsumerDrainManager.DrainState drainState) {
         if (drainState == RocketMQConsumerDrainManager.DrainState.DRAINING
                 || drainState == RocketMQConsumerDrainManager.DrainState.DRAINED
                 || drainState == RocketMQConsumerDrainManager.DrainState.FAILED) {
             return drainState.name();
+        }
+        if (activationState == RocketMQConsumerActivationManager.ActivationState.FAILED) {
+            return "ACTIVATION_FAILED";
+        }
+        if (activationState == RocketMQConsumerActivationManager.ActivationState.INVALID) {
+            return "INVALID_CONFIGURATION";
         }
         if (!enabled) {
             return total == 0 ? "DISABLED" : "INVALID_DISABLED_STATE";
@@ -269,6 +292,15 @@ public class RocketMQConsumerStatusController extends BaseController {
         return ResponseEntity.status(httpStatus).body(message(code, responseMessage, data));
     }
 
+    /**
+     * Enforces the current deployment boundary: Jenkins enters the application container with
+     * kubectl exec and calls 127.0.0.1. Forwarded client headers are intentionally ignored, so an
+     * external proxy cannot claim loopback through X-Forwarded-For. This boundary must be revisited
+     * if a same-Pod sidecar or local reverse proxy is introduced.
+     *
+     * @param request current HTTP request
+     * @return true only for a connection originating from the Pod network namespace loopback
+     */
     private boolean isLoopbackRequest(HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
         return "127.0.0.1".equals(remoteAddr)

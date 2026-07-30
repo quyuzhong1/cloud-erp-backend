@@ -7,7 +7,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -117,13 +120,66 @@ public class RocketMQConsumerActivationManagerTest {
             Assert.assertTrue(expected.getMessage().contains("activation incomplete"));
         }
 
-        Mockito.verify(firstConsumer).setAwaitTerminationMillisWhenShutdown(Long.MAX_VALUE);
+        Mockito.verify(firstConsumer).setAwaitTerminationMillisWhenShutdown(60000L);
         Mockito.verify(firstContainer).stop();
         Assert.assertFalse(firstContainer.isRunning());
         Assert.assertFalse(failedContainer.isRunning());
         Assert.assertFalse(manager.isEffectivelyEnabled());
         Assert.assertEquals("FAILED", manager.getActivationState());
         context.close();
+    }
+
+    @Test
+    public void shouldBoundRollbackWhenActivatedContainerStopBlocks() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        CountDownLatch releaseStop = new CountDownLatch(1);
+        DefaultRocketMQListenerContainer blockedContainer =
+                Mockito.mock(DefaultRocketMQListenerContainer.class);
+        DefaultRocketMQListenerContainer failedContainer =
+                Mockito.mock(DefaultRocketMQListenerContainer.class);
+        Mockito.when(blockedContainer.isRunning()).thenReturn(true);
+        Mockito.doAnswer(invocation -> {
+            try {
+                releaseStop.await();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+            return null;
+        }).when(blockedContainer).stop();
+        Mockito.when(failedContainer.isRunning()).thenReturn(false);
+
+        ThreadPoolTaskExecutor rollbackExecutor = new ThreadPoolTaskExecutor();
+        rollbackExecutor.setCorePoolSize(1);
+        rollbackExecutor.setMaxPoolSize(1);
+        rollbackExecutor.setQueueCapacity(1);
+        rollbackExecutor.initialize();
+        MockEnvironment environment = deferredEnvironment("green", "green")
+                .withProperty("erp.mq.consumer.activation-rollback-timeout-ms", "100");
+        RocketMQConsumerActivationManager manager = new RocketMQConsumerActivationManager(
+                context,
+                environment,
+                () -> {
+                    context.getBeanFactory().registerSingleton("blockedRocketMQContainer", blockedContainer);
+                    context.getBeanFactory().registerSingleton("failedRocketMQContainer", failedContainer);
+                },
+                new RocketMQConsumerLifecycleCoordinator(),
+                rollbackExecutor);
+
+        long startedNanos = System.nanoTime();
+        try {
+            manager.activate();
+            Assert.fail("partial listener activation must fail");
+        } catch (IllegalStateException expected) {
+            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNanos);
+            Assert.assertTrue("rollback must honor its shared deadline", elapsedMillis < 3000L);
+            Assert.assertTrue(manager.getFailureMessage().contains("activation rollback timed out"));
+            Assert.assertEquals("FAILED", manager.getActivationState());
+        } finally {
+            releaseStop.countDown();
+            rollbackExecutor.shutdown();
+            context.close();
+        }
     }
 
     @Test

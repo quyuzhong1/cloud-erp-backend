@@ -7,6 +7,7 @@ import org.apache.rocketmq.spring.support.RocketMQMessageConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
@@ -14,13 +15,20 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * One-way activation for RocketMQ listeners deferred during blue-green startup.
@@ -32,11 +40,15 @@ public class RocketMQConsumerActivationManager {
     public static final String LOCAL_COLOR_PROPERTY = "release.color";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RocketMQConsumerActivationManager.class);
+    private static final String ACTIVATION_ROLLBACK_TIMEOUT_MILLIS_PROPERTY =
+            "erp.mq.consumer.activation-rollback-timeout-ms";
+    private static final long DEFAULT_ACTIVATION_ROLLBACK_TIMEOUT_MILLIS = 60000L;
 
     private final ApplicationContext applicationContext;
     private final Environment environment;
     private final ListenerRegistrar listenerRegistrar;
     private final RocketMQConsumerLifecycleCoordinator lifecycleCoordinator;
+    private final AsyncTaskExecutor rollbackExecutor;
     private final RocketMQConsumerEnabledResolver.ConsumerSwitchState consumerSwitchState;
     private final boolean startupEnabled;
 
@@ -51,13 +63,16 @@ public class RocketMQConsumerActivationManager {
      * @param messageConverter RocketMQ message converter
      * @param rocketMQProperties RocketMQ client properties
      * @param lifecycleCoordinator shared activation and drain coordinator
+     * @param rollbackExecutor bounded executor used to stop partially activated listeners
      */
     @Autowired
     public RocketMQConsumerActivationManager(ApplicationContext applicationContext,
                                              Environment environment,
                                              RocketMQMessageConverter messageConverter,
                                              RocketMQProperties rocketMQProperties,
-                                             RocketMQConsumerLifecycleCoordinator lifecycleCoordinator) {
+                                             RocketMQConsumerLifecycleCoordinator lifecycleCoordinator,
+                                             @Qualifier(MessageLifecycleExecutorConfig.ROCKETMQ_CONTAINER_EXECUTOR)
+                                                     AsyncTaskExecutor rollbackExecutor) {
         this(applicationContext, environment, () -> {
             if (!(environment instanceof StandardEnvironment)) {
                 throw new IllegalStateException("Spring Environment is not a StandardEnvironment");
@@ -66,23 +81,49 @@ public class RocketMQConsumerActivationManager {
                     messageConverter, (StandardEnvironment) environment, rocketMQProperties);
             configuration.setApplicationContext(applicationContext);
             configuration.afterSingletonsInstantiated();
-        }, lifecycleCoordinator);
+        }, lifecycleCoordinator, rollbackExecutor);
     }
 
     RocketMQConsumerActivationManager(ApplicationContext applicationContext,
                                       Environment environment,
                                       ListenerRegistrar listenerRegistrar) {
-        this(applicationContext, environment, listenerRegistrar, new RocketMQConsumerLifecycleCoordinator());
+        this(applicationContext,
+                environment,
+                listenerRegistrar,
+                new RocketMQConsumerLifecycleCoordinator(),
+                new TaskExecutorAdapter(Runnable::run));
     }
 
     RocketMQConsumerActivationManager(ApplicationContext applicationContext,
                                       Environment environment,
                                       ListenerRegistrar listenerRegistrar,
                                       RocketMQConsumerLifecycleCoordinator lifecycleCoordinator) {
+        this(applicationContext,
+                environment,
+                listenerRegistrar,
+                lifecycleCoordinator,
+                new TaskExecutorAdapter(Runnable::run));
+    }
+
+    /**
+     * Creates an activation manager with an explicit rollback executor.
+     *
+     * @param applicationContext current application context
+     * @param environment Spring environment
+     * @param listenerRegistrar deferred listener registrar
+     * @param lifecycleCoordinator shared activation and drain coordinator
+     * @param rollbackExecutor executor used to stop partially activated listeners
+     */
+    RocketMQConsumerActivationManager(ApplicationContext applicationContext,
+                                      Environment environment,
+                                      ListenerRegistrar listenerRegistrar,
+                                      RocketMQConsumerLifecycleCoordinator lifecycleCoordinator,
+                                      AsyncTaskExecutor rollbackExecutor) {
         this.applicationContext = applicationContext;
         this.environment = environment;
         this.listenerRegistrar = listenerRegistrar;
         this.lifecycleCoordinator = lifecycleCoordinator;
+        this.rollbackExecutor = rollbackExecutor;
         this.consumerSwitchState = RocketMQConsumerEnabledResolver.resolve(environment);
         this.startupEnabled =
                 consumerSwitchState == RocketMQConsumerEnabledResolver.ConsumerSwitchState.ENABLED;
@@ -233,24 +274,47 @@ public class RocketMQConsumerActivationManager {
         Map<String, DefaultRocketMQListenerContainer> currentContainers = applicationContext.getBeansOfType(
                 DefaultRocketMQListenerContainer.class, false, false);
         List<String> rollbackFailures = new ArrayList<>();
+        Map<String, Future<?>> rollbackFutures = new LinkedHashMap<>();
+        long rollbackTimeoutMillis = getActivationRollbackTimeoutMillis();
+        long rollbackDeadlineNanos = System.nanoTime()
+                + TimeUnit.MILLISECONDS.toNanos(rollbackTimeoutMillis);
         for (Map.Entry<String, DefaultRocketMQListenerContainer> entry : currentContainers.entrySet()) {
             if (containersBeforeActivation.contains(entry.getKey())) {
                 continue;
             }
-            DefaultRocketMQListenerContainer container = entry.getValue();
             try {
-                if (container.isRunning()) {
-                    if (container.getConsumer() != null) {
-                        container.getConsumer().setAwaitTerminationMillisWhenShutdown(Long.MAX_VALUE);
-                    }
-                    container.stop();
-                }
-                if (container.isRunning()) {
-                    rollbackFailures.add(entry.getKey() + " remains running after stop");
-                }
-            } catch (RuntimeException | Error rollbackError) {
+                String beanName = entry.getKey();
+                DefaultRocketMQListenerContainer container = entry.getValue();
+                rollbackFutures.put(beanName, rollbackExecutor.submit(
+                        () -> stopActivatedContainer(beanName, container, rollbackTimeoutMillis)));
+            } catch (RuntimeException | Error submitError) {
                 rollbackFailures.add(entry.getKey() + ": "
-                        + rollbackError.getClass().getSimpleName() + ": " + rollbackError.getMessage());
+                        + submitError.getClass().getSimpleName() + ": " + submitError.getMessage());
+            }
+        }
+
+        for (Map.Entry<String, Future<?>> entry : rollbackFutures.entrySet()) {
+            long remainingNanos = rollbackDeadlineNanos - System.nanoTime();
+            if (remainingNanos <= 0L) {
+                rollbackFailures.add("activation rollback timed out after " + rollbackTimeoutMillis + "ms");
+                cancelOutstandingRollbacks(rollbackFutures);
+                break;
+            }
+            try {
+                entry.getValue().get(remainingNanos, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                rollbackFailures.add("activation rollback was interrupted");
+                cancelOutstandingRollbacks(rollbackFutures);
+                break;
+            } catch (TimeoutException ex) {
+                rollbackFailures.add("activation rollback timed out after " + rollbackTimeoutMillis + "ms");
+                cancelOutstandingRollbacks(rollbackFutures);
+                break;
+            } catch (ExecutionException ex) {
+                Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                rollbackFailures.add(entry.getKey() + ": "
+                        + cause.getClass().getSimpleName() + ": " + cause.getMessage());
             }
         }
         if (rollbackFailures.isEmpty()) {
@@ -260,6 +324,69 @@ public class RocketMQConsumerActivationManager {
         String rollbackFailure = "RocketMQ activation rollback failed: " + String.join("; ", rollbackFailures);
         LOGGER.error(rollbackFailure);
         return rollbackFailure;
+    }
+
+    /**
+     * Stops one listener created by the failed activation attempt.
+     *
+     * @param beanName listener Bean name
+     * @param container listener container
+     * @param rollbackTimeoutMillis maximum client shutdown wait
+     */
+    private void stopActivatedContainer(String beanName,
+                                        DefaultRocketMQListenerContainer container,
+                                        long rollbackTimeoutMillis) {
+        if (container.isRunning()) {
+            if (container.getConsumer() != null) {
+                container.getConsumer().setAwaitTerminationMillisWhenShutdown(rollbackTimeoutMillis);
+            }
+            container.stop();
+        }
+        if (container.isRunning()) {
+            throw new IllegalStateException(beanName + " remains running after stop");
+        }
+    }
+
+    /**
+     * Cancels every unfinished rollback task after the shared deadline expires.
+     *
+     * @param rollbackFutures submitted rollback tasks
+     */
+    private void cancelOutstandingRollbacks(Map<String, Future<?>> rollbackFutures) {
+        for (Future<?> future : rollbackFutures.values()) {
+            if (!future.isDone()) {
+                future.cancel(true);
+            }
+        }
+    }
+
+    /**
+     * Resolves the total activation rollback deadline without using strict property conversion.
+     *
+     * @return positive rollback timeout in milliseconds
+     */
+    private long getActivationRollbackTimeoutMillis() {
+        String configured = environment.getProperty(ACTIVATION_ROLLBACK_TIMEOUT_MILLIS_PROPERTY);
+        if (!hasText(configured)) {
+            return DEFAULT_ACTIVATION_ROLLBACK_TIMEOUT_MILLIS;
+        }
+        try {
+            long timeout = Long.parseLong(configured.trim());
+            if (timeout > 0L) {
+                return timeout;
+            }
+        } catch (NumberFormatException ex) {
+            LOGGER.warn("Invalid {} value '{}'; using default {}ms",
+                    ACTIVATION_ROLLBACK_TIMEOUT_MILLIS_PROPERTY,
+                    configured,
+                    DEFAULT_ACTIVATION_ROLLBACK_TIMEOUT_MILLIS);
+            return DEFAULT_ACTIVATION_ROLLBACK_TIMEOUT_MILLIS;
+        }
+        LOGGER.warn("Non-positive {} value '{}'; using default {}ms",
+                ACTIVATION_ROLLBACK_TIMEOUT_MILLIS_PROPERTY,
+                configured,
+                DEFAULT_ACTIVATION_ROLLBACK_TIMEOUT_MILLIS);
+        return DEFAULT_ACTIVATION_ROLLBACK_TIMEOUT_MILLIS;
     }
 
     /**

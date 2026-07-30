@@ -196,6 +196,15 @@ public class XxlJobStatusController extends BaseController {
         return ResponseEntity.status(httpStatus).body(message(code, responseMessage, data));
     }
 
+    /**
+     * Enforces the current deployment boundary: Jenkins enters the application container with
+     * kubectl exec and calls 127.0.0.1. Forwarded client headers are intentionally ignored, so an
+     * external proxy cannot claim loopback through X-Forwarded-For. This boundary must be revisited
+     * if a same-Pod sidecar or local reverse proxy is introduced.
+     *
+     * @param request current HTTP request
+     * @return true only for a connection originating from the Pod network namespace loopback
+     */
     private boolean isLoopbackRequest(HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
         return "127.0.0.1".equals(remoteAddr)
