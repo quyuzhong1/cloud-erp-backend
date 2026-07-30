@@ -7,6 +7,7 @@ import java.util.Map;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryTransactionEntity;
+import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
 
 import cn.hutool.core.lang.Pair;
 
@@ -76,9 +77,21 @@ public interface InventoryTransactionService extends SuperService<InventoryTrans
     void rollbackRedis(String transactionId);
     
     /**
-     * 检查库存是否长时间未回滚
+     * 检查 Redis 残留 TRY：孤儿 rollback + DB 已提交但 commit 失败的重试。
+     *
+     * @param orphanRollbackTimeoutSeconds 孤儿 TRY 回滚等待秒数
+     * @param commitRetryTimeoutSeconds    commit 重试等待秒数
      */
-    void inventoryCheckRollback(int timeout);
+    void inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds);
+
+    /**
+     * 兼容旧 Job 参数：commit 重试默认 {@link com.erp.server.wms.config.InventoryRedisTxCompensateHelper#DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS}s。
+     *
+     * @param timeout 孤儿 TRY 回滚等待秒数
+     */
+    default void inventoryCheckRollback(int timeout) {
+        inventoryCheckRollback(timeout, InventoryRedisTxCompensateHelper.DEFAULT_COMMIT_RETRY_TIMEOUT_SECONDS);
+    }
     
     /**
      * 检查库存交易一致性

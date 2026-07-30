@@ -28,6 +28,12 @@ public class PgUnallocLockSynchronizationAdapter extends TransactionSynchronizat
         inventoryRedisUtil.unLock(lock);
     }
 
+    @Override
+    public int getOrder() {
+        // afterCompletion 升序执行：order 更大者后解锁，确保 Redis commit 完成后再释放共享锁
+        return InventoryTxSynchronizationOrder.UNALLOC_LOCK_UNLOCK;
+    }
+
 	/**
 	 * 注册事务结束后解锁；无活跃 Spring 事务时由调用方在 {@code try/finally} 中释放锁。
 	 *

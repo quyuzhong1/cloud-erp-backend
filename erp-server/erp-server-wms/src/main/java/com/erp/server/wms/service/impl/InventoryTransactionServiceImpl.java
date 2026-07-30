@@ -50,6 +50,8 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.server.wms.config.InventoryRedisTxCompensateHelper;
+import com.erp.server.wms.config.InventoryRedisTxCompensateRegistry;
 import com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter;
 import com.erp.server.wms.util.InventoryUnallocCheckHelper;
 import com.erp.server.wms.mapper.InventoryTransactionMapper;
@@ -720,42 +722,36 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
         }
     }
 
-    private static final Map<String, Date> rollbackTimeMap = new HashMap<>();
-    
 	@Override
-	public void inventoryCheckRollback(int timeout) {
-		Collection<String> keys = inventoryRedisUtil.keys(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
-		if(CollUtil.isNotEmpty(keys)) {
-			Set<String> transactions = keys.stream().map(k -> {
-				String[] split = k.split(":");
-				return split[split.length - 1];
-			}).collect(Collectors.toSet());
-			Set<String> dbTransactions = lambdaQuery().in(InventoryTransactionEntity::getId, transactions)
-					.select(InventoryTransactionEntity::getId).list()
-					.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet());
-			transactions.removeIf(dbTransactions::contains);
-			if(CollUtil.isNotEmpty(transactions)) {
-				transactions.forEach(t -> {
-					String logMsg = StringUtil.appendLogMsg("inventoryCheckRollback", t);
-			    	log.info("{}开始" , logMsg);
-					Date date = rollbackTimeMap.get(t);
-					if(date == null) {
-						rollbackTimeMap.put(t, new Date());
-					}else {
-						if(new Date().after(DateUtil.offsetSecond(date, timeout))) {
-							try {
-								log.error("{}自动回滚开始" , logMsg);
-								this.rollbackRedis(t);
-								log.error("{}自动回滚结束" , logMsg);
-							} catch (Exception e) {
-								log.error("检查redis自动回滚执行失败：{}" , t , e);
-							}
-						}
-					}
-					log.info("{}结束" , logMsg);
-				});
-			}
+	public void inventoryCheckRollback(int orphanRollbackTimeoutSeconds, int commitRetryTimeoutSeconds) {
+		Collection<String> keys = inventoryRedisUtil.keys(
+				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
+		InventoryRedisTxCompensateHelper.compensate(keys,
+				this::loadExistingDbTransactionIds,
+				transactionId -> this.commitRedis(transactionId, false),
+				this::rollbackRedis,
+				InventoryRedisTxCompensateRegistry.TxKind.ENTITY,
+				orphanRollbackTimeoutSeconds,
+				commitRetryTimeoutSeconds);
+	}
+
+	/**
+	 * 查询 DB 中仍存在的 Redis transactionId（按 transaction_id 字段，非主键 id）。
+	 *
+	 * @param transactionIds Redis 残留 TRANSACTION ID 集合
+	 * @return DB 中存在的 transactionId
+	 */
+	private Set<String> loadExistingDbTransactionIds(Set<String> transactionIds) {
+		if (CollUtil.isEmpty(transactionIds)) {
+			return Collections.emptySet();
 		}
+		return lambdaQuery()
+				.in(InventoryTransactionEntity::getTransactionId, transactionIds)
+				.select(InventoryTransactionEntity::getTransactionId)
+				.list()
+				.stream()
+				.map(InventoryTransactionEntity::getTransactionId)
+				.collect(Collectors.toSet());
 	}
 
 	@Override

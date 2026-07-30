@@ -27,6 +27,12 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 	public void afterCompletion(int status) {
 		InventoryRedisTxSynchronizationHelper.afterEntityCompletion(transactionId, status, needCommit);
 	}
+
+	@Override
+	public int getOrder() {
+		// afterCompletion 升序执行：order 更小者先跑 Redis commit/rollback
+		return InventoryTxSynchronizationOrder.REDIS_TX_CALLBACK;
+	}
 	
 	public static void register(String transactionId) {
 		InventoryTransactionSynchronizationAdapter synchronization = new InventoryTransactionSynchronizationAdapter();
