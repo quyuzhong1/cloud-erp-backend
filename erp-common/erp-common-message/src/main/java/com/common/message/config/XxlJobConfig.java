@@ -2,6 +2,7 @@ package com.common.message.config;
 
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
@@ -52,11 +54,13 @@ public class XxlJobConfig {
     @Bean
     @ConditionalOnMissingBean(XxlJobSpringExecutor.class)
     @Conditional(XxlJobExecutorCondition.class)
-    public XxlJobSpringExecutor xxlJobExecutor() {
+    public XxlJobSpringExecutor xxlJobExecutor(
+            @Qualifier(MessageLifecycleExecutorConfig.COORDINATOR_EXECUTOR)
+                    AsyncTaskExecutor lifecycleExecutor) {
         log.info(">>>>>>>>>>> xxl-job config init.");
         log.info(">>>>>>>>>>> xxl-job [adminAddress]={},[appname]={},[accessTokenConfigured]={}",
                 adminAddresses, appname, hasText(accessToken));
-        XxlJobSpringExecutor xxlJobSpringExecutor = new ReleaseControlledXxlJobSpringExecutor();
+        XxlJobSpringExecutor xxlJobSpringExecutor = new ReleaseControlledXxlJobSpringExecutor(lifecycleExecutor);
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
         xxlJobSpringExecutor.setAppname(appname);
         xxlJobSpringExecutor.setAddress(address);

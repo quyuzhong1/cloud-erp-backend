@@ -441,6 +441,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		if (StringUtils.isNotBlank(soB2cEntity.getId())) {
+			soReturnInstockEntity.setSourceId(soB2cEntity.getId());
+		}
 		if (StringUtils.isNotBlank(matchedReturn.getSoCode())) {
 			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
 		}
@@ -619,6 +622,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			log.warn("[海外仓退货入库] 参考单号匹配到销售订单{}但一个SKU都匹配不上，全部改为生成预入库单", soB2cEntity.getCode());
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		// 来源编号：该场景按参考单号直接匹配到销售订单（未命中具体退货单），取销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(soB2cEntity.getId())) {
+			soReturnInstockEntity.setSourceId(soB2cEntity.getId());
+		}
+		if (StringUtils.isNotBlank(soB2cEntity.getCode())) {
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+		}
 
 		// 顺带尝试关联退货单（与既有销售订单流程一致）
 		this.matchSoReturn(soReturnInstockEntity, splitResult.matchedList, dto, soB2cEntity);
@@ -637,6 +647,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			log.warn("[海外仓退货入库] 参考单号匹配到B2B销售订单{}但一个SKU都匹配不上，全部改为生成预入库单", soInfoEntity.getCode());
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntityForSoInfo(dto, warehouseEntity, soInfoEntity);
+		// 来源编号：该场景按参考单号匹配到B2B销售订单，取销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(soInfoEntity.getId())) {
+			soReturnInstockEntity.setSourceId(soInfoEntity.getId());
+		}
+		if (StringUtils.isNotBlank(soInfoEntity.getCode())) {
+			soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
+		}
 
 		// 已匹配到订单的SKU落退货入库单，订单里没有的SKU（unmatchedList）单独落预入库单，两者同一本地事务提交
 		this.persistMatchedInstockAndUnmatchedPrestock(soReturnInstockEntity, splitResult.matchedList, dto, warehouseEntity, splitResult.unmatchedList);
@@ -1712,6 +1729,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					soReturnInstockEntity.setSourceId(b2bThirdDelivery.getId());
 					soReturnInstockEntity.setSourceCode(b2bThirdDelivery.getSoCode());
 				}
+			}
+			if (CharSequenceUtil.isBlank(soReturnInstockEntity.getSourceCode())) {
+				soReturnInstockEntity.setSourceId(soInfoEntity.getId());
+				soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
 			}
 			soReturnInstockEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
 			soReturnInstockEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());

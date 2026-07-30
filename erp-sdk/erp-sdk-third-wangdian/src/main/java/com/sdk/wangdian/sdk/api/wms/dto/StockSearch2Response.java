@@ -83,6 +83,7 @@ public class StockSearch2Response
 		@SerializedName("warehouse_id") private Integer warehouseId;
 		@SerializedName("last_inout_time") private String lastInoutTime;
 		@SerializedName("last_pd_time") private String lastPdTime;
+		@SerializedName("available_num") private BigDecimal availableNum;
 
 		private String erpWarehouseId;
 
@@ -612,6 +613,14 @@ public class StockSearch2Response
 		public void setLastPdTime(String lastPdTime)
 		{
 			this.lastPdTime = lastPdTime;
+		}
+
+		public BigDecimal getAvailableNum() {
+			return availableNum;
+		}
+
+		public void setAvailableNum(BigDecimal availableNum) {
+			this.availableNum = availableNum;
 		}
 	}
 }
