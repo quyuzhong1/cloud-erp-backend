@@ -2377,7 +2377,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+    public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response){
         // 复用单 sheet 导出的状态过滤口径，保持业务边界一致
         pagingParamDTO.setExportDeclareStatus(Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode()));
         List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
@@ -2875,7 +2875,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             BigDecimal singleNetWeight = StringUtils.isBlank(detail.getSkuId())
                     ? BigDecimal.ZERO
                     : skuNetWeightMap.getOrDefault(detail.getSkuId(), BigDecimal.ZERO);
-            BigDecimal lineNetWeight = singleNetWeight.multiply(BigDecimal.valueOf(qty)).setScale(MathUtil.scale, RoundingMode.HALF_UP);
+            BigDecimal lineNetWeight = singleNetWeight.multiply(BigDecimal.valueOf(qty))
+                    .divide(MathUtil.BigDecimal_1000, MathUtil.THREE, RoundingMode.HALF_UP);
             item.setNetWeight(lineNetWeight);
             return item;
         }).collect(Collectors.toList());
@@ -2919,7 +2920,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .map(TmsDeclareBillDTO.PackingListItem::getNetWeight)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(MathUtil.scale, RoundingMode.HALF_UP);
+                .setScale(MathUtil.TWO, RoundingMode.HALF_UP);
         info.setTotalQty(totalQty);
         info.setTotalNetWeight(totalNetWeight);
 
