@@ -184,11 +184,11 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         String skuId = Objects.nonNull(inventoryDTO) ? inventoryDTO.getSkuId() : "";
         int erpUsableQty = Objects.nonNull(inventoryDTO) ? inventoryDTO.getQty() : 0;
         //可用库存数量
-        BigDecimal availableNum = Objects.nonNull(detail) ? detail.getAvailableNum() : BigDecimal.ZERO;
+        BigDecimal availableNum = Objects.nonNull(detail) && Objects.nonNull(detail.getAvailableNum()) ? detail.getAvailableNum() : BigDecimal.ZERO;
         //库存量
-        BigDecimal stockNum = Objects.nonNull(detail) ? detail.getStockNum() : BigDecimal.ZERO;
+        BigDecimal stockNum = Objects.nonNull(detail) && Objects.nonNull(detail.getStockNum()) ? detail.getStockNum() : BigDecimal.ZERO;
         //锁定量
-        BigDecimal lockNum = Objects.nonNull(detail) ? detail.getLockNum() : BigDecimal.ZERO;
+        BigDecimal lockNum = Objects.nonNull(detail) && Objects.nonNull(detail.getLockNum()) ? detail.getLockNum() : BigDecimal.ZERO;
         //第三方skuNo
         String thirdSkuNo = Objects.nonNull(detail) && CharSequenceUtil.isNotBlank(detail.getSpecNo()) ? detail.getSpecNo() : skuNo;
         if (CharSequenceUtil.isBlank(thirdSkuNo)) {
