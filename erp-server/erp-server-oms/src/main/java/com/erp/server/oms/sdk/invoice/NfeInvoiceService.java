@@ -108,6 +108,9 @@ public class NfeInvoiceService {
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
     private static final int DANFE_SIMPLE_HEIGHT_MM = 150;
     private static final int DANFE_SIMPLE_WIDTH_MM = 100;
+    /** getDanfe 失败/超时/空响应时的最大重试次数（含首次） */
+    private static final int GET_DANFE_MAX_ATTEMPTS = 3;
+    private static final long GET_DANFE_RETRY_SLEEP_MS = 300L;
     private static final Pattern BRAZIL_NFE_CHAVE_PATTERN = Pattern.compile("\\b\\d{44}\\b");
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -619,6 +622,10 @@ public class NfeInvoiceService {
         invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
         invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
         invoiceInfoEntity.setCompanyName(companyName);
+        // 详情已返回 PDF 时直接标记获取发票成功；否则由 getDanfe 重试链路回写
+        if (CharSequenceUtil.isNotBlank(pdfUrl)) {
+            invoiceInfoEntity.setGetInvoiceStatus(InvoiceInfoGetInvoiceStatusEnum.SUCCESS.getCode());
+        }
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
 
         if (CharSequenceUtil.isNotBlank(xmlUrl) || CharSequenceUtil.isNotBlank(pdfUrl)) {
@@ -838,49 +845,122 @@ public class NfeInvoiceService {
     }
     
     /**
-     * 根据Danfe接口获取PDF并上传
-     * 注意：不再通过XML填充PDF模板生成PDF，而是直接通过getDanfe接口获取PDF URL
-     * 
-     * @param invoiceId 发票ID
-     * @param uuid 发票UUID
-     * @param companyToken 公司token（用于调用getDanfe接口）
+     * 手工重新获取 NF-e 发票 PDF（内部最多重试 3 次）。
+     *
+     * @param invoiceId 开票清单 id
+     * @return true=获取并上传成功
      */
-    private void generateAndUploadPdfFromDanfe(String invoiceId, String uuid, String companyToken) {
+    public boolean refetchInvoicePdf(String invoiceId) {
+        InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getById(invoiceId);
+        if (invoiceInfoEntity == null) {
+            throw new ServiceException("开票清单不存在");
+        }
+        String uuid = invoiceInfoEntity.getQueryId();
+        CfgInvoiceSettingDetailEntity settingDetail = cfgInvoiceSettingDetailService.getById(invoiceInfoEntity.getCfgId());
+        String companyToken = Objects.nonNull(settingDetail) ? settingDetail.getToken() : null;
+        return generateAndUploadPdfFromDanfe(invoiceId, uuid, companyToken);
+    }
+
+    /**
+     * 根据 Danfe 接口获取 PDF 并上传；失败/超时/空响应时自动重试最多 3 次，并回写 get_invoice_status。
+     * 注意：不再通过 XML 填充 PDF 模板生成 PDF，而是直接通过 getDanfe 接口获取 PDF URL。
+     *
+     * @param invoiceId    发票ID
+     * @param uuid         发票UUID
+     * @param companyToken 公司token（用于调用getDanfe接口）
+     * @return true=成功获取并上传
+     */
+    private boolean generateAndUploadPdfFromDanfe(String invoiceId, String uuid, String companyToken) {
         if (CharSequenceUtil.isBlank(uuid) || CharSequenceUtil.isBlank(companyToken)) {
-            log.warn("获取Danfe PDF参数不完整, invoiceId:{}, uuid:{}, companyToken:{}", invoiceId, uuid, companyToken);
+            log.warn("获取Danfe PDF参数不完整, invoiceId:{}, uuidBlank:{}, tokenBlank:{}",
+                    invoiceId, CharSequenceUtil.isBlank(uuid), CharSequenceUtil.isBlank(companyToken));
+            markGetInvoiceFailed(invoiceId, "参数不完整");
+            return false;
+        }
+        Exception lastError = null;
+        for (int attempt = 1; attempt <= GET_DANFE_MAX_ATTEMPTS; attempt++) {
+            try {
+                GetDanfeDTO getDanfeDTO = buildSimpleDanfeRequest(uuid);
+                GetDanfeResponseDTO.GetDanfeDataDTO danfeData = tfFiscalService.getDanfeV2(getDanfeDTO, companyToken);
+                String pdfUrl = resolveDanfePdfUrl(danfeData);
+                if (CharSequenceUtil.isBlank(pdfUrl)) {
+                    lastError = new ServiceException("获取Danfe PDF URL为空");
+                    log.warn("获取Danfe PDF URL为空, invoiceId:{}, uuid:{}, attempt:{}/{}",
+                            invoiceId, uuid, attempt, GET_DANFE_MAX_ATTEMPTS);
+                    sleepBeforeDanfeRetry(attempt);
+                    continue;
+                }
+                uploadFile(invoiceId, "", pdfUrl);
+                markGetInvoiceSuccess(invoiceId);
+                log.warn("获取Danfe PDF并上传成功, invoiceId:{}, uuid:{}, attempt:{}", invoiceId, uuid, attempt);
+                return true;
+            } catch (Exception e) {
+                lastError = e;
+                log.warn("获取Danfe PDF失败, invoiceId:{}, uuid:{}, attempt:{}/{}",
+                        invoiceId, uuid, attempt, GET_DANFE_MAX_ATTEMPTS, e);
+                sleepBeforeDanfeRetry(attempt);
+            }
+        }
+        String errMsg = lastError != null ? lastError.getMessage() : "未知错误";
+        markGetInvoiceFailed(invoiceId, errMsg);
+        return false;
+    }
+
+    /**
+     * getDanfe 重试前短暂等待（最后一次不再等待）。
+     *
+     * @param attempt 当前已执行次数（从 1 开始）
+     */
+    private void sleepBeforeDanfeRetry(int attempt) {
+        if (attempt >= GET_DANFE_MAX_ATTEMPTS) {
             return;
         }
         try {
-            // 调用getDanfe接口获取PDF URL
-            GetDanfeDTO getDanfeDTO = buildSimpleDanfeRequest(uuid);
-            
-            GetDanfeResponseDTO.GetDanfeDataDTO danfeData = tfFiscalService.getDanfeV2(getDanfeDTO, companyToken);
-            
-            String pdfUrl = resolveDanfePdfUrl(danfeData);
-            
-            if (CharSequenceUtil.isBlank(pdfUrl)) {
-                log.warn("获取Danfe PDF URL为空, invoiceId:{}, uuid:{}", invoiceId, uuid);
+            Thread.sleep(GET_DANFE_RETRY_SLEEP_MS);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * 标记获取发票成功。
+     *
+     * @param invoiceId 开票清单 id
+     */
+    private void markGetInvoiceSuccess(String invoiceId) {
+        try {
+            InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getById(invoiceId);
+            if (invoiceInfoEntity == null) {
                 return;
             }
-            
-            // 上传PDF文件
-            uploadFile(invoiceId, "", pdfUrl);
-            log.info("获取Danfe PDF并上传成功, invoiceId:{}, uuid:{}, pdfUrl:{}", invoiceId, uuid, pdfUrl);
-        } catch (Exception e) {
-            log.error("获取Danfe PDF并上传失败, invoiceId:{}, uuid:{}", invoiceId, uuid, e);
-            // 失败时更新备注，但不抛出异常，避免影响主流程
-            try {
-                InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getById(invoiceId);
-                if (invoiceInfoEntity != null) {
-                    String remark = CharSequenceUtil.isNotBlank(invoiceInfoEntity.getRemark()) 
-                        ? invoiceInfoEntity.getRemark() + "；获取Danfe PDF失败: " + e.getMessage()
-                        : "获取Danfe PDF失败: " + e.getMessage();
-                    invoiceInfoEntity.setRemark(remark);
-                    invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
-                }
-            } catch (Exception ex) {
-                log.error("更新发票备注失败, invoiceId:{}", invoiceId, ex);
+            invoiceInfoEntity.setGetInvoiceStatus(InvoiceInfoGetInvoiceStatusEnum.SUCCESS.getCode());
+            invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+        } catch (Exception ex) {
+            log.error("更新获取发票成功状态失败, invoiceId:{}", invoiceId, ex);
+        }
+    }
+
+    /**
+     * 标记获取发票失败，并追加备注「获取Danfe PDF失败」。
+     *
+     * @param invoiceId 开票清单 id
+     * @param errorMsg  失败原因
+     */
+    private void markGetInvoiceFailed(String invoiceId, String errorMsg) {
+        try {
+            InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getById(invoiceId);
+            if (invoiceInfoEntity == null) {
+                return;
             }
+            String detail = CharSequenceUtil.blankToDefault(errorMsg, "未知错误");
+            String remark = CharSequenceUtil.isNotBlank(invoiceInfoEntity.getRemark())
+                    ? invoiceInfoEntity.getRemark() + "；获取Danfe PDF失败: " + detail
+                    : "获取Danfe PDF失败: " + detail;
+            invoiceInfoEntity.setRemark(remark);
+            invoiceInfoEntity.setGetInvoiceStatus(InvoiceInfoGetInvoiceStatusEnum.FAILED.getCode());
+            invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+        } catch (Exception ex) {
+            log.error("更新获取发票失败状态失败, invoiceId:{}", invoiceId, ex);
         }
     }
 

@@ -25,6 +25,7 @@
        <result column="remark" property="remark" />
        <result column="file_url" property="fileUrl" />
        <result column="upload_status" property="uploadStatus" />
+       <result column="get_invoice_status" property="getInvoiceStatus" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -38,7 +39,7 @@
         update_time,
         version,
         is_deleted,
-        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status,invoice_nature,platform_invoice_no,cancel_reason,return_tax_code,return_reason,invoice_remark
+        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status, get_invoice_status,invoice_nature,platform_invoice_no,cancel_reason,return_tax_code,return_reason,invoice_remark
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$PagingViewDTO">
         SELECT
@@ -58,6 +59,7 @@
         i.remark as remark,
         case when i.invoice_type = 'nfe' then att.attach_url else i.file_url end as fileUrl,
         i.upload_status as uploadStatus,
+        i.get_invoice_status as getInvoiceStatus,
         i.upload_time as uploadTime,
         id.id as detailId,
         id.sku_id,

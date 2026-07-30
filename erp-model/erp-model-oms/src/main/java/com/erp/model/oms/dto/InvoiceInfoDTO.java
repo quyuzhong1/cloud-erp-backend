@@ -446,6 +446,12 @@ public class InvoiceInfoDTO implements Serializable {
         private String uploadStatusName;
 
         /**
+         * 获取发票状态:success=成功,failed=失败,空=未获取/不适用 【可排序】
+         */
+        private String getInvoiceStatus;
+        private String getInvoiceStatusName;
+
+        /**
          * skuId
          */
         private String skuId;
